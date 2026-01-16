@@ -5,7 +5,7 @@ added_files = [
 ]
 
 a = Analysis(
-    ['C:/Users/servidorOPD/Documents/Programas/HostControllerF160/main.py'],
+    ['C:/Users/Joao/Documents/Documentação/1_60/HostFocuser160-OPD/main.py'],
     pathex=[],
     binaries=[],
     datas=added_files,
