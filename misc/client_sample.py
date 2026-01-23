@@ -1,6 +1,7 @@
 from PyQt5 import QtWidgets, uic
-from PyQt5.QtCore import QTimer
+from PyQt5.QtCore import QTimer, QRegularExpression
 from PyQt5.QtGui import *
+from PyQt5.QtWidgets import QPushButton, QLineEdit, QProgressBar, QTextEdit, QLabel, QStackedWidget
 
 from src.core.config import Config
 
@@ -9,6 +10,7 @@ import sys
 import json
 import os
 import time
+import socket
 
 def resource_path(relative_path):
     """ Get absolute path to resource, works for dev and for PyInstaller """
@@ -25,17 +27,70 @@ class ClientSimulator(QtWidgets.QMainWindow):
         if not self.check_config():
             return
 
+    # Associate UI variables to allow intellisense with PyQt Widgets
+        self.btnMove = self.findChild(QtWidgets.QPushButton, 'btnMove')
+        self.btnMove: QPushButton = self.btnMove
+        self.btnConnect = self.findChild(QtWidgets.QPushButton, 'btnConnect')
+        self.btnConnect: QPushButton = self.btnConnect
+        self.btnHalt = self.findChild(QtWidgets.QPushButton, 'btnHalt')
+        self.btnHalt: QPushButton = self.btnHalt
+        self.btnHome = self.findChild(QtWidgets.QPushButton, 'btnHome')
+        self.btnHome: QPushButton = self.btnHome
+        self.btnUp = self.findChild(QtWidgets.QPushButton, 'btnUp')
+        self.btnUp: QPushButton = self.btnUp
+        self.btnDown = self.findChild(QtWidgets.QPushButton, 'btnDown')
+        self.btnDown: QPushButton = self.btnDown
+        self.btnUpdateStatus = self.findChild(QtWidgets.QPushButton, 'btnUpdateStatus')
+        self.btnUpdateStatus: QPushButton = self.btnUpdateStatus
+
+        self.BarFocuser = self.findChild(QtWidgets.QProgressBar, 'BarFocuser')
+        self.BarFocuser: QProgressBar = self.BarFocuser
+        self.txtStatus = self.findChild(QtWidgets.QTextEdit, 'txtStatus')
+        self.txtStatus: QTextEdit = self.txtStatus
+
+        self.statConn_2 = self.findChild(QtWidgets.QLabel, 'statConn_2')     #TODO: Verificar pq não consigo colocar sem o "_2" no designer
+        self.statConn_2: QLabel = self.statConn_2
+        self.statMov_2 = self.findChild(QtWidgets.QLabel, 'statMov_2')     #TODO: Verificar pq não consigo colocar sem o "_2" no designer
+        self.statMov_2: QLabel = self.statMov_2
+        self.statBusy_2 = self.findChild(QtWidgets.QLabel, 'statBusy_2')     #TODO: Verificar pq não consigo colocar sem o "_2" no designer
+        self.statBusy_2: QLabel = self.statBusy_2
+        self.statInit_2 = self.findChild(QtWidgets.QLabel, 'statInit_2')     #TODO: Verificar pq não consigo colocar sem o "_2" no designer
+        self.statInit_2: QLabel = self.statInit_2
+
+        self.txtClientIp = self.findChild(QtWidgets.QLineEdit, 'txtClientIp')
+        self.txtClientIp: QLineEdit = self.txtClientIp
+
+        self.btnConnectClient = self.findChild(QtWidgets.QPushButton, 'btnConnectClient')
+        self.btnConnectClient: QPushButton = self.btnConnectClient
+
+        self.pageSelect = self.findChild(QtWidgets.QStackedWidget, 'pageSelect')
+        self.pageSelect: QStackedWidget = self.pageSelect
+        
+    # Configure Widgets and Widgets Actions
         self.btnMove.clicked.connect(self.move_to)
         self.btnConnect.clicked.connect(self.connect)
         self.btnHalt.clicked.connect(self.halt)
         self.btnHome.clicked.connect(self.home)
         self.btnUp.clicked.connect(self.move_out)
         self.btnDown.clicked.connect(self.move_in)
-
-        self.context = zmq.Context()       
+        self.btnConnectClient.clicked.connect(self.connect_to_server)
 
         self.BarFocuser.setStyleSheet("QProgressBar::chunk { background-color: rgb(26, 26, 26) } QProgressBar { color: indianred; }")
         self.BarFocuser.setTextDirection(0) 
+
+        self.txtClientIp.setText(get_private_ip())                      # Considers the Ip of the current machine
+        self.txtClientIp.returnPressed.connect(self.ClientIpDefined)    # Configures event of return key press
+        inputValidator = QRegularExpressionValidator(                   # Validator that allows only numbers and points
+            QRegularExpression("[0-9.]+"), self.txtClientIp
+        )
+        self.txtClientIp.setValidator(inputValidator)
+
+        self.pageSelect.setCurrentIndex(0)                              # Defines starting widget
+
+        
+
+
+        self.context = zmq.Context()       
 
         self.previous_is_mov = None
         self.previous_pos = None
@@ -61,6 +116,15 @@ class ClientSimulator(QtWidgets.QMainWindow):
         self.get_status()
         self.timer.start(100)  
 
+    def connect_to_server(self):
+        if(self.pageSelect.currentIndex() == 1):
+            self.pageSelect.setCurrentIndex(0)
+        else:
+            self.pageSelect.setCurrentIndex(1)
+
+    def ClientIpDefined(self):
+        self.btnConnectClient.click()
+
     def check_config(self):
         try:
             self.ip_addr = Config.ip_address  
@@ -73,7 +137,7 @@ class ClientSimulator(QtWidgets.QMainWindow):
     def start_client(self):
         self.subscriber = self.context.socket(zmq.SUB)
         # self.subscriber.connect(f"tcp://{Config.ip_address}:{Config.port_pub}")     #TODO: Nesse ponto não pode usar o `ip_address = '*'`, tem que ser o IP do host. `ip_address = '*'` só pode ser usado com `bind` e não com `connect`
-        self.subscriber.connect(f"tcp://192.168.0.183:{Config.port_pub}") 
+        self.subscriber.connect(f"tcp://192.168.0.188:{Config.port_pub}") 
         topics_to_subscribe = ''
 
         self.subscriber.setsockopt_string(zmq.SUBSCRIBE, topics_to_subscribe)
@@ -83,7 +147,7 @@ class ClientSimulator(QtWidgets.QMainWindow):
 
         self.req = self.context.socket(zmq.REQ)
         # self.req.connect(f"tcp://{Config.ip_address}:{Config.port_rep}")            #TODO: Nesse ponto não pode usar o `ip_address = '*'`, tem que ser o IP do host. `ip_address = '*'` só pode ser usado com `bind` e não com `connect`
-        self.req.connect(f"tcp://192.168.0.183:{Config.port_rep}")
+        self.req.connect(f"tcp://192.168.0.188:{Config.port_rep}")
 
     def send_request(self, action, timeout=1000):
         self._msg_json["action"] = action
@@ -160,29 +224,29 @@ class ClientSimulator(QtWidgets.QMainWindow):
                 self.position = int(data["position"])                    
                 self.BarFocuser.setValue(int(self.position))
                 if (data["cmd"]["clientId"]) > 0:
-                    self.statBusy.setStyleSheet("background-color: lightgreen")
-                    self.statBusy.setText(str(data["cmd"]["clientId"]))
+                    self.statBusy_2.setStyleSheet("background-color: lightgreen")
+                    self.statBusy_2.setText(str(data["cmd"]["clientId"]))
                 else:
-                    self.statBusy.setText('')
-                    self.statBusy.setStyleSheet("background-color: indianred")
+                    self.statBusy_2.setText('')
+                    self.statBusy_2.setStyleSheet("background-color: indianred")
                 if data["homing"]:
                     self.homing = True
-                    self.statInit.setStyleSheet("background-color: lightgreen")
+                    self.statInit_2.setStyleSheet("background-color: lightgreen")
                 else:
                     self.homing = False
-                    self.statInit.setStyleSheet("background-color: indianred") 
+                    self.statInit_2.setStyleSheet("background-color: indianred") 
                 if data["isMoving"]:
                     self.is_moving = True
-                    self.statMov.setStyleSheet("background-color: lightgreen")
+                    self.statMov_2.setStyleSheet("background-color: lightgreen")
                 else:
                     self.is_moving = False
-                    self.statMov.setStyleSheet("background-color: indianred") 
+                    self.statMov_2.setStyleSheet("background-color: indianred") 
                 if data["connected"]:
                     self.connected = True
-                    self.statConn.setStyleSheet("background-color: lightgreen")
+                    self.statConn_2.setStyleSheet("background-color: lightgreen")
                 else:
                     self.connected = False
-                    self.statConn.setStyleSheet("background-color: indianred")               
+                    self.statConn_2.setStyleSheet("background-color: indianred")               
             except Exception as e:
                 print(e)
                 self.BarFocuser.setValue(0)
@@ -191,3 +255,15 @@ class ClientSimulator(QtWidgets.QMainWindow):
         """Close application"""
         self.disconnect()
         event.accept()
+
+
+def get_private_ip():
+    with socket.socket(socket.AF_INET, socket.SOCK_DGRAM) as st:
+        st.settimeout(0.0)
+        try:
+            st.connect(('8.8.8.8', 80))
+            ip = st.getsockname()[0]
+        except socket.error:
+            ip = '127.0.0.1'
+        st.close()
+    return ip
