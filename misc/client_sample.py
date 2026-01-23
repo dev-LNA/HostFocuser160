@@ -72,7 +72,8 @@ class ClientSimulator(QtWidgets.QMainWindow):
 
     def start_client(self):
         self.subscriber = self.context.socket(zmq.SUB)
-        self.subscriber.connect(f"tcp://{Config.ip_address}:{Config.port_pub}")
+        # self.subscriber.connect(f"tcp://{Config.ip_address}:{Config.port_pub}")     #TODO: Nesse ponto não pode usar o `ip_address = '*'`, tem que ser o IP do host. `ip_address = '*'` só pode ser usado com `bind` e não com `connect`
+        self.subscriber.connect(f"tcp://192.168.0.183:{Config.port_pub}") 
         topics_to_subscribe = ''
 
         self.subscriber.setsockopt_string(zmq.SUBSCRIBE, topics_to_subscribe)
@@ -81,8 +82,9 @@ class ClientSimulator(QtWidgets.QMainWindow):
         self.poller.register(self.subscriber, zmq.POLLIN)
 
         self.req = self.context.socket(zmq.REQ)
-        self.req.connect(f"tcp://{Config.ip_address}:{Config.port_rep}")
-    
+        # self.req.connect(f"tcp://{Config.ip_address}:{Config.port_rep}")            #TODO: Nesse ponto não pode usar o `ip_address = '*'`, tem que ser o IP do host. `ip_address = '*'` só pode ser usado com `bind` e não com `connect`
+        self.req.connect(f"tcp://192.168.0.183:{Config.port_rep}")
+
     def send_request(self, action, timeout=1000):
         self._msg_json["action"] = action
         self.req.send_string(json.dumps(self._msg_json))

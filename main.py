@@ -64,7 +64,7 @@ class FocuserOPD(QtWidgets.QMainWindow):
         
         self.lblIP.setText(f"IP: {self.control.ip_address}")
         self.lblPort.setText(f"PUB {self.control.port_pub}, REPLY {self.control.port_rep}")
-
+        
         # LOG FILE
         self.log_text_edit = QtWidgets.QTextEdit()  # Widget to display log
         self.log_dock_widget = QtWidgets.QDockWidget("Log", self)
@@ -232,7 +232,7 @@ class FocuserOPD(QtWidgets.QMainWindow):
         status = self.control.status
         con = status["connected"]
         
-        if self.run_thread and self.run_thread.is_alive():
+        if self.run_thread and self.run_thread.is_alive():      
             self.statusBar().setStyleSheet("background-color: green")
             self.statServer.setStyleSheet("background-color: green; border-radius: 10px;")
         else:
@@ -274,7 +274,7 @@ class FocuserOPD(QtWidgets.QMainWindow):
         close = close.exec()
 
         if close == QMessageBox.Yes:   
-            self.stop()  
+            self.stop()                 #BUG: Quando o programa é fechado enquanto o servidor não está conectado dá um erro com o 0MQ. Parece que quando o programa é fechado ocorre uma tentativa de publicar o estado antes de fechar, mas se o servidor estiver desconectado não vai conseguir fazer essa publicação e vai dar um erro. 
             event.accept()
         else:
             event.ignore()

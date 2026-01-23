@@ -6,8 +6,8 @@
    <rect>
     <x>0</x>
     <y>0</y>
-    <width>340</width>
-    <height>417</height>
+    <width>337</width>
+    <height>441</height>
    </rect>
   </property>
   <property name="windowTitle">
@@ -501,10 +501,26 @@ border-radius: 2px;
     <property name="geometry">
      <rect>
       <x>10</x>
-      <y>280</y>
+      <y>300</y>
       <width>311</width>
       <height>121</height>
      </rect>
+    </property>
+   </widget>
+   <widget class="QPushButton" name="btnUpdateStatus">
+    <property name="geometry">
+     <rect>
+      <x>230</x>
+      <y>270</y>
+      <width>89</width>
+      <height>25</height>
+     </rect>
+    </property>
+    <property name="styleSheet">
+     <string notr="true">background-color: forestGreen;</string>
+    </property>
+    <property name="text">
+     <string>Status</string>
     </property>
    </widget>
   </widget>

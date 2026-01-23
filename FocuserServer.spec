@@ -5,7 +5,7 @@ added_files = [
 ]
 
 a = Analysis(
-    ['C:/Users/Joao/Documents/Documentação/1_60/HostFocuser160-OPD/main.py'],
+    ['C:/Users/Joao/Documents/Documentação/1_60/HostFocuser160-OPD/main.py'],     # TODO: Alterar para ser independente da pasta que o programa está no computador
     pathex=[],
     binaries=[],
     datas=added_files,

@@ -21,7 +21,7 @@ class App():
     def __init__(self, logger: Logger):
 
         self.logger = logger
-        self.config_file = r"src/config/config.toml"
+        self.config_file = r"src/config/config.toml"   #TODO: Remover, não é usado para nada.
 
         # Network Settings
         self.context = None
@@ -74,7 +74,7 @@ class App():
             "tempCompAvailable": Config.tempcompavailable,
             "temperature": 0,
             "timestamp": datetime.isoformat(datetime.now(), timespec='milliseconds'),
-            "version": "1.0.0"            
+            "version": "1.0.0"            #TODO: Pegar a versão do arquivo config.toml
         }
         
         self.device = Focuser(self.logger)
@@ -94,7 +94,7 @@ class App():
             _try += 1
             self.router = self.ping_router()
         
-        if self.reachable:
+        if self.reachable:          #TODO: Atualizar com o caso de não tem conseguido conectar? Quais mensagens no status e no logger precisariam ser alteradas?
             try:
                 self.device.connected = True
                 self._position =self.device.position
@@ -137,6 +137,7 @@ class App():
         self.poller.register(self.replier, zmq.POLLIN)        
         self.logger.info(f'Server Started')
         self.pub_status()
+        
     
     def close_connection(self):
         """Unbind all sockets and destroy context"""
@@ -229,7 +230,7 @@ class App():
         """Stops the motor"""
         if self.device.Halt():
             time.sleep(.1)
-            self._is_moving = True # set _is_moving to true so the main loop can realy check if the motor is moving or not
+            self._is_moving = True # set _is_moving to true so the main loop can realy check if the motor is moving or not  #TODO: Verificar o motivo disso ser necessário
             self.logger.info(f'Device Stopped')
         else:
             self.status["alarm"] = self.device.alarm
@@ -260,7 +261,7 @@ class App():
         """(Deprecated) - Self explained"""
         self.logger.info(f'Device Disconnected')
     
-    def handle_in_out(self, direction, speed):
+    def handle_in_out(self, direction, speed):  #TODO: Talvez colocar uma velocidade default
         """Move focuser to a position
         Args: 
             direction (int): 1 for IN, 0 for OUT.
@@ -337,7 +338,7 @@ class App():
         while not self.stop_var:
             t0 = time.time()
             current_time = datetime.now()
-            if -1 >= (current_time.second - self.last_pub.second) or (current_time.second - self.last_pub.second) >= 1:  
+            if -1 >= (current_time.second - self.last_pub.second) or (current_time.second - self.last_pub.second) >= 1:     #TODO: Não daria pra só checar se o valor absoluto for >= 1?
                 self.device.position              
                 self.pub_status()
                 self.last_pub = current_time                
@@ -389,7 +390,7 @@ class App():
                             self.reply('ACK')
                             command_processed = True
 
-                        if cmd in command_handlers and self.busy_id == 0:
+                        if cmd in command_handlers and self.busy_id == 0: #TODO: O comando HALT está tanto no "command_handlers" quanto no `if` acima
                             command_handlers[cmd]()
                             self.reply('ACK')
                             command_processed = True
@@ -403,19 +404,19 @@ class App():
                         self.pub_status()
                         self.logger.error(f'Error: {str(e)}')
 
-                if self._is_moving:
+                if self._is_moving:                             #TODO: Qual o motivo de `_is_moving` ter que ser `true` para chamar `device.is_moving` para checar se está em movimento?
                     self._is_moving = self.device.is_moving
                     time.sleep(.05)
                     self._position = self.device.position
                 if self._homing:
-                    self._homing = self.device.homing 
+                    self._homing = self.device.homing           #TODO: Qual o motivo de `_homing` ter que ser `true` para chamar `device.homing` para checar se está executando a rotina de inicialização?
                     # self._position = self.device.position 
                 if not self._homing and not self._is_moving:
                     # this means the device is not busy
                     self._client_id = 0
                     self.status["cmd"] =  {
-                                            "clientId": self._client_id,
-                                            "clientTransactionId": 0,
+                                            "clientId": self._client_id,    #TODO: Esse valor pode ser 0? Checar arquivo do Ramon e documentação Alpaca. Talvez o 0 seja reservado para "not busy"
+                                            "clientTransactionId": 0,       #TODO: Esse valor pode ser 0? Checar arquivo do Ramon e documentação Alpaca. Talvez o 0 seja reservado para "not busy"
                                             "clientName": "",
                                             "action": ""
                                             }                    
