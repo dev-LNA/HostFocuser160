@@ -274,7 +274,7 @@ class FocuserOPD(QtWidgets.QMainWindow):
         close = close.exec()
 
         if close == QMessageBox.Yes:   
-            self.stop()                 #BUG: Quando o programa é fechado enquanto o servidor não está conectado dá um erro com o 0MQ. Parece que quando o programa é fechado ocorre uma tentativa de publicar o estado antes de fechar, mas se o servidor estiver desconectado não vai conseguir fazer essa publicação e vai dar um erro. 
+            self.stop()
             event.accept()
         else:
             event.ignore()

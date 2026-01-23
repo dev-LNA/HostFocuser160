@@ -145,18 +145,21 @@ class App():
         self.status["connected"] = self.device.connected
         self.pub_status()
         try:
-            self.publisher.unbind(f"tcp://{self.ip_address}:{self.port_pub}")
-            self.logger.info(f'Disconnecting Publisher')
+            if(self.publisher):
+                self.publisher.unbind(f"tcp://{self.ip_address}:{self.port_pub}")
+                self.logger.info(f'Disconnecting Publisher')
         except Exception as e:
             self.logger.error(f'Error closing Publisher connection: {str(e)}')
         try:
-            self.replier.unbind(f"tcp://{self.ip_address}:{self.port_rep}")
-            self.logger.info(f'Disconnecting Replier')
+            if(self.replier):
+                self.replier.unbind(f"tcp://{self.ip_address}:{self.port_rep}")
+                self.logger.info(f'Disconnecting Replier')
         except Exception as e:
             self.logger.error(f'Error closing Replier connection: {str(e)}')
         
-        self.context.destroy()
-        self.context = None
+        if self.context is not None:
+            self.context.destroy()
+            self.context = None
 
     def disconnect(self):
         """Stops main loop and close all sockets"""
@@ -168,9 +171,12 @@ class App():
     def pub_status(self):
         """Publishes status via ZeroMQ"""
         self.status["timestamp"] = datetime.isoformat(datetime.now(), timespec='milliseconds')
-        json_string = json.dumps(self.status)        
-        self.publisher.send_string(json_string)
-        self.logger.info(f'Status published: {self.status}')
+        json_string = json.dumps(self.status)  
+        try:      
+            self.publisher.send_string(json_string)
+            self.logger.info(f'Status published: {self.status}')
+        except Exception as e:
+            self.logger.error(f'Error: {str(e)}')
     
     def stop(self):
         """Stop main loop and unregister zmq.POLL"""
