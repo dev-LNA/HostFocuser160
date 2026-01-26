@@ -85,14 +85,21 @@ class App():
         """Ping device and reads the position and initialized variables"""
         _try = 0
         self.last_ping_time = datetime.now()
-        print("Trying Reconnect")
+        print("Trying Connect")
         for _try in range(5):
+            print("Trying Connect: Try number ", (_try+1))
             self.reachable = self.ping_server()            
             if self.reachable:
                 self.router = True
+                print("Connection succesful after", (_try+1), "tries" )
                 break
-            _try += 1
+            print("Device not reachable...")     
+            print("Trying to reach router...")       
             self.router = self.ping_router()
+            if(self.router):
+                print("Router reachable")
+            else:
+                print("Could not reach router")
         
         if self.reachable:          #TODO: Atualizar com o caso de não tem conseguido conectar? Quais mensagens no status e no logger precisariam ser alteradas?
             try:

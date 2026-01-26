@@ -60,6 +60,9 @@ class ClientSimulator(QtWidgets.QMainWindow):
         self.txtClientIp = self.findChild(QtWidgets.QLineEdit, 'txtClientIp')
         self.txtClientIp: QLineEdit = self.txtClientIp
 
+        self.lblTestConn1 = self.findChild(QLabel, 'lblTestConn1')
+        self.lblTestConn1: QLabel = self.lblTestConn1
+
         self.btnConnectClient = self.findChild(QtWidgets.QPushButton, 'btnConnectClient')
         self.btnConnectClient: QPushButton = self.btnConnectClient
 
@@ -78,7 +81,8 @@ class ClientSimulator(QtWidgets.QMainWindow):
         self.BarFocuser.setStyleSheet("QProgressBar::chunk { background-color: rgb(26, 26, 26) } QProgressBar { color: indianred; }")
         self.BarFocuser.setTextDirection(0) 
 
-        self.txtClientIp.setText(get_private_ip())                      # Considers the Ip of the current machine
+        self.lblTestConn1.setText("")                             
+        self.txtClientIp.setText(_get_private_ip())                      # Considers the Ip of the current machine
         self.txtClientIp.returnPressed.connect(self.ClientIpDefined)    # Configures event of return key press
         inputValidator = QRegularExpressionValidator(                   # Validator that allows only numbers and points
             QRegularExpression("[0-9.]+"), self.txtClientIp
@@ -90,7 +94,8 @@ class ClientSimulator(QtWidgets.QMainWindow):
         
 
 
-        self.context = zmq.Context()       
+        # self.context = zmq.Context()       
+        self.context = None
 
         self.previous_is_mov = None
         self.previous_pos = None
@@ -109,18 +114,43 @@ class ClientSimulator(QtWidgets.QMainWindow):
             "action": "STATUS"
         }
 
-        self.start_client()
-        self.txtStatus.setText(f"{Config.ip_address}")
-        self.timer = QTimer()
-        self.timer.timeout.connect(self.update)
-        self.get_status()
-        self.timer.start(100)  
+        # self.start_client()
+        # self.txtStatus.setText(f"{Config.ip_address}")
+        # self.timer = QTimer()
+        # self.timer.timeout.connect(self.update)
+        # self.get_status()
+        # self.timer.start(100)  
 
     def connect_to_server(self):
-        if(self.pageSelect.currentIndex() == 1):
-            self.pageSelect.setCurrentIndex(0)
-        else:
+        """
+        Starts the client and the 'update' method.
+        Before the creation of the 0mq context a ping is performed to guarantee that
+            the server is reachable.
+        
+        :param self: 
+        """
+        self._connection_ip = self.txtClientIp.text()
+
+        try:
+            s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+            s.settimeout(1)
+            s.connect((self._connection_ip, self.port_pub))
+            s.close()
+
+            self.context = zmq.Context()     
+            self.start_client()  
+            self.txtStatus.setText(f"Connected to + {self._connection_ip}")    
+            self.timer = QTimer()
+            self.timer.timeout.connect(self.update)
+            self.get_status()
+            self.timer.start(100)  
+
             self.pageSelect.setCurrentIndex(1)
+        except Exception as e:
+            print({str(e)})
+            self.lblTestConn1.setText("Could not establish connection to server")
+
+
 
     def ClientIpDefined(self):
         self.btnConnectClient.click()
@@ -135,9 +165,11 @@ class ClientSimulator(QtWidgets.QMainWindow):
             return False
 
     def start_client(self):
+
         self.subscriber = self.context.socket(zmq.SUB)
         # self.subscriber.connect(f"tcp://{Config.ip_address}:{Config.port_pub}")     #TODO: Nesse ponto não pode usar o `ip_address = '*'`, tem que ser o IP do host. `ip_address = '*'` só pode ser usado com `bind` e não com `connect`
-        self.subscriber.connect(f"tcp://192.168.0.188:{Config.port_pub}") 
+        # self.subscriber.connect(f"tcp://192.168.0.195:{Config.port_pub}") 
+        self.subscriber.connect(f"tcp://{self._connection_ip}:{Config.port_pub}")
         topics_to_subscribe = ''
 
         self.subscriber.setsockopt_string(zmq.SUBSCRIBE, topics_to_subscribe)
@@ -147,7 +179,9 @@ class ClientSimulator(QtWidgets.QMainWindow):
 
         self.req = self.context.socket(zmq.REQ)
         # self.req.connect(f"tcp://{Config.ip_address}:{Config.port_rep}")            #TODO: Nesse ponto não pode usar o `ip_address = '*'`, tem que ser o IP do host. `ip_address = '*'` só pode ser usado com `bind` e não com `connect`
-        self.req.connect(f"tcp://192.168.0.188:{Config.port_rep}")
+        # self.req.connect(f"tcp://192.168.0.195:{Config.port_rep}") 
+        self.req.connect(f"tcp://{self._connection_ip}:{Config.port_rep}")
+
 
     def send_request(self, action, timeout=1000):
         self._msg_json["action"] = action
@@ -253,17 +287,22 @@ class ClientSimulator(QtWidgets.QMainWindow):
     
     def closeEvent(self, event):
         """Close application"""
-        self.disconnect()
+        if(self.context):
+            self.disconnect()
         event.accept()
 
 
-def get_private_ip():
+def _get_private_ip():
+    """
+    Gets the IP address of the PC running the program.
+    This will be considered as the initial IP to connect to the host.
+    """
     with socket.socket(socket.AF_INET, socket.SOCK_DGRAM) as st:
         st.settimeout(0.0)
         try:
-            st.connect(('8.8.8.8', 80))
+            st.connect((Config.router_ip, 80))          # Opens a connections just to verify the socket
             ip = st.getsockname()[0]
         except socket.error:
-            ip = '127.0.0.1'
+            ip = '127.0.0.1'                            #TODO: Mostrar uma mensagem de erro?
         st.close()
     return ip
