@@ -38,6 +38,7 @@ class App():
         self.previous_pos = 0
         self.last_ping_time = datetime.now()
         self.last_pub = datetime.now()
+        self._flag_change = False
 
         #variables for status request
         self._is_moving = False
@@ -322,18 +323,25 @@ class App():
         if self._position != self.previous_pos:
             self.status["position"] = self._position
             self.previous_pos = self._position
-            self.pub_status()
+            self._flag_change = True
+            # self.pub_status()
             self.encoder = int(self._position * Config.enc_2_microns)
 
         if self._is_moving != self.previous_is_mov:
             self.status["isMoving"] = self._is_moving
             self.previous_is_mov = self._is_moving 
             self.status["initialized"] = self.device.initialized
-            self.pub_status()
+            self._flag_change = True
+            # self.pub_status()
 
         if self._homing != self.previous_homing:
             self.status["homing"] = self._homing            
             self.previous_homing = self._homing
+            self._flag_change = True
+            # self.pub_status()
+        
+        if self._flag_change:   # Publishes in 0MQ if a change occurred
+            self._flag_change = False
             self.pub_status()
 
         # if self._is_moving and self._homing:
@@ -352,7 +360,8 @@ class App():
             t0 = time.time()
             current_time = datetime.now()
             if -1 >= (current_time.second - self.last_pub.second) or (current_time.second - self.last_pub.second) >= 1:     #TODO: Não daria pra só checar se o valor absoluto for >= 1?
-                self.device.position              
+                # self.device.position 
+                self._position = self.device.position             
                 self.pub_status()
                 self.last_pub = current_time                
             if self.device and self.device.connected and self.poller:
@@ -362,7 +371,7 @@ class App():
                     try:
                         msg_rep = json.loads(msg_rep)
                         cmd = msg_rep.get("action") 
-                        if not 'STATUS' in cmd and (msg_rep.get("clientId") == self._client_id or self._client_id == 0):
+                        if not 'STATUS' in cmd and (msg_rep.get("clientId") == self._client_id or self._client_id == 0):    #TODO: Definir melhor os comandos que podem ser executados quando o dispositivo está ocupado        
                             # Only accept commands (except for status request) if not busy or if it 
                             # was requested by the same client
                             self.status["cmd"] = msg_rep
@@ -434,6 +443,7 @@ class App():
                                             "action": ""
                                             }                    
                 
+                # self._position = self.device.position
                 self.busy_id = self._client_id
                 self.update_status()                
                 self.status["alarm"] = 0

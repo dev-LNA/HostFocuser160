@@ -153,7 +153,7 @@ class FocuserDriver():
         except ValueError as e:
             self.logger.error(f'[Device] Error reading position: {str(e)}')
             self._lock.release()  
-        return self._last_pos                                           
+        return self._last_pos                                           #TODO: Colocar esse 'return' dentro do except?
     
     @property
     def is_moving(self) -> bool:                    #TODO: Possibilitar configurar número de retries?
@@ -242,6 +242,27 @@ class FocuserDriver():
             self.logger.error(f'[Device] Alarm Error {str(e)}')
         
         return self._alarm
+
+    @property
+    def get_driver_state(self) -> bool:
+        """
+        Verifies the state of the motor driver.
+        
+        :param self:
+        :return: True if driver is active / False if driver is not active
+        :rtype: bool
+        """
+        self._lock.acquire()
+        resp = self._write("EO", 5)
+        self._lock.release()
+        if resp == '1':
+            self.logger.info('[Device] Motor Driver ON')
+            return True
+        else:
+            self.logger.info('[Device] Motor Driver OFF')
+            return False
+
+
 
     def home(self):                             #TODO: Deixar configurar quantidade de retries?
         """Executes the INIT routine        
@@ -348,14 +369,17 @@ class FocuserDriver():
         self._timer = None
         self._lock.release()      
     
-    def Halt(self) -> None:   
+    def Halt(self) -> bool:   
         """Send command STOP and stops main program with GS0=0 subroutine"""     
         resp_stop = self._write("V42=1", 5)     #TODO: Não precisa do `acquire/release` que nem foi utilizado para chamar o `_write` nos métodos anteriores?
         if resp_stop == 'OK':                 
             self.logger.info('[Device] halt')
             self.stop()
             return True  # Command executed successfully 
-        return False        
+        return False 
+
+
+
     
     def _write(self, cmd, max_retries = 5):
         """Send commands to device socket.

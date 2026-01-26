@@ -24,7 +24,7 @@ class ClientSimulator(QtWidgets.QMainWindow):
         super(ClientSimulator, self).__init__()
         uic.loadUi(main_ui_path, self)
 
-        if not self.check_config():
+        if not self._check_config():
             return
 
     # Associate UI variables to allow intellisense with PyQt Widgets
@@ -70,20 +70,20 @@ class ClientSimulator(QtWidgets.QMainWindow):
         self.pageSelect: QStackedWidget = self.pageSelect
         
     # Configure Widgets and Widgets Actions
-        self.btnMove.clicked.connect(self.move_to)
-        self.btnConnect.clicked.connect(self.connect)
-        self.btnHalt.clicked.connect(self.halt)
-        self.btnHome.clicked.connect(self.home)
-        self.btnUp.clicked.connect(self.move_out)
-        self.btnDown.clicked.connect(self.move_in)
-        self.btnConnectClient.clicked.connect(self.connect_to_server)
+        self.btnMove.clicked.connect(self._move_to)
+        self.btnConnect.clicked.connect(self._connect)
+        self.btnHalt.clicked.connect(self._halt)
+        self.btnHome.clicked.connect(self._home)
+        self.btnUp.clicked.connect(self._move_out)
+        self.btnDown.clicked.connect(self._move_in)
+        self.btnConnectClient.clicked.connect(self._connect_to_server)
 
         self.BarFocuser.setStyleSheet("QProgressBar::chunk { background-color: rgb(26, 26, 26) } QProgressBar { color: indianred; }")
         self.BarFocuser.setTextDirection(0) 
 
         self.lblTestConn1.setText("")                             
         self.txtClientIp.setText(_get_private_ip())                      # Considers the Ip of the current machine
-        self.txtClientIp.returnPressed.connect(self.ClientIpDefined)    # Configures event of return key press
+        self.txtClientIp.returnPressed.connect(self._clientIpDefined)    # Configures event of return key press
         inputValidator = QRegularExpressionValidator(                   # Validator that allows only numbers and points
             QRegularExpression("[0-9.]+"), self.txtClientIp
         )
@@ -114,14 +114,14 @@ class ClientSimulator(QtWidgets.QMainWindow):
             "action": "STATUS"
         }
 
-        # self.start_client()
+        # self._start_client()
         # self.txtStatus.setText(f"{Config.ip_address}")
         # self.timer = QTimer()
         # self.timer.timeout.connect(self.update)
-        # self.get_status()
+        # self._get_status()
         # self.timer.start(100)  
 
-    def connect_to_server(self):
+    def _connect_to_server(self):
         """
         Starts the client and the 'update' method.
         Before the creation of the 0mq context a ping is performed to guarantee that
@@ -138,11 +138,11 @@ class ClientSimulator(QtWidgets.QMainWindow):
             s.close()
 
             self.context = zmq.Context()     
-            self.start_client()  
+            self._start_client()  
             self.txtStatus.setText(f"Connected to + {self._connection_ip}")    
             self.timer = QTimer()
             self.timer.timeout.connect(self.update)
-            self.get_status()
+            self._get_status()
             self.timer.start(100)  
 
             self.pageSelect.setCurrentIndex(1)
@@ -152,10 +152,10 @@ class ClientSimulator(QtWidgets.QMainWindow):
 
 
 
-    def ClientIpDefined(self):
+    def _clientIpDefined(self):
         self.btnConnectClient.click()
 
-    def check_config(self):
+    def _check_config(self):
         try:
             self.ip_addr = Config.ip_address  
             self.port_pub = Config.port_pub  
@@ -164,11 +164,9 @@ class ClientSimulator(QtWidgets.QMainWindow):
         except:
             return False
 
-    def start_client(self):
+    def _start_client(self):
 
         self.subscriber = self.context.socket(zmq.SUB)
-        # self.subscriber.connect(f"tcp://{Config.ip_address}:{Config.port_pub}")     #TODO: Nesse ponto não pode usar o `ip_address = '*'`, tem que ser o IP do host. `ip_address = '*'` só pode ser usado com `bind` e não com `connect`
-        # self.subscriber.connect(f"tcp://192.168.0.195:{Config.port_pub}") 
         self.subscriber.connect(f"tcp://{self._connection_ip}:{Config.port_pub}")
         topics_to_subscribe = ''
 
@@ -178,12 +176,10 @@ class ClientSimulator(QtWidgets.QMainWindow):
         self.poller.register(self.subscriber, zmq.POLLIN)
 
         self.req = self.context.socket(zmq.REQ)
-        # self.req.connect(f"tcp://{Config.ip_address}:{Config.port_rep}")            #TODO: Nesse ponto não pode usar o `ip_address = '*'`, tem que ser o IP do host. `ip_address = '*'` só pode ser usado com `bind` e não com `connect`
-        # self.req.connect(f"tcp://192.168.0.195:{Config.port_rep}") 
         self.req.connect(f"tcp://{self._connection_ip}:{Config.port_rep}")
 
 
-    def send_request(self, action, timeout=1000):
+    def _send_request(self, action, timeout=1000):
         self._msg_json["action"] = action
         self.req.send_string(json.dumps(self._msg_json))
 
@@ -202,53 +198,53 @@ class ClientSimulator(QtWidgets.QMainWindow):
             print(f"No response received within {timeout} milliseconds.")
             return None
     
-    def connect(self):
-        response = self.send_request("CONNECT")
+    def _connect(self):
+        response = self._send_request("CONNECT")
         if response:
             self.txtStatus.setText(response)
 
-    def home(self):
-        response = self.send_request("HOME")
+    def _home(self):
+        response = self._send_request("HOME")
         if response:
             self.txtStatus.setText(response)
 
-    def disconnect(self):
-        response = self.send_request("DISCONNECT")
+    def _disconnect(self):
+        response = self._send_request("DISCONNECT")
         if response:
             self.txtStatus.setText(response)
 
-    def halt(self):
-        response = self.send_request("HALT")
+    def _halt(self):
+        response = self._send_request("HALT")
         if response:
             self.txtStatus.setText(response)
 
-    def move_to(self):
+    def _move_to(self):
         if not self.is_moving:
             pos = self.txtMov.text()
-            response = self.send_request(f"MOVE={pos}")
+            response = self._send_request(f"MOVE={pos}")
             if response:
                 self.txtStatus.setText(response)
 
-    def move_in(self):
+    def _move_in(self):
         if not self.is_moving:
-            response = self.send_request("FOCUSIN=200")
+            response = self._send_request("FOCUSIN=200")
             if response:
                 self.txtStatus.setText(response)
 
-    def move_out(self):
+    def _move_out(self):
         if not self.is_moving:
-            response = self.send_request("FOCUSOUT=200")
+            response = self._send_request("FOCUSOUT=200")
             if response:
                 self.txtStatus.setText(response)
 
-    def get_status(self):
-        response = self.send_request("STATUS")
+    def _get_status(self):
+        response = self._send_request("STATUS")
         if response:
             self.txtStatus.setText(response)
 
     def update(self):
         if round(time.time() % 35) == 0:
-            self.get_status()
+            self._get_status()
         self.socks = dict(self.poller.poll(100))
         if self.socks.get(self.subscriber) == zmq.POLLIN:
             message = self.subscriber.recv_string()
@@ -288,7 +284,7 @@ class ClientSimulator(QtWidgets.QMainWindow):
     def closeEvent(self, event):
         """Close application"""
         if(self.context):
-            self.disconnect()
+            self._disconnect()
         event.accept()
 
 

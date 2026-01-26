@@ -41,6 +41,7 @@ class FocuserOPD(QtWidgets.QMainWindow):
     def __init__(self):
         super(FocuserOPD, self).__init__()
         uic.loadUi(main_ui_path, self)
+        self.second_window = None
 
         if not CONFIG_FILE:
             close = QMessageBox()
@@ -166,6 +167,10 @@ class FocuserOPD(QtWidgets.QMainWindow):
     
     def stop(self):
         """Stops main program and the main loop at Application interface with Device"""
+    # Also closes second window if it is opened
+        if self.second_window is not None:
+            self.second_window.close()
+
         if self.control:
             self.control.disconnect()
         if self.run_thread and self.run_thread.is_alive():
@@ -188,7 +193,7 @@ class FocuserOPD(QtWidgets.QMainWindow):
         with open(self.config_file, "w") as file:
             file.write(content_to_save)
 
-    def toggle_log_view(self, state):
+    def toggle_log_view(self, state):       # TODO: Checar. Por algum motivo fica tudo travado quando abre a tela de logger e só volta ao normal se reinicia o programa
         """Shows LOG side window"""
         if state == Qt.Checked:
             
