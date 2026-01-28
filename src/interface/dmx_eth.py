@@ -261,7 +261,69 @@ class FocuserDriver():
         else:
             self.logger.info('[Device] Motor Driver OFF')
             return False
+        
+    @property
+    def get_device_IP(self) -> str:
+        """
+        Returns the motor IP
+        
+        :param self:
+        :return: String with the motor IP
+        :rtype: str
+        """
+        self._lock.acquire()
+        resp = self._write("IP", 5)
+        self._lock.release()
+        return resp
+    
+    @property
+    def get_device_ID(self) -> str:
+        """
+        Returns the motor ID
+        
+        :param self:
+        :return: String with the motor ID
+        :rtype: str
+        """
+        self._lock.acquire()
+        resp = self._write("ID", 5)
+        self._lock.release()
+        return resp
+    
+    @property
+    def get_device_Firmware_Version(self) -> str:
+        """
+        Returns the motor firmware Version
+        
+        :param self:
+        :return: String with the motor firmware version
+        :rtype: str
+        """
+        self._lock.acquire()
+        resp = self._write("VER", 5)
+        self._lock.release()
+        return resp
 
+    @property
+    def get_motor_status(self) -> str:
+        """
+        Returns the motor status
+        
+        :param self:
+        :return: 
+        :rtype: str
+        """
+        self._lock.acquire()
+        resp = self._write("MST", 5)
+        self._lock.release()
+        return resp
+        # try:
+        #     sts = format(int(resp), '012b')
+        #     return sts
+        # except Exception as e:
+        #     return("Invalid state")
+        
+        
 
 
     def home(self):                             #TODO: Deixar configurar quantidade de retries?

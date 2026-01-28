@@ -64,6 +64,9 @@ class App():
             "connected": False,
             "controller": Config.name,
             "device": Config.device_name,
+            "device_IP": "127.0.0.1",
+            "device_ID": "",
+            "device_Firmware_Version": "",
             "error": "",
             "homing": False,
             "initialized": False,
@@ -108,6 +111,10 @@ class App():
                 self._position =self.device.position
                 self.status["position"] = self._position
                 self.status["initialized"] = self.device.initialized
+                self.status["device_IP"] = self.device.get_device_IP
+                self.status["device_ID"] = self.device.get_device_ID
+                self.status["device_Firmware_Version"] = self.device.get_device_Firmware_Version
+                
                 self.logger.info(f'Device Reached.')
             except Exception as e:
                 self.logger.error(f'Error reaching device: {str(e)}') 
@@ -220,7 +227,7 @@ class App():
             time.sleep(.1)
             return True
         except Exception as e:
-            return False           
+            return False
 
     def handle_home(self):
         """Executes the INIT routine, which means moving motor axis to the
@@ -340,6 +347,24 @@ class App():
             self._flag_change = True
             # self.pub_status()
         
+        resp = format(int(self.device.get_motor_status), '012b')
+        motor_status = "".join(reversed(resp))
+        # print(motor_status)
+
+        # try:
+        #     motor_status = format(int(resp), '012b')
+        # except Exception as e:
+        #     return("Invalid state")
+        
+        # if(motor_status[0] == '1'):
+        #     print("motor em movimento")
+        # else:
+        #     print("motor parado")
+        # if(motor_status[1] == '1'):
+        #     print("motor acelerando")
+        # if(motor_status[2] == '1'):
+        #     print("motor desacelerando")
+
         if self._flag_change:   # Publishes in 0MQ if a change occurred
             self._flag_change = False
             self.pub_status()

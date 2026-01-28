@@ -6,7 +6,7 @@
 # Python Compatibility: Requires Python 3.10 or later
 
 from PyQt5 import QtWidgets, uic
-from PyQt5.QtCore import QTimer, Qt
+from PyQt5.QtCore import QTimer, Qt, QPoint, pyqtSignal
 from PyQt5.QtGui import *
 from PyQt5.QtWidgets import QMessageBox, QMenu, QSystemTrayIcon, QAction
 
@@ -153,9 +153,18 @@ class FocuserOPD(QtWidgets.QMainWindow):
     
     def run_simulator(self):
         """Opens the simulator window"""
-        self.second_window = ClientSimulator()
-        self.second_window.show()
-    
+        if self.second_window is None:
+            self.second_window = ClientSimulator()
+            self.second_window.sig.connect(self._simulator_closed)          # Signal to inform the main window that the simulator was closed    
+            self.second_window.move(self.pos() + QPoint(self.width(), 0))   # Positions the simulator window next to the main window
+            self.second_window.show()                                       # Opens the simulator window
+
+    def _simulator_closed(self, msg):
+        """ Receives closed window signal from the simulator """
+        if(msg == True):    
+            self.second_window = None           # "Deletes" the simulator window from the main window
+            print("simulador fechado")
+
     def start(self):
         """Start server"""
         if self.run_thread and self.run_thread.is_alive():

@@ -1,5 +1,5 @@
 from PyQt5 import QtWidgets, uic
-from PyQt5.QtCore import QTimer, QRegularExpression
+from PyQt5.QtCore import QTimer, QRegularExpression, pyqtSignal
 from PyQt5.QtGui import *
 from PyQt5.QtWidgets import QPushButton, QLineEdit, QProgressBar, QTextEdit, QLabel, QStackedWidget
 
@@ -20,6 +20,9 @@ def resource_path(relative_path):
 main_ui_path = resource_path('../assets/client.ui')
 
 class ClientSimulator(QtWidgets.QMainWindow):
+
+    sig = pyqtSignal(bool)
+
     def __init__(self):
         super(ClientSimulator, self).__init__()
         uic.loadUi(main_ui_path, self)
@@ -27,6 +30,7 @@ class ClientSimulator(QtWidgets.QMainWindow):
         if not self._check_config():
             return
 
+        
     # Associate UI variables to allow intellisense with PyQt Widgets
         self.btnMove = self.findChild(QtWidgets.QPushButton, 'btnMove')
         self.btnMove: QPushButton = self.btnMove
@@ -57,6 +61,16 @@ class ClientSimulator(QtWidgets.QMainWindow):
         self.statInit_2 = self.findChild(QtWidgets.QLabel, 'statInit_2')     #TODO: Verificar pq não consigo colocar sem o "_2" no designer
         self.statInit_2: QLabel = self.statInit_2
 
+        self.lblMotorID = self.findChild(QtWidgets.QLabel, 'lblMotorID')
+        self.lblMotorID: QLabel = self.lblMotorID
+        self.lblMotorIP = self.findChild(QtWidgets.QLabel, 'lblMotorIP')
+        self.lblMotorIP: QLabel = self.lblMotorIP
+        self.lblMotorFirmVer = self.findChild(QtWidgets.QLabel, 'lblMotorFirmVer')
+        self.lblMotorFirmVer: QLabel = self.lblMotorFirmVer
+
+        self.lblServerIP = self.findChild(QtWidgets.QLabel, 'lblServerIP')
+        self.lblServerIP: QLabel = self.lblServerIP
+
         self.txtClientIp = self.findChild(QtWidgets.QLineEdit, 'txtClientIp')
         self.txtClientIp: QLineEdit = self.txtClientIp
 
@@ -77,6 +91,7 @@ class ClientSimulator(QtWidgets.QMainWindow):
         self.btnUp.clicked.connect(self._move_out)
         self.btnDown.clicked.connect(self._move_in)
         self.btnConnectClient.clicked.connect(self._connect_to_server)
+        self.btnUpdateStatus.clicked.connect(self._get_status)
 
         self.BarFocuser.setStyleSheet("QProgressBar::chunk { background-color: rgb(26, 26, 26) } QProgressBar { color: indianred; }")
         self.BarFocuser.setTextDirection(0) 
@@ -140,10 +155,19 @@ class ClientSimulator(QtWidgets.QMainWindow):
             self.context = zmq.Context()     
             self._start_client()  
             self.txtStatus.setText(f"Connected to + {self._connection_ip}")    
+            self.lblServerIP.setText(self._connection_ip)
             self.timer = QTimer()
             self.timer.timeout.connect(self.update)
             self._get_status()
             self.timer.start(100)  
+
+            message = self.subscriber.recv_string()
+            self.txtStatus.setText(message)
+            data = json.loads(message)
+
+            self.lblMotorID.setText(data["device_ID"])
+            self.lblMotorIP.setText(data["device_IP"])
+            self.lblMotorFirmVer.setText(data["device_Firmware_Version"])
 
             self.pageSelect.setCurrentIndex(1)
         except Exception as e:
@@ -285,6 +309,7 @@ class ClientSimulator(QtWidgets.QMainWindow):
         """Close application"""
         if(self.context):
             self._disconnect()
+        self.sig.emit(True)
         event.accept()
 
 
