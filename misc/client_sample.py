@@ -152,7 +152,8 @@ class ClientSimulator(QtWidgets.QMainWindow):
             s.connect((self._connection_ip, self.port_pub))
             s.close()
 
-            self.context = zmq.Context()     
+            self.context = zmq.Context() 
+            self.context.setsockopt(zmq.LINGER, 0)      # Drop pending messages in case of timeout        
             self._start_client()  
             self.txtStatus.setText(f"Connected to + {self._connection_ip}")    
             self.lblServerIP.setText(self._connection_ip)
@@ -203,7 +204,7 @@ class ClientSimulator(QtWidgets.QMainWindow):
         self.req.connect(f"tcp://{self._connection_ip}:{Config.port_rep}")
 
 
-    def _send_request(self, action, timeout=1000):
+    def _send_request(self, action, timeout=1500):
         self._msg_json["action"] = action
         self.req.send_string(json.dumps(self._msg_json))
 
@@ -220,7 +221,19 @@ class ClientSimulator(QtWidgets.QMainWindow):
                 return None
         else:
             print(f"No response received within {timeout} milliseconds.")
+            print(f"Resetting client...")
+            self._reset_client_context()
             return None
+        
+    def _reset_client_context(self):
+        """ Resets client context to allow continuous communication in case of a timeout  """
+        try:
+            self.context.destroy()
+            self._connect_to_server()
+            print(f"Communication reset succes")
+        except:
+            print(f"Error establishing connection")
+        
     
     def _connect(self):
         response = self._send_request("CONNECT")

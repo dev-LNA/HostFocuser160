@@ -347,23 +347,18 @@ class App():
             self._flag_change = True
             # self.pub_status()
         
-        resp = format(int(self.device.get_motor_status), '012b')
-        motor_status = "".join(reversed(resp))
-        # print(motor_status)
-
-        # try:
-        #     motor_status = format(int(resp), '012b')
-        # except Exception as e:
-        #     return("Invalid state")
+        resp = format(int(self.device.get_motor_status), '012b')        # TODO: Ver um jeito de converter para binário sem ser string
+        motor_status = "".join(reversed(resp))                          
+        print(motor_status)
         
-        # if(motor_status[0] == '1'):
-        #     print("motor em movimento")
-        # else:
-        #     print("motor parado")
-        # if(motor_status[1] == '1'):
-        #     print("motor acelerando")
-        # if(motor_status[2] == '1'):
-        #     print("motor desacelerando")
+        if(motor_status[0] == '1'):                                   # TODO: Adicionar lógica para mostrar o status atual do motor e substituir pela lógica atual
+            print("motor em movimento")
+        else:
+            print("motor parado")
+        if(motor_status[1] == '1'):
+            print("motor acelerando")
+        if(motor_status[2] == '1'):
+            print("motor desacelerando")
 
         if self._flag_change:   # Publishes in 0MQ if a change occurred
             self._flag_change = False
