@@ -373,17 +373,25 @@ class App():
     def run(self):
         """Main Loop"""
         self._client_id = 0
+        command_handlers = {
+            'HOME': self.handle_home,
+            'HALT': self.handle_halt,
+            'CONNECT': self.handle_connect,
+            'DISCONNECT': self.handle_disconnect,
+            'STATUS': self.pub_status,
+        }
         self.start_server()
         self.stop_var = False
         self.status["connected"] = self.device.connected
         while not self.stop_var:
             t0 = time.time()
             current_time = datetime.now()
-            if -1 >= (current_time.second - self.last_pub.second) or (current_time.second - self.last_pub.second) >= 1:     #TODO: Não daria pra só checar se o valor absoluto for >= 1?
+            # if -1 >= (current_time.second - self.last_pub.second) or (current_time.second - self.last_pub.second) >= 1:       #TODO: Não daria pra só checar se o valor absoluto for >= 1?
+            if abs(current_time.second - self.last_pub.second) >= 1:                                                            # Updates position and publishes status every 1 second
                 # self.device.position 
-                self._position = self.device.position             
+                self._position = self.device.position    
                 self.pub_status()
-                self.last_pub = current_time                
+                self.last_pub = current_time
             if self.device and self.device.connected and self.poller:
                 socks = dict(self.poller.poll(50))
                 if socks.get(self.replier) == zmq.POLLIN:
@@ -402,13 +410,13 @@ class App():
                     try:
                         # Handle all possible commands
                         self.status["error"] = ""
-                        command_handlers = {
-                            'HOME': self.handle_home,
-                            'HALT': self.handle_halt,
-                            'CONNECT': self.handle_connect,
-                            'DISCONNECT': self.handle_disconnect,
-                            'STATUS': self.pub_status,
-                        }
+                        # command_handlers = {
+                        #     'HOME': self.handle_home,
+                        #     'HALT': self.handle_halt,
+                        #     'CONNECT': self.handle_connect,
+                        #     'DISCONNECT': self.handle_disconnect,
+                        #     'STATUS': self.pub_status,
+                        # }
 
                         command_processed = False
 

@@ -160,6 +160,7 @@ class FocuserDriver():
         """Checks if device is moving"""            #TODO: Pelo programa do motor `V46` não indica necessariamente que o motor está em movimento, mas sim que uma subrotina está sendo executada. Em alguns pontos do programa do motor é utilizado `V9` para indicar que o motor está em movimento.
         self._lock.acquire()
         x = self._write("V46", max_retries=5)       #TODO: Adicionar try .. except?
+        # self._lock.release()
         if x == "1":
             self._is_moving = True
             self._lock.release()
@@ -232,6 +233,7 @@ class FocuserDriver():
     
     @property
     def alarm(self) -> int:                                 #TODO: Não precisa do `acquire/release` que nem foi utilizado para chamar o `_write` nos métodos anteriores?    
+        self._lock.acquire()
         res = self._write("ALM", max_retries=5)
         try:                                                #TODO: O que ativaria uma exceção dentro desse try?
             self._alarm = int(res)
@@ -240,7 +242,7 @@ class FocuserDriver():
         except Exception as e: 
             self._alarm = 0
             self.logger.error(f'[Device] Alarm Error {str(e)}')
-        
+        self._lock.release()
         return self._alarm
 
     @property
@@ -254,12 +256,13 @@ class FocuserDriver():
         """
         self._lock.acquire()
         resp = self._write("EO", 5)
-        self._lock.release()
         if resp == '1':
             self.logger.info('[Device] Motor Driver ON')
+            self._lock.release()
             return True
         else:
             self.logger.info('[Device] Motor Driver OFF')
+            self._lock.release()
             return False
         
     @property
@@ -332,13 +335,15 @@ class FocuserDriver():
             Device response or Error message
         Raises:
             RuntimeError if device is busy
-        """      
+        """    
+        self._lock.acquire()  
         if self._is_moving:                     #TODO: O `_is_moving` na verdade está verificando se alguma rotina está sendo executada (motor busy), mas essa checagem faz sentido, uma vez que não se pode iniciar uma rotina enquanto outra já está em execução.            
             raise RuntimeError('Cannot start a move while the focuser is moving')
 
         res = self._write("GS30", max_retries=5)     #TODO: Não precisa do `acquire/release` que nem foi utilizado para chamar o `_write` nos métodos anteriores? 
         if res == 'OK':
             self.logger.info('[Device] home: Success')      #TODO: Não seria bom também executar o `initialized` para confirmar que deu tudo certo e manter `_initialized` atualizado?
+            self._lock.release()
             return res  
         else:
             alarm = self.alarm                              #TODO: Não existe um `self.alarm` só `self._alarm`
@@ -346,6 +351,7 @@ class FocuserDriver():
                 self.logger.error('[Device] home: Failed and Alarm flag is up') 
 
         self.logger.error('[Device] home: Failed after retries')        #TODO: Informar quantidade de retries? O motor envia alguma outra mensagem de erro com mais informações do que aconteceu?
+        self._lock.release()
         return res      
 
     def move(self, position: int):                      #TODO: Deixar configurar quantidade de retries?
@@ -357,6 +363,7 @@ class FocuserDriver():
         Raises:
             RuntimeError if Invalid input or if device is busy
         """      
+        self._lock.acquire()
         pos_conv = int(round((Config.enc_2_microns * position), 0))
         if self._is_moving:                                                             #TODO: O `_is_moving` na verdade está verificando se alguma rotina está sendo executada (motor busy), mas essa checagem faz sentido, uma vez que não se pode iniciar uma rotina enquanto outra já está em execução.
             raise RuntimeError('Cannot start a move while the focuser is moving')       #TODO: Mudar para "Motor is busy" ?
@@ -369,7 +376,8 @@ class FocuserDriver():
             resp = self._write(f"GS29", max_retries=5)                                  #TODO: Não precisa do `acquire/release` que nem foi utilizado para chamar o `_write` nos métodos anteriores? 
             if "OK" in resp:
                 self.logger.info(f'[Device] move={str(position)}')
-                return                                                  #TODO: return true ?
+                self._lock.release()
+                return True                                                 #TODO: return true ?
             else:
                 alarm = self.alarm                      #TODO: Não existe um `self.alarm` só `self._alarm`
                 if alarm == 1:
@@ -385,6 +393,7 @@ class FocuserDriver():
         Raises:
             RuntimeError if Invalid input or if device is busy
         """      
+        self._lock.acquire()
         vel_conv = vel*Config.speed_factor
         if self._is_moving:
             raise RuntimeError('Cannot set speed while the focuser is moving')  #TODO: O `_is_moving` na verdade está verificando se alguma rotina está sendo executada (motor busy), mas essa checagem faz sentido, uma vez que não se pode iniciar uma rotina enquanto outra já está em execução.
@@ -395,6 +404,7 @@ class FocuserDriver():
         resp = self._write(f"V21={vel_conv}", max_retries=5)                    #TODO: Não precisa do `acquire/release` que nem foi utilizado para chamar o `_write` nos métodos anteriores? 
         if "OK" in resp: 
             self.logger.info(f'[Device] speed={str(vel)}')
+            self._lock.release()
             return True           
         else:
             raise RuntimeError(f'[device] {resp}')    
@@ -406,10 +416,12 @@ class FocuserDriver():
         Raises:
             RuntimeError if Invalid input or if device is busy
         """      
+        self._lock.acquire()
         if self._is_moving:                                                     #TODO: O `_is_moving` na verdade está verificando se alguma rotina está sendo executada (motor busy), mas essa checagem faz sentido, uma vez que não se pode iniciar uma rotina enquanto outra já está em execução.
             raise RuntimeError('Cannot set speed while the focuser is moving')  #TODO: Corrigir mensagem do erro
         if direction != 1 and direction != 0:
-            return                                                              #TODO: Retornar alguma informação de erro?
+            self._lock.release()
+            return False                                                        #TODO: Retornar alguma informação de erro?
         else:
             resp = self._write(f"GS2{str(direction)}", max_retries=5)           #TODO: Não precisa do `acquire/release` que nem foi utilizado para chamar o `_write` nos métodos anteriores? 
         if "OK" in resp: 
@@ -417,27 +429,31 @@ class FocuserDriver():
                 self.logger.info(f'[Device] moving FOCUSIN')
             elif direction == 0:
                 self.logger.info(f'[Device] moving FOCUSOUT')
+            self._lock.release()
             return True           
         else:
             raise RuntimeError(f'[device] {resp}')         
 
-    def stop(self) -> None:                     #TODO: Acho que poderia ser renomeado para `_stop` já que a ideia é só complementar o HALT
+    def _stop(self) -> None:                     #TODO: Acho que poderia ser renomeado para `_stop` já que a ideia é só complementar o HALT
         """Complements the HALT method"""
-        self._lock.acquire()
+        # self._lock.acquire()
         self._is_moving = False
         self._stopped = True                    #TODO: Só é usado aqui, não seria a mesma coisa que `_is_moving == False` ?
         if self._timer is not None:             #TODO: Esse timer é criado mas não é usado para nada no código
             self._timer.cancel()
         self._timer = None
-        self._lock.release()      
+        # self._lock.release()      
     
     def Halt(self) -> bool:   
-        """Send command STOP and stops main program with GS0=0 subroutine"""     
+        """Send command STOP and stops main program with GS0=0 subroutine"""  
+        self._lock.acquire()   
         resp_stop = self._write("V42=1", 5)     #TODO: Não precisa do `acquire/release` que nem foi utilizado para chamar o `_write` nos métodos anteriores?
         if resp_stop == 'OK':                 
             self.logger.info('[Device] halt')
-            self.stop()
+            self._stop()
+            self._lock.release()
             return True  # Command executed successfully 
+        self._lock.release()
         return False 
 
 

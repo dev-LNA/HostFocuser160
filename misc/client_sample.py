@@ -99,10 +99,11 @@ class ClientSimulator(QtWidgets.QMainWindow):
         self.lblTestConn1.setText("")                             
         self.txtClientIp.setText(_get_private_ip())                      # Considers the Ip of the current machine
         self.txtClientIp.returnPressed.connect(self._clientIpDefined)    # Configures event of return key press
-        inputValidator = QRegularExpressionValidator(                   # Validator that allows only numbers and points
-            QRegularExpression("[0-9.]+"), self.txtClientIp
-        )
-        self.txtClientIp.setValidator(inputValidator)
+        self.txtClientIp.setInputMask('000.000.000.000;_')
+        # inputValidator = QRegularExpressionValidator(                   # Validator that allows only numbers and points
+        #     QRegularExpression("[0-9.]+"), self.txtClientIp                 #TODO: trocar por -> self.txtClientIp.setInputMask('000.000.000.000;_')
+        # )
+        # self.txtClientIp.setValidator(inputValidator)
 
         self.pageSelect.setCurrentIndex(0)                              # Defines starting widget
 
