@@ -1,9 +1,11 @@
 from PyQt5 import QtWidgets, uic
-from PyQt5.QtCore import QTimer, QRegularExpression, pyqtSignal
+from PyQt5.QtCore import QTimer, QRegularExpression, pyqtSignal, QObject, QRunnable, QThreadPool
 from PyQt5.QtGui import *
 from PyQt5.QtWidgets import QPushButton, QLineEdit, QProgressBar, QTextEdit, QLabel, QStackedWidget
 
 from src.core.config import Config
+
+from misc.client_updater import Updater
 
 import zmq
 import sys
@@ -30,6 +32,7 @@ class ClientSimulator(QtWidgets.QMainWindow):
         if not self._check_config():
             return
 
+        self.updater = None
         
     # Associate UI variables to allow intellisense with PyQt Widgets
         self.btnMove = self.findChild(QtWidgets.QPushButton, 'btnMove')
@@ -158,10 +161,26 @@ class ClientSimulator(QtWidgets.QMainWindow):
             self._start_client()  
             self.txtStatus.setText(f"Connected to + {self._connection_ip}")    
             self.lblServerIP.setText(self._connection_ip)
-            self.timer = QTimer()
-            self.timer.timeout.connect(self.update)
-            self._get_status()
-            self.timer.start(100)  
+            # self.timer = QTimer()
+            # self.timer.timeout.connect(self.update)
+            # self._get_status()
+            # self.timer.start(100)  
+
+            self.threadpool = QThreadPool()                                                 # Defines threadpool
+            self.updater = Updater(poller=self.poller, subscriber=self.subscriber)          # Creates Updater thread
+            self.updater.signals.message.connect(self.txtStatus.setText)                    # Updates status text box with updated message
+            self.updater.signals.position.connect(self.BarFocuser.setValue)                 # Updates bar value with position
+            self.updater.signals.clientID.connect(self.statBusy_2.setText)                  # Updates client Id
+            self.updater.signals.lbl_clientId_style.connect(self.statBusy_2.setStyleSheet)  # Updates style of client Id label according to status
+            self.updater.signals.connected.connect(self._update_connect_status)
+            self.updater.signals.lbl_conn_style.connect(self.statConn_2.setStyleSheet)      #
+            self.updater.signals.homing.connect(self._update_home_status)
+            self.updater.signals.lbl_init_style.connect(self.statInit_2.setStyleSheet)
+            self.updater.signals.is_moving.connect(self._update_moving_status)
+            self.updater.signals.lbl_mov_style.connect(self.statMov_2.setStyleSheet)
+
+
+            self.threadpool.start(self.updater)                                     # Starts updater
 
             message = self.subscriber.recv_string()
             self.txtStatus.setText(message)
@@ -172,6 +191,7 @@ class ClientSimulator(QtWidgets.QMainWindow):
             self.lblMotorFirmVer.setText(data["device_Firmware_Version"])
 
             self.pageSelect.setCurrentIndex(1)
+
         except Exception as e:
             print({str(e)})
             self.lblTestConn1.setText("Could not establish connection to server")
@@ -251,6 +271,15 @@ class ClientSimulator(QtWidgets.QMainWindow):
         if response:
             self.txtStatus.setText(response)
 
+        # If the updater thread is active it is necessary to safely close it
+        if self.updater is not None:
+            self.updater.stop()                         # Sends stop signal to thread
+            while self.updater.finished is not True:    # Waits thread to finish
+                time.sleep(0.01)
+            self.updater = None                         # Clears updater
+        
+        
+
     def _halt(self):
         response = self._send_request("HALT")
         if response:
@@ -280,44 +309,16 @@ class ClientSimulator(QtWidgets.QMainWindow):
         if response:
             self.txtStatus.setText(response)
 
-    def update(self):
-        if round(time.time() % 35) == 0:
-            self._get_status()
-        self.socks = dict(self.poller.poll(100))
-        if self.socks.get(self.subscriber) == zmq.POLLIN:
-            message = self.subscriber.recv_string()
-            self.txtStatus.setText(message)
-            data = json.loads(message)
-            try: 
-                self.position = int(data["position"])                    
-                self.BarFocuser.setValue(int(self.position))
-                if (data["cmd"]["clientId"]) > 0:
-                    self.statBusy_2.setStyleSheet("background-color: lightgreen")
-                    self.statBusy_2.setText(str(data["cmd"]["clientId"]))
-                else:
-                    self.statBusy_2.setText('')
-                    self.statBusy_2.setStyleSheet("background-color: indianred")
-                if data["homing"]:
-                    self.homing = True
-                    self.statInit_2.setStyleSheet("background-color: lightgreen")
-                else:
-                    self.homing = False
-                    self.statInit_2.setStyleSheet("background-color: indianred") 
-                if data["isMoving"]:
-                    self.is_moving = True
-                    self.statMov_2.setStyleSheet("background-color: lightgreen")
-                else:
-                    self.is_moving = False
-                    self.statMov_2.setStyleSheet("background-color: indianred") 
-                if data["connected"]:
-                    self.connected = True
-                    self.statConn_2.setStyleSheet("background-color: lightgreen")
-                else:
-                    self.connected = False
-                    self.statConn_2.setStyleSheet("background-color: indianred")               
-            except Exception as e:
-                print(e)
-                self.BarFocuser.setValue(0)
+    def _update_connect_status(self, status):
+        self.connected = status
+        print(f"Connected = {self.connected}")
+
+    def _update_home_status(self, status):
+        self.homing = status
+
+    def _update_moving_status(self, status):
+        self.is_moving = status
+
     
     def closeEvent(self, event):
         """Close application"""
