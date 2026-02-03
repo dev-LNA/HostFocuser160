@@ -1,4 +1,4 @@
-from PyQt5.QtCore import QRunnable, QObject, pyqtSignal
+from PyQt5.QtCore import QRunnable, QObject, pyqtSignal, pyqtSlot
 import zmq
 import json
 
@@ -36,6 +36,7 @@ class Updater(QRunnable):
         self.finished = False
         self.running = True
 
+    @pyqtSlot()
     def run(self):
         try:
             while self.running:
@@ -57,7 +58,7 @@ class Updater(QRunnable):
                             else:                                
                                 self.signals.clientID.emit(str(data["cmd"]["clientId"]))
                                 self.signals.lbl_clientId_style.emit("background-color: lightgreen")
-                            print(data["cmd"]["clientId"])
+                            # print(data["cmd"]["clientId"])
                         if data["connected"] != self._connected:
                             self._connected = data["connected"]
                             self.signals.connected.emit(self._connected)
@@ -67,14 +68,14 @@ class Updater(QRunnable):
                                 self.signals.lbl_conn_style.emit("background-color: lightgreen")
                         if data["homing"] != self._homing:
                             self._homing = data["homing"]
-                            self.signals.connected.emit(self._homing)
+                            self.signals.homing.emit(self._homing)
                             if self._homing is False:
                                 self.signals.lbl_init_style.emit("background-color: indianred")
                             else:                                
                                 self.signals.lbl_init_style.emit("background-color: lightgreen")
                         if data["isMoving"] != self._isMoving:
                             self._isMoving = data["isMoving"]
-                            self.signals.connected.emit(self._isMoving)
+                            self.signals.is_moving.emit(self._isMoving)
                             if self._isMoving is False:
                                 self.signals.lbl_mov_style.emit("background-color: indianred")
                             else:                                
@@ -89,5 +90,6 @@ class Updater(QRunnable):
         finally:
             self.finished = True
 
+    @pyqtSlot()
     def stop(self):
         self.running = False

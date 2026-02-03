@@ -68,9 +68,9 @@ class App():
             "device_ID": "",
             "device_Firmware_Version": "",
             "error": "",
-            "homing": False,
-            "initialized": False,
-            "isMoving": False,
+            "homing": False,            # Homing solicited
+            "initialized": False,       # Homing finalized
+            "isMoving": False,          # Executing a function inside the motor
             "maxSpeed": Config.max_speed,
             "maxStep": Config.max_step,
             "position": 0,

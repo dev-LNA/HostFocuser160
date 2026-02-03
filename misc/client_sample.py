@@ -1,11 +1,12 @@
 from PyQt5 import QtWidgets, uic
-from PyQt5.QtCore import QTimer, QRegularExpression, pyqtSignal, QObject, QRunnable, QThreadPool
+from PyQt5.QtCore import QTimer, QRegularExpression, pyqtSignal, QObject, QRunnable, QThreadPool, pyqtSlot
 from PyQt5.QtGui import *
 from PyQt5.QtWidgets import QPushButton, QLineEdit, QProgressBar, QTextEdit, QLabel, QStackedWidget
 
 from src.core.config import Config
 
 from misc.client_updater import Updater
+from misc.client_sender import ReqSender
 
 import zmq
 import sys
@@ -32,7 +33,8 @@ class ClientSimulator(QtWidgets.QMainWindow):
         if not self._check_config():
             return
 
-        self.updater = None
+        self._updater = None
+        self._sender = None
         
     # Associate UI variables to allow intellisense with PyQt Widgets
         self.btnMove = self.findChild(QtWidgets.QPushButton, 'btnMove')
@@ -102,7 +104,7 @@ class ClientSimulator(QtWidgets.QMainWindow):
         self.lblTestConn1.setText("")                             
         self.txtClientIp.setText(_get_private_ip())                      # Considers the Ip of the current machine
         self.txtClientIp.returnPressed.connect(self._clientIpDefined)    # Configures event of return key press
-        self.txtClientIp.setInputMask('000.000.000.000;_')
+        self.txtClientIp.setInputMask('000.000.000.000;')
         # inputValidator = QRegularExpressionValidator(                   # Validator that allows only numbers and points
         #     QRegularExpression("[0-9.]+"), self.txtClientIp                 #TODO: trocar por -> self.txtClientIp.setInputMask('000.000.000.000;_')
         # )
@@ -149,48 +151,53 @@ class ClientSimulator(QtWidgets.QMainWindow):
         :param self: 
         """
         self._connection_ip = self.txtClientIp.text()
-
+        
         try:
             s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
             s.settimeout(1)
             s.connect((self._connection_ip, self.port_pub))
             s.close()
-
+            
             self.context = zmq.Context() 
             self.context.setsockopt(zmq.LINGER, 0)      # Drop pending messages in case of timeout        
             self._start_client()  
             self.txtStatus.setText(f"Connected to + {self._connection_ip}")    
             self.lblServerIP.setText(self._connection_ip)
-            # self.timer = QTimer()
-            # self.timer.timeout.connect(self.update)
-            # self._get_status()
-            # self.timer.start(100)  
+            
+            
+            self.threadpool = QThreadPool()                                                  # Defines threadpool
+            self._updater = Updater(poller=self.poller, subscriber=self.subscriber)          # Creates Updater thread
+            self._updater.signals.message.connect(self.txtStatus.setText)                    # Updates status text box with updated message
+            self._updater.signals.position.connect(self.BarFocuser.setValue)                 # Updates bar value with position
+            self._updater.signals.clientID.connect(self.statBusy_2.setText)                  # Updates client Id
+            self._updater.signals.lbl_clientId_style.connect(self.statBusy_2.setStyleSheet)  # Updates style of client Id label according to status
+            self._updater.signals.connected.connect(self._update_connect_status)
+            self._updater.signals.lbl_conn_style.connect(self.statConn_2.setStyleSheet)      #
+            self._updater.signals.homing.connect(self._update_home_status)
+            self._updater.signals.lbl_init_style.connect(self.statInit_2.setStyleSheet)
+            self._updater.signals.is_moving.connect(self._update_moving_status)
+            self._updater.signals.lbl_mov_style.connect(self.statMov_2.setStyleSheet)
+            
+            self._sender = ReqSender(req=self.req)
+            self._sender.signals.timeout_error.connect(self._reset_client_context)
+            self._sender.signals.response.connect(self.txtStatus.setText)
+            self._sender.setAutoDelete(False)
 
-            self.threadpool = QThreadPool()                                                 # Defines threadpool
-            self.updater = Updater(poller=self.poller, subscriber=self.subscriber)          # Creates Updater thread
-            self.updater.signals.message.connect(self.txtStatus.setText)                    # Updates status text box with updated message
-            self.updater.signals.position.connect(self.BarFocuser.setValue)                 # Updates bar value with position
-            self.updater.signals.clientID.connect(self.statBusy_2.setText)                  # Updates client Id
-            self.updater.signals.lbl_clientId_style.connect(self.statBusy_2.setStyleSheet)  # Updates style of client Id label according to status
-            self.updater.signals.connected.connect(self._update_connect_status)
-            self.updater.signals.lbl_conn_style.connect(self.statConn_2.setStyleSheet)      #
-            self.updater.signals.homing.connect(self._update_home_status)
-            self.updater.signals.lbl_init_style.connect(self.statInit_2.setStyleSheet)
-            self.updater.signals.is_moving.connect(self._update_moving_status)
-            self.updater.signals.lbl_mov_style.connect(self.statMov_2.setStyleSheet)
-
-
-            self.threadpool.start(self.updater)                                     # Starts updater
-
+            # Initial update
             message = self.subscriber.recv_string()
+            
             self.txtStatus.setText(message)
             data = json.loads(message)
-
+            
             self.lblMotorID.setText(data["device_ID"])
             self.lblMotorIP.setText(data["device_IP"])
             self.lblMotorFirmVer.setText(data["device_Firmware_Version"])
-
+            
             self.pageSelect.setCurrentIndex(1)
+
+            self.threadpool.start(self._updater)    # Starts updater
+            # self.threadpool.start(self._sender)     # Starts sender
+
 
         except Exception as e:
             print({str(e)})
@@ -211,7 +218,7 @@ class ClientSimulator(QtWidgets.QMainWindow):
             return False
 
     def _start_client(self):
-
+        self.txtStatus.setText("Connecting subscriber socket...")
         self.subscriber = self.context.socket(zmq.SUB)
         self.subscriber.connect(f"tcp://{self._connection_ip}:{Config.port_pub}")
         topics_to_subscribe = ''
@@ -221,93 +228,79 @@ class ClientSimulator(QtWidgets.QMainWindow):
         self.poller = zmq.Poller()
         self.poller.register(self.subscriber, zmq.POLLIN)
 
+        self.txtStatus.setText("Connecting requisition socket...")
         self.req = self.context.socket(zmq.REQ)
         self.req.connect(f"tcp://{self._connection_ip}:{Config.port_rep}")
-
-
-    def _send_request(self, action, timeout=1500):
-        self._msg_json["action"] = action
-        self.req.send_string(json.dumps(self._msg_json))
-
-        poller = zmq.Poller()
-        poller.register(self.req, zmq.POLLIN)
-
-        socks = dict(poller.poll(timeout))  # Timeout in milliseconds
-        if socks.get(self.req) == zmq.POLLIN:
-            try:
-                response = self.req.recv_string()
-                return response
-            except Exception as e:
-                print(f"Error receiving response: {e}")
-                return None
-        else:
-            print(f"No response received within {timeout} milliseconds.")
-            print(f"Resetting client...")
-            self._reset_client_context()
-            return None
-        
+        self.txtStatus.clear()
+       
     def _reset_client_context(self):
         """ Resets client context to allow continuous communication in case of a timeout  """
         try:
+            self._clear_thread_updater()
+            self._clear_thread_sender()
             self.context.destroy()
             self._connect_to_server()
-            print(f"Communication reset succes")
+            print(f"Communication reset success")
         except:
             print(f"Error establishing connection")
         
     
+    def _send_command(self, command: str, timeout: int=1500) -> str:
+        try:
+            self._sender.send_request(self._client_id, command, timeout)    #   Sets message
+            self.threadpool.start(self._sender)                             #   Starts Sender thread    
+            return "OK"
+        except Exception as e:
+            return f"Error sending command to server -> {str(e)}"
+
     def _connect(self):
-        response = self._send_request("CONNECT")
-        if response:
-            self.txtStatus.setText(response)
+        self._send_command("CONNECT")
+        
 
     def _home(self):
-        response = self._send_request("HOME")
-        if response:
-            self.txtStatus.setText(response)
+        self._send_command("HOME")
 
     def _disconnect(self):
-        response = self._send_request("DISCONNECT")
-        if response:
-            self.txtStatus.setText(response)
-
+        self._send_command("DISCONNECT")
         # If the updater thread is active it is necessary to safely close it
-        if self.updater is not None:
-            self.updater.stop()                         # Sends stop signal to thread
-            while self.updater.finished is not True:    # Waits thread to finish
-                time.sleep(0.01)
-            self.updater = None                         # Clears updater
-        
-        
+        self._clear_thread_updater()
+        # If the sender thread is active it is necessary to safely close it
+        self._clear_thread_sender()
 
     def _halt(self):
-        response = self._send_request("HALT")
-        if response:
-            self.txtStatus.setText(response)
+        self._send_command("HALT")
 
     def _move_to(self):
         if not self.is_moving:
             pos = self.txtMov.text()
-            response = self._send_request(f"MOVE={pos}")
-            if response:
-                self.txtStatus.setText(response)
+            self._send_command(f"MOVE={pos}")
 
     def _move_in(self):
         if not self.is_moving:
-            response = self._send_request("FOCUSIN=200")
-            if response:
-                self.txtStatus.setText(response)
+            self._send_command("FOCUSIN=200")
 
     def _move_out(self):
         if not self.is_moving:
-            response = self._send_request("FOCUSOUT=200")
-            if response:
-                self.txtStatus.setText(response)
+            self._send_command("FOCUSOUT=200")
 
     def _get_status(self):
-        response = self._send_request("STATUS")
-        if response:
-            self.txtStatus.setText(response)
+        if self._sender._send is False:                          # A new command is only sent if the last one was already sent
+            self._send_command("STATUS")
+
+            
+    def _clear_thread_updater(self):
+        if self._updater is not None:
+            self._updater.stop()                         # Sends stop signal to thread
+            while self._updater.finished is not True:    # Waits thread to finish
+                pass
+            self._updater = None                         # Clears updater
+
+    def _clear_thread_sender(self):
+        if self._sender is not None:
+            self._sender.stop()                         # Sends stop signal to thread
+            while self._sender.finished is not True:    # Waits thread to finish
+                pass
+            self._sender = None                         # Clears sender
 
     def _update_connect_status(self, status):
         self.connected = status

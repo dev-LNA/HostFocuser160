@@ -328,7 +328,7 @@ SUB 29	; FOCUS GOTO
 		V8 = 1
 		WHILE V8 > 0
 			V11 = MSTX	; Read status
-			V8 = V11 & 3;	Motor moving bits
+			V8 = V11 & 3;	Motor moving bits		#TODO: correto seria checar "&7"
 			IF V42 = 1	; Check stop command
 				STOPX
 				DELAY = 500	; Desacceleration time = 300
@@ -344,7 +344,7 @@ SUB 29	; FOCUS GOTO
 	V8 = 1
 	WHILE V8 > 0
 		V11 = MSTX	; Read status
-		V8 = V11 & 3;	Motor moving bits
+		V8 = V11 & 3;	Motor moving bits		#TODO: correto seria checar "&7"			
 		IF V42 = 1	; Check stop command
 			STOPX
 			DELAY = 500	; Desacceleration time = 300
