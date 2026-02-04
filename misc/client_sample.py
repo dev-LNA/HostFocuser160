@@ -1,7 +1,6 @@
-from PyQt5 import QtWidgets, uic
-from PyQt5.QtCore import QTimer, QRegularExpression, pyqtSignal, QObject, QRunnable, QThreadPool, pyqtSlot
-from PyQt5.QtGui import *
-from PyQt5.QtWidgets import QPushButton, QLineEdit, QProgressBar, QTextEdit, QLabel, QStackedWidget
+from PyQt6 import QtWidgets, uic
+from PyQt6.QtCore import pyqtSignal, QThreadPool
+from PyQt6.QtWidgets import QPushButton, QLineEdit, QProgressBar, QTextEdit, QLabel, QStackedWidget
 
 from src.core.config import Config
 
@@ -12,7 +11,6 @@ import zmq
 import sys
 import json
 import os
-import time
 import socket
 
 def resource_path(relative_path):
@@ -99,7 +97,7 @@ class ClientSimulator(QtWidgets.QMainWindow):
         self.btnUpdateStatus.clicked.connect(self._get_status)
 
         self.BarFocuser.setStyleSheet("QProgressBar::chunk { background-color: rgb(26, 26, 26) } QProgressBar { color: indianred; }")
-        self.BarFocuser.setTextDirection(0) 
+        self.BarFocuser.setTextDirection(QProgressBar.Direction.BottomToTop) 
 
         self.lblTestConn1.setText("")                             
         self.txtClientIp.setText(_get_private_ip())                      # Considers the Ip of the current machine

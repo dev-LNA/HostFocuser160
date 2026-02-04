@@ -5,10 +5,10 @@
 #
 # Python Compatibility: Requires Python 3.10 or later
 
-from PyQt5 import QtWidgets, uic
-from PyQt5.QtCore import QTimer, Qt, QPoint, pyqtSignal
-from PyQt5.QtGui import *
-from PyQt5.QtWidgets import QMessageBox, QMenu, QSystemTrayIcon, QAction
+from PyQt6 import QtWidgets, uic
+from PyQt6.QtCore import QTimer, Qt, QPoint, pyqtSignal
+from PyQt6.QtGui import QAction, QIcon
+from PyQt6.QtWidgets import QMessageBox, QMenu, QSystemTrayIcon
 
 import sys
 import os
@@ -72,7 +72,7 @@ class FocuserOPD(QtWidgets.QMainWindow):
         self.log_dock_widget.setWidget(self.log_text_edit)
         self.log_text_edit.setStyleSheet("color: lightgrey")
         self.boxLog.stateChanged.connect(self.toggle_log_view)     
-        self.addDockWidget(Qt.BottomDockWidgetArea, self.log_dock_widget)
+        self.addDockWidget(Qt.DockWidgetArea.BottomDockWidgetArea, self.log_dock_widget)
         self.log_dock_widget.setMinimumSize(600, 500)   
         self.log_dock_widget.setFloating(True)
         self.log_dock_widget.move(dock_x, dock_y)  
@@ -95,7 +95,7 @@ class FocuserOPD(QtWidgets.QMainWindow):
         self.conf_dock_widget.setWidget(widget_inside_dock)
         self.conf_dock_widget.move(dock_x, dock_y)        
         # Add the QDockWidget to the main window and hide it initially
-        self.addDockWidget(Qt.BottomDockWidgetArea, self.conf_dock_widget)
+        self.addDockWidget(Qt.DockWidgetArea.BottomDockWidgetArea, self.conf_dock_widget)
         self.conf_dock_widget.hide()    
         self.conf_dock_widget.setMinimumSize(400, 500)   
         self.conf_dock_widget.setFloating(True)
@@ -136,19 +136,19 @@ class FocuserOPD(QtWidgets.QMainWindow):
         if Config.startup:
             self.start()
     
-    def minimize_to_tray(self):
+    def minimize_to_tray(self):     # TODO: Melhor a visualização da mensagem do botão direito na bandeja
         """Minimize to tray"""
         self.hide()  
         self.tray_icon.show() 
 
     def restore_from_tray(self):
         """Restore from Tray"""
-        self.show()  
+        self.show()             
         self.tray_icon.hide()
     
     def tray_activated(self, reason):
         """Restore from double click on icon"""
-        if reason == QSystemTrayIcon.DoubleClick:
+        if reason == QSystemTrayIcon.ActivationReason.DoubleClick:
             self.restore_from_tray()
     
     def run_simulator(self):
@@ -199,16 +199,16 @@ class FocuserOPD(QtWidgets.QMainWindow):
     def save_config_file(self):
         """Save modified config in config file"""
         content_to_save = self.conf_text_edit.toPlainText()        
-        with open(self.config_file, "w") as file:
+        with open(self.config_file, "w") as file:       # TODO: Colocar mensagem de confirmação de que a nova configuração foi salva com sucesso
             file.write(content_to_save)
 
-    def toggle_log_view(self, state):       # TODO: Checar. Por algum motivo fica tudo travado quando abre a tela de logger e só volta ao normal se reinicia o programa
-        """Shows LOG side window"""
-        if state == Qt.Checked:
+    def toggle_log_view(self, state):                   # TODO: Checar. Por algum motivo fica tudo travado quando abre a tela de logger e só volta ao normal se reinicia o programa
+        """Shows LOG side window"""                     # INFO: Melhorou bastante quando troquei para o pyqt6
+        if state is Qt.CheckState.Checked.value:        
             
             if self.log_file:
                 self.read_log_file(self.log_file)
-                self.log_dock_widget.show()
+                self.log_dock_widget.show()             # TODO: Mudar o estado da checkbox se a janela de log for fechada pelo botão de X da janela
         else:
             self.log_dock_widget.hide()
 
@@ -284,10 +284,10 @@ class FocuserOPD(QtWidgets.QMainWindow):
         """Close application"""
         close = QMessageBox()
         close.setText("Deseja sair?")
-        close.setStandardButtons(QMessageBox.Yes | QMessageBox.No)
+        close.setStandardButtons(QMessageBox.StandardButton.Yes | QMessageBox.StandardButton.No)
         close = close.exec()
 
-        if close == QMessageBox.Yes:   
+        if close == QMessageBox.StandardButton.Yes:   
             self.stop()
             event.accept()
         else:
@@ -302,6 +302,6 @@ if __name__ == "__main__":
     main_window1.show()
     
 
-    sys.exit(app.exec_()) 
+    sys.exit(app.exec()) 
     
     

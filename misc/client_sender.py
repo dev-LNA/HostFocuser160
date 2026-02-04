@@ -1,4 +1,4 @@
-from PyQt5.QtCore import QRunnable, QObject, pyqtSignal, pyqtSlot
+from PyQt6.QtCore import QRunnable, QObject, pyqtSignal, pyqtSlot
 import zmq
 import json
 
