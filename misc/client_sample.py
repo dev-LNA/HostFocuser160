@@ -77,17 +77,18 @@ class ClientSimulator(QtWidgets.QMainWindow):
         self.txtClientIp = self.findChild(QtWidgets.QLineEdit, 'txtClientIp')
         self.txtClientIp: QLineEdit = self.txtClientIp
 
-        self.lblTestConn1 = self.findChild(QLabel, 'lblTestConn1')
-        self.lblTestConn1: QLabel = self.lblTestConn1
-
         self.btnConnectClient = self.findChild(QtWidgets.QPushButton, 'btnConnectClient')
         self.btnConnectClient: QPushButton = self.btnConnectClient
 
         self.pageSelect = self.findChild(QtWidgets.QStackedWidget, 'pageSelect')
         self.pageSelect: QStackedWidget = self.pageSelect
+
+        self.stsBar = self.findChild(QtWidgets.QStatusBar, 'stsBar')
+        self.stsBar: QStackedWidget = self.stsBar
         
     # Configure Widgets and Widgets Actions
         self.btnMove.clicked.connect(self._move_to)
+        self.btnMove.setStatusTip("Set focus position")
         self.btnConnect.clicked.connect(self._connect)
         self.btnHalt.clicked.connect(self._halt)
         self.btnHome.clicked.connect(self._home)
@@ -98,8 +99,7 @@ class ClientSimulator(QtWidgets.QMainWindow):
 
         self.BarFocuser.setStyleSheet("QProgressBar::chunk { background-color: rgb(26, 26, 26) } QProgressBar { color: indianred; }")
         self.BarFocuser.setTextDirection(QProgressBar.Direction.BottomToTop) 
-
-        self.lblTestConn1.setText("")                             
+                            
         self.txtClientIp.setText(_get_private_ip())                      # Considers the Ip of the current machine
         self.txtClientIp.returnPressed.connect(self._clientIpDefined)    # Configures event of return key press
         self.txtClientIp.setInputMask('000.000.000.000;')
@@ -191,6 +191,7 @@ class ClientSimulator(QtWidgets.QMainWindow):
             self.lblMotorIP.setText(data["device_IP"])
             self.lblMotorFirmVer.setText(data["device_Firmware_Version"])
             
+            self.statusBar().clearMessage()
             self.pageSelect.setCurrentIndex(1)
 
             self.threadpool.start(self._updater)    # Starts updater
@@ -199,7 +200,7 @@ class ClientSimulator(QtWidgets.QMainWindow):
 
         except Exception as e:
             print({str(e)})
-            self.lblTestConn1.setText("Could not establish connection to server")
+            self.statusBar().showMessage("Could not establish connection to server")
 
 
 

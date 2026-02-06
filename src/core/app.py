@@ -119,6 +119,21 @@ class App():
             except Exception as e:
                 self.logger.error(f'Error reaching device: {str(e)}') 
 
+    def qqcois(str: str="ola") -> str:
+        """_summary_
+
+        Parameters
+        ----------
+        str : str, optional
+            _description_, by default "ola"
+
+        Returns
+        -------
+        str
+            _description_
+        """
+        
+
     def start_server(self): 
         """ Starts Server ZeroMQ, creating context 
         then binding PUB and REP sockets"""
