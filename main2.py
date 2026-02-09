@@ -22,6 +22,8 @@ if CONFIG_FILE:
     
     from misc.client_sample import ClientSimulator
     from misc.ui_intellisense import UiWidgets
+    from misc.log_box import LogBox
+    
 
 def resource_path(relative_path):
     """ Get absolute path to resource, works for dev and for PyInstaller """
@@ -30,18 +32,24 @@ def resource_path(relative_path):
 
 main_ui_path = resource_path('assets/ui/main.ui')
 icon_tray = resource_path('assets/icon.png')
-
+icon_con_ok = resource_path('assets/ui/icons/status.png')
+icon_con_nok = resource_path('assets/ui/icons/status-busy.png')
+icon_con_wait = resource_path('assets/ui/icons/status-away.png')
 
 class FocuserOPD(QtWidgets.QMainWindow):
 
     # Signals
-    _expanded = False                           # keeps the information if the gui is expanded
     _expanding = pyqtSignal(bool)               # Informs that the expanding animation is in process  
+
+    _reachable = False
+    _run_thread = None
+    _cooldown = time.time()
 
     def __init__(self):
         super(FocuserOPD, self).__init__()
         uic.loadUi(main_ui_path, self)
         self.second_window = None
+        self.log_box = None
 
         if not CONFIG_FILE:
             close = QMessageBox()
@@ -54,8 +62,8 @@ class FocuserOPD(QtWidgets.QMainWindow):
 
         self.control = App(logger)
 
-        self.config_file = r"src/config/config.toml"
-        self.log_file = r"logs/focuser.log"
+        self.config_file = r"src/config/config.toml"                    # Path to configuration file
+        self.log_file = r"logs/focuser.log"                             # Path to log file              # TODO: inicializar o arquivo com o nome padronizado, de acordo com a data (dia inicia ao meio dia)
 
         # Creates "ui_elements" widget to hold intellisense references to the widgets
         self.ui_elements = UiWidgets(self)
@@ -64,47 +72,94 @@ class FocuserOPD(QtWidgets.QMainWindow):
         self.ui_elements.txtSocketIP.setText(f"{self.control.ip_address}")
         self.ui_elements.txtPortPUB.setText(f"{self.control.port_pub}")
         self.ui_elements.txtPortREP.setText(f"{self.control.port_rep}")
+        self.ui_elements.actionShow_Log.triggered.connect(self._toggle_log_box)
+        self.ui_elements.actionClient_Simulator.triggered.connect(self._run_simulator)
+        self.ui_elements.actionHide.triggered.connect(self._minimize_to_tray)
+
+        self.ui_elements.conBarServerRouter.setProperty("conStatusBar", "waiting")
+        self.ui_elements.conBarRouterMotor.setProperty("conStatusBar", "waiting")
+
+        self.control._router_con_status.connect(self.ui_elements.conBarServerRouter.setProperty)
+        self.control._motor_con_status.connect(self.ui_elements.conBarRouterMotor.setProperty)
+
+        self.ui_elements.ledServer.setProperty("ledStatus", "OK")
+
+        self.control._router_con_status.connect(self.ui_elements.ledRouter.setProperty)
+        self.control._motor_con_status.connect(self.ui_elements.ledMotor.setProperty)
+        
+
+        # Imports the box to show log files                             # TODO: Adicionar mais funcionalidades ao log box, como pesquisar no log e escolher o log que se deseja abrir
+        self.log_box = LogBox()                                         # TODO: Também é necessário alterar a forma que os arquivos são salvos, colocando um nome padrão de acordo com a data    
+        self.log_box.closed.connect(self._closed_log_box)               # Signal to inform the main window that the log box was closed by pressing the X button            
+        
+        self._conIcon = QLabel()
+        self._conIcon.setPixmap(QPixmap(icon_con_ok))
+        self._conIcon.setMaximumSize(21,21)
+        self.statusBar().addPermanentWidget(self._conIcon)
+
+        
+
+
+        # TODO: Criar uma parte para a configuração de engenharia, para substituir a edição direta das configurações através de "settings"
+
+        # System tray menu
+        self.tray_icon = QSystemTrayIcon(self)                          # Creates system tray icon
+        self.tray_icon.setIcon(QIcon(icon_tray))                        # Replace 'icon.png' with your icon file
+        self.tray_icon.setToolTip('FocusServer')                        # Status tip of tray icon
+
+        self.tray_menu = QMenu(self)                                    # Creates tray icon menu
+        restore_action = QAction('Restore', self)                       # Action to restore window
+        restore_action.triggered.connect(self._restore_from_tray)       # Connects action to method to restore window
+        self.tray_menu.addAction(restore_action)                        # Adds the action to the menu
+
+        self.tray_icon.setContextMenu(self.tray_menu)                   # Sets the tray icon context menu that opens when tray icon is right clicked
+        self.tray_icon.activated.connect(self._tray_activated)          # Method executed when tray icon is activated by an event
+
+        self.update_timer = QTimer(self)                                # Creates update timer
+        self.update_timer.timeout.connect(self._update)                  # Connects the times with method 'update'
+        self.update_timer.start(100)                                    # Configures timer for 100ms
+
+
+        # Events definitions
+        #   sets animations and install event filter on objects
+        self.ui_elements.conBarServerRouter.setValue(0)
+        self.ui_elements.conBarServerRouter.animation = QPropertyAnimation(
+            self.ui_elements.conBarServerRouter, b'value', self
+        )
+        self.ui_elements.conBarServerRouter.animation.setEasingCurve(QEasingCurve.Type.OutCubic)
+        self.ui_elements.conBarServerRouter.animation.setDuration(300)
+        self.ui_elements.conBarServerRouter.installEventFilter(self)
+
+        self.ui_elements.conBarRouterMotor.setValue(0)
+        self.ui_elements.conBarRouterMotor.animation = QPropertyAnimation(
+            self.ui_elements.conBarRouterMotor, b'value', self
+        )
+        self.ui_elements.conBarRouterMotor.animation.setEasingCurve(QEasingCurve.Type.OutCubic)
+        self.ui_elements.conBarRouterMotor.animation.setDuration(300)
+        self.ui_elements.conBarRouterMotor.installEventFilter(self)
+
+        self.ui_elements.ledServer.installEventFilter(self)
+        self.ui_elements.ledRouter.installEventFilter(self)
+        self.ui_elements.ledMotor.installEventFilter(self)
+
+        self.ui_elements.ledServer.setProperty("ledStatus", "OK")
+
+        self._ping()
+        if Config.startup:
+            self._start()
 
 
 
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
+######### OUTROS TESTES ##########
+        self.ui_elements.btnTestes.clicked.connect(self._testes)
 
         self._starting_size = QSize(self.width(), self.height())    # Holds the initial screen size
         
         self.ui_elements.actionShow_toolbar.triggered.connect(              
             lambda checked: self.ui_elements.toolBar.setVisible(checked)    # Action to toggle toolbar
             )   
-        
-        self.ui_elements.ledServer.setProperty("statusLed", "NOK")
-
-        self.ui_elements.conBarServerRouter.setValue(0)
-        self.conBarAnimation = QPropertyAnimation(
-            self.ui_elements.conBarServerRouter, b'value', self
-        )
-        self.conBarAnimation.setEasingCurve(QEasingCurve.Type.OutCubic)
-        self.conBarAnimation.setDuration(300)
-
-        self.ui_elements.conBarServerRouter.installEventFilter(self)
+    
         
         # self.ui_elements.pushButton.clicked.connect(self.teste1)
         # self.ui_elements.pushButton_2.clicked.connect(self.teste2)
@@ -120,11 +175,13 @@ class FocuserOPD(QtWidgets.QMainWindow):
         # self._expanding.connect(self.ui_elements.pushButton.setDisabled)
 
 
-    def _expanded_ended(self):
-        self._expanding.emit(False)      
 
 
-        
+    def _testes(self):
+        self.ui_elements.conBarServerRouter.setProperty("conStatusBar", "waiting")
+        self.ui_elements.conBarRouterMotor.setProperty("conStatusBar", "connecting")
+        self.ui_elements.ledServer.setProperty("statusLed", "NOK")
+
     def teste1(self):
 
         if(self.ui_elements.ledServer.property("statusLed") == "OK"):
@@ -137,18 +194,18 @@ class FocuserOPD(QtWidgets.QMainWindow):
 
         if(self.ui_elements.conBarServerRouter.value() == 0):
             # self.ui_elements.conBarServerRouter.setValue(50)
-            # self.conBarAnimation.setEndValue(50)
-            # self.conBarAnimation.start()
+            # self.conBarServerRouterAnimation.setEndValue(50)
+            # self.conBarServerRouterAnimation.start()
             self.ui_elements.conBarServerRouter.setProperty("conStatusBar", "connecting")
         elif(self.ui_elements.conBarServerRouter.value() == 50):
             # self.ui_elements.conBarServerRouter.setValue(100)
-            # self.conBarAnimation.setEndValue(100)
-            # self.conBarAnimation.start()
+            # self.conBarServerRouterAnimation.setEndValue(100)
+            # self.conBarServerRouterAnimation.start()
             self.ui_elements.conBarServerRouter.setProperty("conStatusBar", "connected")
         elif(self.ui_elements.conBarServerRouter.value() == 100):
             # self.ui_elements.conBarServerRouter.setValue(0)
-            # self.conBarAnimation.setEndValue(0)
-            # self.conBarAnimation.start()
+            # self.conBarServerRouterAnimation.setEndValue(0)
+            # self.conBarServerRouterAnimation.start()
             self.ui_elements.conBarServerRouter.setProperty("conStatusBar", "waiting")
         
         self._update_gui_element(self.ui_elements.conBarServerRouter)
@@ -166,7 +223,107 @@ class FocuserOPD(QtWidgets.QMainWindow):
         self._expanding.emit(True)
         self.animation.start()
 
+######### FIM OUTROS TESTES ##########
 
+
+
+    def _closed_log_box(self):
+        """Guarantees that the action is unchecked if the Log Box is closed by pressing the X button"""
+        self.ui_elements.actionShow_Log.setChecked(False)
+
+    def _toggle_log_box(self, checked):
+        """Toggles the log box
+
+        Parameters
+        ----------
+        checked : bool
+            State of the action "actionShow_Log"
+        """
+        if checked is True:
+            try:
+                if self.log_file is not None:
+                    self._read_log_file(self.log_file)
+                    self.log_box.show()
+            except Exception as e:
+                print(f"{str(e)}")
+        else:
+            self.log_box.hide()
+
+
+    def _read_log_file(self, file_path):
+        """Open LOG file"""
+        with open(file_path, "r") as file:
+            log_content = file.read()
+            self.log_box.txtLog.setPlainText(log_content)   
+
+    def _minimize_to_tray(self):
+        """Minimize to tray"""
+        self.hide()                                                     # Hides server window   
+        self.tray_icon.show()                                           # Show tray icon menu
+
+    def _restore_from_tray(self):
+        """Restore window from Tray"""
+        self.show()                                                     # Show server window
+        self.tray_icon.hide()                                           # Hides tray icon menu
+    
+    def _tray_activated(self, reason):
+        """Method called when an icon tray event occurs
+
+        Parameters
+        ----------
+        reason : ActivationReason
+            Reason that the tray icon was activated
+        """
+        if reason == QSystemTrayIcon.ActivationReason.DoubleClick:      # If a double click was detected
+            self._restore_from_tray()                                   # Restores the window
+
+    def _run_simulator(self, checked):
+        """Opens the simulator window"""
+        if checked is True:
+            if self.second_window is None:
+                self.second_window = ClientSimulator()
+                self.second_window.sig.connect(self._simulator_closed)          # Signal to inform the main window that the simulator was closed    
+                self.second_window.move(self.pos() + QPoint(self.width(), 0))   # Positions the simulator window next to the main window
+                self.second_window.show()                                       # Opens the simulator window
+        else:
+            self._simulator_closed(True)                                        # Closes the simulator if already opened
+
+    def _simulator_closed(self, msg):
+        """ Receives closed window signal from the simulator """
+        if msg is True:    
+            self.second_window = None                                       # "Deletes" the simulator window from the main window
+            self.ui_elements.actionClient_Simulator.setChecked(False)       # Unchecks action to open client simulator
+            print("simulador fechado")
+
+
+    def _ping(self):
+        """Checks if device is reachable"""
+
+        self._cooldown = time.time()
+        # if self.control.reachable:
+        #     self._reachable = True
+        #     self.ui_elements.conBarServerRouter.setProperty("conStatusBar", "connected")
+        #     self.ui_elements.conBarRouterMotor.setProperty("conStatusBar", "connected")
+        #     self.ui_elements.ledServer.setProperty("statusLed", "OK")
+        #     self.ui_elements.ledRouter.setProperty("statusLed", "OK")
+        #     self.ui_elements.ledMotor.setProperty("statusLed", "OK")
+        # else:
+        #     self._reachable = False
+        #     if self.control.router:
+        #         self.ui_elements.conBarServerRouter.setProperty("conStatusBar", "connected")
+        #         self.ui_elements.conBarRouterMotor.setProperty("conStatusBar", "waiting")
+        #         self.ui_elements.ledServer.setProperty("statusLed", "OK")
+        #         self.ui_elements.ledRouter.setProperty("statusLed", "OK")
+        #         self.ui_elements.ledMotor.setProperty("statusLed", "NOK")
+        #     else:
+        #         self.ui_elements.conBarServerRouter.setProperty("conStatusBar", "waiting")
+        #         self.ui_elements.conBarRouterMotor.setProperty("conStatusBar", "waiting")
+        #         self.ui_elements.ledServer.setProperty("statusLed", "NOK")
+        #         self.ui_elements.ledRouter.setProperty("statusLed", "NOK")
+        #         self.ui_elements.ledMotor.setProperty("statusLed", "NOK")
+
+    def _expanded_ended(self):
+        self._expanding.emit(False)      
 
     def _update_gui_element(self, widget: QtWidgets):
         """Updates the GUI element style after an event occured
@@ -196,23 +353,120 @@ class FocuserOPD(QtWidgets.QMainWindow):
         bool
             Returns if everything went ok
         """
-        if obj is self.ui_elements.conBarServerRouter:
-            if event.type() == QEvent.Type.DynamicPropertyChange:   
-                if self.ui_elements.conBarServerRouter.property("conStatusBar") == "waiting":
-                    self.conBarAnimation.setEndValue(0)
-                    self.conBarAnimation.start()
-                elif self.ui_elements.conBarServerRouter.property("conStatusBar") == "connecting":
-                    self.conBarAnimation.setEndValue(50)
-                    self.conBarAnimation.start()
-                elif self.ui_elements.conBarServerRouter.property("conStatusBar") == "connected":
-                    self.conBarAnimation.setEndValue(100)
-                    self.conBarAnimation.start()
-                return True
-        
+
+        # Events related to a 'Dynamic Property' being changed
+        if event.type() == QEvent.Type.DynamicPropertyChange:
+
+            if obj.__class__ is QtWidgets.QProgressBar:
+                    # Animations related to progress bars
+                    if obj.property("conStatusBar") == "waiting":
+                        obj.animation.setEndValue(0)
+                        obj.animation.start()
+                    elif obj.property("conStatusBar") == "connecting":
+                        obj.animation.setEndValue(50)
+                        obj.animation.start()
+                    elif obj.property("conStatusBar") == "connected":
+                        obj.animation.setEndValue(100)
+                        obj.animation.start()
+                    self._update_gui_element(obj)
+                    return True   
+                    
+            if obj.__class__ is QtWidgets.QLabel:
+                    # Animations related to labels
+                    self._update_gui_element(obj)
+                    return True 
 
         # For all other events or objects, return False to allow normal handling
         return super().eventFilter(obj, event)
 
+
+    def _start(self):
+        """Start server"""
+        if self._run_thread and self._run_thread.is_alive():
+            print("Still Alive")
+            return
+        self._run_thread = Thread(target = self.control.run)
+        self._run_thread.start()
+        # self._run_thread.daemon = True
+    
+    def _stop(self):
+        """Stops main program and the main loop at Application interface with Device"""
+    # Also closes second window if it is opened
+        if self.second_window is not None:
+            self.second_window.close()
+
+        if self.control:
+            self.control.disconnect()
+        if self._run_thread and self._run_thread.is_alive():
+            self._run_thread.join()
+
+    def _update(self):
+        """Main loop and UI manager"""   
+        status = self.control.status
+        con = status["connected"] 
+
+        if self._run_thread and self._run_thread.is_alive():      
+            pass
+        else:
+            pass
+        if con:
+            # self.statusBar().showMessage("Device Socket Connected")
+            self._conIcon.setPixmap(QPixmap(icon_con_ok))
+        
+            if not self._reachable:
+                # self.lblPing.setText("Device is Reachable")
+                self._conIcon.setPixmap(QPixmap(icon_con_wait))
+                self._reachable = True
+        else:
+            self._conIcon.setPixmap(QPixmap(icon_con_nok))        
+            if self._reachable:
+                # self.lblPing.setText("Device is NOT Reachable")
+                self._reachable = False
+            # self.statusBar().showMessage("Device Socket Disconnected")
+
+        # self.lblPos.setText(str(status["position"]))
+        # self.lblEnc.setText(str(self.control.encoder))
+        # self.txtClientID.setText(str(self.control.busy_id))
+        # self.lblCommSpeed.setText(str(self.control.connection_speed))
+        if len(status["error"]) > 1:
+            pass
+            # self.lblErr.setToolTip(status["error"])
+            # self.lblErr.setStyleSheet("background-color: indianred; border-radius: 10px;")
+        else:
+            pass
+            # self.lblErr.setStyleSheet("background-color: rgb(119, 118, 123); border-radius: 10px;")
+        if status["isMoving"]:
+            pass
+            # self.lblMov.setStyleSheet("background-color: green; border-radius: 10px;")
+        else:
+            pass
+            # self.lblMov.setStyleSheet("background-color: rgb(119, 118, 123); border-radius: 10px;")
+        
+
+        #updates connection status every 10 sec
+        if int(time.time() - self._cooldown) > 10:
+            self._ping()
+
+
+    def closeEvent(self, event):
+        """Close event
+
+        Parameters
+        ----------
+        event : _type_
+            _description_
+        """
+        close = QMessageBox()
+        close.setWindowTitle("Close")
+        close.setText("Deseja sair?")
+        close.setStandardButtons(QMessageBox.StandardButton.Yes | QMessageBox.StandardButton.No)
+        close = close.exec()
+
+        if close == QMessageBox.StandardButton.Yes:   
+            self._stop()
+            event.accept()
+        else:
+            event.ignore()
 
 if __name__ == "__main__":
 

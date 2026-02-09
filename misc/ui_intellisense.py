@@ -11,7 +11,8 @@ from PyQt6.QtWidgets import (
     QLineEdit,
     QGroupBox,
     QTextEdit,
-    QDockWidget)
+    QDockWidget,
+    QStatusBar)
 
 
 
@@ -19,7 +20,20 @@ from PyQt6.QtWidgets import (
 class UiWidgets(QWidget):
     def __init__(self, window):
 
+        # BOTAO PARA TESTES
+        self.btnTestes = window.findChild(QPushButton, 'btnTestes')
+        self.btnTestes: QPushButton = self.btnTestes
+
+
         # uic.loadUi(main_ui_path, self)
+
+    # Buttons
+        self.btnStart = window.findChild(QPushButton, 'btnStart')
+        self.btnStart: QPushButton = self.btnStart
+
+        self.btnStop = window.findChild(QPushButton, 'btnStop')
+        self.btnStop: QPushButton = self.btnStop
+
         
         self.menuOptions = window.findChild(QMenu, 'menuOptions')
         self.menuOptions: QMenu = self.menuOptions
@@ -45,11 +59,21 @@ class UiWidgets(QWidget):
         self.ledServer = window.findChild(QLabel, 'ledServer')
         self.ledServer: QLabel = self.ledServer
 
+        self.ledRouter = window.findChild(QLabel, 'ledRouter')
+        self.ledRouter: QLabel = self.ledRouter
+
+        self.ledMotor = window.findChild(QLabel, 'ledMotor')
+        self.ledMotor: QLabel = self.ledMotor
+
         self.conBarServerRouter = window.findChild(QProgressBar, 'conBarServerRouter')
         self.conBarServerRouter: QProgressBar = self.conBarServerRouter
 
         self.conBarRouterMotor = window.findChild(QProgressBar, 'conBarRouterMotor')
         self.conBarRouterMotor: QProgressBar = self.conBarRouterMotor
+
+        # self.statusbar = window.findChild(QStatusBar, 'statusbar')
+        # self.statusbar: QStatusBar = self.statusbar
+
 
 # Connectivity group box
 
@@ -69,4 +93,13 @@ class UiWidgets(QWidget):
         self.txtComSpeed: QLineEdit = self.txtComSpeed
 
 # Driver info group box
+
+
+
+
+
+
+
+
+
 

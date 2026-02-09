@@ -5,6 +5,8 @@
 #
 # Python Compatibility: Requires Python 3.10 or later
 
+from PyQt6.QtCore import pyqtSignal, QObject
+
 from logging import Logger
 
 import time
@@ -12,14 +14,22 @@ import zmq
 import json
 import socket
 from datetime import datetime
+from pythonping import ping
 
 from src.core.config import Config
 
 from src.interface.dmx_eth import FocuserDriver as Focuser
 
-class App():
-    def __init__(self, logger: Logger):
+class App(QObject):
 
+    _router_con_status = pyqtSignal(str, str)
+    _motor_con_status = pyqtSignal(str, str)
+
+    _router_reachable = False
+    _motor_reachable  = False
+
+    def __init__(self, logger: Logger):
+        super(App, self).__init__()
         self.logger = logger
         self.config_file = r"src/config/config.toml"   #TODO: Remover, não é usado para nada.
 
@@ -82,6 +92,8 @@ class App():
         }
         
         self.device = Focuser(self.logger)
+
+
         self.reach_device()
         self.start_server()
 
@@ -89,50 +101,104 @@ class App():
         """Ping device and reads the position and initialized variables"""
         _try = 0
         self.last_ping_time = datetime.now()
-        print("Trying Connect")
-        for _try in range(5):
-            print("Trying Connect: Try number ", (_try+1))
-            self.reachable = self.ping_server()            
-            if self.reachable:
-                self.router = True
-                print("Connection succesful after", (_try+1), "tries" )
-                break
-            print("Device not reachable...")     
-            print("Trying to reach router...")       
-            self.router = self.ping_router()
-            if(self.router):
-                print("Router reachable")
-            else:
-                print("Could not reach router")
-        
-        if self.reachable:          #TODO: Atualizar com o caso de não tem conseguido conectar? Quais mensagens no status e no logger precisariam ser alteradas?
-            try:
-                self.device.connected = True
-                self._position =self.device.position
-                self.status["position"] = self._position
-                self.status["initialized"] = self.device.initialized
-                self.status["device_IP"] = self.device.get_device_IP
-                self.status["device_ID"] = self.device.get_device_ID
-                self.status["device_Firmware_Version"] = self.device.get_device_Firmware_Version
+
+        if not self._router_reachable:
+            self._router_con_status.emit("conStatusBar", "connecting")
+            self._router_con_status.emit("statusLed", "NOK")
+            self._motor_con_status.emit("conStatusBar", "waiting")
+            self._motor_con_status.emit("statusLed", "NOK")
+            for _try in range(5):
+                print(f"Trying Connect to Router: Try number {_try+1}")
+                self._router_reachable = self.ping_router()
+                if self._router_reachable:
+                    print("Connection succesfull after", (_try+1), "tries" )
+                    self._router_con_status.emit("conStatusBar", "connected")
+                    self._router_con_status.emit("statusLed", "OK")
+                    break
+
+
+        if self._router_reachable:
+            self._router_con_status.emit("conStatusBar", "connected")
+            self._router_con_status.emit("statusLed", "OK")
+            
+            self._motor_con_status.emit("conStatusBar", "connecting")
+            self._motor_con_status.emit("statusLed", "NOK")
+
+            for _try in range(5):
+                print(f"Trying Connect to Motor: Try number {_try+1}")
+                self._motor_reachable = self.ping_server()
+                if self._motor_reachable:
+                    print("Connection succesfull after", (_try+1), "tries" )
+                    self._motor_con_status.emit("conStatusBar", "connected")
+                    self._motor_con_status.emit("statusLed", "OK")
+                    break
+            
+            if self._motor_reachable:
+                self._motor_con_status.emit("conStatusBar", "connected")
+                self._motor_con_status.emit("statusLed", "OK")
+
+                try:
+                    self.device.connected = True
+                    self._position =self.device.position
+                    self.status["position"] = self._position
+                    self.status["initialized"] = self.device.initialized
+                    self.status["device_IP"] = self.device.get_device_IP
+                    self.status["device_ID"] = self.device.get_device_ID
+                    self.status["device_Firmware_Version"] = self.device.get_device_Firmware_Version
+                    
+                    self.logger.info(f'Device Reached.')
+                except Exception as e:
+                    self.logger.error(f'Error reaching device: {str(e)}') 
+
+
+
+
+
+
+
+        # print("Trying Connect")
+        # self._router_con_status.emit("conStatusBar", "connecting")
+        # self._motor_con_status.emit("conStatusBar", "connecting")
+        # self._router_con_status.emit("statusLed", "NOK")
+        # self._motor_con_status.emit("statusLed", "NOK")
+        # for _try in range(5):
+        #     print("Trying Connect to motor: Try number ", (_try+1))            
+        #     self.reachable = self.ping_server()            
+        #     if self.reachable:
+        #         self.router = True
+        #         print("Connection succesfull after", (_try+1), "tries" )
+        #         self._router_con_status.emit("conStatusBar", "connected")
+        #         self._router_con_status.emit("statusLed", "OK")
+        #         self._motor_con_status.emit("conStatusBar", "connected")
+        #         self._motor_con_status.emit("statusLed", "OK")
+        #         break
+        #     print("Device not reachable...")     
+        #     print("Trying to reach router...")       
+        #     self.router = self.ping_router()
+        #     if(self.router):
+        #         print("Router reachable")
+        #         self._router_con_status.emit("conStatusBar", "connected")
+        #         self._router_con_status.emit("statusLed", "OK")
+        #     else:
+        #         print("Could not reach router")
+        #         self._router_con_status.emit("conStatusBar", "awaiting")
+        #         self._motor_con_status.emit("conStatusBar", "awaiting")
+        #         self._router_con_status.emit("statusLed", "NOK")
+        #         self._motor_con_status.emit("statusLed", "NOK")
+        # if self.reachable:          #TODO: Atualizar com o caso de não tem conseguido conectar? Quais mensagens no status e no logger precisariam ser alteradas?
+        #     try:
+        #         self.device.connected = True
+        #         self._position =self.device.position
+        #         self.status["position"] = self._position
+        #         self.status["initialized"] = self.device.initialized
+        #         self.status["device_IP"] = self.device.get_device_IP
+        #         self.status["device_ID"] = self.device.get_device_ID
+        #         self.status["device_Firmware_Version"] = self.device.get_device_Firmware_Version
                 
-                self.logger.info(f'Device Reached.')
-            except Exception as e:
-                self.logger.error(f'Error reaching device: {str(e)}') 
-
-    def qqcois(str: str="ola") -> str:
-        """_summary_
-
-        Parameters
-        ----------
-        str : str, optional
-            _description_, by default "ola"
-
-        Returns
-        -------
-        str
-            _description_
-        """
-        
+        #         self.logger.info(f'Device Reached.')
+        #     except Exception as e:
+        #         self.logger.error(f'Error reaching device: {str(e)}') 
+       
 
     def start_server(self): 
         """ Starts Server ZeroMQ, creating context 
@@ -216,32 +282,24 @@ class App():
             self.poller = None
             time.sleep(.2)
     
-    def ping_server(self):
+    def ping_server(self):                      # TODO: Trocar nome da função para "ping_motor"
         """Check if motor is reachable
         ::returns:: bool
         """
-        try:
-            s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-            s.settimeout(.6)
-            s.connect((Config.device_ip, Config.device_port))
-            s.close()
-            time.sleep(.1)
+        response = ping(Config.device_ip, count=1, timeout=0.6)
+        if(response.success()):
             return True
-        except Exception as e:
-            return False 
+        else:
+            return False
 
     def ping_router(self):
         """Check if router is reachable
         ::returns:: bool
         """
-        try:
-            s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-            s.settimeout(.6)
-            s.connect((Config.router_ip, 80))
-            s.close()
-            time.sleep(.1)
+        response = ping(Config.router_ip, count=1, timeout=0.6)
+        if(response.success()):
             return True
-        except Exception as e:
+        else:
             return False
 
     def handle_home(self):
@@ -490,8 +548,11 @@ class App():
                 self.busy_id = self._client_id
                 self.update_status()                
                 self.status["alarm"] = 0
+
             else:
-                if (current_time - self.last_ping_time).total_seconds() >= 7:
+                if abs(current_time.second - self.last_ping_time.second) >= 5:
+                    self._router_reachable = self.ping_router()
+                    self._motor_reachable = self.ping_server()
                     self.reach_device()
                 self.status["connected"] = self.device.connected
             self.connection_speed = f"interval:  {round(time.time()-t0, 3)}"

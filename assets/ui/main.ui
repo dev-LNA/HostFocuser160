@@ -260,7 +260,7 @@ QProgressBar[conStatusBar=&quot;connected&quot;]::chunk {
         </spacer>
        </item>
        <item>
-        <widget class="QLabel" name="ledRouter_2">
+        <widget class="QLabel" name="ledServer">
          <property name="sizePolicy">
           <sizepolicy hsizetype="Fixed" vsizetype="Fixed">
            <horstretch>0</horstretch>
@@ -908,7 +908,7 @@ QProgressBar[conStatusBar=&quot;connected&quot;]::chunk {
         </widget>
        </item>
        <item>
-        <widget class="QLabel" name="ledServer">
+        <widget class="QLabel" name="ledRouter">
          <property name="sizePolicy">
           <sizepolicy hsizetype="Fixed" vsizetype="Fixed">
            <horstretch>0</horstretch>
@@ -944,15 +944,15 @@ QProgressBar[conStatusBar=&quot;connected&quot;]::chunk {
               <gradient centralx="0.500000000000000" centraly="0.500000000000000" focalx="0.602000000000000" focaly="0.630682000000000" radius="0.486000000000000" type="RadialGradient" spread="ReflectSpread" coordinatemode="ObjectBoundingMode">
                <gradientstop position="0.000000000000000">
                 <color alpha="239">
-                 <red>68</red>
-                 <green>255</green>
-                 <blue>0</blue>
+                 <red>255</red>
+                 <green>76</green>
+                 <blue>76</blue>
                 </color>
                </gradientstop>
                <gradientstop position="1.000000000000000">
                 <color alpha="239">
-                 <red>0</red>
-                 <green>157</green>
+                 <red>157</red>
+                 <green>0</green>
                  <blue>0</blue>
                 </color>
                </gradientstop>
@@ -1027,15 +1027,15 @@ QProgressBar[conStatusBar=&quot;connected&quot;]::chunk {
               <gradient centralx="0.500000000000000" centraly="0.500000000000000" focalx="0.602000000000000" focaly="0.630682000000000" radius="0.486000000000000" type="RadialGradient" spread="ReflectSpread" coordinatemode="ObjectBoundingMode">
                <gradientstop position="0.000000000000000">
                 <color alpha="239">
-                 <red>68</red>
-                 <green>255</green>
-                 <blue>0</blue>
+                 <red>255</red>
+                 <green>76</green>
+                 <blue>76</blue>
                 </color>
                </gradientstop>
                <gradientstop position="1.000000000000000">
                 <color alpha="239">
-                 <red>0</red>
-                 <green>157</green>
+                 <red>157</red>
+                 <green>0</green>
                  <blue>0</blue>
                 </color>
                </gradientstop>
@@ -1047,15 +1047,15 @@ QProgressBar[conStatusBar=&quot;connected&quot;]::chunk {
               <gradient centralx="0.500000000000000" centraly="0.500000000000000" focalx="0.602000000000000" focaly="0.630682000000000" radius="0.486000000000000" type="RadialGradient" spread="ReflectSpread" coordinatemode="ObjectBoundingMode">
                <gradientstop position="0.000000000000000">
                 <color alpha="239">
-                 <red>68</red>
-                 <green>255</green>
-                 <blue>0</blue>
+                 <red>255</red>
+                 <green>76</green>
+                 <blue>76</blue>
                 </color>
                </gradientstop>
                <gradientstop position="1.000000000000000">
                 <color alpha="239">
-                 <red>0</red>
-                 <green>157</green>
+                 <red>157</red>
+                 <green>0</green>
                  <blue>0</blue>
                 </color>
                </gradientstop>
@@ -1132,15 +1132,15 @@ QProgressBar[conStatusBar=&quot;connected&quot;]::chunk {
               <gradient centralx="0.500000000000000" centraly="0.500000000000000" focalx="0.602000000000000" focaly="0.630682000000000" radius="0.486000000000000" type="RadialGradient" spread="ReflectSpread" coordinatemode="ObjectBoundingMode">
                <gradientstop position="0.000000000000000">
                 <color alpha="239">
-                 <red>68</red>
-                 <green>255</green>
-                 <blue>0</blue>
+                 <red>255</red>
+                 <green>76</green>
+                 <blue>76</blue>
                 </color>
                </gradientstop>
                <gradientstop position="1.000000000000000">
                 <color alpha="239">
-                 <red>0</red>
-                 <green>157</green>
+                 <red>157</red>
+                 <green>0</green>
                  <blue>0</blue>
                 </color>
                </gradientstop>
@@ -1215,15 +1215,15 @@ QProgressBar[conStatusBar=&quot;connected&quot;]::chunk {
               <gradient centralx="0.500000000000000" centraly="0.500000000000000" focalx="0.602000000000000" focaly="0.630682000000000" radius="0.486000000000000" type="RadialGradient" spread="ReflectSpread" coordinatemode="ObjectBoundingMode">
                <gradientstop position="0.000000000000000">
                 <color alpha="239">
-                 <red>68</red>
-                 <green>255</green>
-                 <blue>0</blue>
+                 <red>255</red>
+                 <green>76</green>
+                 <blue>76</blue>
                 </color>
                </gradientstop>
                <gradientstop position="1.000000000000000">
                 <color alpha="239">
-                 <red>0</red>
-                 <green>157</green>
+                 <red>157</red>
+                 <green>0</green>
                  <blue>0</blue>
                 </color>
                </gradientstop>
@@ -1235,15 +1235,15 @@ QProgressBar[conStatusBar=&quot;connected&quot;]::chunk {
               <gradient centralx="0.500000000000000" centraly="0.500000000000000" focalx="0.602000000000000" focaly="0.630682000000000" radius="0.486000000000000" type="RadialGradient" spread="ReflectSpread" coordinatemode="ObjectBoundingMode">
                <gradientstop position="0.000000000000000">
                 <color alpha="239">
-                 <red>68</red>
-                 <green>255</green>
-                 <blue>0</blue>
+                 <red>255</red>
+                 <green>76</green>
+                 <blue>76</blue>
                 </color>
                </gradientstop>
                <gradientstop position="1.000000000000000">
                 <color alpha="239">
-                 <red>0</red>
-                 <green>157</green>
+                 <red>157</red>
+                 <green>0</green>
                  <blue>0</blue>
                 </color>
                </gradientstop>
@@ -1320,15 +1320,15 @@ QProgressBar[conStatusBar=&quot;connected&quot;]::chunk {
               <gradient centralx="0.500000000000000" centraly="0.500000000000000" focalx="0.602000000000000" focaly="0.630682000000000" radius="0.486000000000000" type="RadialGradient" spread="ReflectSpread" coordinatemode="ObjectBoundingMode">
                <gradientstop position="0.000000000000000">
                 <color alpha="239">
-                 <red>68</red>
-                 <green>255</green>
-                 <blue>0</blue>
+                 <red>255</red>
+                 <green>76</green>
+                 <blue>76</blue>
                 </color>
                </gradientstop>
                <gradientstop position="1.000000000000000">
                 <color alpha="239">
-                 <red>0</red>
-                 <green>157</green>
+                 <red>157</red>
+                 <green>0</green>
                  <blue>0</blue>
                 </color>
                </gradientstop>
@@ -1403,15 +1403,15 @@ QProgressBar[conStatusBar=&quot;connected&quot;]::chunk {
               <gradient centralx="0.500000000000000" centraly="0.500000000000000" focalx="0.602000000000000" focaly="0.630682000000000" radius="0.486000000000000" type="RadialGradient" spread="ReflectSpread" coordinatemode="ObjectBoundingMode">
                <gradientstop position="0.000000000000000">
                 <color alpha="239">
-                 <red>68</red>
-                 <green>255</green>
-                 <blue>0</blue>
+                 <red>255</red>
+                 <green>76</green>
+                 <blue>76</blue>
                 </color>
                </gradientstop>
                <gradientstop position="1.000000000000000">
                 <color alpha="239">
-                 <red>0</red>
-                 <green>157</green>
+                 <red>157</red>
+                 <green>0</green>
                  <blue>0</blue>
                 </color>
                </gradientstop>
@@ -1423,15 +1423,15 @@ QProgressBar[conStatusBar=&quot;connected&quot;]::chunk {
               <gradient centralx="0.500000000000000" centraly="0.500000000000000" focalx="0.602000000000000" focaly="0.630682000000000" radius="0.486000000000000" type="RadialGradient" spread="ReflectSpread" coordinatemode="ObjectBoundingMode">
                <gradientstop position="0.000000000000000">
                 <color alpha="239">
-                 <red>68</red>
-                 <green>255</green>
-                 <blue>0</blue>
+                 <red>255</red>
+                 <green>76</green>
+                 <blue>76</blue>
                 </color>
                </gradientstop>
                <gradientstop position="1.000000000000000">
                 <color alpha="239">
-                 <red>0</red>
-                 <green>157</green>
+                 <red>157</red>
+                 <green>0</green>
                  <blue>0</blue>
                 </color>
                </gradientstop>
@@ -1505,7 +1505,7 @@ QProgressBar[conStatusBar=&quot;connected&quot;]::chunk {
           <string/>
          </property>
          <property name="statusLed" stdset="0">
-          <string>OK</string>
+          <string>NOK</string>
          </property>
         </widget>
        </item>
@@ -1547,7 +1547,7 @@ QProgressBar[conStatusBar=&quot;connected&quot;]::chunk {
         </widget>
        </item>
        <item>
-        <widget class="QLabel" name="ledRouter">
+        <widget class="QLabel" name="ledMotor">
          <property name="sizePolicy">
           <sizepolicy hsizetype="Fixed" vsizetype="Fixed">
            <horstretch>0</horstretch>
@@ -2328,6 +2328,45 @@ QProgressBar[conStatusBar=&quot;connected&quot;]::chunk {
     </property>
     <property name="title">
      <string>Driver Info</string>
+    </property>
+   </widget>
+   <widget class="QPushButton" name="btnTestes">
+    <property name="geometry">
+     <rect>
+      <x>230</x>
+      <y>250</y>
+      <width>75</width>
+      <height>24</height>
+     </rect>
+    </property>
+    <property name="text">
+     <string>testes</string>
+    </property>
+   </widget>
+   <widget class="QPushButton" name="btnStart">
+    <property name="geometry">
+     <rect>
+      <x>230</x>
+      <y>140</y>
+      <width>75</width>
+      <height>24</height>
+     </rect>
+    </property>
+    <property name="text">
+     <string>start</string>
+    </property>
+   </widget>
+   <widget class="QPushButton" name="btnStop">
+    <property name="geometry">
+     <rect>
+      <x>230</x>
+      <y>180</y>
+      <width>75</width>
+      <height>24</height>
+     </rect>
+    </property>
+    <property name="text">
+     <string>Stop</string>
     </property>
    </widget>
   </widget>

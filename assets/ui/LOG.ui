@@ -6,23 +6,22 @@
    <rect>
     <x>0</x>
     <y>0</y>
-    <width>387</width>
-    <height>336</height>
+    <width>478</width>
+    <height>389</height>
    </rect>
   </property>
   <property name="windowTitle">
-   <string>Form</string>
+   <string>Log</string>
   </property>
-  <widget class="QTextEdit" name="textEdit">
-   <property name="geometry">
-    <rect>
-     <x>50</x>
-     <y>90</y>
-     <width>271</width>
-     <height>201</height>
-    </rect>
-   </property>
-  </widget>
+  <layout class="QHBoxLayout" name="horizontalLayout">
+   <item>
+    <widget class="QTextEdit" name="txtLog">
+     <property name="readOnly">
+      <bool>true</bool>
+     </property>
+    </widget>
+   </item>
+  </layout>
  </widget>
  <resources/>
  <connections/>
