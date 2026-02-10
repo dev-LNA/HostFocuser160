@@ -28,6 +28,8 @@ class App(QObject):
     _server_started_status = pyqtSignal(str, str)
     _server_started_bool = pyqtSignal(bool)
 
+    _statusMessage = pyqtSignal(str)
+
     _router_reachable = False
     _motor_reachable  = False
 
@@ -45,7 +47,7 @@ class App(QObject):
         self.connection_speed = 0
 
         # Control variables
-        self.stop_var = False
+        self._stop_var = False
         self.previous_is_mov = False
         self.previous_homing = False
         self.previous_pos = 0
@@ -106,15 +108,17 @@ class App(QObject):
         self.last_ping_time = datetime.now()
 
         if not self._router_reachable:
-            self._signals_router_connection("waiting")
+            self._signals_router_connection("connecting")
             self._signals_motor_connection("waiting")
             
             
             for _try in range(5):
                 print(f"Trying Connect to Router: Try number {_try+1}")
+                self._statusMessage.emit(f"Trying Connect to Router: Try number {_try+1}")
                 self._router_reachable = self.ping_router()
                 if self._router_reachable:
                     print("Connection succesfull after", (_try+1), "tries" )
+                    self._statusMessage.emit(f"Connection succesfull after {_try+1} tries")
                     self._signals_router_connection("connected")
                     break
 
@@ -125,9 +129,11 @@ class App(QObject):
             
             for _try in range(5): 
                 print(f"Trying Connect to Motor: Try number {_try+1}")
+                self._statusMessage.emit(f"Trying Connect to Motor: Try number {_try+1}")
                 self._motor_reachable = self.ping_server()
                 if self._motor_reachable:
                     print("Connection succesfull after", (_try+1), "tries" )
+                    self._statusMessage.emit(f"Connection succesfull after {_try+1} tries")
                     self._signals_motor_connection("connected")
                     break
             
@@ -149,6 +155,15 @@ class App(QObject):
 
 
     def _signals_router_connection(self, status: str):
+        """Updates the signals related to the router connection
+
+        Parameters
+        ----------
+        status : str
+            waiting -> not connected
+            connecting -> not connected and trying to connect
+            connected -> connected
+        """
         if status is "connected":
             self._router_con_status.emit("conStatusBar", "connected")
             self._router_con_status.emit("statusLed", "OK")
@@ -160,6 +175,15 @@ class App(QObject):
             self._router_con_status.emit("statusLed", "NOK")
 
     def _signals_motor_connection(self, status: str):
+        """Updates the signals related to the motor connection
+
+        Parameters
+        ----------
+        status : str
+            waiting -> not connected
+            connecting -> not connected and trying to connect
+            connected -> connected
+        """
         if status is "connected":
             self._motor_con_status.emit("conStatusBar", "connected")
             self._motor_con_status.emit("statusLed", "OK")
@@ -171,6 +195,14 @@ class App(QObject):
             self._motor_con_status.emit("statusLed", "NOK")
 
     def _signals_server_connection(self, status: bool):
+        """Updates the signals related to the server connection
+
+        Parameters
+        ----------
+        status : bool
+            True -> Server initialized
+            False -> Server not initialized
+        """
         self._server_started_bool.emit(status)
         if status:
             self._server_started_status.emit("statusLed", "OK")
@@ -214,15 +246,15 @@ class App(QObject):
         self.poller = zmq.Poller()                                                      # Creates Poller
         self.poller.register(self.replier, zmq.POLLIN)                                  # Register poller to monitoring REP
         self.logger.info(f'Server Started')
-        self.pub_status()                                                               # Publishes current status to ZMQ
+        self._pub_status()                                                               # Publishes current status to ZMQ
         self._signals_server_connection(True)
         
     
-    def close_connection(self):
+    def _close_connection(self):
         """Unbind all sockets and destroy context"""
         self.device.disconnect()
         self.status["connected"] = self.device.connected
-        self.pub_status()
+        self._pub_status()
         try:
             if(self.publisher):
                 self.publisher.unbind(f"tcp://{self.ip_address}:{self.port_pub}")
@@ -242,12 +274,17 @@ class App(QObject):
 
     def disconnect(self):
         """Stops main loop and close all sockets"""
-        self.stop()
-        self.close_connection()
+        self._stop()
+        self._close_connection()
+
+    # Updates signals status
+        self._signals_server_connection(False)
+        self._signals_motor_connection("waiting")
+        self._signals_router_connection("waiting")
 
         self.logger.info(f'Server Disconnecting')
     
-    def pub_status(self):
+    def _pub_status(self):
         """Publishes status via ZeroMQ"""
         self.status["timestamp"] = datetime.isoformat(datetime.now(), timespec='milliseconds')              # Sets status timestamp
         json_string = json.dumps(self.status)                                                               # Serializes the current Status in a JSON formatted string
@@ -257,9 +294,9 @@ class App(QObject):
         except Exception as e:
             self.logger.error(f'Error: {str(e)}')
     
-    def stop(self):
+    def _stop(self):
         """Stop main loop and unregister zmq.POLL"""
-        self.stop_var = True
+        self._stop_var = True
         if self.poller:
             self.poller.unregister(self.replier)
             self.poller = None
@@ -301,7 +338,7 @@ class App(QObject):
             self.status["alarm"] = self.device.alarm
             self.status["error"] = str(e)
             self.logger.error(f'Homing {e}')
-            self.pub_status()
+            self._pub_status()
 
     def handle_halt(self):
         """Stops the motor"""
@@ -332,7 +369,7 @@ class App(QObject):
         """(Deprecated) - Self explained"""
         self.logger.info(f'Device Connected')
         self.device.position
-        self.pub_status()
+        self._pub_status()
 
     def handle_disconnect(self):
         """(Deprecated) - Self explained"""
@@ -361,7 +398,7 @@ class App(QObject):
             self.status["alarm"] = self.device.alarm
             self.status["error"] = str(e)
             self.logger.error(f'Moving FOCUS IN | OUT')
-            self.pub_status()
+            self._pub_status()
 
     def handle_move(self, pos, speed):
         """Move focuser to a position
@@ -378,7 +415,7 @@ class App(QObject):
             self.status["alarm"] = self.device.alarm
             self.status["error"] = str(e)
             self.logger.error(f'Moving {pos}: {str(e)}')
-            self.pub_status()
+            self._pub_status()
 
     def update_status(self):
         """Verifies if there is a change in state variables, 
@@ -387,7 +424,7 @@ class App(QObject):
             self.status["position"] = self._position
             self.previous_pos = self._position
             self._flag_change = True
-            # self.pub_status()
+            # self._pub_status()
             self.encoder = int(self._position * Config.enc_2_microns)
 
         if self._is_moving != self.previous_is_mov:
@@ -395,13 +432,13 @@ class App(QObject):
             self.previous_is_mov = self._is_moving 
             self.status["initialized"] = self.device.initialized
             self._flag_change = True
-            # self.pub_status()
+            # self._pub_status()
 
         if self._homing != self.previous_homing:
             self.status["homing"] = self._homing            
             self.previous_homing = self._homing
             self._flag_change = True
-            # self.pub_status()
+            # self._pub_status()
         
         # resp = format(int(self.device.get_motor_status), '012b')        # TODO: Ver um jeito de converter para binário sem ser string
         # motor_status = "".join(reversed(resp))                          
@@ -418,7 +455,7 @@ class App(QObject):
 
         if self._flag_change:   # Publishes in 0MQ if a change occurred
             self._flag_change = False
-            self.pub_status()
+            self._pub_status()
 
         # if self._is_moving and self._homing:
         #     self.status["clientId"] = 0
@@ -434,19 +471,19 @@ class App(QObject):
             'HALT': self.handle_halt,
             'CONNECT': self.handle_connect,
             'DISCONNECT': self.handle_disconnect,
-            'STATUS': self.pub_status,
+            'STATUS': self._pub_status,
         }
         self.start_server()                                         # Starts the ZMQ server and publishes the current status
-        self.stop_var = False                                       # Initializes variable used that keep the thread loop running
+        self._stop_var = False                                       # Initializes variable used that keep the thread loop running
         self.status["connected"] = self.device.connected            # Reads "_connected" from the motor
-        while not self.stop_var:                                    # Start of the thread loop
+        while not self._stop_var:                                    # Start of the thread loop
             t0 = time.time()                                        # Keeps the time when the loop began
             current_time = datetime.now()                           # Reads current time
             # if -1 >= (current_time.second - self.last_pub.second) or (current_time.second - self.last_pub.second) >= 1:       #TODO: Não daria pra só checar se o valor absoluto for >= 1?
             if abs(current_time.second - self.last_pub.second) >= 1:                                                            # Updates position and publishes status every 1 second
                 # self.device.position 
                 self._position = self.device.position                                                                           # Reads motor current position
-                self.pub_status()                                                                                               # Publishes status  #TODO: Não adianta atualizar "_position" se não colocar em "Status" para publicar
+                self._pub_status()                                                                                               # Publishes status  #TODO: Não adianta atualizar "_position" se não colocar em "Status" para publicar
                 self.last_pub = current_time                                                                                    # Updates las publish moment
             if self.device and self.device.connected and self.poller:                                                           # Continues the loop if the device is configured and connected and the poller is configured
                 socks = dict(self.poller.poll(50))                                                                              # Polls the information from the ZMQ to receive commands from the client
@@ -500,7 +537,7 @@ class App(QObject):
                         self.status["connected"] = self.device.connected                                                        # Updates connection status of the motor
 
                     except Exception as e:                                                                                      # If an exception occurs during the handling of the command 
-                        self.pub_status()                                                                                       # Published current status
+                        self._pub_status()                                                                                       # Published current status
                         self.logger.error(f'Error: {str(e)}')                                                                   # Logs error
 
                 if self._is_moving:                             #TODO: Qual o motivo de `_is_moving` ter que ser `true` para chamar `device.is_moving` para checar se está em movimento?
@@ -530,5 +567,6 @@ class App(QObject):
                     self._motor_reachable = self.ping_server()                                                                      # Updates if moto is reachable
                     self.reach_device()                                                                                             # Tries to reach device
                 self.status["connected"] = self.device.connected                                                                # Updates "connected" state
+                self._statusMessage.emit("")                                                                                    # Clears status message
             self.connection_speed = f"interval:  {round(time.time()-t0, 3)}"                                                # Calculates time to run thread loop
 

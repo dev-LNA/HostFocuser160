@@ -80,6 +80,7 @@ class FocuserOPD(QtWidgets.QMainWindow):
         self.ui_elements.conBarRouterMotor.setProperty("conStatusBar", "waiting")
        
         self.ui_elements.btnStart.clicked.connect(self._start)
+        self.ui_elements.btnStop.clicked.connect(self._stop)
         
         self.ui_elements.actionShow_toolbar.triggered.connect(              
             lambda checked: self.ui_elements.toolBar.setVisible(checked)    # Action to toggle toolbar
@@ -94,6 +95,9 @@ class FocuserOPD(QtWidgets.QMainWindow):
         self.control._motor_con_status.connect(self.ui_elements.ledMotor.setProperty)
         self.control._server_started_status.connect(self.ui_elements.ledServer.setProperty)
         self.control._server_started_bool.connect(self.ui_elements.btnStart.setDisabled)
+        self.control._server_started_bool.connect(self.ui_elements.btnStop.setEnabled)
+
+        self.control._statusMessage.connect(self.statusBar().showMessage)
 
 
         
