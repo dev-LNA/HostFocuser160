@@ -25,6 +25,9 @@ class App(QObject):
     _router_con_status = pyqtSignal(str, str)
     _motor_con_status = pyqtSignal(str, str)
 
+    _server_started_status = pyqtSignal(str, str)
+    _server_started_bool = pyqtSignal(bool)
+
     _router_reachable = False
     _motor_reachable  = False
 
@@ -93,9 +96,9 @@ class App(QObject):
         
         self.device = Focuser(self.logger)
 
-
-        self.reach_device()
-        self.start_server()
+    # Reaching the device and starting the server at this point is not necessary        
+        # self.reach_device()
+        # self.start_server()
 
     def reach_device(self):
         """Ping device and reads the position and initialized variables"""
@@ -103,40 +106,34 @@ class App(QObject):
         self.last_ping_time = datetime.now()
 
         if not self._router_reachable:
-            self._router_con_status.emit("conStatusBar", "connecting")
-            self._router_con_status.emit("statusLed", "NOK")
-            self._motor_con_status.emit("conStatusBar", "waiting")
-            self._motor_con_status.emit("statusLed", "NOK")
+            self._signals_router_connection("waiting")
+            self._signals_motor_connection("waiting")
+            
+            
             for _try in range(5):
                 print(f"Trying Connect to Router: Try number {_try+1}")
                 self._router_reachable = self.ping_router()
                 if self._router_reachable:
                     print("Connection succesfull after", (_try+1), "tries" )
-                    self._router_con_status.emit("conStatusBar", "connected")
-                    self._router_con_status.emit("statusLed", "OK")
+                    self._signals_router_connection("connected")
                     break
 
 
         if self._router_reachable:
-            self._router_con_status.emit("conStatusBar", "connected")
-            self._router_con_status.emit("statusLed", "OK")
+            self._signals_router_connection("connected")
+            self._signals_motor_connection("connecting")
             
-            self._motor_con_status.emit("conStatusBar", "connecting")
-            self._motor_con_status.emit("statusLed", "NOK")
-
-            for _try in range(5):
+            for _try in range(5): 
                 print(f"Trying Connect to Motor: Try number {_try+1}")
                 self._motor_reachable = self.ping_server()
                 if self._motor_reachable:
                     print("Connection succesfull after", (_try+1), "tries" )
-                    self._motor_con_status.emit("conStatusBar", "connected")
-                    self._motor_con_status.emit("statusLed", "OK")
+                    self._signals_motor_connection("connected")
                     break
             
             if self._motor_reachable:
-                self._motor_con_status.emit("conStatusBar", "connected")
-                self._motor_con_status.emit("statusLed", "OK")
-
+                self._signals_motor_connection("connected")
+                              
                 try:
                     self.device.connected = True
                     self._position =self.device.position
@@ -151,88 +148,74 @@ class App(QObject):
                     self.logger.error(f'Error reaching device: {str(e)}') 
 
 
+    def _signals_router_connection(self, status: str):
+        if status is "connected":
+            self._router_con_status.emit("conStatusBar", "connected")
+            self._router_con_status.emit("statusLed", "OK")
+        elif status is "connecting":
+            self._router_con_status.emit("conStatusBar", "connecting")
+            self._router_con_status.emit("statusLed", "NOK")
+        else:
+            self._router_con_status.emit("conStatusBar", "waiting")
+            self._router_con_status.emit("statusLed", "NOK")
 
+    def _signals_motor_connection(self, status: str):
+        if status is "connected":
+            self._motor_con_status.emit("conStatusBar", "connected")
+            self._motor_con_status.emit("statusLed", "OK")
+        elif status is "connecting":
+            self._motor_con_status.emit("conStatusBar", "connecting")
+            self._motor_con_status.emit("statusLed", "NOK")
+        else:
+            self._motor_con_status.emit("conStatusBar", "waiting")
+            self._motor_con_status.emit("statusLed", "NOK")
 
+    def _signals_server_connection(self, status: bool):
+        self._server_started_bool.emit(status)
+        if status:
+            self._server_started_status.emit("statusLed", "OK")
+        else:
+            self._server_started_status.emit("statusLed", "NOK")
 
-
-
-        # print("Trying Connect")
-        # self._router_con_status.emit("conStatusBar", "connecting")
-        # self._motor_con_status.emit("conStatusBar", "connecting")
-        # self._router_con_status.emit("statusLed", "NOK")
-        # self._motor_con_status.emit("statusLed", "NOK")
-        # for _try in range(5):
-        #     print("Trying Connect to motor: Try number ", (_try+1))            
-        #     self.reachable = self.ping_server()            
-        #     if self.reachable:
-        #         self.router = True
-        #         print("Connection succesfull after", (_try+1), "tries" )
-        #         self._router_con_status.emit("conStatusBar", "connected")
-        #         self._router_con_status.emit("statusLed", "OK")
-        #         self._motor_con_status.emit("conStatusBar", "connected")
-        #         self._motor_con_status.emit("statusLed", "OK")
-        #         break
-        #     print("Device not reachable...")     
-        #     print("Trying to reach router...")       
-        #     self.router = self.ping_router()
-        #     if(self.router):
-        #         print("Router reachable")
-        #         self._router_con_status.emit("conStatusBar", "connected")
-        #         self._router_con_status.emit("statusLed", "OK")
-        #     else:
-        #         print("Could not reach router")
-        #         self._router_con_status.emit("conStatusBar", "awaiting")
-        #         self._motor_con_status.emit("conStatusBar", "awaiting")
-        #         self._router_con_status.emit("statusLed", "NOK")
-        #         self._motor_con_status.emit("statusLed", "NOK")
-        # if self.reachable:          #TODO: Atualizar com o caso de não tem conseguido conectar? Quais mensagens no status e no logger precisariam ser alteradas?
-        #     try:
-        #         self.device.connected = True
-        #         self._position =self.device.position
-        #         self.status["position"] = self._position
-        #         self.status["initialized"] = self.device.initialized
-        #         self.status["device_IP"] = self.device.get_device_IP
-        #         self.status["device_ID"] = self.device.get_device_ID
-        #         self.status["device_Firmware_Version"] = self.device.get_device_Firmware_Version
-                
-        #         self.logger.info(f'Device Reached.')
-        #     except Exception as e:
-        #         self.logger.error(f'Error reaching device: {str(e)}') 
        
 
     def start_server(self): 
         """ Starts Server ZeroMQ, creating context 
         then binding PUB and REP sockets"""
 
-        if self.context:    
+        if self.context:                                                                # If context already created returns
+            self._signals_server_connection(True)
             return  
         
-        self.context = zmq.Context()
+        self.context = zmq.Context()                                                    # Creates context
         print('Context Created')
 
         try:
             # Status Publisher
-            self.publisher = self.context.socket(zmq.PUB)
-            self.publisher.bind(f"tcp://{self.ip_address}:{self.port_pub}")
+            self.publisher = self.context.socket(zmq.PUB)                               # Creates PUB
+            self.publisher.bind(f"tcp://{self.ip_address}:{self.port_pub}")             # Binds PUB to * IP address and configured PUB port
             print(f"Publisher binded to {self.ip_address}:{self.port_pub}")
         except Exception as e:
-            self.logger.error(f'Error Binding Publihser: {str(e)}')
+            self.logger.error(f'Error Binding Publisher: {str(e)}')
+            self._signals_server_connection(False)
             return
 
         try:
             # Command REP
-            self.replier = self.context.socket(zmq.REP)
-            self.replier.bind(f"tcp://{self.ip_address}:{self.port_rep}")
+            self.replier = self.context.socket(zmq.REP)                                 # Creates REP
+            self.replier.bind(f"tcp://{self.ip_address}:{self.port_rep}")               # Binds REP to * IP adress and configured REP port
             print(f"REP binded to {self.ip_address}:{self.port_rep}")
         except Exception as e:
             self.logger.error(f'Error Binding Replier: {str(e)}')
+            self._signals_server_connection(False)
             return
 
         # Poller
-        self.poller = zmq.Poller()
-        self.poller.register(self.replier, zmq.POLLIN)        
+        self.poller = zmq.Poller()                                                      # Creates Poller
+        self.poller.register(self.replier, zmq.POLLIN)                                  # Register poller to monitoring REP
         self.logger.info(f'Server Started')
-        self.pub_status()
+        self.pub_status()                                                               # Publishes current status to ZMQ
+        self._signals_server_connection(True)
         
     
     def close_connection(self):
@@ -266,11 +249,11 @@ class App(QObject):
     
     def pub_status(self):
         """Publishes status via ZeroMQ"""
-        self.status["timestamp"] = datetime.isoformat(datetime.now(), timespec='milliseconds')
-        json_string = json.dumps(self.status)  
+        self.status["timestamp"] = datetime.isoformat(datetime.now(), timespec='milliseconds')              # Sets status timestamp
+        json_string = json.dumps(self.status)                                                               # Serializes the current Status in a JSON formatted string
         try:      
-            self.publisher.send_string(json_string)
-            self.logger.info(f'Status published: {self.status}')
+            self.publisher.send_string(json_string)                                                         # Publishes Status JSON string
+            self.logger.info(f'Status published: {self.status}')                                            # If no error occurred while publishing logs the published JSON string
         except Exception as e:
             self.logger.error(f'Error: {str(e)}')
     
@@ -445,115 +428,107 @@ class App(QObject):
 
     def run(self):
         """Main Loop"""
-        self._client_id = 0
-        command_handlers = {
+        self._client_id = 0                                         # Starts client not busy
+        command_handlers = {                                        # Handles for the methods to be executed according to the commands
             'HOME': self.handle_home,
             'HALT': self.handle_halt,
             'CONNECT': self.handle_connect,
             'DISCONNECT': self.handle_disconnect,
             'STATUS': self.pub_status,
         }
-        self.start_server()
-        self.stop_var = False
-        self.status["connected"] = self.device.connected
-        while not self.stop_var:
-            t0 = time.time()
-            current_time = datetime.now()
+        self.start_server()                                         # Starts the ZMQ server and publishes the current status
+        self.stop_var = False                                       # Initializes variable used that keep the thread loop running
+        self.status["connected"] = self.device.connected            # Reads "_connected" from the motor
+        while not self.stop_var:                                    # Start of the thread loop
+            t0 = time.time()                                        # Keeps the time when the loop began
+            current_time = datetime.now()                           # Reads current time
             # if -1 >= (current_time.second - self.last_pub.second) or (current_time.second - self.last_pub.second) >= 1:       #TODO: Não daria pra só checar se o valor absoluto for >= 1?
             if abs(current_time.second - self.last_pub.second) >= 1:                                                            # Updates position and publishes status every 1 second
                 # self.device.position 
-                self._position = self.device.position    
-                self.pub_status()
-                self.last_pub = current_time
-            if self.device and self.device.connected and self.poller:
-                socks = dict(self.poller.poll(50))
-                if socks.get(self.replier) == zmq.POLLIN:
-                    msg_rep = self.replier.recv_string()
+                self._position = self.device.position                                                                           # Reads motor current position
+                self.pub_status()                                                                                               # Publishes status  #TODO: Não adianta atualizar "_position" se não colocar em "Status" para publicar
+                self.last_pub = current_time                                                                                    # Updates las publish moment
+            if self.device and self.device.connected and self.poller:                                                           # Continues the loop if the device is configured and connected and the poller is configured
+                socks = dict(self.poller.poll(50))                                                                              # Polls the information from the ZMQ to receive commands from the client
+                if socks.get(self.replier) == zmq.POLLIN:                                                                       # If the socket is configured as Pollin   #TODO: Necessário?
+                    msg_rep = self.replier.recv_string()                                                                        # Receives the JSON from the client
                     try:
-                        msg_rep = json.loads(msg_rep)
-                        cmd = msg_rep.get("action") 
-                        if not 'STATUS' in cmd and (msg_rep.get("clientId") == self._client_id or self._client_id == 0):    #TODO: Definir melhor os comandos que podem ser executados quando o dispositivo está ocupado        
+                        msg_rep = json.loads(msg_rep)                                                                           # Deserializes the JSON
+                        cmd = msg_rep.get("action")                                                                             # Reads the "action" from the JSON
+                        if not 'STATUS' in cmd and (msg_rep.get("clientId") == self._client_id or self._client_id == 0):        #TODO: Definir melhor os comandos que podem ser executados quando o dispositivo está ocupado        
                             # Only accept commands (except for status request) if not busy or if it 
                             # was requested by the same client
-                            self.status["cmd"] = msg_rep
-                            self._client_id = msg_rep.get("clientId") 
+                            self.status["cmd"] = msg_rep                                                                        # Reads the "cmd" from the JSON
+                            self._client_id = msg_rep.get("clientId")                                                           # Reads the "clientID" from the JSON
                     except Exception as e:
                         print(e)
-                        self.reply('NAK')
+                        self.reply('NAK')                                                                                       # If an error occurred during the reading of the JSON return 'NAK' to the client
                     try:
                         # Handle all possible commands
-                        self.status["error"] = ""
-                        # command_handlers = {
-                        #     'HOME': self.handle_home,
-                        #     'HALT': self.handle_halt,
-                        #     'CONNECT': self.handle_connect,
-                        #     'DISCONNECT': self.handle_disconnect,
-                        #     'STATUS': self.pub_status,
-                        # }
+                        self.status["error"] = ""                                                                               # Resets "error" status
 
-                        command_processed = False
+                        command_processed = False                                                                               # Initializes "command_processed"
 
-                        if "MOVE=" in cmd and self.busy_id == 0:
-                            self.handle_move(cmd[5:], Config.max_speed)
-                            self.reply('ACK')
-                            command_processed = True
+                        if "MOVE=" in cmd and self.busy_id == 0:                                                                # If the server is not busy and received the command "MOVE"
+                            self.handle_move(cmd[5:], Config.max_speed)                                                         # Calls function to handle move with the desired position and default speed
+                            self.reply('ACK')                                                                                   # Return 'ACK' to the client
+                            command_processed = True                                                                            # Sets "command_processed"
 
-                        if "FOCUSIN" in cmd and self.busy_id == 0:
-                            self.handle_in_out(1, cmd[8:])
-                            self.reply('ACK')
-                            command_processed = True
+                        if "FOCUSIN" in cmd and self.busy_id == 0:                                                              # If the server is not busy and received the command "FOCUSIN"
+                            self.handle_in_out(1, cmd[8:])                                                                      # Calls the function to handle FOCUSIN and FOCUSOUT with '1' to select FOCUSIN
+                            self.reply('ACK')                                                                                   # Return 'ACK' to the client
+                            command_processed = True                                                                            # Sets "command_processed"
 
-                        if "FOCUSOUT" in cmd and self.busy_id == 0:
-                            self.handle_in_out(0, cmd[9:])
-                            self.reply('ACK')
-                            command_processed = True
+                        if "FOCUSOUT" in cmd and self.busy_id == 0:                                                             # If the server is not busy and received the command "FOCUSOUT"
+                            self.handle_in_out(0, cmd[9:])                                                                      # Calls the function to handle FOCUSIN and FOCUSOUT with '0' to select FOCUSOUT    
+                            self.reply('ACK')                                                                                   # Return 'ACK' to the client            
+                            command_processed = True                                                                            # Sets "command_processed"            
 
-                        if "HALT" in cmd and (self._client_id == self.busy_id or self.busy_id == 0):
-                            self.handle_halt()
-                            self.reply('ACK')
-                            command_processed = True
+                        if "HALT" in cmd and (self._client_id == self.busy_id or self.busy_id == 0):                            # If the server is not busy or the client is the same previously connected and the command "HALT" is received                            
+                            self.handle_halt()                                                                                  # Calls the function that handles "HALT"        
+                            self.reply('ACK')                                                                                   # Return 'ACK' to the client                    
+                            command_processed = True                                                                            # Sets "command_processed"                 
 
-                        if cmd in command_handlers and self.busy_id == 0: #TODO: O comando HALT está tanto no "command_handlers" quanto no `if` acima
-                            command_handlers[cmd]()
-                            self.reply('ACK')
-                            command_processed = True
+                        if cmd in command_handlers and self.busy_id == 0:                                                       # If server not busy and other command is received              #TODO: O comando HALT está tanto no "command_handlers" quanto no `if` acima
+                            command_handlers[cmd]()                                                                             # Calls the appropriate function to handle the received command #TODO: Todoas as funções podem ser chamadas dessa forma 
+                            self.reply('ACK')                                                                                   # Return 'ACK' to the client 
+                            command_processed = True                                                                            # Sets "command_processed"
 
-                        if not command_processed:
-                            self.reply('NAK')
+                        if not command_processed:                                                                               # If command was NOT processed
+                            self.reply('NAK')                                                                                   # Return 'NAK' to client
 
-                        self.status["connected"] = self.device.connected
+                        self.status["connected"] = self.device.connected                                                        # Updates connection status of the motor
 
-                    except Exception as e:
-                        self.pub_status()
-                        self.logger.error(f'Error: {str(e)}')
+                    except Exception as e:                                                                                      # If an exception occurs during the handling of the command 
+                        self.pub_status()                                                                                       # Published current status
+                        self.logger.error(f'Error: {str(e)}')                                                                   # Logs error
 
                 if self._is_moving:                             #TODO: Qual o motivo de `_is_moving` ter que ser `true` para chamar `device.is_moving` para checar se está em movimento?
-                    self._is_moving = self.device.is_moving
+                    self._is_moving = self.device.is_moving                                                                     # Checks if the motor is in movement        #TODO: Na verdade está checando se alguma função está sendo executada no motor
                     time.sleep(.05)
-                    self._position = self.device.position
-                if self._homing:
-                    self._homing = self.device.homing           #TODO: Qual o motivo de `_homing` ter que ser `true` para chamar `device.homing` para checar se está executando a rotina de inicialização?
-                    # self._position = self.device.position 
-                if not self._homing and not self._is_moving:
-                    # this means the device is not busy
-                    self._client_id = 0
-                    self.status["cmd"] =  {
-                                            "clientId": self._client_id,    #TODO: Esse valor pode ser 0? Checar arquivo do Ramon e documentação Alpaca. Talvez o 0 seja reservado para "not busy"
-                                            "clientTransactionId": 0,       #TODO: Esse valor pode ser 0? Checar arquivo do Ramon e documentação Alpaca. Talvez o 0 seja reservado para "not busy"
+                    self._position = self.device.position                                                                       # Updates motor position             
+                if self._homing:                                # (self._homing == True) indicates that the homing was not performed
+                    self._homing = self.device.homing           # This means that while the homing is not performed this will keep checking if it was performed        #TODO: Qual o motivo de `_homing` ter que ser `true` para chamar `device.homing` para checar se está executando a rotina de inicialização?
+                if not self._homing and not self._is_moving:    # (self._homing == False) indicates that the homing was performed
+                                                                # The homing was performed and the motor is not moving -> Indicates the motor is not busy
+                    self._client_id = 0                         # Sets client not busy
+                    self.status["cmd"] =  {                     # Resets "cmd" 
+                                            "clientId": self._client_id,                #TODO: Esse valor pode ser 0? Checar arquivo do Ramon e documentação Alpaca. Talvez o 0 seja reservado para "not busy"
+                                            "clientTransactionId": 0,                   #TODO: Esse valor pode ser 0? Checar arquivo do Ramon e documentação Alpaca. Talvez o 0 seja reservado para "not busy"
                                             "clientName": "",
                                             "action": ""
                                             }                    
                 
                 # self._position = self.device.position
-                self.busy_id = self._client_id
-                self.update_status()                
-                self.status["alarm"] = 0
-
-            else:
-                if abs(current_time.second - self.last_ping_time.second) >= 5:
-                    self._router_reachable = self.ping_router()
-                    self._motor_reachable = self.ping_server()
-                    self.reach_device()
-                self.status["connected"] = self.device.connected
-            self.connection_speed = f"interval:  {round(time.time()-t0, 3)}"
+                self.busy_id = self._client_id                                              # Keeps the ID of the client that sent the last command
+                self.update_status()                                                        # Updates motor readings and publishes the current status to ZMQ             
+                self.status["alarm"] = 0                                                    # Resets "alarm"
+                                                    
+            else:                                                                       # If the device is not configured or not connected or the poller is not configured              
+                if (abs(current_time.second - self.last_ping_time.second) >= 5) or (self._router_reachable is False):           # Runs every 5 seconds
+                    self._router_reachable = self.ping_router()                                                                     # Updates if router is reachable      #INFO: self.reach_device() já faz esses dois
+                    self._motor_reachable = self.ping_server()                                                                      # Updates if moto is reachable
+                    self.reach_device()                                                                                             # Tries to reach device
+                self.status["connected"] = self.device.connected                                                                # Updates "connected" state
+            self.connection_speed = f"interval:  {round(time.time()-t0, 3)}"                                                # Calculates time to run thread loop
 

@@ -78,14 +78,24 @@ class FocuserOPD(QtWidgets.QMainWindow):
 
         self.ui_elements.conBarServerRouter.setProperty("conStatusBar", "waiting")
         self.ui_elements.conBarRouterMotor.setProperty("conStatusBar", "waiting")
+       
+        self.ui_elements.btnStart.clicked.connect(self._start)
+        
+        self.ui_elements.actionShow_toolbar.triggered.connect(              
+            lambda checked: self.ui_elements.toolBar.setVisible(checked)    # Action to toggle toolbar
+        )   
 
+
+        # Configuration of signals
         self.control._router_con_status.connect(self.ui_elements.conBarServerRouter.setProperty)
         self.control._motor_con_status.connect(self.ui_elements.conBarRouterMotor.setProperty)
 
-        self.ui_elements.ledServer.setProperty("ledStatus", "OK")
-
         self.control._router_con_status.connect(self.ui_elements.ledRouter.setProperty)
         self.control._motor_con_status.connect(self.ui_elements.ledMotor.setProperty)
+        self.control._server_started_status.connect(self.ui_elements.ledServer.setProperty)
+        self.control._server_started_bool.connect(self.ui_elements.btnStart.setDisabled)
+
+
         
 
         # Imports the box to show log files                             # TODO: Adicionar mais funcionalidades ao log box, como pesquisar no log e escolher o log que se deseja abrir
@@ -142,8 +152,6 @@ class FocuserOPD(QtWidgets.QMainWindow):
         self.ui_elements.ledRouter.installEventFilter(self)
         self.ui_elements.ledMotor.installEventFilter(self)
 
-        self.ui_elements.ledServer.setProperty("ledStatus", "OK")
-
         self._ping()
         if Config.startup:
             self._start()
@@ -156,9 +164,7 @@ class FocuserOPD(QtWidgets.QMainWindow):
 
         self._starting_size = QSize(self.width(), self.height())    # Holds the initial screen size
         
-        self.ui_elements.actionShow_toolbar.triggered.connect(              
-            lambda checked: self.ui_elements.toolBar.setVisible(checked)    # Action to toggle toolbar
-            )   
+
     
         
         # self.ui_elements.pushButton.clicked.connect(self.teste1)
@@ -296,7 +302,7 @@ class FocuserOPD(QtWidgets.QMainWindow):
             print("simulador fechado")
 
 
-    def _ping(self):
+    def _ping(self):        # INFO: Com os signals configurados acho que não vai mais precisar dessa função
         """Checks if device is reachable"""
 
         self._cooldown = time.time()
