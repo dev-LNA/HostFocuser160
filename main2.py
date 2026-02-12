@@ -69,9 +69,9 @@ class FocuserOPD(QtWidgets.QMainWindow):
         self.ui_elements = UiWidgets(self)
 
         # Ui elements initialization and configuration
-        self.ui_elements.txtSocketIP.setText(f"{self.control.ip_address}")
-        self.ui_elements.txtPortPUB.setText(f"{self.control.port_pub}")
-        self.ui_elements.txtPortREP.setText(f"{self.control.port_rep}")
+        self.ui_elements.lblSocketIP.setText(f"{self.control.ip_address}")
+        self.ui_elements.lblPortPUB.setText(f"{self.control.port_pub}")
+        self.ui_elements.lblPortREP.setText(f"{self.control.port_rep}")
         self.ui_elements.actionShow_Log.triggered.connect(self._toggle_log_box)
         self.ui_elements.actionClient_Simulator.triggered.connect(self._run_simulator)
         self.ui_elements.actionHide.triggered.connect(self._minimize_to_tray)
@@ -86,18 +86,35 @@ class FocuserOPD(QtWidgets.QMainWindow):
             lambda checked: self.ui_elements.toolBar.setVisible(checked)    # Action to toggle toolbar
         )   
 
+        self._conIcon = QLabel()
+        # self._conIcon.setPixmap(QPixmap(icon_con_ok))
+        self._conIcon.setMaximumSize(21,21)
+        self.statusBar().addPermanentWidget(self._conIcon)
 
         # Configuration of signals
-        self.control._router_con_status.connect(self.ui_elements.conBarServerRouter.setProperty)
-        self.control._motor_con_status.connect(self.ui_elements.conBarRouterMotor.setProperty)
+        self.control._signal_router_status.connect(self.ui_elements.conBarServerRouter.setProperty)
+        self.control._signal_motor_status.connect(self.ui_elements.conBarRouterMotor.setProperty)
 
-        self.control._router_con_status.connect(self.ui_elements.ledRouter.setProperty)
-        self.control._motor_con_status.connect(self.ui_elements.ledMotor.setProperty)
-        self.control._server_started_status.connect(self.ui_elements.ledServer.setProperty)
-        self.control._server_started_bool.connect(self.ui_elements.btnStart.setDisabled)
-        self.control._server_started_bool.connect(self.ui_elements.btnStop.setEnabled)
+        self.control._signal_router_status.connect(self.ui_elements.ledRouter.setProperty)
+        self.control._signal_motor_status.connect(self.ui_elements.ledMotor.setProperty)
+        self.control._signal_server_started_status.connect(self.ui_elements.ledServer.setProperty)
+        self.control._signal_server_started_bool.connect(self.ui_elements.btnStart.setDisabled)
+        self.control._signal_server_started_bool.connect(self.ui_elements.btnStop.setEnabled)
 
         self.control._statusMessage.connect(self.statusBar().showMessage)
+        self.control._statusBar_led.connect(self._conIcon.setPixmap)
+        self.control._connection_speed.connect(self.ui_elements.lblComSpeed.setText)
+
+        self.control._signal_client_id.connect(self.ui_elements.lblClientID_val.setText)
+        self.control._signal_position.connect(self.ui_elements.lblPosition_val.setText)
+        self.control._signal_encoder.connect(self.ui_elements.lblEncoder_val.setText)
+        # self.control._signal_moving.connect(self.ui_elements.ledMoving.setPixmap)
+        self.control._signal_moving.connect(self.ui_elements.ledMoving.setProperty)
+
+        self.control._signal_motor_reachable_bool.connect(self.ui_elements.gbConnectivity.setEnabled)
+        self.control._signal_motor_reachable_bool.connect(self.ui_elements.gbDriverInfo.setEnabled)
+
+        self.control._signal_transaction_id.connect(self.ui_elements.lblTransactionId_val.setText)
 
 
         
@@ -106,10 +123,7 @@ class FocuserOPD(QtWidgets.QMainWindow):
         self.log_box = LogBox()                                         # TODO: Também é necessário alterar a forma que os arquivos são salvos, colocando um nome padrão de acordo com a data    
         self.log_box.closed.connect(self._closed_log_box)               # Signal to inform the main window that the log box was closed by pressing the X button            
         
-        self._conIcon = QLabel()
-        self._conIcon.setPixmap(QPixmap(icon_con_ok))
-        self._conIcon.setMaximumSize(21,21)
-        self.statusBar().addPermanentWidget(self._conIcon)
+
 
         
 
@@ -155,6 +169,7 @@ class FocuserOPD(QtWidgets.QMainWindow):
         self.ui_elements.ledServer.installEventFilter(self)
         self.ui_elements.ledRouter.installEventFilter(self)
         self.ui_elements.ledMotor.installEventFilter(self)
+        self.ui_elements.ledMoving.installEventFilter(self)
 
         self._ping()
         if Config.startup:
@@ -188,9 +203,7 @@ class FocuserOPD(QtWidgets.QMainWindow):
 
 
     def _testes(self):
-        self.ui_elements.conBarServerRouter.setProperty("conStatusBar", "waiting")
-        self.ui_elements.conBarRouterMotor.setProperty("conStatusBar", "connecting")
-        self.ui_elements.ledServer.setProperty("statusLed", "NOK")
+        self.control.reset_timeout()
 
     def teste1(self):
 
@@ -296,7 +309,7 @@ class FocuserOPD(QtWidgets.QMainWindow):
                 self.second_window.move(self.pos() + QPoint(self.width(), 0))   # Positions the simulator window next to the main window
                 self.second_window.show()                                       # Opens the simulator window
         else:
-            self._simulator_closed(True)                                        # Closes the simulator if already opened
+            self.second_window.close()                                          # Closes the simulator if already opened
 
     def _simulator_closed(self, msg):
         """ Receives closed window signal from the simulator """
@@ -385,7 +398,7 @@ class FocuserOPD(QtWidgets.QMainWindow):
                     # Animations related to labels
                     self._update_gui_element(obj)
                     return True 
-
+            
         # For all other events or objects, return False to allow normal handling
         return super().eventFilter(obj, event)
 
@@ -421,14 +434,14 @@ class FocuserOPD(QtWidgets.QMainWindow):
             pass
         if con:
             # self.statusBar().showMessage("Device Socket Connected")
-            self._conIcon.setPixmap(QPixmap(icon_con_ok))
+            # self._conIcon.setPixmap(QPixmap(icon_con_ok))
         
             if not self._reachable:
                 # self.lblPing.setText("Device is Reachable")
-                self._conIcon.setPixmap(QPixmap(icon_con_wait))
+                # self._conIcon.setPixmap(QPixmap(icon_con_wait))
                 self._reachable = True
         else:
-            self._conIcon.setPixmap(QPixmap(icon_con_nok))        
+            # self._conIcon.setPixmap(QPixmap(icon_con_nok))        
             if self._reachable:
                 # self.lblPing.setText("Device is NOT Reachable")
                 self._reachable = False
@@ -436,7 +449,7 @@ class FocuserOPD(QtWidgets.QMainWindow):
 
         # self.lblPos.setText(str(status["position"]))
         # self.lblEnc.setText(str(self.control.encoder))
-        # self.txtClientID.setText(str(self.control.busy_id))
+        # self.lblClientID_val.setText(str(self.control.busy_id))
         # self.lblCommSpeed.setText(str(self.control.connection_speed))
         if len(status["error"]) > 1:
             pass

@@ -80,20 +80,37 @@ class UiWidgets(QWidget):
         self.gbConnectivity = window.findChild(QGroupBox, 'gbConnectivity')
         self.gbConnectivity: QGroupBox = self.gbConnectivity
 
-        self.txtSocketIP = window.findChild(QLineEdit, 'txtSocketIP')
-        self.txtSocketIP: QLineEdit = self.txtSocketIP
+        self.lblSocketIP = window.findChild(QLabel, 'lblSocketIP')
+        self.lblSocketIP: QLabel = self.lblSocketIP
 
-        self.txtPortPUB = window.findChild(QLineEdit, 'txtPortPUB')
-        self.txtPortPUB: QLineEdit = self.txtPortPUB
+        self.lblPortPUB = window.findChild(QLabel, 'lblPortPUB')
+        self.lblPortPUB: QLabel = self.lblPortPUB
 
-        self.txtPortREP = window.findChild(QLineEdit, 'txtPortREP')
-        self.txtPortREP: QLineEdit = self.txtPortREP
+        self.lblPortREP = window.findChild(QLabel, 'lblPortREP')
+        self.lblPortREP: QLabel = self.lblPortREP
 
-        self.txtComSpeed = window.findChild(QLineEdit, 'txtComSpeed')
-        self.txtComSpeed: QLineEdit = self.txtComSpeed
+        self.lblComSpeed = window.findChild(QLabel, 'lblComSpeed')
+        self.lblComSpeed: QLabel = self.lblComSpeed
 
 # Driver info group box
 
+        self.gbDriverInfo = window.findChild(QGroupBox, 'gbDriverInfo')
+        self.gbDriverInfo: QGroupBox = self.gbDriverInfo
+
+        self.lblClientID_val = window.findChild(QLabel, 'lblClientID_val')
+        self.lblClientID_val: QLabel = self.lblClientID_val
+
+        self.lblEncoder_val = window.findChild(QLabel, 'lblEncoder_val')
+        self.lblEncoder_val: QLabel = self.lblEncoder_val
+
+        self.lblPosition_val = window.findChild(QLabel, 'lblPosition_val')
+        self.lblPosition_val: QLabel = self.lblPosition_val
+        
+        self.lblTransactionId_val = window.findChild(QLabel, 'lblTransactionId_val')
+        self.lblTransactionId_val: QLabel = self.lblTransactionId_val
+
+        self.ledMoving = window.findChild(QLabel, 'ledMoving')
+        self.ledMoving: QLabel = self.ledMoving
 
 
 

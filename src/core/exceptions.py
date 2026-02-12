@@ -27,7 +27,7 @@ class ActionNotImplementedException:
     def Message(self) -> str:
         return self.message
 
-class DriverException:
+class DriverException(Exception):
     """
     **Exception Class for Driver Internal Errors**
         This exception is used for device errors and other internal exceptions.
