@@ -1,7 +1,7 @@
 from PyQt6 import QtWidgets, uic
 from PyQt6.QtCore import QTimer, Qt, QPoint, QPropertyAnimation, QSize, QEasingCurve, QDynamicPropertyChangeEvent, QObject, QEvent, pyqtSignal
 from PyQt6.QtGui import QAction, QIcon, QPixmap
-from PyQt6.QtWidgets import QMessageBox, QMenu, QSystemTrayIcon, QPushButton,QToolBar, QLabel
+from PyQt6.QtWidgets import QMessageBox, QMenu, QSystemTrayIcon, QPushButton,QToolBar, QLabel, QWidget, QProgressBar
 
 import sys
 import os
@@ -21,6 +21,8 @@ if CONFIG_FILE:
     from src.core.app import App
     
     from misc.client_sample import ClientSimulator
+    from misc.settings import SettingsWindow
+    from misc.load_bar import LoadBar
     from misc.ui_intellisense import UiWidgets
     from misc.log_box import LogBox
     
@@ -31,10 +33,12 @@ def resource_path(relative_path):
     return os.path.join(base_path, relative_path)
 
 main_ui_path = resource_path('assets/ui/main.ui')
+load_window_path = resource_path('assets/ui/load.ui')
 icon_tray = resource_path('assets/icon.png')
 icon_con_ok = resource_path('assets/ui/icons/status.png')
 icon_con_nok = resource_path('assets/ui/icons/status-busy.png')
 icon_con_wait = resource_path('assets/ui/icons/status-away.png')
+
 
 class FocuserOPD(QtWidgets.QMainWindow):
 
@@ -49,7 +53,9 @@ class FocuserOPD(QtWidgets.QMainWindow):
         super(FocuserOPD, self).__init__()
         uic.loadUi(main_ui_path, self)
         self.second_window = None
+        self._settings_window = None
         self.log_box = None
+        self.load_window = None
 
         if not CONFIG_FILE:
             close = QMessageBox()
@@ -66,7 +72,7 @@ class FocuserOPD(QtWidgets.QMainWindow):
         self.log_file = r"logs/focuser.log"                             # Path to log file              # TODO: inicializar o arquivo com o nome padronizado, de acordo com a data (dia inicia ao meio dia)
 
         # Creates "ui_elements" widget to hold intellisense references to the widgets
-        self.ui_elements = UiWidgets(self)
+        self.ui_elements = UiWidgets(self, "main")
 
         # Ui elements initialization and configuration
         self.ui_elements.lblSocketIP.setText(f"{self.control.ip_address}")
@@ -75,6 +81,7 @@ class FocuserOPD(QtWidgets.QMainWindow):
         self.ui_elements.actionShow_Log.triggered.connect(self._toggle_log_box)
         self.ui_elements.actionClient_Simulator.triggered.connect(self._run_simulator)
         self.ui_elements.actionHide.triggered.connect(self._minimize_to_tray)
+        self.ui_elements.actionSettings.triggered.connect(self._open_settings)
 
         self.ui_elements.conBarServerRouter.setProperty("conStatusBar", "waiting")
         self.ui_elements.conBarRouterMotor.setProperty("conStatusBar", "waiting")
@@ -318,6 +325,21 @@ class FocuserOPD(QtWidgets.QMainWindow):
             self.ui_elements.actionClient_Simulator.setChecked(False)       # Unchecks action to open client simulator
             print("simulador fechado")
 
+
+    def _open_settings(self):
+        """Opens settings window"""
+        if self._settings_window is None:
+            self._settings_window = SettingsWindow(self.control.device)
+            self._settings_window._signal_window_closed.connect(self._settings_closed)
+            self._settings_window.move(self.pos() + QPoint(self.width(), 0))
+            self._settings_window.show()
+
+            
+
+    def _settings_closed(self, msg):
+        if msg is True:
+            self._settings_window = None
+            print("Configurações fechadas")
 
     def _ping(self):        # INFO: Com os signals configurados acho que não vai mais precisar dessa função
         """Checks if device is reachable"""

@@ -326,7 +326,55 @@ class FocuserDriver():
         # except Exception as e:
         #     return("Invalid state")
         
+    @property
+    def get_backlash(self) -> str:
+        self._lock.acquire()
+        resp = self._write("V74", 5)
+        self._lock.release()
+        return resp
         
+    @property
+    def get_max_pos(self) -> str:
+        self._lock.acquire()
+        resp = self._write("V71", 5)
+        self._lock.release()
+        pos = int(resp) / Config.enc_2_microns
+        return f"{pos:.0f}"
+    @get_max_pos.setter
+    def set_max_pos(self, value: str):
+        pos = str(int(value) * Config.enc_2_microns)
+        self._lock.acquire()
+        resp = self._write(f"V71={pos}", 5)
+        self._lock.release()
+
+            
+
+    
+    @property
+    def get_park_pos(self) -> str:      # TODO: Implementar posição de 'park' no motor DMX-ETH
+        """ Not implemented """
+        return "Not implemented"
+        
+    @property
+    def get_max_speed(self) -> str:     # TODO: Necessário alterar algumas coisas no firmware do motor pra essa infomração ficar consistente    
+        self._lock.acquire()
+        resp = self._write("HSPD", 5)
+        self._lock.release()
+        return resp        
+         
+    @property
+    def get_normal_speed(self) -> str: # TODO: No DMX-ETH a velocidade 'normal' é a max speed
+        self._lock.acquire()
+        resp = self._write("HSPD", 5)
+        self._lock.release()
+        return resp        
+    
+    @property
+    def get_low_speed(self) -> str:
+        self._lock.acquire()
+        resp = self._write("LSPD", 5)
+        self._lock.release()
+        return resp            
 
 
     def home(self):                             #TODO: Deixar configurar quantidade de retries?

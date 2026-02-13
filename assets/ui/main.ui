@@ -6,8 +6,8 @@
    <rect>
     <x>0</x>
     <y>0</y>
-    <width>335</width>
-    <height>577</height>
+    <width>322</width>
+    <height>582</height>
    </rect>
   </property>
   <property name="windowTitle">
@@ -49,7 +49,10 @@ QProgressBar[conStatusBar=&quot;connecting&quot;]::chunk {
 }
 QProgressBar[conStatusBar=&quot;connected&quot;]::chunk {
     background-color: qlineargradient(spread:reflect, x1:0.5, y1:0.5, x2:0.5, y2:1, stop:0 rgba(85, 255, 0, 255), stop:1 rgba(0, 157, 0, 168));
-}</string>
+}
+
+
+</string>
   </property>
   <widget class="QWidget" name="centralwidget">
    <widget class="QLabel" name="lblTitle">
@@ -2340,7 +2343,7 @@ QProgressBar[conStatusBar=&quot;connected&quot;]::chunk {
      <rect>
       <x>9</x>
       <y>246</y>
-      <width>301</width>
+      <width>289</width>
       <height>142</height>
      </rect>
     </property>
@@ -2356,332 +2359,334 @@ QProgressBar[conStatusBar=&quot;connected&quot;]::chunk {
     <property name="title">
      <string>Driver Info</string>
     </property>
-    <widget class="QWidget" name="">
-     <property name="geometry">
-      <rect>
-       <x>10</x>
-       <y>26</y>
-       <width>281</width>
-       <height>22</height>
-      </rect>
-     </property>
-     <layout class="QHBoxLayout" name="horizontalLayout_2">
-      <property name="spacing">
-       <number>6</number>
-      </property>
-      <item>
-       <widget class="QLabel" name="lblClientId">
-        <property name="text">
-         <string>Client ID:</string>
-        </property>
-       </widget>
-      </item>
-      <item>
-       <widget class="QLabel" name="lblClientID_val">
-        <property name="minimumSize">
-         <size>
-          <width>40</width>
-          <height>0</height>
-         </size>
-        </property>
-        <property name="maximumSize">
-         <size>
-          <width>50</width>
-          <height>16777215</height>
-         </size>
-        </property>
-        <property name="styleSheet">
-         <string notr="true">background-color: white</string>
-        </property>
-        <property name="frameShape">
-         <enum>QFrame::Shape::Panel</enum>
-        </property>
-        <property name="frameShadow">
-         <enum>QFrame::Shadow::Sunken</enum>
-        </property>
-        <property name="lineWidth">
-         <number>2</number>
-        </property>
-        <property name="text">
-         <string/>
-        </property>
-        <property name="alignment">
-         <set>Qt::AlignmentFlag::AlignCenter</set>
-        </property>
-       </widget>
-      </item>
-      <item>
-       <spacer name="horizontalSpacer_2">
-        <property name="orientation">
-         <enum>Qt::Orientation::Horizontal</enum>
-        </property>
-        <property name="sizeHint" stdset="0">
-         <size>
-          <width>40</width>
-          <height>20</height>
-         </size>
-        </property>
-       </spacer>
-      </item>
-      <item>
-       <widget class="QLabel" name="lblTransactionId">
-        <property name="text">
-         <string>Transaction ID</string>
-        </property>
-       </widget>
-      </item>
-      <item>
-       <widget class="QLabel" name="lblTransactionId_val">
-        <property name="minimumSize">
-         <size>
-          <width>40</width>
-          <height>0</height>
-         </size>
-        </property>
-        <property name="maximumSize">
-         <size>
-          <width>60</width>
-          <height>16777215</height>
-         </size>
-        </property>
-        <property name="styleSheet">
-         <string notr="true">background-color: white</string>
-        </property>
-        <property name="frameShape">
-         <enum>QFrame::Shape::Panel</enum>
-        </property>
-        <property name="frameShadow">
-         <enum>QFrame::Shadow::Sunken</enum>
-        </property>
-        <property name="lineWidth">
-         <number>2</number>
-        </property>
-        <property name="text">
-         <string/>
-        </property>
-        <property name="alignment">
-         <set>Qt::AlignmentFlag::AlignCenter</set>
-        </property>
-       </widget>
-      </item>
-     </layout>
-    </widget>
-    <widget class="QWidget" name="">
-     <property name="geometry">
-      <rect>
-       <x>11</x>
-       <y>50</y>
-       <width>94</width>
-       <height>22</height>
-      </rect>
-     </property>
-     <layout class="QHBoxLayout" name="horizontalLayout_5">
-      <item>
-       <widget class="QLabel" name="lblPosition">
-        <property name="maximumSize">
-         <size>
-          <width>50</width>
-          <height>16777215</height>
-         </size>
-        </property>
-        <property name="text">
-         <string>Position:</string>
-        </property>
-       </widget>
-      </item>
-      <item>
-       <widget class="QLabel" name="lblPosition_val">
-        <property name="enabled">
-         <bool>true</bool>
-        </property>
-        <property name="minimumSize">
-         <size>
-          <width>40</width>
-          <height>0</height>
-         </size>
-        </property>
-        <property name="maximumSize">
-         <size>
-          <width>50</width>
-          <height>16777215</height>
-         </size>
-        </property>
-        <property name="styleSheet">
-         <string notr="true">background-color: white</string>
-        </property>
-        <property name="frameShape">
-         <enum>QFrame::Shape::Panel</enum>
-        </property>
-        <property name="frameShadow">
-         <enum>QFrame::Shadow::Sunken</enum>
-        </property>
-        <property name="lineWidth">
-         <number>2</number>
-        </property>
-        <property name="midLineWidth">
-         <number>0</number>
-        </property>
-        <property name="text">
-         <string/>
-        </property>
-        <property name="alignment">
-         <set>Qt::AlignmentFlag::AlignCenter</set>
-        </property>
-       </widget>
-      </item>
-     </layout>
-    </widget>
-    <widget class="QWidget" name="">
-     <property name="geometry">
-      <rect>
-       <x>11</x>
-       <y>83</y>
-       <width>94</width>
-       <height>22</height>
-      </rect>
-     </property>
-     <layout class="QHBoxLayout" name="horizontalLayout_6">
-      <item>
-       <widget class="QLabel" name="lblEncoder">
-        <property name="text">
-         <string>Encoder:</string>
-        </property>
-       </widget>
-      </item>
-      <item>
-       <widget class="QLabel" name="lblEncoder_val">
-        <property name="minimumSize">
-         <size>
-          <width>40</width>
-          <height>0</height>
-         </size>
-        </property>
-        <property name="maximumSize">
-         <size>
-          <width>50</width>
-          <height>16777215</height>
-         </size>
-        </property>
-        <property name="styleSheet">
-         <string notr="true">background-color: white</string>
-        </property>
-        <property name="frameShape">
-         <enum>QFrame::Shape::Panel</enum>
-        </property>
-        <property name="frameShadow">
-         <enum>QFrame::Shadow::Sunken</enum>
-        </property>
-        <property name="lineWidth">
-         <number>2</number>
-        </property>
-        <property name="midLineWidth">
-         <number>0</number>
-        </property>
-        <property name="text">
-         <string/>
-        </property>
-        <property name="alignment">
-         <set>Qt::AlignmentFlag::AlignCenter</set>
-        </property>
-       </widget>
-      </item>
-     </layout>
-    </widget>
-    <widget class="QWidget" name="">
-     <property name="geometry">
-      <rect>
-       <x>10</x>
-       <y>110</y>
-       <width>112</width>
-       <height>22</height>
-      </rect>
-     </property>
-     <layout class="QHBoxLayout" name="horizontalLayout">
-      <item>
-       <widget class="QLabel" name="lblMoving">
-        <property name="minimumSize">
-         <size>
-          <width>44</width>
-          <height>16</height>
-         </size>
-        </property>
-        <property name="maximumSize">
-         <size>
-          <width>44</width>
-          <height>16</height>
-         </size>
-        </property>
-        <property name="styleSheet">
-         <string notr="true"/>
-        </property>
-        <property name="frameShape">
-         <enum>QFrame::Shape::NoFrame</enum>
-        </property>
-        <property name="frameShadow">
-         <enum>QFrame::Shadow::Sunken</enum>
-        </property>
-        <property name="text">
-         <string>Moving:</string>
-        </property>
-        <property name="alignment">
-         <set>Qt::AlignmentFlag::AlignLeading|Qt::AlignmentFlag::AlignLeft|Qt::AlignmentFlag::AlignVCenter</set>
-        </property>
-       </widget>
-      </item>
-      <item>
-       <widget class="QLabel" name="ledMoving">
-        <property name="minimumSize">
-         <size>
-          <width>14</width>
-          <height>14</height>
-         </size>
-        </property>
-        <property name="maximumSize">
-         <size>
-          <width>14</width>
-          <height>14</height>
-         </size>
-        </property>
-        <property name="layoutDirection">
-         <enum>Qt::LayoutDirection::RightToLeft</enum>
-        </property>
-        <property name="styleSheet">
-         <string notr="true">border-radius:7px;</string>
-        </property>
-        <property name="frameShape">
-         <enum>QFrame::Shape::NoFrame</enum>
-        </property>
-        <property name="frameShadow">
-         <enum>QFrame::Shadow::Sunken</enum>
-        </property>
-        <property name="text">
-         <string/>
-        </property>
-        <property name="alignment">
-         <set>Qt::AlignmentFlag::AlignCenter</set>
-        </property>
-        <property name="statusLed" stdset="0">
-         <string>NOK</string>
-        </property>
-       </widget>
-      </item>
-      <item>
-       <spacer name="horizontalSpacer">
-        <property name="orientation">
-         <enum>Qt::Orientation::Horizontal</enum>
-        </property>
-        <property name="sizeHint" stdset="0">
-         <size>
-          <width>40</width>
-          <height>20</height>
-         </size>
-        </property>
-       </spacer>
-      </item>
-     </layout>
-    </widget>
+    <layout class="QVBoxLayout" name="verticalLayout_3">
+     <item>
+      <layout class="QHBoxLayout" name="horizontalLayout_2">
+       <property name="spacing">
+        <number>6</number>
+       </property>
+       <item>
+        <widget class="QLabel" name="lblClientId">
+         <property name="text">
+          <string>Client ID:</string>
+         </property>
+        </widget>
+       </item>
+       <item>
+        <widget class="QLabel" name="lblClientID_val">
+         <property name="minimumSize">
+          <size>
+           <width>40</width>
+           <height>0</height>
+          </size>
+         </property>
+         <property name="maximumSize">
+          <size>
+           <width>50</width>
+           <height>16777215</height>
+          </size>
+         </property>
+         <property name="styleSheet">
+          <string notr="true">background-color: white</string>
+         </property>
+         <property name="frameShape">
+          <enum>QFrame::Shape::Panel</enum>
+         </property>
+         <property name="frameShadow">
+          <enum>QFrame::Shadow::Sunken</enum>
+         </property>
+         <property name="lineWidth">
+          <number>2</number>
+         </property>
+         <property name="text">
+          <string/>
+         </property>
+         <property name="alignment">
+          <set>Qt::AlignmentFlag::AlignCenter</set>
+         </property>
+        </widget>
+       </item>
+       <item>
+        <spacer name="horizontalSpacer_2">
+         <property name="orientation">
+          <enum>Qt::Orientation::Horizontal</enum>
+         </property>
+         <property name="sizeHint" stdset="0">
+          <size>
+           <width>40</width>
+           <height>20</height>
+          </size>
+         </property>
+        </spacer>
+       </item>
+       <item>
+        <widget class="QLabel" name="lblTransactionId">
+         <property name="text">
+          <string>Transaction ID</string>
+         </property>
+        </widget>
+       </item>
+       <item>
+        <widget class="QLabel" name="lblTransactionId_val">
+         <property name="minimumSize">
+          <size>
+           <width>40</width>
+           <height>0</height>
+          </size>
+         </property>
+         <property name="maximumSize">
+          <size>
+           <width>60</width>
+           <height>16777215</height>
+          </size>
+         </property>
+         <property name="styleSheet">
+          <string notr="true">background-color: white</string>
+         </property>
+         <property name="frameShape">
+          <enum>QFrame::Shape::Panel</enum>
+         </property>
+         <property name="frameShadow">
+          <enum>QFrame::Shadow::Sunken</enum>
+         </property>
+         <property name="lineWidth">
+          <number>2</number>
+         </property>
+         <property name="text">
+          <string/>
+         </property>
+         <property name="alignment">
+          <set>Qt::AlignmentFlag::AlignCenter</set>
+         </property>
+        </widget>
+       </item>
+      </layout>
+     </item>
+     <item>
+      <layout class="QHBoxLayout" name="horizontalLayout_5">
+       <property name="spacing">
+        <number>8</number>
+       </property>
+       <item>
+        <widget class="QLabel" name="lblPosition">
+         <property name="maximumSize">
+          <size>
+           <width>50</width>
+           <height>16777215</height>
+          </size>
+         </property>
+         <property name="text">
+          <string>Position:</string>
+         </property>
+        </widget>
+       </item>
+       <item>
+        <widget class="QLabel" name="lblPosition_val">
+         <property name="enabled">
+          <bool>true</bool>
+         </property>
+         <property name="minimumSize">
+          <size>
+           <width>40</width>
+           <height>0</height>
+          </size>
+         </property>
+         <property name="maximumSize">
+          <size>
+           <width>50</width>
+           <height>16777215</height>
+          </size>
+         </property>
+         <property name="styleSheet">
+          <string notr="true">background-color: white</string>
+         </property>
+         <property name="frameShape">
+          <enum>QFrame::Shape::Panel</enum>
+         </property>
+         <property name="frameShadow">
+          <enum>QFrame::Shadow::Sunken</enum>
+         </property>
+         <property name="lineWidth">
+          <number>2</number>
+         </property>
+         <property name="midLineWidth">
+          <number>0</number>
+         </property>
+         <property name="text">
+          <string/>
+         </property>
+         <property name="alignment">
+          <set>Qt::AlignmentFlag::AlignCenter</set>
+         </property>
+        </widget>
+       </item>
+       <item>
+        <spacer name="horizontalSpacer_3">
+         <property name="orientation">
+          <enum>Qt::Orientation::Horizontal</enum>
+         </property>
+         <property name="sizeHint" stdset="0">
+          <size>
+           <width>40</width>
+           <height>20</height>
+          </size>
+         </property>
+        </spacer>
+       </item>
+      </layout>
+     </item>
+     <item>
+      <layout class="QHBoxLayout" name="horizontalLayout_6">
+       <property name="spacing">
+        <number>8</number>
+       </property>
+       <item>
+        <widget class="QLabel" name="lblEncoder">
+         <property name="text">
+          <string>Encoder:</string>
+         </property>
+        </widget>
+       </item>
+       <item>
+        <widget class="QLabel" name="lblEncoder_val">
+         <property name="minimumSize">
+          <size>
+           <width>40</width>
+           <height>0</height>
+          </size>
+         </property>
+         <property name="maximumSize">
+          <size>
+           <width>50</width>
+           <height>16777215</height>
+          </size>
+         </property>
+         <property name="styleSheet">
+          <string notr="true">background-color: white</string>
+         </property>
+         <property name="frameShape">
+          <enum>QFrame::Shape::Panel</enum>
+         </property>
+         <property name="frameShadow">
+          <enum>QFrame::Shadow::Sunken</enum>
+         </property>
+         <property name="lineWidth">
+          <number>2</number>
+         </property>
+         <property name="midLineWidth">
+          <number>0</number>
+         </property>
+         <property name="text">
+          <string/>
+         </property>
+         <property name="alignment">
+          <set>Qt::AlignmentFlag::AlignCenter</set>
+         </property>
+        </widget>
+       </item>
+       <item>
+        <spacer name="horizontalSpacer_4">
+         <property name="orientation">
+          <enum>Qt::Orientation::Horizontal</enum>
+         </property>
+         <property name="sizeHint" stdset="0">
+          <size>
+           <width>40</width>
+           <height>20</height>
+          </size>
+         </property>
+        </spacer>
+       </item>
+      </layout>
+     </item>
+     <item>
+      <layout class="QHBoxLayout" name="horizontalLayout">
+       <item>
+        <widget class="QLabel" name="lblMoving">
+         <property name="minimumSize">
+          <size>
+           <width>44</width>
+           <height>16</height>
+          </size>
+         </property>
+         <property name="maximumSize">
+          <size>
+           <width>44</width>
+           <height>16</height>
+          </size>
+         </property>
+         <property name="styleSheet">
+          <string notr="true"/>
+         </property>
+         <property name="frameShape">
+          <enum>QFrame::Shape::NoFrame</enum>
+         </property>
+         <property name="frameShadow">
+          <enum>QFrame::Shadow::Sunken</enum>
+         </property>
+         <property name="text">
+          <string>Moving:</string>
+         </property>
+         <property name="alignment">
+          <set>Qt::AlignmentFlag::AlignLeading|Qt::AlignmentFlag::AlignLeft|Qt::AlignmentFlag::AlignVCenter</set>
+         </property>
+        </widget>
+       </item>
+       <item>
+        <widget class="QLabel" name="ledMoving">
+         <property name="minimumSize">
+          <size>
+           <width>14</width>
+           <height>14</height>
+          </size>
+         </property>
+         <property name="maximumSize">
+          <size>
+           <width>14</width>
+           <height>14</height>
+          </size>
+         </property>
+         <property name="layoutDirection">
+          <enum>Qt::LayoutDirection::RightToLeft</enum>
+         </property>
+         <property name="styleSheet">
+          <string notr="true">border-radius:7px;</string>
+         </property>
+         <property name="frameShape">
+          <enum>QFrame::Shape::NoFrame</enum>
+         </property>
+         <property name="frameShadow">
+          <enum>QFrame::Shadow::Sunken</enum>
+         </property>
+         <property name="text">
+          <string/>
+         </property>
+         <property name="alignment">
+          <set>Qt::AlignmentFlag::AlignCenter</set>
+         </property>
+         <property name="statusLed" stdset="0">
+          <string>NOK</string>
+         </property>
+        </widget>
+       </item>
+       <item>
+        <spacer name="horizontalSpacer">
+         <property name="orientation">
+          <enum>Qt::Orientation::Horizontal</enum>
+         </property>
+         <property name="sizeHint" stdset="0">
+          <size>
+           <width>40</width>
+           <height>20</height>
+          </size>
+         </property>
+        </spacer>
+       </item>
+      </layout>
+     </item>
+    </layout>
    </widget>
-   <widget class="QWidget" name="">
+   <widget class="QWidget" name="layoutWidget">
     <property name="geometry">
      <rect>
       <x>219</x>
@@ -2720,7 +2725,7 @@ QProgressBar[conStatusBar=&quot;connected&quot;]::chunk {
     <rect>
      <x>0</x>
      <y>0</y>
-     <width>335</width>
+     <width>322</width>
      <height>22</height>
     </rect>
    </property>
@@ -2735,6 +2740,8 @@ QProgressBar[conStatusBar=&quot;connected&quot;]::chunk {
     <addaction name="separator"/>
     <addaction name="actionShow_toolbar"/>
     <addaction name="actionShow_Log"/>
+    <addaction name="separator"/>
+    <addaction name="actionEngineering"/>
     <addaction name="separator"/>
     <addaction name="actionHide"/>
    </widget>
@@ -2767,10 +2774,14 @@ QProgressBar[conStatusBar=&quot;connected&quot;]::chunk {
    <addaction name="actionClient_Simulator"/>
    <addaction name="actionShow_Log"/>
    <addaction name="separator"/>
+   <addaction name="actionHide"/>
   </widget>
   <action name="actionHide">
    <property name="text">
     <string>&amp;Hide App</string>
+   </property>
+   <property name="iconText">
+    <string>Hide</string>
    </property>
    <property name="statusTip">
     <string>Hide the app to the tray</string>
@@ -2863,6 +2874,11 @@ QProgressBar[conStatusBar=&quot;connected&quot;]::chunk {
    </property>
    <property name="iconVisibleInMenu">
     <bool>false</bool>
+   </property>
+  </action>
+  <action name="actionEngineering">
+   <property name="text">
+    <string>Engineering</string>
    </property>
   </action>
  </widget>

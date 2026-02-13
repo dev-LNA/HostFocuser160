@@ -707,18 +707,18 @@ class App(QObject):
         try:
             resp = format(int(self.device.get_motor_status), '012b')        # TODO: Ver um jeito de converter para binário sem ser string
             motor_status = "".join(reversed(resp))                          # This is only done so that the bit order is as shown in table 7 of the manual of the motor (DMX-ETH)
-            print(motor_status)
+            # print(motor_status)
             
             if(motor_status[0] == '1'):                                 
-                print("motor em movimento")
+                # print("motor em movimento")
                 self.is_moving = True
             else:
-                print("motor parado")
+                # print("motor parado")
                 self.is_moving = False
-            if(motor_status[1] == '1'):
-                print("motor acelerando")
-            if(motor_status[2] == '1'):
-                print("motor desacelerando")
+            # if(motor_status[1] == '1'):
+            #     print("motor acelerando")
+            # if(motor_status[2] == '1'):
+            #     print("motor desacelerando")
         except Exception as e:                                              # TODO: Verificar o que tem que ser feito se não conseguir obter essa informação 
             print(e)
 
