@@ -278,25 +278,31 @@ class FocuserDriver():
         resp = self._write("IP", 5)
         self._lock.release()
         return resp
+    @get_device_IP.setter
+    def set_device_IP(self, value: str):
+        self._lock.acquire()
+        self._write(f"IP={value}", 5)
+        self._lock.release()
     
     @property
-    def get_device_ID(self) -> str:
+    def get_device_ID(self) -> str:                     # TODO: Mudar para o ID do motor mesmo, não faz sentido mostra o ID do fornecedor
         """
-        Returns the motor ID
+        Returns the motor supplier ID
         
         :param self:
         :return: String with the motor ID
         :rtype: str
         """
         self._lock.acquire()
-        resp = self._write("ID", 5)
+        # resp = self._write("ID", 5)
+        resp = self._write("V50", 5)                    # Hardware ID stored at memory V50 on DMX-ETH  
         self._lock.release()
         return resp
     
     @property
-    def get_device_Firmware_Version(self) -> str:
+    def get_device_Firmware_Version(self) -> str:       # TODO: Mudar para o firmware do software mesmo, não faz sentido mostra a versão de firmware do fabricante
         """
-        Returns the motor firmware Version
+        Returns the motor supplier firmware Version
         
         :param self:
         :return: String with the motor firmware version
@@ -332,6 +338,11 @@ class FocuserDriver():
         resp = self._write("V74", 5)
         self._lock.release()
         return resp
+    @get_backlash.setter
+    def set_backlash(self, value: str) -> str:
+        self._lock.acquire()
+        resp = self._write(f"V74={value}")
+        self._lock.release()
         
     @property
     def get_max_pos(self) -> str:
@@ -346,35 +357,62 @@ class FocuserDriver():
         self._lock.acquire()
         resp = self._write(f"V71={pos}", 5)
         self._lock.release()
-
-            
-
-    
+      
     @property
     def get_park_pos(self) -> str:      # TODO: Implementar posição de 'park' no motor DMX-ETH
         """ Not implemented """
         return "Not implemented"
-        
+    @get_park_pos.setter
+    def set_park_pos(self, value: str) -> str:      # TODO: Park position not implemented in DMX-ETH
+        # self._lock.acquire()
+        # self._lock.release()
+        pass
+
     @property
     def get_max_speed(self) -> str:     # TODO: Necessário alterar algumas coisas no firmware do motor pra essa infomração ficar consistente    
         self._lock.acquire()
         resp = self._write("HSPD", 5)
         self._lock.release()
-        return resp        
+        return resp    
+    @get_max_speed.setter
+    def set_max_speed(self, value: str):
+        self._lock.acquire()
+        resp = self._write(f"HSPD={value}")
+        self._lock.release()
          
     @property
-    def get_normal_speed(self) -> str: # TODO: No DMX-ETH a velocidade 'normal' é a max speed
+    def get_normal_speed(self) -> str: # TODO: No DMX-ETH a velocidade 'normal' é a max speed. Fazer alguma lógica diferente?
         self._lock.acquire()
         resp = self._write("HSPD", 5)
         self._lock.release()
-        return resp        
+        return resp         
+    @get_normal_speed.setter
+    def set_normal_speed(self, value: str): # TODO: No DMX-ETH a velocidade 'normal' é a max speed. Fazer alguma lógica diferente?
+        self._lock.acquire()
+        resp = self._write(f"HSPD={value}")
+        self._lock.release()   
     
     @property
     def get_low_speed(self) -> str:
         self._lock.acquire()
         resp = self._write("LSPD", 5)
         self._lock.release()
-        return resp            
+        return resp   
+    @get_low_speed.setter
+    def set_low_speed(self, value: str):
+        self._lock.acquire()
+        resp = self._write(f"LSPD={value}")
+        self._lock.release()   
+
+
+    def _store_to_flash(self):
+        """Stores the settings to the motor flash
+         Some settings will only be changed after a hard reset check table 7.15 of the DMS-ETH manual
+         If '_store_to_flash' is not executed the variables saved in V51~V100 will be lost after a hard reset
+         #TODO: O firmware do motor reseta os valores de max_pos, backlash, max_speed e low_speed durante o boot."""
+        self._lock.acquire()
+        resp = self._write("STORE")
+        self._lock.release()
 
 
     def home(self):                             #TODO: Deixar configurar quantidade de retries?

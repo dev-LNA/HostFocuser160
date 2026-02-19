@@ -1,0 +1,35 @@
+title = "Focuser160MQ"
+
+[General]
+name = "Focuser160"
+version = "1.0.0"
+description = "Interface for Perkin-Elmer Focuser"
+startup = true
+
+[Device]
+absolute = true
+device_name = '2ndMirror'
+deviceID = '3285e9af-8d1d-4f9d-b368-d129d8e9a24b'               # https://guidgenerator.com/online-guid-generator.aspx
+device_ip = '192.168.0.251'                                     # '200.131.64.171'
+router_ip = '192.168.0.1'                                       # '192.168.50.25' # 
+device_port = 5001
+encoder2microns = 42.2047244
+max_step = 50700                                                # microns
+max_speed = 500                                                 # microns/sec
+max_increment = 0
+tempcompavailable = false
+temp_comp = false
+speed_security = 215000
+speedFactor = 428                                               # Converts units in microns to motor units
+step_size = 0
+
+[Network]
+ip_address = "*"
+port_pub = 7001
+port_rep = 7002
+
+[Logging]
+log_level = "INFO"
+log_to_stdout = false
+log_max_size_mb = 10
+log_num_keep = 10

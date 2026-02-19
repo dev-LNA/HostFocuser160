@@ -9,7 +9,7 @@
    <rect>
     <x>0</x>
     <y>0</y>
-    <width>385</width>
+    <width>405</width>
     <height>342</height>
    </rect>
   </property>
@@ -26,8 +26,8 @@ background-color: white;
    <widget class="QLabel" name="lblMotoIP">
     <property name="geometry">
      <rect>
-      <x>15</x>
-      <y>87</y>
+      <x>9</x>
+      <y>67</y>
       <width>49</width>
       <height>16</height>
      </rect>
@@ -64,7 +64,7 @@ background-color: white;
      <number>1</number>
     </property>
     <property name="text">
-     <string>{160 / IAG} focuser</string>
+     <string/>
     </property>
     <property name="scaledContents">
      <bool>false</bool>
@@ -76,8 +76,8 @@ background-color: white;
    <widget class="QPushButton" name="btnEngineering">
     <property name="geometry">
      <rect>
-      <x>300</x>
-      <y>10</y>
+      <x>314</x>
+      <y>266</y>
       <width>82</width>
       <height>24</height>
      </rect>
@@ -98,8 +98,8 @@ background-color: white;
    <widget class="QLineEdit" name="txtMotorIP">
     <property name="geometry">
      <rect>
-      <x>70</x>
-      <y>87</y>
+      <x>64</x>
+      <y>67</y>
       <width>116</width>
       <height>22</height>
      </rect>
@@ -129,9 +129,9 @@ background-color: white;
    <widget class="QFrame" name="frame">
     <property name="geometry">
      <rect>
-      <x>15</x>
-      <y>115</y>
-      <width>271</width>
+      <x>9</x>
+      <y>95</y>
+      <width>275</width>
       <height>175</height>
      </rect>
     </property>
@@ -423,8 +423,8 @@ background-color: white;
    <widget class="QPushButton" name="btnSave">
     <property name="geometry">
      <rect>
-      <x>300</x>
-      <y>190</y>
+      <x>314</x>
+      <y>166</y>
       <width>75</width>
       <height>24</height>
      </rect>
@@ -439,8 +439,8 @@ background-color: white;
    <widget class="QWidget" name="layoutWidget">
     <property name="geometry">
      <rect>
-      <x>30</x>
-      <y>50</y>
+      <x>9</x>
+      <y>41</y>
       <width>176</width>
       <height>20</height>
      </rect>
@@ -516,8 +516,8 @@ background-color: white;
    <widget class="QWidget" name="layoutWidget">
     <property name="geometry">
      <rect>
-      <x>230</x>
-      <y>50</y>
+      <x>270</x>
+      <y>41</y>
       <width>126</width>
       <height>20</height>
      </rect>
@@ -587,7 +587,7 @@ background-color: white;
     <rect>
      <x>0</x>
      <y>0</y>
-     <width>385</width>
+     <width>405</width>
      <height>22</height>
     </rect>
    </property>
