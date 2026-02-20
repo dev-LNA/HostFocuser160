@@ -177,9 +177,9 @@ class App(QObject):
                     self.position =self.device.position
                     self.status["position"] = self.position
                     self.status["initialized"] = self.device.initialized
-                    self.status["device_IP"] = self.device.get_device_IP
-                    self.status["device_ID"] = self.device.get_device_ID
-                    self.status["device_Firmware_Version"] = self.device.get_device_Firmware_Version
+                    self.status["device_IP"] = self.device.device_IP
+                    self.status["device_ID"] = self.device.device_ID
+                    self.status["device_Firmware_Version"] = self.device.device_Firmware_Version
                     
                     self.logger.info(f'Device Reached.')
                 except Exception as e:
@@ -705,7 +705,7 @@ class App(QObject):
         """Issues command to read the current motor status.
         """
         try:
-            resp = format(int(self.device.get_motor_status), '012b')        # TODO: Ver um jeito de converter para binário sem ser string
+            resp = format(int(self.device.motor_status), '012b')        # TODO: Ver um jeito de converter para binário sem ser string
             motor_status = "".join(reversed(resp))                          # This is only done so that the bit order is as shown in table 7 of the manual of the motor (DMX-ETH)
             # print(motor_status)
             

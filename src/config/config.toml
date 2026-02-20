@@ -8,19 +8,19 @@ startup = true
 
 [Device]
 absolute = true
-device_name = '2ndMirror'
-deviceID = '3285e9af-8d1d-4f9d-b368-d129d8e9a24b' # https://guidgenerator.com/online-guid-generator.aspx
-device_ip = '192.168.0.251' # '200.131.64.171'
-router_ip = '192.168.0.1' # '192.168.50.25' # 
+device_name = "2ndMirror"
+deviceID = "3285e9af-8d1d-4f9d-b368-d129d8e9a24b"
+device_ip = "192.168.0.250"
+router_ip = "192.168.0.1"
 device_port = 5001
 encoder2microns = 42.2047244
-max_step = 50700 # microns
-max_speed = 500 # microns/sec
+max_step = 50700
+max_speed = 500
 max_increment = 0
 tempcompavailable = false
 temp_comp = false
 speed_security = 215000
-speedFactor = 428 # Converts units in microns to motor units
+speedFactor = 428
 step_size = 0
 
 [Network]

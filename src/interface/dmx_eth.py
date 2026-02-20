@@ -4,6 +4,8 @@ from threading import Lock
 from threading import Timer
 
 from src.core.config import Config
+from src.core.exceptions import DriverException
+
 
 import socket
 import time
@@ -44,6 +46,16 @@ class FocuserDriver():
 
         self._timer: Timer = None
         self._interval: float = .15
+
+        self.property_handlers = {        
+                'DEVICE_IP': 'device_IP',
+                'BACKLASH': 'backlash',
+                'MAX_POS': 'max_pos',
+                'PARK_POS': 'park_pos',
+                'MAX_SPEED': 'max_speed',
+                'NORMAL_SPEED': 'normal_speed',
+                'LOW_SPEED': 'low_speed'
+            }
 
     @property
     def connected(self):
@@ -197,7 +209,7 @@ class FocuserDriver():
         return self._initialized
 
     @property
-    def get_status(self) -> str:
+    def status(self) -> str:
         self._lock.acquire()
         self._status = self._write("GS0")
         self._lock.release()
@@ -246,7 +258,7 @@ class FocuserDriver():
         return self._alarm
 
     @property
-    def get_driver_state(self) -> bool:
+    def driver_state(self) -> bool:
         """
         Verifies the state of the motor driver.
         
@@ -266,7 +278,7 @@ class FocuserDriver():
             return False
         
     @property
-    def get_device_IP(self) -> str:
+    def device_IP(self) -> str:
         """
         Returns the motor IP
         
@@ -278,14 +290,14 @@ class FocuserDriver():
         resp = self._write("IP", 5)
         self._lock.release()
         return resp
-    @get_device_IP.setter
-    def set_device_IP(self, value: str):
+    @device_IP.setter
+    def device_IP(self, value: str):
         self._lock.acquire()
         self._write(f"IP={value}", 5)
         self._lock.release()
     
     @property
-    def get_device_ID(self) -> str:                     # TODO: Mudar para o ID do motor mesmo, não faz sentido mostra o ID do fornecedor
+    def device_ID(self) -> str:                     # TODO: Mudar para o ID do motor mesmo, não faz sentido mostra o ID do fornecedor
         """
         Returns the motor supplier ID
         
@@ -300,7 +312,7 @@ class FocuserDriver():
         return resp
     
     @property
-    def get_device_Firmware_Version(self) -> str:       # TODO: Mudar para o firmware do software mesmo, não faz sentido mostra a versão de firmware do fabricante
+    def device_Firmware_Version(self) -> str:       # TODO: Mudar para o firmware do software mesmo, não faz sentido mostra a versão de firmware do fabricante
         """
         Returns the motor supplier firmware Version
         
@@ -314,7 +326,7 @@ class FocuserDriver():
         return resp
 
     @property
-    def get_motor_status(self) -> str:
+    def motor_status(self) -> str:
         """
         Returns the motor status
         
@@ -333,73 +345,73 @@ class FocuserDriver():
         #     return("Invalid state")
         
     @property
-    def get_backlash(self) -> str:
+    def backlash(self) -> str:
         self._lock.acquire()
         resp = self._write("V74", 5)
         self._lock.release()
         return resp
-    @get_backlash.setter
-    def set_backlash(self, value: str) -> str:
+    @backlash.setter
+    def backlash(self, value: str) -> str:
         self._lock.acquire()
         resp = self._write(f"V74={value}")
         self._lock.release()
         
     @property
-    def get_max_pos(self) -> str:
+    def max_pos(self) -> str:
         self._lock.acquire()
         resp = self._write("V71", 5)
         self._lock.release()
         pos = int(resp) / Config.enc_2_microns
         return f"{pos:.0f}"
-    @get_max_pos.setter
-    def set_max_pos(self, value: str):
+    @max_pos.setter
+    def max_pos(self, value: str):
         pos = str(int(value) * Config.enc_2_microns)
         self._lock.acquire()
         resp = self._write(f"V71={pos}", 5)
         self._lock.release()
       
     @property
-    def get_park_pos(self) -> str:      # TODO: Implementar posição de 'park' no motor DMX-ETH
+    def park_pos(self) -> str:      # TODO: Implementar posição de 'park' no motor DMX-ETH
         """ Not implemented """
         return "Not implemented"
-    @get_park_pos.setter
-    def set_park_pos(self, value: str) -> str:      # TODO: Park position not implemented in DMX-ETH
+    @park_pos.setter
+    def park_pos(self, value: str) -> str:      # TODO: Park position not implemented in DMX-ETH
         # self._lock.acquire()
         # self._lock.release()
         pass
 
     @property
-    def get_max_speed(self) -> str:     # TODO: Necessário alterar algumas coisas no firmware do motor pra essa infomração ficar consistente    
+    def max_speed(self) -> str:     # TODO: Necessário alterar algumas coisas no firmware do motor pra essa infomração ficar consistente    
         self._lock.acquire()
         resp = self._write("HSPD", 5)
         self._lock.release()
         return resp    
-    @get_max_speed.setter
-    def set_max_speed(self, value: str):
+    @max_speed.setter
+    def max_speed(self, value: str):
         self._lock.acquire()
         resp = self._write(f"HSPD={value}")
         self._lock.release()
          
     @property
-    def get_normal_speed(self) -> str: # TODO: No DMX-ETH a velocidade 'normal' é a max speed. Fazer alguma lógica diferente?
+    def normal_speed(self) -> str: # TODO: No DMX-ETH a velocidade 'normal' é a max speed. Fazer alguma lógica diferente?
         self._lock.acquire()
         resp = self._write("HSPD", 5)
         self._lock.release()
         return resp         
-    @get_normal_speed.setter
-    def set_normal_speed(self, value: str): # TODO: No DMX-ETH a velocidade 'normal' é a max speed. Fazer alguma lógica diferente?
+    @normal_speed.setter
+    def normal_speed(self, value: str): # TODO: No DMX-ETH a velocidade 'normal' é a max speed. Fazer alguma lógica diferente?
         self._lock.acquire()
         resp = self._write(f"HSPD={value}")
         self._lock.release()   
     
     @property
-    def get_low_speed(self) -> str:
+    def low_speed(self) -> str:
         self._lock.acquire()
         resp = self._write("LSPD", 5)
         self._lock.release()
         return resp   
-    @get_low_speed.setter
-    def set_low_speed(self, value: str):
+    @low_speed.setter
+    def low_speed(self, value: str):
         self._lock.acquire()
         resp = self._write(f"LSPD={value}")
         self._lock.release()   

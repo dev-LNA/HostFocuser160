@@ -1,7 +1,9 @@
+from ast import Attribute
+
 from PyQt6 import uic
 from PyQt6.QtWidgets import QMainWindow, QLineEdit, QProgressBar, QDialog
 from PyQt6.QtCore import QThread, pyqtSignal, pyqtProperty
-
+from PyQt6.QtGui import QFontMetrics
 from misc.load_bar import LoadBar
 from misc.ui_intellisense import UiWidgets
 from misc.login_form import LoginForm
@@ -26,6 +28,8 @@ def resource_path(relative_path):
 path_to_ui = resource_path('../assets/ui/settings.ui')              # Path to settings window UI
 config_file = "src/config/config.toml"
 
+
+
 class SettingsWindow(QMainWindow):
 
     _signal_window_closed = pyqtSignal(bool)                        # Signal to inform that the window was closed
@@ -38,7 +42,7 @@ class SettingsWindow(QMainWindow):
 
     _motor_settings = dict()                                        # Motor current settings
     _settings_changed = False                                       # Informs if a setting was changed
-    _changes = dict()                                               # Dict of settings that were changed, keeping the old values for reference
+    _changed_settings = dict()                                      # Dict of settings that were changed, keeping the old values for reference
 
 
     def __init__(self, driver: FocuserDriver):
@@ -89,6 +93,8 @@ class SettingsWindow(QMainWindow):
 
         self._updater._running.connect(self._initialize_motor_settings)                 # When the updater finishes reading the motor the dictionary with the current values must be updated
 
+        self._changed_settings.clear()          # Resets changes dictionary   
+
         self._update_settings()                                                         # Updates current settings by reading the values from the motor
         
 
@@ -133,13 +139,22 @@ class SettingsWindow(QMainWindow):
         
 
     @property
-    def get_motor_settings(self):
+    def motor_settings(self):
         return self._motor_settings
 
     def _set_motor_settings(self, key:str, value:str):
-        if self._motor_settings[key] != value:
-            self._changes[key] = self._motor_settings[key]      # Indicates that this value has changed and saves the old value for reference
-            self._motor_settings[key] = value
+
+        if value == self._motor_settings[key]:
+            if key in self._changed_settings:
+                print(f"{self._changed_settings}")
+                print("deleting key")
+                del self._changed_settings[key]
+                print(f"{self._changed_settings}")
+
+        if (self._motor_settings[key] != value) or ( (key in self._changed_settings) and self._changed_settings[key] != value):
+            self._changed_settings[key] = value      # Indicates that this value has changed and saves the new value
+            # self._changed_settings[key] = self._motor_settings[key]      # Indicates that this value has changed and saves the old value for reference
+            # self._motor_settings[key] = value
             self._settings_changed = True
             print(f"{key} value changed to {value}")
         else:
@@ -182,12 +197,13 @@ class SettingsWindow(QMainWindow):
             Checks if the value in the text box changed in relation to the one read from the motor
         during the initialization, and if the value has changed sends the command to the motor to 
         change the setting value."""
-            self._changes.clear()          # Resets changes dictionary         
+ 
+            # self._changed_settings.clear()          # Resets changes dictionary         
         # Device IP
             self._set_motor_settings("DEVICE_IP", self.ui_elements.txtMotorIP.text())
             if self._settings_changed:
-                # self._changes["DEVICE_IP"] = self._motor_settings["DEVICE_IP"]
-                self.driver.set_device_IP = self._motor_settings["DEVICE_IP"]
+                # self._changed_settings["DEVICE_IP"] = self._motor_settings["DEVICE_IP"]
+                self.driver.device_IP = self._motor_settings["DEVICE_IP"]
 
             # If the motor IP is changed it is important to keep the config file updated so that when the server is restarted the new IP address is saved
                 with open(config_file, 'r') as f:
@@ -200,64 +216,58 @@ class SettingsWindow(QMainWindow):
 
         # Backlash compensation
             self._set_motor_settings("BACKLASH", self.ui_elements.txtBackComp.text())
-            if self._settings_changed:
-                # self._changes["BACKLASH"] = self._motor_settings["BACKLASH"]
-                self.driver.set_backlash = self._motor_settings["BACKLASH"]
+            # if self._settings_changed:
+            #     self.driver.backlash = self._motor_settings["BACKLASH"]
         # Max position
             self._set_motor_settings("MAX_POS", self.ui_elements.txtMaxPos.text())
-            if self._settings_changed:
-                # self._changes["MAX_POS"] = self._motor_settings["MAX_POS"]
-                current_pos = self.driver.position                                  # Reads the current position
-                self.driver.set_max_pos = self._motor_settings["MAX_POS"]         # Saves new max pos value
-                if int(self._motor_settings["MAX_POS"]) < current_pos:            # If the new max position is lower than the current position informs that a homing is needed    #TODO: É necessário mesmo?                
-                    print("Necessário realizar homing")                            # TODO: Se o novo valor máximo for menor que a posição atual vai ser necessário realizar o homing para garantir que a posição atual vai ser válida dentro do novo limite
+            # if self._settings_changed:
+                # current_pos = self.driver.position                                  # Reads the current position
+                # self.driver.max_pos = self._motor_settings["MAX_POS"]         # Saves new max pos value
+                # if int(self._motor_settings["MAX_POS"]) < current_pos:            # If the new max position is lower than the current position informs that a homing is needed    #TODO: É necessário mesmo?                
+                #     print("Necessário realizar homing")                            # TODO: Se o novo valor máximo for menor que a posição atual vai ser necessário realizar o homing para garantir que a posição atual vai ser válida dentro do novo limite
         # Park position
             self._set_motor_settings("PARK_POS", self.ui_elements.txtPark.text())
-            if self._settings_changed:
-                # self._changes["PARK_POS"] = self._motor_settings["PARK_POS"]
-                self.driver.set_park_pos = self._motor_settings["PARK_POS"]
         # Max speed
             self._set_motor_settings("MAX_SPEED", self.ui_elements.txtMaxSpeed.text())  #TODO: No firmware do motor está limitado em 214400
-            if self._settings_changed:
-                # self._changes["MAX_SPEED"] = self._motor_settings["MAX_SPEED"]
-                self.driver.set_max_speed = self._motor_settings["MAX_SPEED"]
         # Normal speed
             self._set_motor_settings("NORMAL_SPEED", self.ui_elements.txtNormalSpeed.text())
-            if self._settings_changed:
-                # self._changes["NORMAL_SPEED"] = self._motor_settings["NORMAL_SPEED"]
-                self.driver.set_normal_speed = self._motor_settings["NORMAL_SPEED"]
         # Normal speed
             self._set_motor_settings("LOW_SPEED", self.ui_elements.txtLowSpeed.text())
-            if self._settings_changed:
-                # self._changes["LOW_SPEED"] = self._motor_settings["LOW_SPEED"]
-                self.driver.set_low_speed = self._motor_settings["LOW_SPEED"]
 
-            if self._changes:                       # If the changes dictionary has any elements than a setting was changed and the command store must be executed
+            if self._changed_settings:                       # If the changes dictionary has any elements than a setting was changed and the command store must be executed
                 verify = VerificationDialog()
                 text = ""
-                keys, values = zip(*self._changes.items())
+                keys, values = zip(*self._changed_settings.items())
                 for i in range(0, len(keys)):
-                    text += f"{keys[i]}: {values[i]} -> {self._motor_settings[keys[i]]}\n"
+                    text += f"<font color=red> {keys[i]}</font>: {self._motor_settings[keys[i]]} -> {values[i]} <br>"
                 
+                text += f"<br>"
+                text += f"<font color=red> * The motor must be restarted for the changes to take effect </font>"
                 verify.txtChanges.setText(text)
-                
+
+                font_size = QFontMetrics(verify.txtChanges.font())
+                text_height = ( (len(keys) + 2) * font_size.height()) + 20
+
+                verify.txtChanges.setMinimumHeight(100)
+                verify.txtChanges.setFixedHeight(text_height)
+
                 if verify.exec() == QDialog.DialogCode.Accepted: 
+                    try:
+                        for _ in keys:
+                            setattr(self.driver, self.driver.property_handlers[_], self._changed_settings[_]) 
 
-                    print(self._changes)
-                    print(self._motor_settings)        
-
-                
-
-                    # self.driver._store_to_flash()       # Store the new settings to flash.
+                        self.driver._store_to_flash()       # Store the new settings to flash.
+                        self._changed_settings.clear()          # Resets changes dictionary   
+                    except Exception as e:
+                        print(e)
                 else:
-                    print("beleza")
-
-
-
-
-
-
-
+                    self.ui_elements.txtMotorIP.setText(self._motor_settings["DEVICE_IP"])
+                    self.ui_elements.txtBackComp.setText(self._motor_settings["BACKLASH"])
+                    self.ui_elements.txtMaxPos.setText(self._motor_settings["MAX_POS"])
+                    self.ui_elements.txtPark.setText(self._motor_settings["PARK_POS"])
+                    self.ui_elements.txtMaxSpeed.setText(self._motor_settings["MAX_SPEED"])
+                    self.ui_elements.txtNormalSpeed.setText(self._motor_settings["NORMAL_SPEED"])
+                    self.ui_elements.txtLowSpeed.setText(self._motor_settings["LOW_SPEED"])
 
 
 
@@ -307,7 +317,7 @@ class RetrieveSettings(QThread):
         self._signal_progress.emit(p)
         self._running.emit(True)
 
-        resp = self.driver.get_device_ID
+        resp = self.driver.device_ID
         if resp == constants.ID_FOCUSER_160:
             self._signal_device_ID.emit("Focuser 160") 
         elif resp == constants.ID_FOCUSER_IAG:
@@ -317,27 +327,25 @@ class RetrieveSettings(QThread):
         
         p += step_size
         self._signal_progress.emit(p)
-        self._signal_backlash.emit(self.driver.get_backlash)
-
-        self._signal_device_IP.emit(self.driver.get_device_IP)
+        self._signal_device_IP.emit(self.driver.device_IP)
         p += step_size
         self._signal_progress.emit(p)
-        self._signal_backlash.emit(self.driver.get_backlash)
+        self._signal_backlash.emit(self.driver.backlash)
         p += step_size
         self._signal_progress.emit(p)
-        self._signal_max_pos.emit(self.driver.get_max_pos)
+        self._signal_max_pos.emit(self.driver.max_pos)
         p += step_size
         self._signal_progress.emit(p)
-        self._signal_park_pos.emit(self.driver.get_park_pos)
+        self._signal_park_pos.emit(self.driver.park_pos)
         p += step_size
         self._signal_progress.emit(p)
-        self._signal_max_speed.emit(self.driver.get_max_speed)
+        self._signal_max_speed.emit(self.driver.max_speed)
         p += step_size
         self._signal_progress.emit(p)
-        self._signal_normal_speed.emit(self.driver.get_normal_speed)
+        self._signal_normal_speed.emit(self.driver.normal_speed)
         p += step_size
         self._signal_progress.emit(p)
-        self._signal_low_speed.emit(self.driver.get_low_speed)
+        self._signal_low_speed.emit(self.driver.low_speed)
         p = 100
         self._signal_progress.emit(p)
         time.sleep(0.2)
