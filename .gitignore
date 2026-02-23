@@ -6,3 +6,4 @@ docs
 logs
 .vscode
 .venv
+/misc/psw.cfg
