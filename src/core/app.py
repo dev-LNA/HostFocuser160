@@ -252,13 +252,20 @@ class App(QObject):
         self._close_connection()
         self.logger.info(f'Server Disconnecting')
     
-    def _pub_status(self):
-        """Publishes status via ZeroMQ"""
+    def _pub_status(self) -> datetime:
+        """Publishes status via ZeroMQ
+
+        Returns
+        -------
+        datetime
+            Time when the pub occurred
+        """
         self.status["timestamp"] = datetime.isoformat(datetime.now(), timespec='milliseconds')              # Sets status timestamp
         json_string = json.dumps(self.status)                                                               # Serializes the current Status in a JSON formatted string
         try:      
             self.publisher.send_string(json_string)                                                         # Publishes Status JSON string
             self.logger.info(f'Status published: {self.status}')                                            # If no error occurred while publishing logs the published JSON string
+            return datetime.now()
         except Exception as e:
             self.logger.error(f'Error: {str(e)}')
     
@@ -561,9 +568,10 @@ class App(QObject):
             # if -1 >= (current_time.second - self.last_pub.second) or (current_time.second - self.last_pub.second) >= 1:       #TODO: Não daria pra só checar se o valor absoluto for >= 1?
             if abs(current_time.second - self.last_pub.second) >= 1:                                                            # Updates position and publishes status every 1 second
                 # self.device.position 
-                self.position = self.device.position                                                                           # Reads motor current position
-                self._pub_status()                                                                                               # Publishes status  #TODO: Não adianta atualizar "_position" se não colocar em "Status" para publicar
-                self.last_pub = current_time                                                                                    # Updates las publish moment
+                self.position = self.device.position                                                                            # Reads motor current position
+                self.status["psosition"] = self.position
+                self.last_pub = self._pub_status()                                                                              # Publishes status  #TODO: Não adianta atualizar "_position" se não colocar em "Status" para publicar
+                # self.last_pub = current_time                                                                                    # Updates las publish moment
             if self.device and self.device.connected and self.poller:                                                           # Continues the loop if the device is configured and connected and the poller is configured
                 socks = dict(self.poller.poll(50))                                                                              # Polls the information from the ZMQ to receive commands from the client
                 if socks.get(self.replier) == zmq.POLLIN:                                                                       # If the socket is configured as Pollin   #TODO: Necessário?

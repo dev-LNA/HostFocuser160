@@ -14,10 +14,10 @@ class UpdaterSignals(QObject):
     connected = pyqtSignal(bool)
     position = pyqtSignal(int)
 
-    lbl_clientId_style = pyqtSignal(str)
-    lbl_conn_style = pyqtSignal(str)
-    lbl_init_style = pyqtSignal(str)
-    lbl_mov_style = pyqtSignal(str)
+    lbl_clientId_style = pyqtSignal(str, str)
+    lbl_conn_style = pyqtSignal(str, str)
+    lbl_init_style = pyqtSignal(str, str)
+    lbl_mov_style = pyqtSignal(str, str)
 
 
 class Updater(QRunnable):
@@ -54,32 +54,34 @@ class Updater(QRunnable):
                             self._clientId = data["cmd"]["clientId"]
                             if self._clientId == 0:
                                 self.signals.clientID.emit("")
-                                self.signals.lbl_clientId_style.emit("background-color: indianred")
+                                self.signals.lbl_clientId_style.emit("ledStatus", "NOK")
                             else:                                
                                 self.signals.clientID.emit(str(data["cmd"]["clientId"]))
-                                self.signals.lbl_clientId_style.emit("background-color: lightgreen")
+                                self.signals.lbl_clientId_style.emit("ledStatus", "OK")
                             # print(data["cmd"]["clientId"])
                         if data["connected"] != self._connected:
                             self._connected = data["connected"]
                             self.signals.connected.emit(self._connected)
                             if self._connected is False:
-                                self.signals.lbl_conn_style.emit("background-color: indianred")
+                                self.signals.lbl_conn_style.emit("ledStatus", "NOK")
                             else:                                
-                                self.signals.lbl_conn_style.emit("background-color: lightgreen")
+                                self.signals.lbl_conn_style.emit("ledStatus", "OK")
                         if data["homing"] != self._homing:
                             self._homing = data["homing"]
                             self.signals.homing.emit(self._homing)
                             if self._homing is False:
-                                self.signals.lbl_init_style.emit("background-color: indianred")
+                                self.signals.lbl_init_style.emit("ledStatus", "NOK")
                             else:                                
-                                self.signals.lbl_init_style.emit("background-color: lightgreen")
+                                self.signals.lbl_init_style.emit("ledStatus", "OK")
                         if data["isMoving"] != self._isMoving:
                             self._isMoving = data["isMoving"]
                             self.signals.is_moving.emit(self._isMoving)
                             if self._isMoving is False:
-                                self.signals.lbl_mov_style.emit("background-color: indianred")
+                                self.signals.lbl_mov_style.emit("ledStatus", "NOK")
+                                pass
                             else:                                
-                                self.signals.lbl_mov_style.emit("background-color: lightgreen")
+                                self.signals.lbl_mov_style.emit("ledStatus", "OK")
+                                pass
                         
                     except Exception as e:
                         print(e)

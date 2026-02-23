@@ -312,7 +312,6 @@ class FocuserOPD(QtWidgets.QMainWindow):
     def _run_simulator(self, checked):
         """Opens the simulator window"""
 
-        # client_num = len(self.clients)
         client = ClientSimulator()
         client.client_ID = self._num_clients + 100              # Clients ID number beging in 100
         client.name = f"Simulador {str(self._num_clients)}"

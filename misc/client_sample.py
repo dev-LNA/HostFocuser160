@@ -1,5 +1,5 @@
 from PyQt6 import QtWidgets, uic
-from PyQt6.QtCore import pyqtSignal, QThreadPool
+from PyQt6.QtCore import pyqtSignal, QThreadPool, QEvent, QObject
 from PyQt6.QtWidgets import QPushButton, QLineEdit, QProgressBar, QTextEdit, QLabel, QStackedWidget
 
 from src.core.config import Config
@@ -18,7 +18,7 @@ def resource_path(relative_path):
     base_path = getattr(sys, '_MEIPASS', os.path.dirname(os.path.abspath(__file__)))
     return os.path.join(base_path, relative_path)
 
-main_ui_path = resource_path('../assets/client.ui')
+main_ui_path = resource_path('../assets/ui/client.ui')
 
 class ClientSimulator(QtWidgets.QMainWindow):
 
@@ -77,8 +77,8 @@ class ClientSimulator(QtWidgets.QMainWindow):
         self.lblMotorID: QLabel = self.lblMotorID
         self.lblMotorIP = self.findChild(QtWidgets.QLabel, 'lblMotorIP')
         self.lblMotorIP: QLabel = self.lblMotorIP
-        self.lblMotorFirmVer = self.findChild(QtWidgets.QLabel, 'lblMotorFirmVer')
-        self.lblMotorFirmVer: QLabel = self.lblMotorFirmVer
+        self.lblClientID = self.findChild(QtWidgets.QLabel, 'lblClientID')
+        self.lblClientID: QLabel = self.lblClientID
 
         self.lblServerIP = self.findChild(QtWidgets.QLabel, 'lblServerIP')
         self.lblServerIP: QLabel = self.lblServerIP
@@ -119,8 +119,13 @@ class ClientSimulator(QtWidgets.QMainWindow):
 
         self.pageSelect.setCurrentIndex(0)                              # Defines starting widget
 
-        
 
+        # Events definitions
+        #   Install event filter on objects
+        self.statConn_2.installEventFilter(self)
+        self.statMov_2.installEventFilter(self)
+        self.statBusy_2.installEventFilter(self)
+        self.statInit_2.installEventFilter(self)
 
         # self.context = zmq.Context()       
         self.context = None
@@ -203,13 +208,13 @@ class ClientSimulator(QtWidgets.QMainWindow):
             self._updater.signals.message.connect(self.txtStatus.setText)                    # Updates status text box with updated message
             self._updater.signals.position.connect(self.BarFocuser.setValue)                 # Updates bar value with position
             self._updater.signals.clientID.connect(self.statBusy_2.setText)                  # Updates client Id
-            self._updater.signals.lbl_clientId_style.connect(self.statBusy_2.setStyleSheet)  # Updates style of client Id label according to status
+            self._updater.signals.lbl_clientId_style.connect(self.statBusy_2.setProperty)  # Updates style of client Id label according to status
             self._updater.signals.connected.connect(self._update_connect_status)
-            self._updater.signals.lbl_conn_style.connect(self.statConn_2.setStyleSheet)      #
+            self._updater.signals.lbl_conn_style.connect(self.statConn_2.setProperty)      #
             self._updater.signals.homing.connect(self._update_home_status)
-            self._updater.signals.lbl_init_style.connect(self.statInit_2.setStyleSheet)
+            self._updater.signals.lbl_init_style.connect(self.statInit_2.setProperty)
             self._updater.signals.is_moving.connect(self._update_moving_status)
-            self._updater.signals.lbl_mov_style.connect(self.statMov_2.setStyleSheet)
+            self._updater.signals.lbl_mov_style.connect(self.statMov_2.setProperty)
             
             self._sender = ReqSender(req=self.req)
             self._sender.signals.timeout_error.connect(self._reset_client_context)
@@ -224,7 +229,7 @@ class ClientSimulator(QtWidgets.QMainWindow):
             
             self.lblMotorID.setText(data["device_ID"])
             self.lblMotorIP.setText(data["device_IP"])
-            self.lblMotorFirmVer.setText(data["device_Firmware_Version"])
+            self.lblClientID.setText(str(self.client_ID))
             
             self.statusBar().clearMessage()
             self.pageSelect.setCurrentIndex(1)
@@ -310,11 +315,11 @@ class ClientSimulator(QtWidgets.QMainWindow):
 
     def _move_in(self):
         if not self.is_moving:
-            self._send_command("FOCUSIN=9")   #TEST_VALUE -> ORIGINAL VALUE => FOCUSIN=200
+            self._send_command("FOCUSIN=1")   #TEST_VALUE -> ORIGINAL VALUE => FOCUSIN=200
 
     def _move_out(self):
         if not self.is_moving:
-            self._send_command("FOCUSOUT=9")  #TEST_VALUE -> ORIGINAL VALUE => FOCUSOUT=200
+            self._send_command("FOCUSOUT=1")  #TEST_VALUE -> ORIGINAL VALUE => FOCUSOUT=200
 
     def _get_status(self):
         if self._sender._send is False:                          # A new command is only sent if the last one was already sent
@@ -345,7 +350,47 @@ class ClientSimulator(QtWidgets.QMainWindow):
     def _update_moving_status(self, status):
         self.is_moving = status
 
-    
+
+    def _update_gui_element(self, widget: QtWidgets):
+        """Updates the GUI element style after an event occured
+
+        Parameters
+        ----------
+        widget : QtWidgets
+            Widget to be updated
+        """
+        widget.style().unpolish(widget)
+        widget.style().polish(widget)
+        widget.update()
+
+
+    def eventFilter(self, obj: QObject, event: QEvent) -> bool:
+        """Process events
+
+        Parameters
+        ----------
+        obj : QObject
+            Object that triggered the event
+        event : QEvent
+            Event that occurred
+
+        Returns
+        -------
+        bool
+            Returns if everything went ok
+        """
+
+        # Events related to a 'Dynamic Property' being changed
+        if event.type() == QEvent.Type.DynamicPropertyChange:
+
+            if obj.__class__ is QtWidgets.QLabel:
+                    # Executed when a label property changes
+                    self._update_gui_element(obj)
+                    return True 
+            
+        # For all other events or objects, return False to allow normal handling
+        return super().eventFilter(obj, event)
+
     def closeEvent(self, event):
         """Close application"""
         if(self.context):
