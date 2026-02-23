@@ -22,9 +22,13 @@ main_ui_path = resource_path('../assets/client.ui')
 
 class ClientSimulator(QtWidgets.QMainWindow):
 
-    sig = pyqtSignal(bool)
+    sig = pyqtSignal(int)
 
-    def __init__(self):
+    _client_id = 666
+    _client_transaction_ID = 0
+    _client_name = "Simulator"
+
+    def __init__(self, clientID: int=None, clientName: str=None):
         super(ClientSimulator, self).__init__()
         uic.loadUi(main_ui_path, self)
 
@@ -33,6 +37,11 @@ class ClientSimulator(QtWidgets.QMainWindow):
 
         self._updater = None
         self._sender = None
+
+        if clientID is not None:
+            self.client_ID = clientID
+        if clientName is not None:
+            self.name = clientName
         
     # Associate UI variables to allow intellisense with PyQt Widgets
         self.btnMove = self.findChild(QtWidgets.QPushButton, 'btnMove')
@@ -124,12 +133,13 @@ class ClientSimulator(QtWidgets.QMainWindow):
         self.homing = False
         self.position = 0
 
-        self._client_id = 666
+        # self._client_id = 666
+        # self._client_transaction_ID = 0
 
         self._msg_json = {
-            "clientId": self._client_id,
-            "clientTransactionId": 0,
-            "clientName": "Simulator",
+            "clientId": self.client_ID,
+            "clientTransactionId": self.transaction_ID,
+            "clientName": self.name,
             "action": "STATUS"
         }
 
@@ -139,6 +149,31 @@ class ClientSimulator(QtWidgets.QMainWindow):
         # self.timer.timeout.connect(self.update)
         # self._get_status()
         # self.timer.start(100)  
+
+    @property
+    def client_ID(self) -> int:
+        return self._client_id
+    
+    @client_ID.setter
+    def client_ID(self, value: int):
+        self._client_id = value
+
+    @property
+    def transaction_ID(self) -> int:
+        return self._client_transaction_ID
+    
+    @transaction_ID.setter
+    def transaction_ID(self, value: int):
+        self._client_transaction_ID = value
+
+    @property
+    def name(self) -> str:
+        return self._client_name
+    
+    @name.setter
+    def name(self, value: str):
+        self._client_name = value   
+
 
     def _connect_to_server(self):
         """
@@ -202,8 +237,6 @@ class ClientSimulator(QtWidgets.QMainWindow):
             print({str(e)})
             self.statusBar().showMessage("Could not establish connection to server")
 
-
-
     def _clientIpDefined(self):
         self.btnConnectClient.click()
 
@@ -246,7 +279,8 @@ class ClientSimulator(QtWidgets.QMainWindow):
     
     def _send_command(self, command: str, timeout: int=1500) -> str:
         try:
-            self._sender.send_request(self._client_id, command, timeout)    #   Sets message
+            self.transaction_ID += 1                                        #   Updates transaction ID
+            self._sender.send_request(self, command, timeout)               #   Sets message
             self.threadpool.start(self._sender)                             #   Starts Sender thread    
             return "OK"
         except Exception as e:
@@ -276,11 +310,11 @@ class ClientSimulator(QtWidgets.QMainWindow):
 
     def _move_in(self):
         if not self.is_moving:
-            self._send_command("FOCUSIN=200")
+            self._send_command("FOCUSIN=9")   #TEST_VALUE -> ORIGINAL VALUE => FOCUSIN=200
 
     def _move_out(self):
         if not self.is_moving:
-            self._send_command("FOCUSOUT=200")
+            self._send_command("FOCUSOUT=9")  #TEST_VALUE -> ORIGINAL VALUE => FOCUSOUT=200
 
     def _get_status(self):
         if self._sender._send is False:                          # A new command is only sent if the last one was already sent
@@ -316,7 +350,7 @@ class ClientSimulator(QtWidgets.QMainWindow):
         """Close application"""
         if(self.context):
             self._disconnect()
-        self.sig.emit(True)
+        self.sig.emit(self.client_ID)
         event.accept()
 
 

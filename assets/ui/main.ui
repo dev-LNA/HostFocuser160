@@ -2828,9 +2828,6 @@ QProgressBar[conStatusBar=&quot;connected&quot;]::chunk {
    </property>
   </action>
   <action name="actionClient_Simulator">
-   <property name="checkable">
-    <bool>true</bool>
-   </property>
    <property name="icon">
     <iconset theme="QIcon::ThemeIcon::ContactNew"/>
    </property>

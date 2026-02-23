@@ -33,3 +33,9 @@ log_level = "INFO"
 log_to_stdout = false
 log_max_size_mb = 10
 log_num_keep = 10
+
+
+# Test bench config
+# Backlash = 50
+# Max pos = 50
+# speed = 9 (used in focusin and focusout)

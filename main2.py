@@ -52,7 +52,9 @@ class FocuserOPD(QtWidgets.QMainWindow):
     def __init__(self):
         super(FocuserOPD, self).__init__()
         uic.loadUi(main_ui_path, self)
-        self.second_window = None
+
+        self.clients = list[ClientSimulator]()
+        self._num_clients = 0
         self._settings_window = None
         self.log_box = None
         self.load_window = None
@@ -309,21 +311,48 @@ class FocuserOPD(QtWidgets.QMainWindow):
 
     def _run_simulator(self, checked):
         """Opens the simulator window"""
-        if checked is True:
-            if self.second_window is None:
-                self.second_window = ClientSimulator()
-                self.second_window.sig.connect(self._simulator_closed)          # Signal to inform the main window that the simulator was closed    
-                self.second_window.move(self.pos() + QPoint(self.width(), 0))   # Positions the simulator window next to the main window
-                self.second_window.show()                                       # Opens the simulator window
-        else:
-            self.second_window.close()                                          # Closes the simulator if already opened
+
+        # client_num = len(self.clients)
+        client = ClientSimulator()
+        client.client_ID = self._num_clients + 100              # Clients ID number beging in 100
+        client.name = f"Simulador {str(self._num_clients)}"
+        client.transaction_ID = 0
+
+        client.sig.connect(self._simulator_closed)
+        client.move(self.pos() + QPoint(self.width(), 0))
+
+        self.clients.append(client)
+        
+        self.clients[len(self.clients)-1].show()
+        self._num_clients+=1
+
+        print(self.clients)
+
+        # if checked is True:
+        # if self.second_window is None:
+        #     self.second_window = ClientSimulator()
+        #     self.second_window.sig.connect(self._simulator_closed)          # Signal to inform the main window that the simulator was closed    
+        #     self.second_window.move(self.pos() + QPoint(self.width(), 0))   # Positions the simulator window next to the main window
+        #     self.second_window.show()                                       # Opens the simulator window
+        # else:
+        #     self.second_window.close()                                          # Closes the simulator if already opened
 
     def _simulator_closed(self, msg):
         """ Receives closed window signal from the simulator """
-        if msg is True:    
-            self.second_window = None                                       # "Deletes" the simulator window from the main window
-            self.ui_elements.actionClient_Simulator.setChecked(False)       # Unchecks action to open client simulator
-            print("simulador fechado")
+
+        for index, client in enumerate(self.clients):
+            if msg == client.client_ID:
+                removed = self.clients.pop(index)
+                print(f"Cliente {removed.client_ID} encerrado")
+
+        # self._num_clients-=1
+
+        print(self.clients)
+                
+        # if msg is True:    
+        #     self.second_window = None                                       # "Deletes" the simulator window from the main window
+        #     self.ui_elements.actionClient_Simulator.setChecked(False)       # Unchecks action to open client simulator
+        #     print("simulador fechado")
 
 
     def _open_settings(self):
@@ -437,8 +466,12 @@ class FocuserOPD(QtWidgets.QMainWindow):
     def _stop(self):
         """Stops main program and the main loop at Application interface with Device"""
     # Also closes second window if it is opened
-        if self.second_window is not None:
-            self.second_window.close()
+        # if self.second_window is not None:
+        #     self.second_window.close()
+
+
+        while self.clients:             # Closes all opened client simulators
+            self.clients[0].close()     # The close method will 'pop' the client from the list, so the client in position 0 is removed until there are no more clients opened
 
         if self.control:
             self.control.disconnect()

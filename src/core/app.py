@@ -635,7 +635,7 @@ class App(QObject):
                     self.clientID = 0                         # Sets client not busy
                     self.status["cmd"] =  {                     # Resets "cmd" 
                                             "clientId": self._client_id,                #TODO: Esse valor pode ser 0? Checar arquivo do Ramon e documentação Alpaca. Talvez o 0 seja reservado para "not busy"
-                                            "clientTransactionId": 0,                   #TODO: Esse valor pode ser 0? Checar arquivo do Ramon e documentação Alpaca. Talvez o 0 seja reservado para "not busy"
+                                            "clientTransactionId": 0,                   
                                             "clientName": "",
                                             "action": ""
                                             }                    
