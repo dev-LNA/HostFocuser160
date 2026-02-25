@@ -113,6 +113,9 @@ class UiWidgets(QWidget):
             self.ledMoving = window.findChild(QLabel, 'ledMoving')
             self.ledMoving: QLabel = self.ledMoving
 
+            self.lblStatus_val = window.findChild(QLabel, 'lblStatus_val')
+            self.lblStatus_val: QLabel = self.lblStatus_val
+
 
 
         elif window_name == "settings":

@@ -20,6 +20,8 @@ def resource_path(relative_path):
 
 main_ui_path = resource_path('../assets/ui/client.ui')
 
+TEST_SETUP = True
+
 class ClientSimulator(QtWidgets.QMainWindow):
 
     sig = pyqtSignal(int)
@@ -315,12 +317,18 @@ class ClientSimulator(QtWidgets.QMainWindow):
 
     def _move_in(self):
         if not self.is_moving:
-            self._send_command("FOCUSIN=1")   #TEST_VALUE -> ORIGINAL VALUE => FOCUSIN=200
+            if TEST_SETUP:
+                self._send_command("FOCUSIN=20")   #TEST_VALUE -> ORIGINAL VALUE => FOCUSIN=200
+            else:
+                self._send_command("FOCUSIN=200")
 
     def _move_out(self):
         if not self.is_moving:
-            self._send_command("FOCUSOUT=1")  #TEST_VALUE -> ORIGINAL VALUE => FOCUSOUT=200
-
+            if TEST_SETUP:
+                self._send_command("FOCUSOUT=20")  #TEST_VALUE -> ORIGINAL VALUE => FOCUSOUT=200
+            else:
+                self._send_command("FOCUSOUT=200")
+                
     def _get_status(self):
         if self._sender._send is False:                          # A new command is only sent if the last one was already sent
             self._send_command("STATUS")

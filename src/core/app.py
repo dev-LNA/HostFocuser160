@@ -11,6 +11,7 @@ from PyQt6.QtGui import QPixmap
 from logging import Logger
 
 import time
+import numpy
 import zmq
 import json
 import socket
@@ -21,8 +22,10 @@ import sys
 
 from src.core.config import Config
 import src.core.exceptions as AlpacaExceptions
+from src.utils.constants import constants
 
-from src.interface.dmx_eth import FocuserDriver as Focuser
+# from src.interface.dmx_eth import FocuserDriver as Focuser
+from src.interface.motor_driver import FocuserDriver as Focuser
 
 
 def resource_path(relative_path):
@@ -58,6 +61,8 @@ class App(QObject):
     # _signal_moving = pyqtSignal(QPixmap)
     _signal_moving = pyqtSignal(str, str)
 
+    _signal_firmware_status = pyqtSignal(str)
+
 
     def __init__(self, logger: Logger):
         super(App, self).__init__()
@@ -91,6 +96,10 @@ class App(QObject):
         self.busy_id = 0
         self._current_speed = Config.max_speed
         self._encoder = 0
+
+        self._status_lim_minus = False
+        self._status_lim_max = False
+            
 
         self._transaction_id = 0
 
@@ -126,7 +135,7 @@ class App(QObject):
             "version": "1.0.0"            #TODO: Pegar a versão do arquivo config.toml
         }
         
-        self.device = Focuser(self.logger)
+        self.device = Focuser(self.logger, constants.ARCUS_DMX_ETH)
 
     # Reaching the device and starting the server at this point is not necessary        
         # self.reach_device()
@@ -542,6 +551,26 @@ class App(QObject):
     @is_moving.setter
     def is_moving(self, value: bool):
         self._is_moving = value
+        if value:
+            # self._signal_moving.emit(QPixmap(icon_con_ok))
+            self._signal_moving.emit("statusLed", "OK")
+        else:
+            # self._signal_moving.emit(QPixmap(icon_con_nok))
+            self._signal_moving.emit("statusLed", "NOK")
+
+    @property
+    def status_lim_minus(self):
+        return self._status_lim_minus
+    @status_lim_minus.setter
+    def status_lim_minus(self, value: bool):
+        self._status_lim_minus = value
+
+    @property
+    def status_lim_max(self):
+        return self._status_lim_max
+    @status_lim_max.setter
+    def status_lim_max(self, value: bool):
+        self._status_lim_max = value
 
     def run(self):
         """Server Main Loop
@@ -565,11 +594,14 @@ class App(QObject):
         while not self._stop_var:                                    # Start of the thread loop
             t0 = time.time()                                        # Keeps the time when the loop began
             current_time = datetime.now()                           # Reads current time
+
+            self._signal_firmware_status.emit(self.device.get_firmware_status())
+
             # if -1 >= (current_time.second - self.last_pub.second) or (current_time.second - self.last_pub.second) >= 1:       #TODO: Não daria pra só checar se o valor absoluto for >= 1?
             if abs(current_time.second - self.last_pub.second) >= 1:                                                            # Updates position and publishes status every 1 second
                 # self.device.position 
                 self.position = self.device.position                                                                            # Reads motor current position
-                self.status["psosition"] = self.position
+                self.status["position"] = self.position
                 self.last_pub = self._pub_status()                                                                              # Publishes status  #TODO: Não adianta atualizar "_position" se não colocar em "Status" para publicar
                 # self.last_pub = current_time                                                                                    # Updates las publish moment
             if self.device and self.device.connected and self.poller:                                                           # Continues the loop if the device is configured and connected and the poller is configured
@@ -630,7 +662,6 @@ class App(QObject):
                         self.logger.error(f'Error: {str(e)}')                                                                   # Logs error
 
 
-                
                 self._check_motor_moving()                  # Verifies if the motor is moving as expected.
                                           
                                            
@@ -686,15 +717,12 @@ class App(QObject):
         """
         if self.is_moving:                             #TODO: Qual o motivo de `_is_moving` ter que ser `true` para chamar `device.is_moving` para checar se está em movimento?
             try:
+                self._read_motor_status()    
                 pos_delta = self.position - self.device.position
-                if pos_delta == 0:                                                      # If the driver says the motor is moving but there is no change in position reading than the motor is stalled
-                    raise AlpacaExceptions.DriverException(1300, "Stalled Motor")       # Raises exception according to Alpaca      #TODO: Definir direito o código e a mensagem
-                self.position = self.device.position
-            except Exception as e:                                                      # At this point could the exception also be due to a communication issue?
-                # if Exception.__class__ is AlpacaExceptions.DriverException:             # if the exception was raised by the driver
-                try:
-                    print(e)
-                    self.status["timeout"]= True
+                if pos_delta == 0 and self.status_lim_minus == False:                                                      # If the driver says the motor is moving but there is no change in position reading than the motor is stalled
+                    # raise AlpacaExceptions.DriverException(1300, "Stalled Motor")       # Raises exception according to Alpaca      #TODO: Definir direito o código e a mensagem
+
+                    print("Stalled Motor")   
                     _loop_count = 0                                                         # TODO: Isso pode ser configurável
                     while self.is_moving and _loop_count < 5:                               # If a stall occurs the server issues a 'halt' command and verifies if the motor responds as expected
                         self.handle_halt()
@@ -703,9 +731,28 @@ class App(QObject):
                         _loop_count+=1
                     if _loop_count == 5:
                         raise Exception("Motor is stalled and driver didn't respond to stop command after 5 tries")
-                except Exception as e:                                                                                      # If an exception occurs during the handling of the command 
-                    self._pub_status()                                                                                       # Published current status
-                    self.logger.error(f'Error: {str(e)}')                                                                   # Logs error
+                    self.status["timeout"]= True
+                    self._pub_status()
+
+                # Resets status. Required to accept new commands
+                    self._homing = False
+                    self._is_busy = False
+                    self.clientID = 0                         # Sets client not busy
+                    self.status["cmd"] =  {                     # Resets "cmd" 
+                                            "clientId": self._client_id,                #TODO: Esse valor pode ser 0? Checar arquivo do Ramon e documentação Alpaca. Talvez o 0 seja reservado para "not busy"
+                                            "clientTransactionId": 0,                   
+                                            "clientName": "",
+                                            "action": ""
+                                            }         
+
+                else:
+                    self.position = self.device.position
+                    self.status["timeout"] = False
+                    self._pub_status()   
+            except Exception as e:                                                      # At this point could the exception also be due to a communication issue?
+                                                                                     # If an exception occurs during the handling of the command 
+                self._pub_status()                                                                                       # Published current status
+                self.logger.error(f'Error: {str(e)}')                                                                   # Logs error
 
 
 
@@ -716,17 +763,25 @@ class App(QObject):
             resp = format(int(self.device.motor_status), '012b')        # TODO: Ver um jeito de converter para binário sem ser string
             motor_status = "".join(reversed(resp))                          # This is only done so that the bit order is as shown in table 7 of the manual of the motor (DMX-ETH)
             # print(motor_status)
-            
-            if(motor_status[0] == '1'):                                 
-                # print("motor em movimento")
+
+
+            if(motor_status[0] == '1'):        
                 self.is_moving = True
             else:
-                # print("motor parado")
                 self.is_moving = False
-            # if(motor_status[1] == '1'):
-            #     print("motor acelerando")
-            # if(motor_status[2] == '1'):
-            #     print("motor desacelerando")
+
+            if(motor_status[4] == '1'):        
+                self.status_lim_minus = True
+            else:
+                self.status_lim_minus = False
+
+            if(motor_status[5] == '1'):        
+                self.status_lim_max = True
+            else:
+                self.status_lim_max = False
+            
+
+
         except Exception as e:                                              # TODO: Verificar o que tem que ser feito se não conseguir obter essa informação 
             print(e)
 

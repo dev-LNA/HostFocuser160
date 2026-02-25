@@ -2344,7 +2344,7 @@ QProgressBar[conStatusBar=&quot;connected&quot;]::chunk {
       <x>9</x>
       <y>246</y>
       <width>289</width>
-      <height>142</height>
+      <height>201</height>
      </rect>
     </property>
     <property name="minimumSize">
@@ -2383,7 +2383,7 @@ QProgressBar[conStatusBar=&quot;connected&quot;]::chunk {
          <property name="maximumSize">
           <size>
            <width>50</width>
-           <height>16777215</height>
+           <height>20</height>
           </size>
          </property>
          <property name="styleSheet">
@@ -2437,7 +2437,7 @@ QProgressBar[conStatusBar=&quot;connected&quot;]::chunk {
          <property name="maximumSize">
           <size>
            <width>60</width>
-           <height>16777215</height>
+           <height>20</height>
           </size>
          </property>
          <property name="styleSheet">
@@ -2494,7 +2494,7 @@ QProgressBar[conStatusBar=&quot;connected&quot;]::chunk {
          <property name="maximumSize">
           <size>
            <width>50</width>
-           <height>16777215</height>
+           <height>20</height>
           </size>
          </property>
          <property name="styleSheet">
@@ -2558,7 +2558,7 @@ QProgressBar[conStatusBar=&quot;connected&quot;]::chunk {
          <property name="maximumSize">
           <size>
            <width>50</width>
-           <height>16777215</height>
+           <height>20</height>
           </size>
          </property>
          <property name="styleSheet">
@@ -2671,6 +2671,61 @@ QProgressBar[conStatusBar=&quot;connected&quot;]::chunk {
        </item>
        <item>
         <spacer name="horizontalSpacer">
+         <property name="orientation">
+          <enum>Qt::Orientation::Horizontal</enum>
+         </property>
+         <property name="sizeHint" stdset="0">
+          <size>
+           <width>40</width>
+           <height>20</height>
+          </size>
+         </property>
+        </spacer>
+       </item>
+      </layout>
+     </item>
+     <item>
+      <layout class="QHBoxLayout" name="horizontalLayout_7">
+       <item>
+        <widget class="QLabel" name="lblStatus">
+         <property name="text">
+          <string>Program Status: </string>
+         </property>
+        </widget>
+       </item>
+       <item>
+        <widget class="QLabel" name="lblStatus_val">
+         <property name="minimumSize">
+          <size>
+           <width>60</width>
+           <height>0</height>
+          </size>
+         </property>
+         <property name="maximumSize">
+          <size>
+           <width>80</width>
+           <height>20</height>
+          </size>
+         </property>
+         <property name="styleSheet">
+          <string notr="true">background-color: white</string>
+         </property>
+         <property name="frameShape">
+          <enum>QFrame::Shape::Panel</enum>
+         </property>
+         <property name="frameShadow">
+          <enum>QFrame::Shadow::Sunken</enum>
+         </property>
+         <property name="lineWidth">
+          <number>2</number>
+         </property>
+         <property name="text">
+          <string/>
+         </property>
+        </widget>
+       </item>
+       <item>
+        <spacer name="horizontalSpacer_9">
          <property name="orientation">
           <enum>Qt::Orientation::Horizontal</enum>
          </property>

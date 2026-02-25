@@ -125,8 +125,10 @@ class FocuserOPD(QtWidgets.QMainWindow):
 
         self.control._signal_transaction_id.connect(self.ui_elements.lblTransactionId_val.setText)
 
+        self.control._signal_firmware_status.connect(self.ui_elements.lblStatus_val.setText)
 
-        
+
+
 
         # Imports the box to show log files                             # TODO: Adicionar mais funcionalidades ao log box, como pesquisar no log e escolher o log que se deseja abrir
         self.log_box = LogBox()                                         # TODO: Também é necessário alterar a forma que os arquivos são salvos, colocando um nome padrão de acordo com a data    
