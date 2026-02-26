@@ -12,7 +12,8 @@ from PyQt6.QtWidgets import (
     QGroupBox,
     QTextEdit,
     QDockWidget,
-    QStatusBar)
+    QStatusBar,
+    QFrame)
 
 
 
@@ -169,6 +170,20 @@ class UiWidgets(QWidget):
 
             self.txtLowSpeed = window.findChild(QLineEdit, 'txtLowSpeed')
             self.txtLowSpeed: QLineEdit = self.txtLowSpeed
+
+        # Frame send command
+
+            self.frameCommand = window.findChild(QFrame, 'frameCommand')
+            self.frameCommand: QFrame = self.frameCommand
+
+            self.txtCommand = window.findChild(QLineEdit, 'txtCommand')
+            self.txtCommand: QLineEdit = self.txtCommand
+
+            self.lblResponse_Val = window.findChild(QLabel, 'lblResponse_Val')
+            self.lblResponse_Val: QLabel = self.lblResponse_Val
+
+            self.btnSendCommand = window.findChild(QPushButton, 'btnSendCommand')
+            self.btnSendCommand: QPushButton = self.btnSendCommand
 
 
 

@@ -579,9 +579,12 @@ class FocuserDriver():
         self._lock.release()
         return False 
 
+    def sendCommand(self, command: str) -> str:
+        self._lock.acquire()
+        resp = self._write(command)
+        self._lock.release()
+        return resp
 
-
-    
     def _write(self, cmd, max_retries = 5):
         """Send commands to device socket.
         Args:  

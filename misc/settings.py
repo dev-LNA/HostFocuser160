@@ -2,14 +2,15 @@ from ast import Attribute
 
 from PyQt6 import uic
 from PyQt6.QtWidgets import QMainWindow, QLineEdit, QProgressBar, QDialog
-from PyQt6.QtCore import QThread, pyqtSignal, pyqtProperty
-from PyQt6.QtGui import QFontMetrics
+from PyQt6.QtCore import QThread, pyqtSignal
+from PyQt6.QtGui import QFontMetrics, QKeyEvent
 from misc.load_bar import LoadBar
 from misc.ui_intellisense import UiWidgets
 from misc.login_form import LoginForm
 from misc.verification import VerificationDialog
 
-from src.interface.dmx_eth import FocuserDriver
+# from src.interface.dmx_eth import FocuserDriver
+from src.interface.motor_driver import FocuserDriver
 from src.core.config import Config  
 
 from src.utils.constants import Constants, constants
@@ -34,6 +35,7 @@ class SettingsWindow(QMainWindow):
 
     _signal_window_closed = pyqtSignal(bool)                        # Signal to inform that the window was closed
     _signal_engineering_mode = pyqtSignal(bool)                     # Signal to inform that the engineering mode is activated
+    _signal_command_response = pyqtSignal(str)
 
     _signal_progress = pyqtSignal(int)                              # Progress signal
 
@@ -66,7 +68,16 @@ class SettingsWindow(QMainWindow):
 
         self.ui_elements.btnEngineering.clicked.connect(self._log_engineering_mode)     # Connects engineering login button
         self.ui_elements.btnSave.clicked.connect(self._save_settings)                   # Connects save settings button
+        
+        self.ui_elements.frameCommand.setVisible(False)                                 # Send commands frame begins not visible
+        self._signal_engineering_mode.connect(self.ui_elements.frameCommand.setVisible) # The commands frame is only visible when in engineering mode
 
+        self.ui_elements.btnSendCommand.clicked.connect(self._send_test_command)
+        self.ui_elements.txtCommand.returnPressed.connect(self._send_test_command)
+        self.ui_elements.txtCommand.textChanged.connect(self._command_changed)
+
+        self._signal_command_response.connect(self.ui_elements.lblResponse_Val.setText)
+        
 
         # self._progress_bar = QProgressBar()
         # self._progress_bar.setVisible(False)
@@ -141,6 +152,17 @@ class SettingsWindow(QMainWindow):
     @property
     def motor_settings(self):
         return self._motor_settings
+    
+    def _send_test_command(self):
+        if self.engineering_mode and self.ui_elements.txtCommand.text():   # The button is not supposed to be visible when not in engineering mode, this is just a safeguard
+            try:
+                self._signal_command_response.emit(self.driver.sendCommand(self.ui_elements.txtCommand.text()))
+            except Exception as e:
+                print(e)
+
+    def _command_changed(self):
+        self.ui_elements.txtCommand.setText(self.ui_elements.txtCommand.text().upper())
+
 
     def _set_motor_settings(self, key:str, value:str):
 

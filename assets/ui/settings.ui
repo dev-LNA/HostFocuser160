@@ -9,8 +9,8 @@
    <rect>
     <x>0</x>
     <y>0</y>
-    <width>405</width>
-    <height>342</height>
+    <width>521</width>
+    <height>368</height>
    </rect>
   </property>
   <property name="windowTitle">
@@ -26,8 +26,8 @@ background-color: white;
    <widget class="QLabel" name="lblMotoIP">
     <property name="geometry">
      <rect>
-      <x>9</x>
-      <y>67</y>
+      <x>15</x>
+      <y>80</y>
       <width>49</width>
       <height>16</height>
      </rect>
@@ -41,9 +41,21 @@ background-color: white;
      <rect>
       <x>9</x>
       <y>9</y>
-      <width>176</width>
-      <height>26</height>
+      <width>200</width>
+      <height>25</height>
      </rect>
+    </property>
+    <property name="minimumSize">
+     <size>
+      <width>200</width>
+      <height>0</height>
+     </size>
+    </property>
+    <property name="maximumSize">
+     <size>
+      <width>250</width>
+      <height>16777215</height>
+     </size>
     </property>
     <property name="font">
      <font>
@@ -76,8 +88,8 @@ background-color: white;
    <widget class="QPushButton" name="btnEngineering">
     <property name="geometry">
      <rect>
-      <x>314</x>
-      <y>266</y>
+      <x>297</x>
+      <y>9</y>
       <width>82</width>
       <height>24</height>
      </rect>
@@ -98,8 +110,8 @@ background-color: white;
    <widget class="QLineEdit" name="txtMotorIP">
     <property name="geometry">
      <rect>
-      <x>64</x>
-      <y>67</y>
+      <x>70</x>
+      <y>80</y>
       <width>116</width>
       <height>22</height>
      </rect>
@@ -129,28 +141,25 @@ background-color: white;
    <widget class="QFrame" name="frame">
     <property name="geometry">
      <rect>
-      <x>9</x>
-      <y>95</y>
-      <width>275</width>
-      <height>175</height>
+      <x>15</x>
+      <y>108</y>
+      <width>276</width>
+      <height>214</height>
      </rect>
     </property>
     <property name="styleSheet">
-     <string notr="true">border-top-color: rgb(0, 170, 0);</string>
+     <string notr="true"/>
     </property>
     <property name="frameShape">
-     <enum>QFrame::Shape::NoFrame</enum>
+     <enum>QFrame::Shape::Panel</enum>
     </property>
     <property name="frameShadow">
-     <enum>QFrame::Shadow::Raised</enum>
+     <enum>QFrame::Shadow::Sunken</enum>
+    </property>
+    <property name="lineWidth">
+     <number>1</number>
     </property>
     <layout class="QFormLayout" name="formLayout">
-     <property name="horizontalSpacing">
-      <number>7</number>
-     </property>
-     <property name="verticalSpacing">
-      <number>5</number>
-     </property>
      <item row="0" column="0">
       <widget class="QLabel" name="lblBackComp">
        <property name="text">
@@ -418,29 +427,46 @@ background-color: white;
        </property>
       </widget>
      </item>
+     <item row="6" column="1">
+      <layout class="QHBoxLayout" name="horizontalLayout_3">
+       <item>
+        <spacer name="horizontalSpacer">
+         <property name="orientation">
+          <enum>Qt::Orientation::Horizontal</enum>
+         </property>
+         <property name="sizeHint" stdset="0">
+          <size>
+           <width>40</width>
+           <height>20</height>
+          </size>
+         </property>
+        </spacer>
+       </item>
+       <item>
+        <widget class="QPushButton" name="btnSave">
+         <property name="maximumSize">
+          <size>
+           <width>60</width>
+           <height>16777215</height>
+          </size>
+         </property>
+         <property name="statusTip">
+          <string>Save new parameters to motor internal memory</string>
+         </property>
+         <property name="text">
+          <string>Save</string>
+         </property>
+        </widget>
+       </item>
+      </layout>
+     </item>
     </layout>
-   </widget>
-   <widget class="QPushButton" name="btnSave">
-    <property name="geometry">
-     <rect>
-      <x>314</x>
-      <y>166</y>
-      <width>75</width>
-      <height>24</height>
-     </rect>
-    </property>
-    <property name="statusTip">
-     <string>Save new parameters to motor internal memory</string>
-    </property>
-    <property name="text">
-     <string>Save</string>
-    </property>
    </widget>
    <widget class="QWidget" name="layoutWidget">
     <property name="geometry">
      <rect>
       <x>9</x>
-      <y>41</y>
+      <y>40</y>
       <width>176</width>
       <height>20</height>
      </rect>
@@ -516,8 +542,8 @@ background-color: white;
    <widget class="QWidget" name="layoutWidget">
     <property name="geometry">
      <rect>
-      <x>270</x>
-      <y>41</y>
+      <x>297</x>
+      <y>40</y>
       <width>126</width>
       <height>20</height>
      </rect>
@@ -578,6 +604,163 @@ background-color: white;
      </item>
     </layout>
    </widget>
+   <widget class="QFrame" name="frameCommand">
+    <property name="geometry">
+     <rect>
+      <x>303</x>
+      <y>108</y>
+      <width>206</width>
+      <height>104</height>
+     </rect>
+    </property>
+    <property name="frameShape">
+     <enum>QFrame::Shape::NoFrame</enum>
+    </property>
+    <property name="frameShadow">
+     <enum>QFrame::Shadow::Raised</enum>
+    </property>
+    <layout class="QVBoxLayout" name="verticalLayout">
+     <item>
+      <layout class="QHBoxLayout" name="horizontalLayout_4">
+       <item>
+        <widget class="QLabel" name="lblCommand">
+         <property name="text">
+          <string>Command:</string>
+         </property>
+        </widget>
+       </item>
+       <item>
+        <widget class="QLineEdit" name="txtCommand">
+         <property name="minimumSize">
+          <size>
+           <width>50</width>
+           <height>0</height>
+          </size>
+         </property>
+         <property name="maximumSize">
+          <size>
+           <width>80</width>
+           <height>16777215</height>
+          </size>
+         </property>
+         <property name="statusTip">
+          <string>Command to be sent to the motor</string>
+         </property>
+         <property name="autoFillBackground">
+          <bool>false</bool>
+         </property>
+         <property name="inputMethodHints">
+          <set>Qt::InputMethodHint::ImhNone</set>
+         </property>
+         <property name="inputMask">
+          <string/>
+         </property>
+         <property name="text">
+          <string/>
+         </property>
+         <property name="frame">
+          <bool>true</bool>
+         </property>
+         <property name="echoMode">
+          <enum>QLineEdit::EchoMode::Normal</enum>
+         </property>
+         <property name="cursorPosition">
+          <number>0</number>
+         </property>
+        </widget>
+       </item>
+      </layout>
+     </item>
+     <item>
+      <layout class="QHBoxLayout" name="horizontalLayout_5">
+       <item>
+        <widget class="QLabel" name="lblResponse">
+         <property name="text">
+          <string>Response:</string>
+         </property>
+        </widget>
+       </item>
+       <item>
+        <widget class="QLabel" name="lblResponse_Val">
+         <property name="minimumSize">
+          <size>
+           <width>75</width>
+           <height>22</height>
+          </size>
+         </property>
+         <property name="maximumSize">
+          <size>
+           <width>100</width>
+           <height>22</height>
+          </size>
+         </property>
+         <property name="statusTip">
+          <string>Response to the last command</string>
+         </property>
+         <property name="styleSheet">
+          <string notr="true"/>
+         </property>
+         <property name="frameShape">
+          <enum>QFrame::Shape::Panel</enum>
+         </property>
+         <property name="frameShadow">
+          <enum>QFrame::Shadow::Sunken</enum>
+         </property>
+         <property name="text">
+          <string/>
+         </property>
+         <property name="alignment">
+          <set>Qt::AlignmentFlag::AlignCenter</set>
+         </property>
+        </widget>
+       </item>
+      </layout>
+     </item>
+     <item>
+      <layout class="QHBoxLayout" name="horizontalLayout_6">
+       <item>
+        <spacer name="horizontalSpacer_2">
+         <property name="orientation">
+          <enum>Qt::Orientation::Horizontal</enum>
+         </property>
+         <property name="sizeHint" stdset="0">
+          <size>
+           <width>40</width>
+           <height>20</height>
+          </size>
+         </property>
+        </spacer>
+       </item>
+       <item>
+        <widget class="QPushButton" name="btnSendCommand">
+         <property name="maximumSize">
+          <size>
+           <width>120</width>
+           <height>16777215</height>
+          </size>
+         </property>
+         <property name="text">
+          <string>Send Command</string>
+         </property>
+        </widget>
+       </item>
+       <item>
+        <spacer name="horizontalSpacer_3">
+         <property name="orientation">
+          <enum>Qt::Orientation::Horizontal</enum>
+         </property>
+         <property name="sizeHint" stdset="0">
+          <size>
+           <width>40</width>
+           <height>20</height>
+          </size>
+         </property>
+        </spacer>
+       </item>
+      </layout>
+     </item>
+    </layout>
+   </widget>
   </widget>
   <widget class="QMenuBar" name="menubar">
    <property name="enabled">
@@ -587,7 +770,7 @@ background-color: white;
     <rect>
      <x>0</x>
      <y>0</y>
-     <width>405</width>
+     <width>521</width>
      <height>22</height>
     </rect>
    </property>
