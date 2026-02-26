@@ -23,6 +23,7 @@ import sys
 from src.core.config import Config
 import src.core.exceptions as AlpacaExceptions
 from src.utils.constants import constants
+from src.utils.signals import PropertySignals
 
 # from src.interface.dmx_eth import FocuserDriver as Focuser
 from src.interface.motor_driver import FocuserDriver as Focuser
@@ -39,11 +40,8 @@ icon_con_wait = resource_path('../../assets/ui/icons/status-away.png')
 
 class App(QObject):
 
-    _signal_router_status = pyqtSignal(str, str)
-    _signal_router_reachable_bool = pyqtSignal(bool)
-
-    _signal_motor_status = pyqtSignal(str, str)
-    _signal_motor_reachable_bool = pyqtSignal(bool)
+    _signals_router = PropertySignals()
+    _signals_motor = PropertySignals()
 
     _signal_server_started_status = pyqtSignal(str, str)
     _signal_server_started_bool = pyqtSignal(bool)
@@ -58,11 +56,17 @@ class App(QObject):
     _signal_transaction_id = pyqtSignal(str)
     _signal_position = pyqtSignal(str)
     _signal_encoder = pyqtSignal(str)
-    # _signal_moving = pyqtSignal(QPixmap)
-    _signal_moving = pyqtSignal(str, str)
-
+    
     _signal_firmware_status = pyqtSignal(str)
 
+    _signals_moving = PropertySignals()
+    _signals_lim_min = PropertySignals()
+    _signals_lim_max = PropertySignals()
+
+    _signals_server = PropertySignals()
+
+
+    
 
     def __init__(self, logger: Logger):
         super(App, self).__init__()
@@ -99,7 +103,7 @@ class App(QObject):
 
         self._status_lim_minus = False
         self._status_lim_max = False
-            
+
 
         self._transaction_id = 0
 
@@ -482,24 +486,13 @@ class App(QObject):
         self._signal_encoder.emit(str(value))
 
     @property
-    def moving(self):
-        return              #TODO: Arrumar o sinal de _is_moving
-    @moving.setter
-    def moving(self, value: bool):
-        if value:
-            # self._signal_moving.emit(QPixmap(icon_con_ok))
-            self._signal_moving.emit("statusLed", "OK")
-        else:
-            # self._signal_moving.emit(QPixmap(icon_con_nok))
-            self._signal_moving.emit("statusLed", "NOK")
-
-    @property
     def router_reachable(self):
         return self._router_reachable
     @router_reachable.setter
     def router_reachable(self, value: bool):
         self._router_reachable = value
-        self._signal_router_reachable_bool.emit(value)
+        # self._signal_router_reachable_bool.emit(value)
+        self._signals_router.status.emit(value)
 
     @property
     def motor_reachable(self):
@@ -507,7 +500,7 @@ class App(QObject):
     @motor_reachable.setter
     def motor_reachable(self, value: bool):
         self._motor_reachable = value
-        self._signal_motor_reachable_bool.emit(value)
+        self._signals_motor.status.emit(value)
 
     @property
     def server_connected(self):
@@ -515,11 +508,11 @@ class App(QObject):
     @server_connected.setter
     def server_connected(self, value: bool):
         self._server_connected = value
-        self._signal_server_started_bool.emit(value)
+        # self._signal_server_started_bool.emit(value)
         if value:
-            self._signal_server_started_status.emit("statusLed", "OK")
+            self._signals_server.emit(value,"statusLed", "OK")
         else:
-            self._signal_server_started_status.emit("statusLed", "NOK")
+            self._signals_server.emit(value,"statusLed", "NOK")
 
     @property
     def communicating_to_motor(self):
@@ -552,11 +545,13 @@ class App(QObject):
     def is_moving(self, value: bool):
         self._is_moving = value
         if value:
-            # self._signal_moving.emit(QPixmap(icon_con_ok))
-            self._signal_moving.emit("statusLed", "OK")
+            # self._signal_moving_status.emit(QPixmap(icon_con_ok))
+            # self._signal_moving_status.emit("statusLed", "OK")
+            self._signals_moving.emit(value, "statusLed", "OK")
         else:
-            # self._signal_moving.emit(QPixmap(icon_con_nok))
-            self._signal_moving.emit("statusLed", "NOK")
+            # self._signal_moving_status.emit(QPixmap(icon_con_nok))
+            # self._signal_moving_status.emit("statusLed", "NOK")
+            self._signals_moving.emit(value, "statusLed", "NOK")
 
     @property
     def status_lim_minus(self):
@@ -564,6 +559,10 @@ class App(QObject):
     @status_lim_minus.setter
     def status_lim_minus(self, value: bool):
         self._status_lim_minus = value
+        if value:
+            self._signals_lim_min.emit(value, "statusLed", "OK")
+        else:
+            self._signals_lim_min.emit(value, "statusLed", "NOK")
 
     @property
     def status_lim_max(self):
@@ -571,6 +570,10 @@ class App(QObject):
     @status_lim_max.setter
     def status_lim_max(self, value: bool):
         self._status_lim_max = value
+        if value:
+            self._signals_lim_max.emit(value, "statusLed", "OK")
+        else:
+            self._signals_lim_max.emit(value, "statusLed", "NOK")
 
     def run(self):
         """Server Main Loop
@@ -802,16 +805,12 @@ class App(QObject):
             connected -> connected
         """
         if status == "connected":
-            self._signal_router_status.emit("conStatusBar", "connected")
-            self._signal_router_status.emit("statusLed", "OK")
+            self._signals_router.info.emit("conStatusBar", "connected")
+            self._signals_router.info.emit("statusLed", "OK")
             self.router_reachable = True
-        elif status == "connecting":
-            self._signal_router_status.emit("conStatusBar", "connecting")
-            self._signal_router_status.emit("statusLed", "NOK")
-            self.router_reachable = False
         else:
-            self._signal_router_status.emit("conStatusBar", "waiting")
-            self._signal_router_status.emit("statusLed", "NOK")
+            self._signals_router.info.emit("conStatusBar", status)      # status = "connecting" or "waiting"
+            self._signals_router.info.emit("statusLed", "NOK")
             self.router_reachable = False
 
     def _signals_motor_connection(self, status: str):
@@ -825,16 +824,12 @@ class App(QObject):
             connected -> connected
         """
         if status == "connected":
-            self._signal_motor_status.emit("conStatusBar", "connected")
-            self._signal_motor_status.emit("statusLed", "OK")
+            self._signals_motor.info.emit("conStatusBar", "connected")
+            self._signals_motor.info.emit("statusLed", "OK")
             self.motor_reachable = True
-        elif status == "connecting":
-            self._signal_motor_status.emit("conStatusBar", "connecting")
-            self._signal_motor_status.emit("statusLed", "NOK")
-            self.motor_reachable = False
         else:
-            self._signal_motor_status.emit("conStatusBar", "waiting")
-            self._signal_motor_status.emit("statusLed", "NOK")
+            self._signals_motor.info.emit("conStatusBar", status)      # status = "connecting" or "waiting"
+            self._signals_motor.info.emit("statusLed", "NOK")
             self.motor_reachable = False
 
     def _signals_communicating_to_motor(self, status: bool):

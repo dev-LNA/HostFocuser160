@@ -101,14 +101,15 @@ class FocuserOPD(QtWidgets.QMainWindow):
         self.statusBar().addPermanentWidget(self._conIcon)
 
         # Configuration of signals
-        self.control._signal_router_status.connect(self.ui_elements.conBarServerRouter.setProperty)
-        self.control._signal_motor_status.connect(self.ui_elements.conBarRouterMotor.setProperty)
+        self.control._signals_router.info.connect(self.ui_elements.conBarServerRouter.setProperty)
+        self.control._signals_motor.info.connect(self.ui_elements.conBarRouterMotor.setProperty)
 
-        self.control._signal_router_status.connect(self.ui_elements.ledRouter.setProperty)
-        self.control._signal_motor_status.connect(self.ui_elements.ledMotor.setProperty)
-        self.control._signal_server_started_status.connect(self.ui_elements.ledServer.setProperty)
-        self.control._signal_server_started_bool.connect(self.ui_elements.btnStart.setDisabled)
-        self.control._signal_server_started_bool.connect(self.ui_elements.btnStop.setEnabled)
+        self.control._signals_router.info.connect(self.ui_elements.ledRouter.setProperty)
+        self.control._signals_motor.info.connect(self.ui_elements.ledMotor.setProperty)
+
+        self.control._signals_server.status.connect(self.ui_elements.btnStart.setDisabled)
+        self.control._signals_server.status.connect(self.ui_elements.btnStop.setEnabled)
+        self.control._signals_server.info.connect(self.ui_elements.ledServer.setProperty)
 
         self.control._statusMessage.connect(self.statusBar().showMessage)
         self.control._statusBar_led.connect(self._conIcon.setPixmap)
@@ -117,11 +118,14 @@ class FocuserOPD(QtWidgets.QMainWindow):
         self.control._signal_client_id.connect(self.ui_elements.lblClientID_val.setText)
         self.control._signal_position.connect(self.ui_elements.lblPosition_val.setText)
         self.control._signal_encoder.connect(self.ui_elements.lblEncoder_val.setText)
-        # self.control._signal_moving.connect(self.ui_elements.ledMoving.setPixmap)
-        self.control._signal_moving.connect(self.ui_elements.ledMoving.setProperty)
+        
+        self.control._signals_moving.info.connect(self.ui_elements.ledMoving.setProperty)
+        self.control._signals_lim_min.info.connect(self.ui_elements.ledLimMin.setProperty)
+        self.control._signals_lim_max.info.connect(self.ui_elements.ledLimMax.setProperty)
 
-        self.control._signal_motor_reachable_bool.connect(self.ui_elements.gbConnectivity.setEnabled)
-        self.control._signal_motor_reachable_bool.connect(self.ui_elements.gbDriverInfo.setEnabled)
+        self.control._signals_motor.status.connect(self.ui_elements.gbConnectivity.setEnabled)
+        self.control._signals_motor.status.connect(self.ui_elements.gbDriverInfo.setEnabled)
+        self.control._signals_motor.status.connect(self.ui_elements.gbMotorStatus.setEnabled)
 
         self.control._signal_transaction_id.connect(self.ui_elements.lblTransactionId_val.setText)
 
@@ -181,6 +185,8 @@ class FocuserOPD(QtWidgets.QMainWindow):
         self.ui_elements.ledRouter.installEventFilter(self)
         self.ui_elements.ledMotor.installEventFilter(self)
         self.ui_elements.ledMoving.installEventFilter(self)
+        self.ui_elements.ledLimMax.installEventFilter(self)
+        self.ui_elements.ledLimMin.installEventFilter(self)
 
         self._ping()
         if Config.startup:

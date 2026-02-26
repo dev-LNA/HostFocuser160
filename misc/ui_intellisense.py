@@ -110,13 +110,22 @@ class UiWidgets(QWidget):
             self.lblTransactionId_val = window.findChild(QLabel, 'lblTransactionId_val')
             self.lblTransactionId_val: QLabel = self.lblTransactionId_val
 
-            self.ledMoving = window.findChild(QLabel, 'ledMoving')
-            self.ledMoving: QLabel = self.ledMoving
-
             self.lblStatus_val = window.findChild(QLabel, 'lblStatus_val')
             self.lblStatus_val: QLabel = self.lblStatus_val
 
+    # Motor motor status group box
 
+            self.gbMotorStatus = window.findChild(QGroupBox, 'gbMotorStatus')
+            self.gbMotorStatus: QGroupBox = self.gbMotorStatus
+
+            self.ledMoving = window.findChild(QLabel, 'ledMoving')
+            self.ledMoving: QLabel = self.ledMoving
+
+            self.ledLimMin = window.findChild(QLabel, 'ledLimMin')
+            self.ledLimMin: QLabel = self.ledLimMin
+
+            self.ledLimMax = window.findChild(QLabel, 'ledLimMax')
+            self.ledLimMax: QLabel = self.ledLimMax
 
         elif window_name == "settings":
             # === Definitions for settings window components === #
