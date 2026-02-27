@@ -13,7 +13,8 @@ from PyQt6.QtWidgets import (
     QTextEdit,
     QDockWidget,
     QStatusBar,
-    QFrame)
+    QFrame,
+    QSlider)
 
 
 
@@ -94,10 +95,10 @@ class UiWidgets(QWidget):
             self.lblComSpeed = window.findChild(QLabel, 'lblComSpeed')
             self.lblComSpeed: QLabel = self.lblComSpeed
 
-    # Driver info group box
+    # Client info group box
 
-            self.gbDriverInfo = window.findChild(QGroupBox, 'gbDriverInfo')
-            self.gbDriverInfo: QGroupBox = self.gbDriverInfo
+            self.gbClientInfo = window.findChild(QGroupBox, 'gbClientInfo')
+            self.gbClientInfo: QGroupBox = self.gbClientInfo
 
             self.lblClientID_val = window.findChild(QLabel, 'lblClientID_val')
             self.lblClientID_val: QLabel = self.lblClientID_val
@@ -116,8 +117,8 @@ class UiWidgets(QWidget):
 
     # Motor motor status group box
 
-            self.gbMotorStatus = window.findChild(QGroupBox, 'gbMotorStatus')
-            self.gbMotorStatus: QGroupBox = self.gbMotorStatus
+            self.gbFocuserStatus = window.findChild(QGroupBox, 'gbFocuserStatus')
+            self.gbFocuserStatus: QGroupBox = self.gbFocuserStatus
 
             self.ledMoving = window.findChild(QLabel, 'ledMoving')
             self.ledMoving: QLabel = self.ledMoving
@@ -127,6 +128,9 @@ class UiWidgets(QWidget):
 
             self.ledLimMax = window.findChild(QLabel, 'ledLimMax')
             self.ledLimMax: QLabel = self.ledLimMax
+
+            self.posSlider = window.findChild(QSlider, 'posSlider')
+            self.posSlider: QSlider = self.posSlider
 
         elif window_name == "settings":
             # === Definitions for settings window components === #

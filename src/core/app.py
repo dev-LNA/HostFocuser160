@@ -20,6 +20,7 @@ from pythonping import ping
 from os import path
 import sys
 
+from misc.client_sample import TEST_SETUP
 from src.core.config import Config
 import src.core.exceptions as AlpacaExceptions
 from src.utils.constants import constants
@@ -54,7 +55,8 @@ class App(QObject):
 
     _signal_client_id = pyqtSignal(str)
     _signal_transaction_id = pyqtSignal(str)
-    _signal_position = pyqtSignal(str)
+    _signal_position_str = pyqtSignal(str)
+    _signal_position_int = pyqtSignal(int)
     _signal_encoder = pyqtSignal(str)
     
     _signal_firmware_status = pyqtSignal(str)
@@ -63,7 +65,11 @@ class App(QObject):
     _signals_lim_min = PropertySignals()
     _signals_lim_max = PropertySignals()
 
+    _signal_max_pos = pyqtSignal(int)
+    _signal_backlash = pyqtSignal(int)
+
     _signals_server = PropertySignals()
+
 
 
     
@@ -72,7 +78,7 @@ class App(QObject):
         super(App, self).__init__()
         self.logger = logger
         self.config_file = r"src/config/config.toml"   #TODO: Remover, não é usado para nada.
-
+    
         # Network Settings
         self.context = None
         self.ip_address = Config.ip_address
@@ -193,6 +199,14 @@ class App(QObject):
                     self.status["device_IP"] = self.device.device_IP
                     self.status["device_ID"] = self.device.device_ID
                     self.status["device_Firmware_Version"] = self.device.device_Firmware_Version
+
+                    if TEST_SETUP:
+                        self._signal_max_pos.emit(int(self.device.max_pos) + 5)     # A small gap at the end to account the distance to the lim+ uswitch 
+                        self._signal_backlash.emit(-(int(self.device.backlash) + 10))     # A small gap at the end to account the distance to the lim+ uswitch 
+                    else:
+                        # TODO: Definir valores de excursão na montagem real
+                        self._signal_max_pos.emit(int(self.device.max_pos))     # A small gap at the end to account the distance to the lim+ uswitch 
+                        self._signal_backlash.emit(-(int(self.device.backlash)))     # A small gap at the end to account the distance to the lim+ uswitch 
                     
                     self.logger.info(f'Device Reached.')
                 except Exception as e:
@@ -475,7 +489,8 @@ class App(QObject):
     @position.setter
     def position(self, value: int):
         self._position = value
-        self._signal_position.emit(str(value))
+        self._signal_position_str.emit(str(value))
+        self._signal_position_int.emit(value)
 
     @property
     def encoder(self):
@@ -534,8 +549,12 @@ class App(QObject):
         return self._transaction_id
     @transaction_id.setter
     def transaction_id(self, value: int):
-        self._transaction_id = value
-        self._signal_transaction_id.emit(str(value))
+        if self.clientID:                                   # The transaction ID must be related to a client
+            self._transaction_id = value
+            self._signal_transaction_id.emit(str(value))
+        else:
+            self._transaction_id = 0
+            self._signal_transaction_id.emit("")
     
 
     @property
@@ -674,9 +693,10 @@ class App(QObject):
                     self._homing = self.device.homing           # This means that while the homing is not performed this will keep checking if it was performed        #TODO: Qual o motivo de `_homing` ter que ser `true` para chamar `device.homing` para checar se está executando a rotina de inicialização?
                 if not self._homing and not self._is_moving:    # (self._homing == False) indicates that the homing was performed
                                                                 # The homing was performed and the motor is not moving -> Indicates the motor is not busy
-                    self.clientID = 0                         # Sets client not busy
+                    self.clientID = 0                           # Sets client not busy
+                    self.transaction_id = 0                     # Resets transaction ID
                     self.status["cmd"] =  {                     # Resets "cmd" 
-                                            "clientId": self._client_id,                #TODO: Esse valor pode ser 0? Checar arquivo do Ramon e documentação Alpaca. Talvez o 0 seja reservado para "not busy"
+                                            "clientId": self.clientID,                #TODO: Esse valor pode ser 0? Checar arquivo do Ramon e documentação Alpaca. Talvez o 0 seja reservado para "not busy"
                                             "clientTransactionId": 0,                   
                                             "clientName": "",
                                             "action": ""
@@ -831,13 +851,3 @@ class App(QObject):
             self._signals_motor.info.emit("conStatusBar", status)      # status = "connecting" or "waiting"
             self._signals_motor.info.emit("statusLed", "NOK")
             self.motor_reachable = False
-
-    def _signals_communicating_to_motor(self, status: bool):
-        self._communicating_to_motor.emit(status)
-        if status:
-            self._statusBar_led.emit(QPixmap(icon_con_ok))
-        else:
-            if (not self.motor_reachable) or (self._server_connected is False):
-                self._statusBar_led.emit(QPixmap(icon_con_nok))
-            else:
-                self._statusBar_led.emit(QPixmap(icon_con_wait))

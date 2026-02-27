@@ -90,6 +90,8 @@ class FocuserOPD(QtWidgets.QMainWindow):
        
         self.ui_elements.btnStart.clicked.connect(self._start)
         self.ui_elements.btnStop.clicked.connect(self._stop)
+
+        self.ui_elements.posSlider.setValue(0) 
         
         self.ui_elements.actionShow_toolbar.triggered.connect(              
             lambda checked: self.ui_elements.toolBar.setVisible(checked)    # Action to toggle toolbar
@@ -116,18 +118,24 @@ class FocuserOPD(QtWidgets.QMainWindow):
         self.control._connection_speed.connect(self.ui_elements.lblComSpeed.setText)
 
         self.control._signal_client_id.connect(self.ui_elements.lblClientID_val.setText)
-        self.control._signal_position.connect(self.ui_elements.lblPosition_val.setText)
+        self.control._signal_transaction_id.connect(self.ui_elements.lblTransactionId_val.setText)
+        
+        self.control._signal_position_str.connect(self.ui_elements.lblPosition_val.setText)
         self.control._signal_encoder.connect(self.ui_elements.lblEncoder_val.setText)
+
+        self.control._signal_position_int.connect(self.ui_elements.posSlider.setValue)
+        self.control._signal_max_pos.connect(self.ui_elements.posSlider.setMaximum)
+        self.control._signal_backlash.connect(self.ui_elements.posSlider.setMinimum)
+
         
         self.control._signals_moving.info.connect(self.ui_elements.ledMoving.setProperty)
         self.control._signals_lim_min.info.connect(self.ui_elements.ledLimMin.setProperty)
         self.control._signals_lim_max.info.connect(self.ui_elements.ledLimMax.setProperty)
 
         self.control._signals_motor.status.connect(self.ui_elements.gbConnectivity.setEnabled)
-        self.control._signals_motor.status.connect(self.ui_elements.gbDriverInfo.setEnabled)
-        self.control._signals_motor.status.connect(self.ui_elements.gbMotorStatus.setEnabled)
-
-        self.control._signal_transaction_id.connect(self.ui_elements.lblTransactionId_val.setText)
+        self.control._signals_motor.status.connect(self.ui_elements.gbClientInfo.setEnabled)
+        self.control._signals_motor.status.connect(self.ui_elements.gbFocuserStatus.setEnabled)
+        self.control._signals_motor.status.connect(self.ui_elements.posSlider.setEnabled)
 
         self.control._signal_firmware_status.connect(self.ui_elements.lblStatus_val.setText)
 

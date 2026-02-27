@@ -38,7 +38,6 @@ class SettingsWindow(QMainWindow):
     _signal_command_response = pyqtSignal(str)
 
     _signal_progress = pyqtSignal(int)                              # Progress signal
-
     _engineering_mode = False                                       # Engineering mode state
     _logged_user = ""                                               # Current logged user
 

@@ -318,14 +318,14 @@ class ClientSimulator(QtWidgets.QMainWindow):
     def _move_in(self):
         if not self.is_moving:
             if TEST_SETUP:
-                self._send_command("FOCUSIN=20")   #TEST_VALUE -> ORIGINAL VALUE => FOCUSIN=200
+                self._send_command("FOCUSIN=5")   #TEST_VALUE -> ORIGINAL VALUE => FOCUSIN=200
             else:
                 self._send_command("FOCUSIN=200")
 
     def _move_out(self):
         if not self.is_moving:
             if TEST_SETUP:
-                self._send_command("FOCUSOUT=20")  #TEST_VALUE -> ORIGINAL VALUE => FOCUSOUT=200
+                self._send_command("FOCUSOUT=5")  #TEST_VALUE -> ORIGINAL VALUE => FOCUSOUT=200
             else:
                 self._send_command("FOCUSOUT=200")
                 
