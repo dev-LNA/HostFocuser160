@@ -151,6 +151,11 @@ class App(QObject):
         # self.reach_device()
         # self.start_server()
 
+#----TESTES #TEST_VALUE
+    def _testes(self):        
+        pass
+#----TESTES
+
     def reach_device(self):
         """Ping device and reads the position and initialized variables"""
         _try = 0

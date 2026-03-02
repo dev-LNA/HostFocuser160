@@ -9,8 +9,8 @@
    <rect>
     <x>0</x>
     <y>0</y>
-    <width>521</width>
-    <height>368</height>
+    <width>518</width>
+    <height>423</height>
    </rect>
   </property>
   <property name="windowTitle">
@@ -23,19 +23,6 @@ background-color: white;
 </string>
   </property>
   <widget class="QWidget" name="centralwidget">
-   <widget class="QLabel" name="lblMotoIP">
-    <property name="geometry">
-     <rect>
-      <x>15</x>
-      <y>80</y>
-      <width>49</width>
-      <height>16</height>
-     </rect>
-    </property>
-    <property name="text">
-     <string>Motor IP:</string>
-    </property>
-   </widget>
    <widget class="QLabel" name="lblFocuser">
     <property name="geometry">
      <rect>
@@ -88,8 +75,8 @@ background-color: white;
    <widget class="QPushButton" name="btnEngineering">
     <property name="geometry">
      <rect>
-      <x>297</x>
-      <y>9</y>
+      <x>420</x>
+      <y>10</y>
       <width>82</width>
       <height>24</height>
      </rect>
@@ -107,44 +94,13 @@ background-color: white;
      <string>Engineering</string>
     </property>
    </widget>
-   <widget class="QLineEdit" name="txtMotorIP">
-    <property name="geometry">
-     <rect>
-      <x>70</x>
-      <y>80</y>
-      <width>116</width>
-      <height>22</height>
-     </rect>
-    </property>
-    <property name="statusTip">
-     <string>Motor IP</string>
-    </property>
-    <property name="styleSheet">
-     <string notr="true"/>
-    </property>
-    <property name="inputMask">
-     <string>000.000.000.000</string>
-    </property>
-    <property name="text">
-     <string>...</string>
-    </property>
-    <property name="frame">
-     <bool>true</bool>
-    </property>
-    <property name="echoMode">
-     <enum>QLineEdit::EchoMode::Normal</enum>
-    </property>
-    <property name="cursorPosition">
-     <number>0</number>
-    </property>
-   </widget>
    <widget class="QFrame" name="frame">
     <property name="geometry">
      <rect>
       <x>15</x>
-      <y>108</y>
+      <y>133</y>
       <width>276</width>
-      <height>214</height>
+      <height>231</height>
      </rect>
     </property>
     <property name="styleSheet">
@@ -161,13 +117,45 @@ background-color: white;
     </property>
     <layout class="QFormLayout" name="formLayout">
      <item row="0" column="0">
+      <widget class="QLabel" name="lblMotoIP">
+       <property name="text">
+        <string>Motor IP:</string>
+       </property>
+      </widget>
+     </item>
+     <item row="0" column="1">
+      <widget class="QLineEdit" name="txtMotorIP">
+       <property name="statusTip">
+        <string>Motor IP</string>
+       </property>
+       <property name="styleSheet">
+        <string notr="true"/>
+       </property>
+       <property name="inputMask">
+        <string>000.000.000.000</string>
+       </property>
+       <property name="text">
+        <string>...</string>
+       </property>
+       <property name="frame">
+        <bool>true</bool>
+       </property>
+       <property name="echoMode">
+        <enum>QLineEdit::EchoMode::Normal</enum>
+       </property>
+       <property name="cursorPosition">
+        <number>0</number>
+       </property>
+      </widget>
+     </item>
+     <item row="2" column="0">
       <widget class="QLabel" name="lblBackComp">
        <property name="text">
         <string>Backlash Compensation:</string>
        </property>
       </widget>
      </item>
-     <item row="0" column="1">
+     <item row="2" column="1">
       <widget class="QLineEdit" name="txtBackComp">
        <property name="minimumSize">
         <size>
@@ -207,14 +195,14 @@ background-color: white;
        </property>
       </widget>
      </item>
-     <item row="1" column="0">
+     <item row="3" column="0">
       <widget class="QLabel" name="lblMaxPos">
        <property name="text">
         <string>Position Max.:</string>
        </property>
       </widget>
      </item>
-     <item row="1" column="1">
+     <item row="3" column="1">
       <widget class="QLineEdit" name="txtMaxPos">
        <property name="minimumSize">
         <size>
@@ -251,14 +239,14 @@ background-color: white;
        </property>
       </widget>
      </item>
-     <item row="2" column="0">
+     <item row="4" column="0">
       <widget class="QLabel" name="lblParkPos">
        <property name="text">
         <string>Park: </string>
        </property>
       </widget>
      </item>
-     <item row="2" column="1">
+     <item row="4" column="1">
       <widget class="QLineEdit" name="txtPark">
        <property name="minimumSize">
         <size>
@@ -295,14 +283,14 @@ background-color: white;
        </property>
       </widget>
      </item>
-     <item row="3" column="0">
+     <item row="5" column="0">
       <widget class="QLabel" name="lblMaxSpeed">
        <property name="text">
         <string>Max Speed:</string>
        </property>
       </widget>
      </item>
-     <item row="3" column="1">
+     <item row="5" column="1">
       <widget class="QLineEdit" name="txtMaxSpeed">
        <property name="minimumSize">
         <size>
@@ -339,14 +327,14 @@ background-color: white;
        </property>
       </widget>
      </item>
-     <item row="4" column="0">
+     <item row="6" column="0">
       <widget class="QLabel" name="lblNormSpeed">
        <property name="text">
         <string>Normal Speed:</string>
        </property>
       </widget>
      </item>
-     <item row="4" column="1">
+     <item row="6" column="1">
       <widget class="QLineEdit" name="txtNormalSpeed">
        <property name="minimumSize">
         <size>
@@ -383,14 +371,14 @@ background-color: white;
        </property>
       </widget>
      </item>
-     <item row="5" column="0">
+     <item row="7" column="0">
       <widget class="QLabel" name="lblLowSpeed">
        <property name="text">
         <string>Low Speed:</string>
        </property>
       </widget>
      </item>
-     <item row="5" column="1">
+     <item row="7" column="1">
       <widget class="QLineEdit" name="txtLowSpeed">
        <property name="minimumSize">
         <size>
@@ -427,7 +415,7 @@ background-color: white;
        </property>
       </widget>
      </item>
-     <item row="6" column="1">
+     <item row="8" column="1">
       <layout class="QHBoxLayout" name="horizontalLayout_3">
        <item>
         <spacer name="horizontalSpacer">
@@ -460,14 +448,21 @@ background-color: white;
        </item>
       </layout>
      </item>
+     <item row="1" column="0" colspan="2">
+      <widget class="Line" name="line">
+       <property name="orientation">
+        <enum>Qt::Orientation::Horizontal</enum>
+       </property>
+      </widget>
+     </item>
     </layout>
    </widget>
    <widget class="QWidget" name="layoutWidget">
     <property name="geometry">
      <rect>
-      <x>9</x>
-      <y>40</y>
-      <width>176</width>
+      <x>17</x>
+      <y>100</y>
+      <width>180</width>
       <height>20</height>
      </rect>
     </property>
@@ -501,8 +496,8 @@ background-color: white;
       <widget class="QLabel" name="lblFirmVer_value">
        <property name="minimumSize">
         <size>
-         <width>36</width>
-         <height>0</height>
+         <width>40</width>
+         <height>16</height>
         </size>
        </property>
        <property name="maximumSize">
@@ -527,7 +522,7 @@ background-color: white;
         <enum>QFrame::Shadow::Sunken</enum>
        </property>
        <property name="text">
-        <string>1</string>
+        <string/>
        </property>
        <property name="alignment">
         <set>Qt::AlignmentFlag::AlignCenter</set>
@@ -542,10 +537,10 @@ background-color: white;
    <widget class="QWidget" name="layoutWidget">
     <property name="geometry">
      <rect>
-      <x>297</x>
-      <y>40</y>
-      <width>126</width>
-      <height>20</height>
+      <x>17</x>
+      <y>73</y>
+      <width>130</width>
+      <height>22</height>
      </rect>
     </property>
     <layout class="QHBoxLayout" name="horizontalLayout_2">
@@ -566,8 +561,8 @@ background-color: white;
       <widget class="QLabel" name="lblServerVer_val">
        <property name="minimumSize">
         <size>
-         <width>36</width>
-         <height>18</height>
+         <width>40</width>
+         <height>16</height>
         </size>
        </property>
        <property name="maximumSize">
@@ -592,7 +587,7 @@ background-color: white;
         <enum>QFrame::Shadow::Sunken</enum>
        </property>
        <property name="text">
-        <string>1</string>
+        <string/>
        </property>
        <property name="alignment">
         <set>Qt::AlignmentFlag::AlignCenter</set>
@@ -770,7 +765,7 @@ background-color: white;
     <rect>
      <x>0</x>
      <y>0</y>
-     <width>521</width>
+     <width>518</width>
      <height>22</height>
     </rect>
    </property>

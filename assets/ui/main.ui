@@ -6,8 +6,8 @@
    <rect>
     <x>0</x>
     <y>0</y>
-    <width>310</width>
-    <height>578</height>
+    <width>313</width>
+    <height>548</height>
    </rect>
   </property>
   <property name="windowTitle">
@@ -906,7 +906,7 @@ QProgressBar[conStatusBar=&quot;connected&quot;]::chunk {
           <bool>false</bool>
          </property>
          <property name="conStatusBar" stdset="0">
-          <string>connected</string>
+          <string>connecting</string>
          </property>
         </widget>
        </item>
@@ -2898,7 +2898,7 @@ QProgressBar[conStatusBar=&quot;connected&quot;]::chunk {
          </property>
          <property name="styleSheet">
           <string notr="true">QSlider::groove:horizontal {
-    border: 1px solid #999999;
+  border-radius:5px;   border: 1px solid #999999;
     height: 8px; /* the groove expands to the size of the slider by default. by giving it a height, it has a fixed size */
     background: qlineargradient(x1:0, y1:0, x2:0, y2:1, stop:0 #B1B1B1, stop:1 #c4c4c4);
     margin: 2px 0;
@@ -2907,8 +2907,8 @@ QProgressBar[conStatusBar=&quot;connected&quot;]::chunk {
 QSlider::handle:horizontal {
     background: qlineargradient(x1:0, y1:0, x2:1, y2:1, stop:0 #b4b4b4, stop:1 #8f8f8f);
     border: 1px solid #5c5c5c;
-    width: 18px;
-    margin: -2px 0; /* handle is placed by default on the contents rect of the groove. Expand outside the groove */
+    width: 8px;
+    margin: -6px 0; /* handle is placed by default on the contents rect of the groove. Expand outside the groove */
     border-radius: 3px;
 }</string>
          </property>
@@ -2919,10 +2919,13 @@ QSlider::handle:horizontal {
           <number>1</number>
          </property>
          <property name="pageStep">
-          <number>2</number>
+          <number>1</number>
+         </property>
+         <property name="value">
+          <number>50</number>
          </property>
          <property name="sliderPosition">
-          <number>0</number>
+          <number>50</number>
          </property>
          <property name="orientation">
           <enum>Qt::Orientation::Horizontal</enum>
@@ -3016,7 +3019,7 @@ QSlider::handle:horizontal {
     <rect>
      <x>0</x>
      <y>0</y>
-     <width>310</width>
+     <width>313</width>
      <height>22</height>
     </rect>
    </property>

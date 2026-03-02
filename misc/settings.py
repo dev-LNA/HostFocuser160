@@ -13,7 +13,8 @@ from misc.verification import VerificationDialog
 from src.interface.motor_driver import FocuserDriver
 from src.core.config import Config  
 
-from src.utils.constants import Constants, constants
+from src.utils.constants import constants
+from src.utils.motor import MotorData
 
 import sys
 from os import path
@@ -75,6 +76,8 @@ class SettingsWindow(QMainWindow):
         self.ui_elements.txtCommand.returnPressed.connect(self._send_test_command)
         self.ui_elements.txtCommand.textChanged.connect(self._command_changed)
 
+        self.ui_elements.lblServerVer_val.setText(Config.server_version)
+
         self._signal_command_response.connect(self.ui_elements.lblResponse_Val.setText)
         
 
@@ -91,15 +94,8 @@ class SettingsWindow(QMainWindow):
         self._updater._running.connect(self._progress_bar.setVisible)                   # The progress bar visibility is connected to the updater method running signal
         self._updater._signal_progress.connect(self._progress_bar.progress.setValue)    # The progress bar value is connected to the updater method progress
     
-    # Each line edit is connected to the updater method signals to update its values once the method reads its values
-        self._updater._signal_device_ID.connect(self.ui_elements.lblFocuser.setText)
-        self._updater._signal_device_IP.connect(self.ui_elements.txtMotorIP.setText)
-        self._updater._signal_backlash.connect(self.ui_elements.txtBackComp.setText)
-        self._updater._signal_max_pos.connect(self.ui_elements.txtMaxPos.setText)
-        self._updater._signal_park_pos.connect(self.ui_elements.txtPark.setText)
-        self._updater._signal_max_speed.connect(self.ui_elements.txtMaxSpeed.setText)
-        self._updater._signal_normal_speed.connect(self.ui_elements.txtNormalSpeed.setText)
-        self._updater._signal_low_speed.connect(self.ui_elements.txtLowSpeed.setText)
+    # The motor data is kept in a dictionary and the parse function is responsible to parse the information
+        self._updater.signal_motor_data.connect(self._parse_motor_data)
 
         self._updater._running.connect(self._initialize_motor_settings)                 # When the updater finishes reading the motor the dictionary with the current values must be updated
 
@@ -109,7 +105,16 @@ class SettingsWindow(QMainWindow):
         
 
 
-
+    def _parse_motor_data(self, data: MotorData):
+        self.ui_elements.lblFocuser.setText(data.ID)
+        self.ui_elements.txtMotorIP.setText(data.IP)
+        self.ui_elements.lblFirmVer_value.setText(data.firmware_version)
+        self.ui_elements.txtBackComp.setText(data.backlash)
+        self.ui_elements.txtMaxPos.setText(data.max_pos)
+        self.ui_elements.txtPark.setText(data.park_pos)
+        self.ui_elements.txtMaxSpeed.setText(data.max_speed)
+        self.ui_elements.txtNormalSpeed.setText(data.normal_speed)
+        self.ui_elements.txtLowSpeed.setText(data.low_speed)
 
     def _update_settings(self):
         """Updates current settings by reading the values from the motor"""
@@ -319,6 +324,20 @@ class RetrieveSettings(QThread):
     _signal_progress = pyqtSignal(int)
 
 
+    # motor_data = {"DEVICE_ID":'',
+    #             "DEVICE_IP":'',
+    #             "BACKLASH":'',
+    #             "MAX_POS":'',
+    #             "PARK_POS":'',
+    #             "MAX_SPEED":'',
+    #             "NORMAL_SPEED":'',
+    #             "LOW_SPEED":''}
+
+    motor_data = MotorData()
+
+    signal_motor_data = pyqtSignal(MotorData)
+
+
     def __init__(self, driver: FocuserDriver):
         """
         Parameters
@@ -340,36 +359,50 @@ class RetrieveSettings(QThread):
 
         resp = self.driver.device_ID
         if resp == constants.ID_FOCUSER_160:
-            self._signal_device_ID.emit("Focuser 160") 
+            # self._signal_device_ID.emit("Focuser 160") 
+            self.motor_data.ID = "Focuser 160"
         elif resp == constants.ID_FOCUSER_IAG:
-            self._signal_device_ID.emit("Focuser IAG")
+            # self._signal_device_ID.emit("Focuser IAG")
+            self.motor_data.ID = "Focuser IAG"
         else:
-            self._signal_device_ID.emit("*Invalid motor ID*")
+            # self._signal_device_ID.emit("*Invalid motor ID*")
+            self.motor_data.ID = "*Invalid motor ID*"
+
+        self.motor_data.firmware_version = self.driver.device_Firmware_Version
+            
         
         p += step_size
         self._signal_progress.emit(p)
-        self._signal_device_IP.emit(self.driver.device_IP)
+        # self._signal_device_IP.emit(self.driver.device_IP)
+        self.motor_data.IP = self.driver.device_IP
         p += step_size
         self._signal_progress.emit(p)
-        self._signal_backlash.emit(self.driver.backlash)
+        # self._signal_backlash.emit(self.driver.backlash)
+        self.motor_data.backlash = self.driver.backlash
         p += step_size
         self._signal_progress.emit(p)
-        self._signal_max_pos.emit(self.driver.max_pos)
+        # self._signal_max_pos.emit(self.driver.max_pos)
+        self.motor_data.max_pos = self.driver.max_pos
         p += step_size
         self._signal_progress.emit(p)
-        self._signal_park_pos.emit(self.driver.park_pos)
+        # self._signal_park_pos.emit(self.driver.park_pos)
+        self.motor_data.park_pos = self.driver.park_pos
         p += step_size
         self._signal_progress.emit(p)
-        self._signal_max_speed.emit(self.driver.max_speed)
+        # self._signal_max_speed.emit(self.driver.max_speed)
+        self.motor_data.max_speed = self.driver.max_speed
         p += step_size
         self._signal_progress.emit(p)
-        self._signal_normal_speed.emit(self.driver.normal_speed)
+        # self._signal_normal_speed.emit(self.driver.normal_speed)
+        self.motor_data.normal_speed = self.driver.normal_speed
         p += step_size
         self._signal_progress.emit(p)
-        self._signal_low_speed.emit(self.driver.low_speed)
+        # self._signal_low_speed.emit(self.driver.low_speed)
+        self.motor_data.low_speed = self.driver.low_speed
         p = 100
         self._signal_progress.emit(p)
         time.sleep(0.2)
-
+        
+        self.signal_motor_data.emit(self.motor_data)
         self._running.emit(False)
 

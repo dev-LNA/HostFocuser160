@@ -29,6 +29,10 @@ class UiWidgets(QWidget):
             # BOTAO PARA TESTES
             self.btnTestes = window.findChild(QPushButton, 'btnTestes')
             self.btnTestes: QPushButton = self.btnTestes
+            self.editTeste = window.findChild(QLineEdit, 'editTeste')
+            self.editTeste: QLineEdit = self.editTeste
+
+
 
         # Buttons
             self.btnStart = window.findChild(QPushButton, 'btnStart')

@@ -316,16 +316,19 @@ class FocuserDriver():
     @property
     def device_Firmware_Version(self) -> str:       # TODO: Mudar para o firmware do software mesmo, não faz sentido mostra a versão de firmware do fabricante
         """
-        Returns the motor supplier firmware Version
+        Returns the motor firmware version
         
         :param self:
         :return: String with the motor firmware version
         :rtype: str
         """
         self._lock.acquire()
-        resp = self._write("VER", 5)
+        V1 = self._write("V90", 5)    # Version number
+        V2 = self._write("V91", 5)    # Update number
+        V3 = self._write("V92", 5)    # Bug fix number
         self._lock.release()
-        return resp
+
+        return f"{V1}.{V2}.{V3}"
 
     @property
     def motor_status(self) -> str:

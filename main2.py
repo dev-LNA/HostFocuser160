@@ -204,7 +204,7 @@ class FocuserOPD(QtWidgets.QMainWindow):
 
 
 ######### OUTROS TESTES ##########
-        self.ui_elements.btnTestes.clicked.connect(self._testes)
+        self.ui_elements.btnTestes.clicked.connect(self.control._testes)
 
         self._starting_size = QSize(self.width(), self.height())    # Holds the initial screen size
         
@@ -225,10 +225,6 @@ class FocuserOPD(QtWidgets.QMainWindow):
         # self._expanding.connect(self.ui_elements.pushButton.setDisabled)
 
 
-
-
-    def _testes(self):
-        self.control.reset_timeout()
 
     def teste1(self):
 

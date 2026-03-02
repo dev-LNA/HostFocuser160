@@ -25,6 +25,7 @@ class Config:
     # ---------------
     startup: str = get_toml('General', 'startup')
     name: str = get_toml('General', 'name')
+    server_version: str = get_toml('General', 'version')
     # ---------------
     # Network Section
     # ---------------

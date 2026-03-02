@@ -21,6 +21,7 @@
 ; - REMOVED COMMAND TO RETURN VELOCITY TO DEFAULT VALUE IN SUB21 AND SUB22
 ; - FIXED MOVING BITS CHECK IN SUB29 (V8 = V11 & 3 --> V8 = V11 & 7)
 ; - IN SUB30 THE INITIAL MOVEMENT WAS CHANGED TO JOGX-
+; - ALLOCATE FIRMWARE VERSION IN MEMORY POSITIONS V90, V91 and V92 [VERSION V90.V91.V92]
 ;
 ; INSTRUCTIONS
 ; ============
@@ -95,6 +96,9 @@ PRG 0	; HARDWARE MECHANISM IDENTIFICATION
 	DEC = 300
 	V44 = 0						; Clear INIT flag of all mechanisms
 	; Testar conexao uswitchs ?
+	V90 = 1					; Version number	
+	V91 = 0					; Update number
+	V92 = 0					; Bug fix number
 END									; End Program 0
 ;
 ;=====================
