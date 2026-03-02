@@ -119,13 +119,16 @@ class UiWidgets(QWidget):
             self.lblStatus_val = window.findChild(QLabel, 'lblStatus_val')
             self.lblStatus_val: QLabel = self.lblStatus_val
 
-    # Motor motor status group box
+    # Focuser status group box
 
             self.gbFocuserStatus = window.findChild(QGroupBox, 'gbFocuserStatus')
             self.gbFocuserStatus: QGroupBox = self.gbFocuserStatus
 
             self.ledMoving = window.findChild(QLabel, 'ledMoving')
             self.ledMoving: QLabel = self.ledMoving
+
+            self.ledHome = window.findChild(QLabel, 'ledHome')
+            self.ledHome: QLabel = self.ledHome
 
             self.ledLimMin = window.findChild(QLabel, 'ledLimMin')
             self.ledLimMin: QLabel = self.ledLimMin

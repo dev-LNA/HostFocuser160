@@ -131,6 +131,7 @@ class FocuserOPD(QtWidgets.QMainWindow):
         self.control._signals_moving.info.connect(self.ui_elements.ledMoving.setProperty)
         self.control._signals_lim_min.info.connect(self.ui_elements.ledLimMin.setProperty)
         self.control._signals_lim_max.info.connect(self.ui_elements.ledLimMax.setProperty)
+        self.control._signals_initialized.info.connect(self.ui_elements.ledHome.setProperty)
 
         self.control._signals_motor.status.connect(self.ui_elements.gbConnectivity.setEnabled)
         self.control._signals_motor.status.connect(self.ui_elements.gbClientInfo.setEnabled)
@@ -195,6 +196,7 @@ class FocuserOPD(QtWidgets.QMainWindow):
         self.ui_elements.ledMoving.installEventFilter(self)
         self.ui_elements.ledLimMax.installEventFilter(self)
         self.ui_elements.ledLimMin.installEventFilter(self)
+        self.ui_elements.ledHome.installEventFilter(self)
 
         self._ping()
         if Config.startup:
@@ -371,10 +373,14 @@ class FocuserOPD(QtWidgets.QMainWindow):
         if self._settings_window is None:
             self._settings_window = SettingsWindow(self.control.device)
             self._settings_window._signal_window_closed.connect(self._settings_closed)
+            self._settings_window._signals_changed_settings.connect(self._parse_changed_settings)
             self._settings_window.move(self.pos() + QPoint(self.width(), 0))
             self._settings_window.show()
 
-            
+    def _parse_changed_settings(self, data: dict):
+        if "MAX_POS" in data:
+            self.ui_elements.posSlider.setMaximum(int(data["MAX_POS"]) + 5)
+            self.ui_elements.posSlider.setMinimum(-12)
 
     def _settings_closed(self, msg):
         if msg is True:

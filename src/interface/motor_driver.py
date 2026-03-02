@@ -190,9 +190,9 @@ class FocuserDriver():
     def homing(self) -> bool:
         """Check if INIT routine is being executed"""
         self._lock.acquire()
-        x = self._write("V44", max_retries=5)
-        if "0" in x:
-            self._homing = True                     #TODO: Pelo programa do motor parece que `V44 == 0` so indicaria que o homing não foi feito, mas não necessariamente significa que está sendo executado
+        x = self._write("V15", max_retries=5)
+        if "1" in x:
+            self._homing = True                     
         else:                                       
             self._homing = False
         self._lock.release()
@@ -396,6 +396,7 @@ class FocuserDriver():
     @max_speed.setter
     def max_speed(self, value: str):
         self._lock.acquire()
+        self._write(f"V75={value}")             # Memória usada para manter o valor de HSPD na inicialização    
         resp = self._write(f"HSPD={value}")
         self._lock.release()
          
@@ -408,18 +409,20 @@ class FocuserDriver():
     @normal_speed.setter
     def normal_speed(self, value: str): # TODO: No DMX-ETH a velocidade 'normal' é a max speed. Fazer alguma lógica diferente?
         self._lock.acquire()
+        self._write(f"V75={value}")
         resp = self._write(f"HSPD={value}")
         self._lock.release()   
     
     @property
     def low_speed(self) -> str:
         self._lock.acquire()
-        resp = self._write("LSPD", 5)
+        resp = self._write("LSPD", 5)           
         self._lock.release()
         return resp   
     @low_speed.setter
     def low_speed(self, value: str):
         self._lock.acquire()
+        self._write(f"V76={value}")             # Memória usada para manter o valor de LSPD na inicialização
         resp = self._write(f"LSPD={value}")
         self._lock.release()   
 

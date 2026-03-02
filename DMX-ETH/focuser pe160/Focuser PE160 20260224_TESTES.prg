@@ -22,6 +22,7 @@
 ; - FIXED MOVING BITS CHECK IN SUB29 (V8 = V11 & 3 --> V8 = V11 & 7)
 ; - IN SUB30 THE INITIAL MOVEMENT WAS CHANGED TO JOGX-
 ; - ALLOCATE FIRMWARE VERSION IN MEMORY POSITIONS V90, V91 and V92 [VERSION V90.V91.V92]
+; - ALLOCATE CONFIGURED HSPD AND LSPD IN V75 AND V76, RESPECTIVELY
 ;
 ; INSTRUCTIONS
 ; ============
@@ -85,13 +86,13 @@ PRG 0	; HARDWARE MECHANISM IDENTIFICATION
 ; V46: Running status. =0 for READY, =1 for BUSY, or error code otherwise.
 ; V50: Mechanism hardware ID, set by S4DMX.
 ; --------------------------------------------
-	V33 = 20240127		; Current S4DMX version.
+	V33 = 20260224		; Current S4DMX version.
 	V50 = 64					; Set ID=64 for unplugged motor
 	V49 = 64					; ICS sets V49 = V50 to enable movements
-	V71 = 2165440			; Maximum target position (encoder units)
-	V74 = 5360				; # overtravel encoder displacement to eliminate backlash. (5/8 rev)
-	HSPD = 250000			; Equivalent to 500 microns/second
-	LSPD = 10000
+;	V71 = 2165440			; Maximum target position (encoder units)
+;	V74 = 5360				; # overtravel encoder displacement to eliminate backlash. (5/8 rev)
+	HSPD = V75			; Equivalent to 500 microns/second
+	LSPD = V76
 	ACC = 300
 	DEC = 300
 	V44 = 0						; Clear INIT flag of all mechanisms
@@ -387,6 +388,7 @@ SUB 30	; FOCUS INIT
 ;
 	V46 = 1			 			; Set start SUB code
 	V44 = 0						; Reset INIT flag
+	V15 = 1						; Indicates INIT is running
 
 	; Moves towards reference position, cheking stop command (V42)
 	EO = 1						; Enable motor driver
@@ -423,6 +425,7 @@ SUB 30	; FOCUS INIT
 	ENDIF
 	EO = 0						; Disable motor driver
 	V42 = 0						; Clear stop flag
+	V15 = 0						; Indicates INIT is NOT running
 	V46 = 0			 			; Set end SUB code
 ENDSUB
 ;

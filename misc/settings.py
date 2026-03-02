@@ -46,6 +46,7 @@ class SettingsWindow(QMainWindow):
     _settings_changed = False                                       # Informs if a setting was changed
     _changed_settings = dict()                                      # Dict of settings that were changed, keeping the old values for reference
 
+    _signals_changed_settings = pyqtSignal(dict)
 
     def __init__(self, driver: FocuserDriver):
         super().__init__()
@@ -211,6 +212,7 @@ class SettingsWindow(QMainWindow):
         -------
         Emits a signal informing that the window was closed, the main window uses this signal to delete the window
         """
+
         self._signal_window_closed.emit(True)
         return super().closeEvent(a0)
     
@@ -282,8 +284,9 @@ class SettingsWindow(QMainWindow):
                         for _ in keys:
                             setattr(self.driver, self.driver.property_handlers[_], self._changed_settings[_]) 
 
-                        self.driver._store_to_flash()       # Store the new settings to flash.
-                        self._changed_settings.clear()          # Resets changes dictionary   
+                        self._signals_changed_settings.emit(self._changed_settings)     # Emits the changes to the main UI
+                        self.driver._store_to_flash()                                   # Store the new settings to flash.
+                        self._changed_settings.clear()                                  # Resets changes dictionary   
                     except Exception as e:
                         print(e)
                 else:
