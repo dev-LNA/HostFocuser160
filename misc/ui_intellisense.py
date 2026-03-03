@@ -19,6 +19,7 @@ from PyQt6.QtWidgets import (
 
 
 
+
 class UiWidgets(QWidget):
     def __init__(self, window, window_name: str):
 
@@ -40,6 +41,9 @@ class UiWidgets(QWidget):
 
             self.btnStop = window.findChild(QPushButton, 'btnStop')
             self.btnStop: QPushButton = self.btnStop
+
+            self.btnArrow = window.findChild(QPushButton, 'btnArrow')
+            self.btnArrow: QPushButton = self.btnArrow
 
             
             self.menuOptions = window.findChild(QMenu, 'menuOptions')
@@ -99,25 +103,34 @@ class UiWidgets(QWidget):
             self.lblComSpeed = window.findChild(QLabel, 'lblComSpeed')
             self.lblComSpeed: QLabel = self.lblComSpeed
 
-    # Client info group box
+    # Command info group box
 
-            self.gbClientInfo = window.findChild(QGroupBox, 'gbClientInfo')
-            self.gbClientInfo: QGroupBox = self.gbClientInfo
+            
+            self.infoFrame = window.findChild(QFrame, 'infoFrame')
+            self.infoFrame: QFrame = self.infoFrame
+
+            self.gbCommandInfo = window.findChild(QGroupBox, 'gbCommandInfo')
+            self.gbCommandInfo: QGroupBox = self.gbCommandInfo
+
+            self.lblTime = window.findChild(QLabel, 'lblTime')
+            self.lblTime: QLabel = self.lblTime
+
+            self.lblClientName_val = window.findChild(QLabel, 'lblClientName_val')
+            self.lblClientName_val: QLabel = self.lblClientName_val
 
             self.lblClientID_val = window.findChild(QLabel, 'lblClientID_val')
             self.lblClientID_val: QLabel = self.lblClientID_val
-
-            self.lblEncoder_val = window.findChild(QLabel, 'lblEncoder_val')
-            self.lblEncoder_val: QLabel = self.lblEncoder_val
-
-            self.lblPosition_val = window.findChild(QLabel, 'lblPosition_val')
-            self.lblPosition_val: QLabel = self.lblPosition_val
             
             self.lblTransactionId_val = window.findChild(QLabel, 'lblTransactionId_val')
             self.lblTransactionId_val: QLabel = self.lblTransactionId_val
+            
+            self.lblCommand_val = window.findChild(QLabel, 'lblCommand_val')
+            self.lblCommand_val: QLabel = self.lblCommand_val
+            
+            self.lblLastHoming_val = window.findChild(QLabel, 'lblLastHoming_val')
+            self.lblLastHoming_val: QLabel = self.lblLastHoming_val
 
-            self.lblStatus_val = window.findChild(QLabel, 'lblStatus_val')
-            self.lblStatus_val: QLabel = self.lblStatus_val
+            
 
     # Focuser status group box
 
@@ -135,6 +148,15 @@ class UiWidgets(QWidget):
 
             self.ledLimMax = window.findChild(QLabel, 'ledLimMax')
             self.ledLimMax: QLabel = self.ledLimMax
+
+            self.lblEncoder_val = window.findChild(QLabel, 'lblEncoder_val')
+            self.lblEncoder_val: QLabel = self.lblEncoder_val
+
+            self.lblPosition_val = window.findChild(QLabel, 'lblPosition_val')
+            self.lblPosition_val: QLabel = self.lblPosition_val
+
+            self.lblStatus_val = window.findChild(QLabel, 'lblStatus_val')
+            self.lblStatus_val: QLabel = self.lblStatus_val
 
             self.posSlider = window.findChild(QSlider, 'posSlider')
             self.posSlider: QSlider = self.posSlider

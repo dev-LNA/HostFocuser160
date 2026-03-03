@@ -72,7 +72,7 @@ class App(QObject):
     _signals_server = PropertySignals()
 
 
-
+    _signal_last_command = pyqtSignal(dict)
 
 
     
@@ -637,7 +637,7 @@ class App(QObject):
         self._client_id = 0                                         # Starts client not busy
         command_handlers = {                                        # Handles for the methods to be executed according to the commands
             'HOME': self.handle_home,
-            'HALT': self.handle_halt,
+            # 'HALT': self.handle_halt,
             'CONNECT': self.handle_connect,
             'DISCONNECT': self.handle_disconnect,
             'STATUS': self._pub_status,
@@ -706,7 +706,9 @@ class App(QObject):
                             self.reply('ACK')                                                                                   # Return 'ACK' to the client 
                             command_processed = True                                                                            # Sets "command_processed"
 
-                        if not command_processed:                                                                               # If command was NOT processed
+                        if command_processed:
+                            self._signal_last_command.emit(self.status)
+                        else:                                                                                                   # If command was NOT processed
                             self.reply('NAK')                                                                                   # Return 'NAK' to client
 
                         self.status["connected"] = self.device.connected                                                        # Updates connection status of the motor

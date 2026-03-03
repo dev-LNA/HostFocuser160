@@ -44,6 +44,7 @@ class FocuserOPD(QtWidgets.QMainWindow):
 
     # Signals
     _expanding = pyqtSignal(bool)               # Informs that the expanding animation is in process  
+    _expanded = False
 
     _reachable = False
     _run_thread = None
@@ -75,6 +76,7 @@ class FocuserOPD(QtWidgets.QMainWindow):
 
         # Creates "ui_elements" widget to hold intellisense references to the widgets
         self.ui_elements = UiWidgets(self, "main")
+        self.setFixedSize(QSize(310, 488))
 
         # Ui elements initialization and configuration
         self.ui_elements.lblSocketIP.setText(f"{self.control.ip_address}")
@@ -90,6 +92,9 @@ class FocuserOPD(QtWidgets.QMainWindow):
        
         self.ui_elements.btnStart.clicked.connect(self._start)
         self.ui_elements.btnStop.clicked.connect(self._stop)
+
+        self.ui_elements.btnArrow.clicked.connect(self._show_info)
+        self.ui_elements.infoFrame.setVisible(False)
 
         self.ui_elements.posSlider.setValue(0) 
         
@@ -117,8 +122,8 @@ class FocuserOPD(QtWidgets.QMainWindow):
         self.control._statusBar_led.connect(self._conIcon.setPixmap)
         self.control._connection_speed.connect(self.ui_elements.lblComSpeed.setText)
 
-        self.control._signal_client_id.connect(self.ui_elements.lblClientID_val.setText)
-        self.control._signal_transaction_id.connect(self.ui_elements.lblTransactionId_val.setText)
+        # self.control._signal_client_id.connect(self.ui_elements.lblClientID_val.setText)
+        # self.control._signal_transaction_id.connect(self.ui_elements.lblTransactionId_val.setText)
         
         self.control._signal_position_str.connect(self.ui_elements.lblPosition_val.setText)
         self.control._signal_encoder.connect(self.ui_elements.lblEncoder_val.setText)
@@ -134,11 +139,13 @@ class FocuserOPD(QtWidgets.QMainWindow):
         self.control._signals_initialized.info.connect(self.ui_elements.ledHome.setProperty)
 
         self.control._signals_motor.status.connect(self.ui_elements.gbConnectivity.setEnabled)
-        self.control._signals_motor.status.connect(self.ui_elements.gbClientInfo.setEnabled)
+        self.control._signals_motor.status.connect(self.ui_elements.gbCommandInfo.setEnabled)
         self.control._signals_motor.status.connect(self.ui_elements.gbFocuserStatus.setEnabled)
         self.control._signals_motor.status.connect(self.ui_elements.posSlider.setEnabled)
 
         self.control._signal_firmware_status.connect(self.ui_elements.lblStatus_val.setText)
+
+        self.control._signal_last_command.connect(self._parse_last_command)
 
 
 
@@ -208,13 +215,14 @@ class FocuserOPD(QtWidgets.QMainWindow):
 ######### OUTROS TESTES ##########
         self.ui_elements.btnTestes.clicked.connect(self.control._testes)
 
-        self._starting_size = QSize(self.width(), self.height())    # Holds the initial screen size
+        # self._starting_size = QSize(self.width(), self.height())    # Holds the initial screen size
+        self._starting_size = QSize(310, self.height())    # Holds the initial screen size
         
 
     
         
         # self.ui_elements.pushButton.clicked.connect(self.teste1)
-        # self.ui_elements.pushButton_2.clicked.connect(self.teste2)
+        self.ui_elements.btnTestes.clicked.connect(self.teste2)
 
 
         self.animation = QPropertyAnimation(self, b"size")
@@ -223,8 +231,9 @@ class FocuserOPD(QtWidgets.QMainWindow):
 
         self.animation.finished.connect(self._expanded_ended)
 
+
         # self._expanding.connect(self.ui_elements.pushButton_2.setDisabled)
-        # self._expanding.connect(self.ui_elements.pushButton.setDisabled)
+        self._expanding.connect(self.ui_elements.btnArrow.setDisabled)
 
 
 
@@ -263,7 +272,7 @@ class FocuserOPD(QtWidgets.QMainWindow):
             self.animation.setEndValue(self._starting_size)
             self._expanded = False
         else:
-            self.animation.setEndValue(QSize(self.width() + 300, self.height()))
+            self.animation.setEndValue(QSize(self.width() + 320, self.height()))
             self._expanded = True
 
         self._expanding.emit(True)
@@ -271,7 +280,19 @@ class FocuserOPD(QtWidgets.QMainWindow):
 
 ######### FIM OUTROS TESTES ##########
 
+    def _show_info(self):
+        if self._expanded is True:
+            self.setMinimumWidth(310)
+            self.animation.setEndValue(self._starting_size)
+            self._expanded = False
+        else:
+            self.setMaximumWidth(630)
+            self.ui_elements.infoFrame.setVisible(True)
+            self.animation.setEndValue(QSize(630, self.height()))
+            self._expanded = True
 
+        self._expanding.emit(True)
+        self.animation.start()
 
     def _closed_log_box(self):
         """Guarantees that the action is unchecked if the Log Box is closed by pressing the X button"""
@@ -387,6 +408,16 @@ class FocuserOPD(QtWidgets.QMainWindow):
             self._settings_window = None
             print("Configurações fechadas")
 
+    def _parse_last_command(self, data: dict):
+        self.ui_elements.lblTime.setText(data["timestamp"])
+        self.ui_elements.lblClientName_val.setText(data["cmd"]["clientName"])
+        self.ui_elements.lblClientID_val.setText(str(data["cmd"]["clientId"]))
+        self.ui_elements.lblTransactionId_val.setText(str(data["cmd"]["clientTransactionId"]))
+        self.ui_elements.lblCommand_val.setText(data["cmd"]["action"])
+        if(data["cmd"]["action"] == "HOME"):
+            self.ui_elements.lblLastHoming_val.setText(data["timestamp"])
+
+
     def _ping(self):        # INFO: Com os signals configurados acho que não vai mais precisar dessa função
         """Checks if device is reachable"""
 
@@ -414,6 +445,11 @@ class FocuserOPD(QtWidgets.QMainWindow):
         #         self.ui_elements.ledMotor.setProperty("statusLed", "NOK")
 
     def _expanded_ended(self):
+        if self._expanded == False:
+            self.setMaximumWidth(self.width())
+            self.ui_elements.infoFrame.setVisible(False)
+        else:
+            self.setMinimumWidth(self.width())
         self._expanding.emit(False)      
 
     def _update_gui_element(self, widget: QtWidgets):
