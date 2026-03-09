@@ -58,6 +58,14 @@ class FocuserDriver():
                 'NORMAL_SPEED': 'normal_speed',
                 'LOW_SPEED': 'low_speed'
             }
+        
+    #The motor driver depends on which focuser is selected
+        if model == constants.ARCUS_DMX_ETH:
+            from src.interface.driver_dmx_eth import DriverMotor
+        elif model == constants.AMP_MOTOR:
+            from src.interface.driver_amp import DriverMotor
+
+        self._driver = DriverMotor
 
     @property
     def connected(self):

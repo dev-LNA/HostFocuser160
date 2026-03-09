@@ -27,7 +27,7 @@ from src.utils.constants import constants
 from src.utils.signals import PropertySignals
 
 # from src.interface.dmx_eth import FocuserDriver as Focuser
-from src.interface.motor_driver import FocuserDriver as Focuser
+# from src.interface.focuser_driver import FocuserDriver as Focuser
 
 
 def resource_path(relative_path):
@@ -149,7 +149,8 @@ class App(QObject):
             "version": "1.0.0"            #TODO: Pegar a versão do arquivo config.toml
         }
         
-        self.device = Focuser(self.logger, constants.ARCUS_DMX_ETH)
+        # self.device = Focuser(self.logger, constants.ARCUS_DMX_ETH)
+        self.device = None
 
         self._signals_initialized.status.connect(lambda value:setattr(self, "initialized", value))
 
@@ -159,71 +160,95 @@ class App(QObject):
 
 #----TESTES #TEST_VALUE
     def _testes(self):        
-        pass
+        self.device.acionar()
 #----TESTES
+    def init_device(self, motor_model: str):
+        """Initializes the motor driver according to the selected focuser
+
+        Parameters
+        ----------
+        motor_model : str
+            Motor model
+
+        Raises
+        ------
+        ValueError
+            Raises exception if the motor model is not valid
+        """
+        if self.device == None:
+            if motor_model == constants.ARCUS_DMX_ETH:
+                from src.interface.driver_dmx_eth import FocuserDriver as Focuser
+            elif motor_model == constants.AMP_MOTOR:
+                from src.interface.driver_amp import FocuserDriver as Focuser
+            
+            self.device = Focuser(self.logger, motor_model)
+        else:
+            raise ValueError("Invalid motor model")
 
     def reach_device(self):
         """Ping device and reads the position and initialized variables"""
         _try = 0
-        self.last_ping_time = datetime.now()
+        self.last_ping_time = datetime.now()                                                        # Saves the time when the method was called
 
-        if not self.router_reachable:
-            self._signals_router_connection("connecting")
-            self._signals_motor_connection("waiting")
-            self.communicating_to_motor = False
-            
-            
-            for _try in range(5):
-                print(f"Trying Connect to Router: Try number {_try+1}")
-                self._statusMessage.emit(f"Trying Connect to Router: Try number {_try+1}")
-                self.router_reachable = self.ping_router()
-                if self.router_reachable:
+        if not self.router_reachable:                                                           # If the router is not reachable
+            self._signals_router_connection("connecting")                                           # Emits signals for GUI update
+            self._signals_motor_connection("waiting")                                               # Emits signals for GUI update
+            self.communicating_to_motor = False                                                     # Not communicating to the motor
+                        
+            for _try in range(5):                                                                   # Tries 5 times to ping the router
+                print(f"Trying Connect to Router: Try number {_try+1}")                         
+                self._statusMessage.emit(f"Trying Connect to Router: Try number {_try+1}")              # Emits signals for GUI update
+                self.router_reachable = self.ping_router()                                              # Tries to ping the router IP
+                if self.router_reachable:                                                               # If the ping is succesful
                     print("Connection succesfull after", (_try+1), "tries" )
-                    self._statusMessage.emit(f"Connection succesfull after {_try+1} tries")
+                    self._statusMessage.emit(f"Connection succesfull after {_try+1} tries")                 # Emits signals for GUI update
                     # self._signals_router_connection("connected")
-                    break
+                    break                                                                                   # Exits for loop
+        else:                                                                                   # If router already reachable
+            self._signals_router_connection("connected")                                            # Emits signals for GUI update
 
-
-        if self.router_reachable:
-            self._signals_router_connection("connected")
-            self._signals_motor_connection("connecting")
-            self.communicating_to_motor = False
+        if self.router_reachable and not self.motor_reachable:                                  # If the router is reachable and the motor is not reachable
+            self._signals_motor_connection("connecting")                                            # Emits signals for GUI update
+            self.communicating_to_motor = False                                                     # Not communicating to the motor
             
-            for _try in range(5): 
+            # if not self.motor_reachable:                                                          # If the motor is not reachable #TODO: Isso aqui é inútil nesse ponto pois já foi checado no if acima
+            for _try in range(5):                                                                   # Tries 5 times to ping the router
                 print(f"Trying Connect to Motor: Try number {_try+1}")
-                self._statusMessage.emit(f"Trying Connect to Motor: Try number {_try+1}")
-                self._motor_reachable = self.ping_server()
-                if self._motor_reachable:
+                self._statusMessage.emit(f"Trying Connect to Motor: Try number {_try+1}")               # Emits signals for GUI update
+                self._motor_reachable = self.ping_server()                                              # Tries to ping the motor IP
+                if self._motor_reachable:                                                               # If the ping is successful
                     print("Connection succesfull after", (_try+1), "tries" )
-                    self._statusMessage.emit(f"Connection succesfull after {_try+1} tries")
+                    self._statusMessage.emit(f"Connection succesfull after {_try+1} tries")                 # Emits signals for GUI update
                     # self._signals_motor_connection("connected")
-                    break
+                    break                                                                                   # Exits for loop
             
-            if self._motor_reachable:
-                self._signals_motor_connection("connected")
-                              
-                try:
-                    self.device.connected = True
-                    self.position =self.device.position
-                    self.status["position"] = self.position
-                    self.status["initialized"] = self.device.initialized
-                    self.status["device_IP"] = self.device.device_IP
-                    self.status["device_ID"] = self.device.device_ID
-                    self.status["device_Firmware_Version"] = self.device.device_Firmware_Version
+        if self.motor_reachable:                                                                # If the motor is reachable
+            self._signals_router_connection("connected")                                            # Emits signals for GUI update
+            self._signals_motor_connection("connected")                                             # Emits signals for GUI update
+                            
+            try:
+                self.device.connected = True                                                        # Creates the socket and connects the server to the motor
+                self.position =self.device.position                                                 # Reads current motor position
+                self.status["position"] = self.position                                             # Updates status
+                self.status["initialized"] = self.device.initialized                                # Updates status
+                self.status["device_IP"] = self.device.device_IP                                    # Updates status
+                self.status["device_ID"] = self.device.device_ID                                    # Updates status
+                self.status["device_Firmware_Version"] = self.device.device_Firmware_Version        # Updates status
 
-                    self._check_homing()
+                self._check_homing()                                                                # Emits homing signals      #TODO: Trocar nome do método
 
-                    if TEST_SETUP:
-                        self._signal_max_pos.emit(int(self.device.max_pos) + 5)     # A small gap at the end to account the distance to the lim+ uswitch 
-                        self._signal_backlash.emit(-(int(self.device.backlash) + 10))     # A small gap at the end to account the distance to the lim+ uswitch 
-                    else:
-                        # TODO: Definir valores de excursão na montagem real
-                        self._signal_max_pos.emit(int(self.device.max_pos))     # A small gap at the end to account the distance to the lim+ uswitch 
-                        self._signal_backlash.emit(-(int(self.device.backlash)))     # A small gap at the end to account the distance to the lim+ uswitch 
-                    
-                    self.logger.info(f'Device Reached.')
-                except Exception as e:
-                    self.logger.error(f'Error reaching device: {str(e)}')     
+            #--- Emits max pos and backlash to update GUI. The value is different in the test setup due to the size and gear differences
+                if TEST_SETUP:
+                    self._signal_max_pos.emit(int(self.device.max_pos) + 5)             # A small gap at the end to account the distance to the lim+ uswitch 
+                    self._signal_backlash.emit(-(int(self.device.backlash) + 10))       # A small gap at the end to account the distance to the lim+ uswitch 
+                else:
+                    # TODO: Definir valores de excursão na montagem real
+                    self._signal_max_pos.emit(int(self.device.max_pos))                 # A small gap at the end to account the distance to the lim+ uswitch 
+                    self._signal_backlash.emit(-(int(self.device.backlash)))            # A small gap at the end to account the distance to the lim+ uswitch 
+                
+                self.logger.info(f'Device Reached.')
+            except Exception as e:
+                self.logger.error(f'Error reaching device: {str(e)}')     
 
     def start_server(self): 
         """ Starts Server ZeroMQ, creating context 
@@ -272,13 +297,13 @@ class App(QObject):
         try:
             if(self.publisher):
                 self.publisher.unbind(f"tcp://{self.ip_address}:{self.port_pub}")
-                self.logger.info(f'Disconnecting Publisher')
+                self.logger.info(f'Disconnecting Publisher')                        #TODO: Será que precisa fazer self.publisher = None ?
         except Exception as e:
             self.logger.error(f'Error closing Publisher connection: {str(e)}')
         try:
             if(self.replier):
                 self.replier.unbind(f"tcp://{self.ip_address}:{self.port_rep}")
-                self.logger.info(f'Disconnecting Replier')
+                self.logger.info(f'Disconnecting Replier')                          #TODO: Será que precisa fazer self.replier = None ? 
         except Exception as e:
             self.logger.error(f'Error closing Replier connection: {str(e)}')
         
@@ -308,7 +333,18 @@ class App(QObject):
             return datetime.now()
         except Exception as e:
             self.logger.error(f'Error: {str(e)}')
+            return datetime.now()
     
+    def stop_server_loop(self):
+        self._stop_var = True
+
+    def stop_poller(self):
+        if self.poller:
+            self.poller.unregister(self.replier)
+            self.poller = None
+            time.sleep(.2)
+
+
     def _stop(self):
         """Stop main loop and unregister zmq.POLL"""
         self._stop_var = True
@@ -717,7 +753,6 @@ class App(QObject):
                         self._pub_status()                                                                                       # Published current status
                         self.logger.error(f'Error: {str(e)}')                                                                   # Logs error
 
-
                 self._check_motor_moving()                  # Verifies if the motor is moving as expected.
                                           
                 self.device.initialized
@@ -742,6 +777,11 @@ class App(QObject):
                 self._update_status()                                                        # Updates motor readings and publishes the current status to ZMQ             
                 self.status["alarm"] = 0                                                    # Resets "alarm"
                 self.communicating_to_motor = False
+            
+            
+            if self.device.connected:
+                pass
+
             else:                                                                       # If the device is not configured or not connected or the poller is not configured              
                 # if (abs(current_time.second - self.last_ping_time.second) >= 5) or (self._router_reachable is False):           # Runs every 5 seconds
                 # if self._router_reachable is False:

@@ -23,6 +23,13 @@
 ; - IN SUB30 THE INITIAL MOVEMENT WAS CHANGED TO JOGX-
 ; - ALLOCATE FIRMWARE VERSION IN MEMORY POSITIONS V90, V91 and V92 [VERSION V90.V91.V92]
 ; - ALLOCATE CONFIGURED HSPD AND LSPD IN V75 AND V76, RESPECTIVELY
+; - #TODO: V77 -> Normal speed
+; - #TODO: V78 -> corrente idle
+; - #TODO: V79 -> desaceleração
+; - #TODO: V80 -> aceleração
+; - #TODO: V81 -> corrente running
+; - #TODO: V82 -> corrente aceleração
+; - #TODO: V83 -> park position
 ;
 ; INSTRUCTIONS
 ; ============

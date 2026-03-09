@@ -9,6 +9,9 @@ from threading import Thread
 from src.core.log import init_logging
 import time
 
+
+from src.utils.constants import constants
+
 try:
     from src.core.config import Config    
     CONFIG_FILE = True
@@ -69,7 +72,7 @@ class FocuserOPD(QtWidgets.QMainWindow):
             if close == QMessageBox.Ok:   
                 sys.exit()
 
-        self.control = App(logger)
+        # self.control = App(logger)
 
         self.config_file = r"src/config/config.toml"                    # Path to configuration file
         self.log_file = r"logs/focuser.log"                             # Path to log file              # TODO: inicializar o arquivo com o nome padronizado, de acordo com a data (dia inicia ao meio dia)
@@ -77,6 +80,13 @@ class FocuserOPD(QtWidgets.QMainWindow):
         # Creates "ui_elements" widget to hold intellisense references to the widgets
         self.ui_elements = UiWidgets(self, "main")
         self.setFixedSize(QSize(310, 488))
+        self.ui_elements.pageSelect.setCurrentIndex(0)
+
+        self.ui_elements.btnStartServer.clicked.connect(self._config_server)
+        self.menuBar().setVisible(False)
+        self.ui_elements.toolBar.setVisible(False)
+
+        self.control = App(logger)
 
         # Ui elements initialization and configuration
         self.ui_elements.lblSocketIP.setText(f"{self.control.ip_address}")
@@ -174,10 +184,6 @@ class FocuserOPD(QtWidgets.QMainWindow):
         self.tray_icon.setContextMenu(self.tray_menu)                   # Sets the tray icon context menu that opens when tray icon is right clicked
         self.tray_icon.activated.connect(self._tray_activated)          # Method executed when tray icon is activated by an event
 
-        self.update_timer = QTimer(self)                                # Creates update timer
-        self.update_timer.timeout.connect(self._update)                  # Connects the times with method 'update'
-        self.update_timer.start(100)                                    # Configures timer for 100ms
-
 
         # Events definitions
         #   sets animations and install event filter on objects
@@ -204,37 +210,6 @@ class FocuserOPD(QtWidgets.QMainWindow):
         self.ui_elements.ledLimMax.installEventFilter(self)
         self.ui_elements.ledLimMin.installEventFilter(self)
         self.ui_elements.ledHome.installEventFilter(self)
-
-        self._ping()
-        if Config.startup:
-            self._start()
-
-
-
-
-######### OUTROS TESTES ##########
-        self.ui_elements.btnTestes.clicked.connect(self.control._testes)
-
-        # self._starting_size = QSize(self.width(), self.height())    # Holds the initial screen size
-        self._starting_size = QSize(310, self.height())    # Holds the initial screen size
-        
-
-    
-        
-        # self.ui_elements.pushButton.clicked.connect(self.teste1)
-        self.ui_elements.btnTestes.clicked.connect(self.teste2)
-
-
-        self.animation = QPropertyAnimation(self, b"size")
-        self.animation.setEasingCurve(QEasingCurve.Type.InOutCubic)
-        self.animation.setDuration(1000)
-
-        self.animation.finished.connect(self._expanded_ended)
-
-
-        # self._expanding.connect(self.ui_elements.pushButton_2.setDisabled)
-        self._expanding.connect(self.ui_elements.btnArrow.setDisabled)
-
 
 
     def teste1(self):
@@ -279,6 +254,67 @@ class FocuserOPD(QtWidgets.QMainWindow):
         self.animation.start()
 
 ######### FIM OUTROS TESTES ##########
+
+    def _config_server(self):
+        """Sets configurations according to the selected focuser"""
+        if self.ui_elements.rb160.isChecked():
+            print("INICIAR FOCALIZADOR DO 160")
+            Config.focuser = "160"
+            Config.device_ip = "192.168.0.250"                  #TODO: Alterar em config.toml o device_ip por 'f160_ip' e 'fiag_IP'
+            self.ui_elements.lblTitle.setText("Focuser 160")
+            self.control.init_device(constants.ARCUS_DMX_ETH)
+            self._init_focuser()
+        elif self.ui_elements.rbIAG.isChecked():
+            print("INICIAR FOCALIZADOR DO IAG")
+            Config.focuser = "IAG"
+            Config.device_ip = "192.168.60.120" #27  #"200.131.64.172" #TEST_VALUE: Usando o valor do ip do DMX para poder fazer testes     #TODO: Alterar em config.toml o device_ip por 'f160_ip' e 'fiag_IP'
+            self.ui_elements.lblTitle.setText("Focuser IAG")
+            self.control.init_device(constants.AMP_MOTOR)
+            self._init_focuser()
+        else:
+            QMessageBox.information(
+                None,  # Parent widget (None centers on the screen; 'self' for a parent window)
+                "Attention",  
+                "A focuser must be selected."  
+    )
+
+    def _init_focuser(self):
+        """Initializes the focuser
+        Sets the visibility for the menuBar an toolBar, changes the 
+        page to show the focuser main window and starts the server if
+        auto startup is configured """
+        self.menuBar().setVisible(True)
+        self.ui_elements.toolBar.setVisible(True)
+        self.ui_elements.pageSelect.setCurrentIndex(1)  
+        if Config.startup:
+            self._start()          
+            
+
+
+
+######### OUTROS TESTES ##########
+        self.ui_elements.btnTestes.clicked.connect(self.control._testes)
+
+        # self._starting_size = QSize(self.width(), self.height())    # Holds the initial screen size
+        self._starting_size = QSize(310, self.height())    # Holds the initial screen size
+        
+
+    
+        
+        # self.ui_elements.pushButton.clicked.connect(self.teste1)
+        self.ui_elements.btnTestes.clicked.connect(self.teste2)
+
+
+        self.animation = QPropertyAnimation(self, b"size")
+        self.animation.setEasingCurve(QEasingCurve.Type.InOutCubic)
+        self.animation.setDuration(1000)
+
+        self.animation.finished.connect(self._expanded_ended)
+
+
+        # self._expanding.connect(self.ui_elements.pushButton_2.setDisabled)
+        self._expanding.connect(self.ui_elements.btnArrow.setDisabled)
+
 
     def _show_info(self):
         if self._expanded is True:
@@ -391,12 +427,36 @@ class FocuserOPD(QtWidgets.QMainWindow):
 
     def _open_settings(self):
         """Opens settings window"""
-        if self._settings_window is None:
-            self._settings_window = SettingsWindow(self.control.device)
-            self._settings_window._signal_window_closed.connect(self._settings_closed)
-            self._settings_window._signals_changed_settings.connect(self._parse_changed_settings)
-            self._settings_window.move(self.pos() + QPoint(self.width(), 0))
-            self._settings_window.show()
+    # To open the settings the motor must be connected
+        if self.control.device.connected:
+            if self._settings_window is None:
+                self._settings_window = SettingsWindow(self.control.device)
+                self._settings_window._signal_window_closed.connect(self._settings_closed)
+                self._settings_window._signals_changed_settings.connect(self._parse_changed_settings)
+                self._settings_window.move(self.pos() + QPoint(self.width(), 0))
+                self._settings_window.show()
+        else:                                                                                   # If the motor is not connected asks the user if they would like to connect #TODO: Talvez dê só para conectar sem perguntar para o usuário
+            msg = QMessageBox.information(
+                self,  # Parent widget (None centers on the screen; 'self' for a parent window)
+                "Attention",  
+                "To open settings the focuser motor must be connected. \nConnect to motor?",
+                buttons=QMessageBox.StandardButton.Yes | QMessageBox.StandardButton.No)
+            if(msg == QMessageBox.StandardButton.Yes):                                                          # If the user whishes to connect the motor
+                self._start()                                                                                   # Connects the server to the motor and starts server operation #TODO: Talvez seja bom ter essas coisas separadas, com um método só para conectar (criar o socket) e outro para iniciar a thread de App, pois a thread de App vai começar a fazer o polling de informações sem parar uma vez iniciada
+                t = time.time()                                                                                 # Keeps current time
+                while not self.control.device.connected:                                                        # Waits 5 seconds while the server tries to connect to the motor
+                    if round(time.time()-t, 3) > 5:                                                             # If the server cannot connect in 5 seconds the code continues executing
+                        break                                                                                       # Break the while loop
+                if self.control.device.connected:                                                               # If the connection to the motor was successful
+                    if self._settings_window is None:                                                               # If the settings windows was not yet defined
+                        self._settings_window = SettingsWindow(self.control.device)                                 # Instantiate settings window
+                        self._settings_window._signal_window_closed.connect(self._settings_closed)                  # Connects closed window signal
+                        self._settings_window._signals_changed_settings.connect(self._parse_changed_settings)       # Connects signal to show the settings in the GUI
+                        self._settings_window.move(self.pos() + QPoint(self.width(), 0))                            # Positions the settings window according to the main window position
+                        self._settings_window.show()                                                                # Shows the settings window
+                else:
+                    raise Exception("Could not connect")                                                        # Exception if the connection was not successful
+
 
     def _parse_changed_settings(self, data: dict):
         if "MAX_POS" in data:
@@ -416,33 +476,6 @@ class FocuserOPD(QtWidgets.QMainWindow):
         self.ui_elements.lblCommand_val.setText(data["cmd"]["action"])
         if(data["cmd"]["action"] == "HOME"):
             self.ui_elements.lblLastHoming_val.setText(data["timestamp"])
-
-
-    def _ping(self):        # INFO: Com os signals configurados acho que não vai mais precisar dessa função
-        """Checks if device is reachable"""
-
-        self._cooldown = time.time()
-        # if self.control.reachable:
-        #     self._reachable = True
-        #     self.ui_elements.conBarServerRouter.setProperty("conStatusBar", "connected")
-        #     self.ui_elements.conBarRouterMotor.setProperty("conStatusBar", "connected")
-        #     self.ui_elements.ledServer.setProperty("statusLed", "OK")
-        #     self.ui_elements.ledRouter.setProperty("statusLed", "OK")
-        #     self.ui_elements.ledMotor.setProperty("statusLed", "OK")
-        # else:
-        #     self._reachable = False
-        #     if self.control.router:
-        #         self.ui_elements.conBarServerRouter.setProperty("conStatusBar", "connected")
-        #         self.ui_elements.conBarRouterMotor.setProperty("conStatusBar", "waiting")
-        #         self.ui_elements.ledServer.setProperty("statusLed", "OK")
-        #         self.ui_elements.ledRouter.setProperty("statusLed", "OK")
-        #         self.ui_elements.ledMotor.setProperty("statusLed", "NOK")
-        #     else:
-        #         self.ui_elements.conBarServerRouter.setProperty("conStatusBar", "waiting")
-        #         self.ui_elements.conBarRouterMotor.setProperty("conStatusBar", "waiting")
-        #         self.ui_elements.ledServer.setProperty("statusLed", "NOK")
-        #         self.ui_elements.ledRouter.setProperty("statusLed", "NOK")
-        #         self.ui_elements.ledMotor.setProperty("statusLed", "NOK")
 
     def _expanded_ended(self):
         if self._expanded == False:
@@ -526,57 +559,24 @@ class FocuserOPD(QtWidgets.QMainWindow):
         while self.clients:             # Closes all opened client simulators
             self.clients[0].close()     # The close method will 'pop' the client from the list, so the client in position 0 is removed until there are no more clients opened
 
+
+        if self._run_thread and self._run_thread.is_alive():    # If the server thread is running 
+            self.control.stop_server_loop()                         # Stops the thread loop
+            self._run_thread.join()                                 # Joins the thread to wait until it is finished
+            self.control.stop_poller()                              # Unregisters server ZMQ poll
+
+
         if self.control:
-            self.control.disconnect()
-        if self._run_thread and self._run_thread.is_alive():
-            self._run_thread.join()
+            self.control.disconnect()                           # Closes the socket to communicate to the motor
 
-    def _update(self):
-        """Main loop and UI manager"""   
-        status = self.control.status
-        con = status["connected"] 
+        # if self.control:
+        #     self.control.disconnect()
+        # if self._run_thread and self._run_thread.is_alive():    # If the server thread is running 
+        #     self.control._stop()                                    # Stops the thread loop and unregister zmq.poll #TODO: Separar isso em mais de uma função, o zmq.poll acho que tem que ser fechado depois que a thread finaliza
+        #     self._run_thread.join()                                 # Joins the thread to wait until it is finished
 
-        if self._run_thread and self._run_thread.is_alive():      
-            pass
-        else:
-            pass
-        if con:
-            # self.statusBar().showMessage("Device Socket Connected")
-            # self._conIcon.setPixmap(QPixmap(icon_con_ok))
-        
-            if not self._reachable:
-                # self.lblPing.setText("Device is Reachable")
-                # self._conIcon.setPixmap(QPixmap(icon_con_wait))
-                self._reachable = True
-        else:
-            # self._conIcon.setPixmap(QPixmap(icon_con_nok))        
-            if self._reachable:
-                # self.lblPing.setText("Device is NOT Reachable")
-                self._reachable = False
-            # self.statusBar().showMessage("Device Socket Disconnected")
-
-        # self.lblPos.setText(str(status["position"]))
-        # self.lblEnc.setText(str(self.control.encoder))
-        # self.lblClientID_val.setText(str(self.control.busy_id))
-        # self.lblCommSpeed.setText(str(self.control.connection_speed))
-        if len(status["error"]) > 1:
-            pass
-            # self.lblErr.setToolTip(status["error"])
-            # self.lblErr.setStyleSheet("background-color: indianred; border-radius: 10px;")
-        else:
-            pass
-            # self.lblErr.setStyleSheet("background-color: rgb(119, 118, 123); border-radius: 10px;")
-        if status["isMoving"]:
-            pass
-            # self.lblMov.setStyleSheet("background-color: green; border-radius: 10px;")
-        else:
-            pass
-            # self.lblMov.setStyleSheet("background-color: rgb(119, 118, 123); border-radius: 10px;")
         
 
-        #updates connection status every 10 sec
-        if int(time.time() - self._cooldown) > 10:
-            self._ping()
 
 
     def closeEvent(self, event):

@@ -4,7 +4,7 @@ title = "Focuser160MQ"
 name = "Focuser160"
 version = "1.0.0"
 description = "Interface for Perkin-Elmer Focuser"
-startup = true
+startup = false
 
 [Device]
 absolute = true

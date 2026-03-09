@@ -20,6 +20,7 @@ def get_toml(sect: str, item: str):
 
 class Config:
     """Device configuration in ``config.toml``"""
+    focuser: str = ""
     # ---------------
     # General Section
     # ---------------

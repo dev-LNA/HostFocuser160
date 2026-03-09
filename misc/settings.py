@@ -4,13 +4,14 @@ from PyQt6 import uic
 from PyQt6.QtWidgets import QMainWindow, QLineEdit, QProgressBar, QDialog
 from PyQt6.QtCore import QThread, pyqtSignal
 from PyQt6.QtGui import QFontMetrics, QKeyEvent
+# from src.core.exceptions import NotImplementedException
 from misc.load_bar import LoadBar
 from misc.ui_intellisense import UiWidgets
 from misc.login_form import LoginForm
 from misc.verification import VerificationDialog
 
 # from src.interface.dmx_eth import FocuserDriver
-from src.interface.motor_driver import FocuserDriver
+# from src.interface.focuser_driver import FocuserDriver
 from src.core.config import Config  
 
 from src.utils.constants import constants
@@ -21,6 +22,9 @@ from os import path
 import toml
 
 import time
+
+
+
 
 def resource_path(relative_path):
     """ Get absolute path to resource, works for dev and for PyInstaller """
@@ -48,8 +52,20 @@ class SettingsWindow(QMainWindow):
 
     _signals_changed_settings = pyqtSignal(dict)
 
-    def __init__(self, driver: FocuserDriver):
+    def __init__(self, driver):
         super().__init__()
+
+        if Config.focuser == "160":
+            from src.interface.driver_dmx_eth import FocuserDriver
+        elif Config.focuser == "IAG":
+            from src.interface.driver_amp import FocuserDriver
+        else:
+            raise RuntimeError("The configured focuser is not valid")
+        
+        if driver.__class__ is not FocuserDriver:
+            raise RuntimeError("Driver must be of FocuserDriver class")
+
+        # self.driver: FocuserDriver
         self.driver = driver                                        # Reference to the motor driver
         
         uic.loadUi(path_to_ui, self)                                # Loads the window UI
@@ -102,8 +118,10 @@ class SettingsWindow(QMainWindow):
 
         self._changed_settings.clear()          # Resets changes dictionary   
 
-        self._update_settings()                                                         # Updates current settings by reading the values from the motor
-        
+        if Config.focuser == "160":
+            self._update_settings()                                                         # Updates current settings by reading the values from the motor
+        else:
+            raise RuntimeError("The IAG settings are not implemented yet")
 
 
     def _parse_motor_data(self, data: MotorData):

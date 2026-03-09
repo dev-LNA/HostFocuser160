@@ -14,7 +14,9 @@ from PyQt6.QtWidgets import (
     QDockWidget,
     QStatusBar,
     QFrame,
-    QSlider)
+    QSlider,
+    QStackedWidget,
+    QRadioButton)
 
 
 
@@ -26,16 +28,35 @@ class UiWidgets(QWidget):
 
         if window_name == "main":
         # === Definitions for main window components === #
+        
+
+            self.pageSelect = window.findChild(QStackedWidget, 'pageSelect')
+            self.pageSelect: QStackedWidget = self.pageSelect
 
             # BOTAO PARA TESTES
             self.btnTestes = window.findChild(QPushButton, 'btnTestes')
             self.btnTestes: QPushButton = self.btnTestes
+
             self.editTeste = window.findChild(QLineEdit, 'editTeste')
             self.editTeste: QLineEdit = self.editTeste
+
+        # Begin Page layout
+            self.btnStartServer = window.findChild(QPushButton, 'btnStartServer')
+            self.btnStartServer: QPushButton = self.btnStartServer
+
+            self.rb160 = window.findChild(QRadioButton, 'rb160')
+            self.rb160: QRadioButton = self.rb160
+
+            self.rbIAG = window.findChild(QRadioButton, 'rbIAG')
+            self.rbIAG: QRadioButton = self.rbIAG
 
 
 
         # Buttons
+
+            self.lblTitle = window.findChild(QLabel, 'lblTitle')
+            self.lblTitle: QLabel = self.lblTitle
+
             self.btnStart = window.findChild(QPushButton, 'btnStart')
             self.btnStart: QPushButton = self.btnStart
 
@@ -45,7 +66,6 @@ class UiWidgets(QWidget):
             self.btnArrow = window.findChild(QPushButton, 'btnArrow')
             self.btnArrow: QPushButton = self.btnArrow
 
-            
             self.menuOptions = window.findChild(QMenu, 'menuOptions')
             self.menuOptions: QMenu = self.menuOptions
 
