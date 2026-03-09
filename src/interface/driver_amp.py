@@ -110,14 +110,15 @@ class FocuserDriver():
     
     def disconnect(self):
         """Disconnects device and close socket"""
-         
+       # self._lock.acquire()
         if self._connected:
             try:
+                while self._lock.locked(): pass     # Waits if a message is being transfered so that the socket is not closed mid-transfer
                 self.motor_socket.close()
                 self._connected = False
-            except:                                         
+            except:
                 raise RuntimeError('Cannot disconnect')     #TODO: Daria para fornecer mais informação do motivo de não ter dado certo?
-         
+        #self._lock.release()
         
     @property
     def temp(self):
@@ -606,19 +607,19 @@ class FocuserDriver():
                     self.motor_socket.sendall(bytes(f'{cmd}\x00', 'ascii'))
                     response = self.motor_socket.recv(1024)
                     self._lock.release()
-                    print(response)
-                    return response.decode('utf-8').replace("\x00", "")                    
+                    return response.decode('ascii').replace("\x00", "")                    
                 except Exception as e:
                     err = e
                 retries += 1                                                               #TODO: Parece que esse retries tem que estar dentro do exception, mas talvez não faça diferença
             self._connected = False
             self.logger.error(f"[Device] Error writing {cmd}: {str(err)}")
             self._lock.release()
-            
             if "WinError" in str(err):                                                     #TODO: Isso aqui não tá fazendo nada de diferente de qualquer outro erro que possa dar
                 # If many retries were unsucessful, says the device is not connected
-                self._connected = False                                                         
+                # self._connected = False 
+                self._lock.release()     
+                self.disconnect()                                                
             # print(f"Error writing ETH: {cmd}: {str(err)}")
-            return str(err)
+            return "0"  #str(err)
         else:
-            return "Not Connected"
+            return "1"

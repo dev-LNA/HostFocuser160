@@ -211,6 +211,28 @@ class FocuserOPD(QtWidgets.QMainWindow):
         self.ui_elements.ledLimMin.installEventFilter(self)
         self.ui_elements.ledHome.installEventFilter(self)
 
+######### OUTROS TESTES ##########
+        self.ui_elements.btnTestes.clicked.connect(self.control._testes)
+
+        # self._starting_size = QSize(self.width(), self.height())    # Holds the initial screen size
+        self._starting_size = QSize(310, self.height())    # Holds the initial screen size
+        
+
+    
+        
+        # self.ui_elements.pushButton.clicked.connect(self.teste1)
+        self.ui_elements.btnTestes.clicked.connect(self.teste2)
+
+
+        self.animation = QPropertyAnimation(self, b"size")
+        self.animation.setEasingCurve(QEasingCurve.Type.InOutCubic)
+        self.animation.setDuration(1000)
+
+        self.animation.finished.connect(self._expanded_ended)
+
+
+        # self._expanding.connect(self.ui_elements.pushButton_2.setDisabled)
+        self._expanding.connect(self.ui_elements.btnArrow.setDisabled)
 
     def teste1(self):
 
@@ -289,32 +311,6 @@ class FocuserOPD(QtWidgets.QMainWindow):
         if Config.startup:
             self._start()          
             
-
-
-
-######### OUTROS TESTES ##########
-        self.ui_elements.btnTestes.clicked.connect(self.control._testes)
-
-        # self._starting_size = QSize(self.width(), self.height())    # Holds the initial screen size
-        self._starting_size = QSize(310, self.height())    # Holds the initial screen size
-        
-
-    
-        
-        # self.ui_elements.pushButton.clicked.connect(self.teste1)
-        self.ui_elements.btnTestes.clicked.connect(self.teste2)
-
-
-        self.animation = QPropertyAnimation(self, b"size")
-        self.animation.setEasingCurve(QEasingCurve.Type.InOutCubic)
-        self.animation.setDuration(1000)
-
-        self.animation.finished.connect(self._expanded_ended)
-
-
-        # self._expanding.connect(self.ui_elements.pushButton_2.setDisabled)
-        self._expanding.connect(self.ui_elements.btnArrow.setDisabled)
-
 
     def _show_info(self):
         if self._expanded is True:

@@ -611,8 +611,6 @@ class FocuserDriver():
                     self.motor_socket.sendall(bytes(f'{cmd}\x00', 'utf-8'))
                     response = self.motor_socket.recv(1024)
                     self._lock.release()
-                    print(response)
-                    print(response.decode('utf-8').replace("\x00", "")    )
                     return response.decode('utf-8').replace("\x00", "")                    
                 except Exception as e:
                     err = e
