@@ -289,7 +289,7 @@ class FocuserOPD(QtWidgets.QMainWindow):
         elif self.ui_elements.rbIAG.isChecked():
             print("INICIAR FOCALIZADOR DO IAG")
             Config.focuser = "IAG"
-            Config.device_ip = "192.168.60.120" #27  #"200.131.64.172" #TEST_VALUE: Usando o valor do ip do DMX para poder fazer testes     #TODO: Alterar em config.toml o device_ip por 'f160_ip' e 'fiag_IP'
+            Config.device_ip = "192.168.60.27" #120  #"200.131.64.172" #TEST_VALUE: Usando o valor do ip do DMX para poder fazer testes     #TODO: Alterar em config.toml o device_ip por 'f160_ip' e 'fiag_IP'
             self.ui_elements.lblTitle.setText("Focuser IAG")
             self.control.init_device(constants.AMP_MOTOR)
             self._init_focuser()

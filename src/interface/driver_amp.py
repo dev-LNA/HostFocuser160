@@ -153,13 +153,18 @@ class FocuserDriver():
     def position(self) -> int:                      #TODO: Talvez o setter de position poderia chamar o método `move`
         """Device enconders position"""      
         try:
-             
-            step = int(self._write("EX", max_retries=5)) 
-            
-            self._position = int(round(step/Config.enc_2_microns))
-            self._last_pos = self._position                             #TODO: Para que exatamente está servindo esse `_last_pos`?
-             
-            return self._position
+            response = self._write("EX", max_retries=5)
+            if is_convertible_to_int(response):
+
+                step = int(response) 
+                
+                self._position = int(round(step/Config.enc_2_microns))
+                self._last_pos = self._position                             #TODO: Para que exatamente está servindo esse `_last_pos`?
+                
+                return self._position
+            else:
+                print("VALOR INVALIDO")
+                return constants.INVALID_RESPONSE
         except ValueError as e:
             self.logger.error(f'[Device] Error reading position: {str(e)}')
                
@@ -348,10 +353,15 @@ class FocuserDriver():
     @property
     def backlash(self) -> str:
          
-        resp = int(self._write("V74", 5))
+        resp = self._write("V74", 5)
+        
+        if is_convertible_to_int(resp):
+            resp = int(resp)
          
-        value = f"{round(resp / Config.enc_2_microns, 0):.0f}"  # Converts to microns
-        return value
+            value = f"{round(resp / Config.enc_2_microns, 0):.0f}"  # Converts to microns
+            return value
+        else:
+            return "Value not convertible to int"
     @backlash.setter
     def backlash(self, value: str) -> str:
         value = str(int(value) * Config.enc_2_microns)    # Converts to encoder value
@@ -363,9 +373,12 @@ class FocuserDriver():
     def max_pos(self) -> str:
          
         resp = self._write("V71", 5)
+        if is_convertible_to_int(resp):
          
-        pos = int(resp) / Config.enc_2_microns
-        return f"{pos:.0f}"
+            pos = int(resp) / Config.enc_2_microns
+            return f"{pos:.0f}"
+        else:
+            return "Value not convertible to int"
     @max_pos.setter
     def max_pos(self, value: str):
         pos = str(int(value) * Config.enc_2_microns)
@@ -598,28 +611,57 @@ class FocuserDriver():
         #   4 - Quando o CLP finalizar o processamento do comando a resposta é colocada no buffer de resposta do CLP
         #   5 - O servidor envia para o CLP um 'echo' do valor recebido no passo 2. Isso é um comando 'dummy' para que o CLP possa responder com o resultado do comando armazenado no buffer.
         #   6 - O CLP precisa resetar o buffer para o valor padrão para aceitar um novo comando.
+
+
         retries = 0
         if self._connected:  
             self._lock.acquire()  
-            time.sleep(0.2)         
+            time.sleep(0.1)         # time.sleep(0.1)  #TODO: Avaliar o motivo de precisar desse tempo morto
             while retries < max_retries:  
                 try:   
                     self.motor_socket.sendall(bytes(f'{cmd}\x00', 'ascii'))
-                    response = self.motor_socket.recv(1024)
+                    response = self.motor_socket.recv(1024).decode('ascii').replace("\x00", "")
+                    print(response)
+                    if response == '@':
+                        print("resp ok")
+                        retries_recv = 0
+                        while response == '!' and retries_recv < max_retries:
+                            try:
+                                self.motor_socket.sendall(bytes(f'@\x00', 'ascii'))
+                                time.sleep(0.1)
+                                response = self.motor_socket.recv(1024).decode('ascii').replace("\x00", "")
+                                print(response)
+                                self._lock.release()
+                                return response
+                            except:
+                                print(str(err))
+                            retries_recv += 1
+                        # If the program reaches this points it means that a problem occurred in sending or receiving the data
+                        self._lock.release()
+                        return "Error communicating to the motor"  #str(err)
+
                     self._lock.release()
-                    return response.decode('ascii').replace("\x00", "")                    
+                    return response               
                 except Exception as e:
                     err = e
-                retries += 1                                                               #TODO: Parece que esse retries tem que estar dentro do exception, mas talvez não faça diferença
-            self._connected = False
+                    print(str(err))
+                retries += 1                                                               
+
+            # If the program reaches this points it means that a problem occurred in sending or receiving the data
             self.logger.error(f"[Device] Error writing {cmd}: {str(err)}")
             self._lock.release()
-            if "WinError" in str(err):                                                     #TODO: Isso aqui não tá fazendo nada de diferente de qualquer outro erro que possa dar
-                # If many retries were unsucessful, says the device is not connected
-                # self._connected = False 
-                self._lock.release()     
-                self.disconnect()                                                
-            # print(f"Error writing ETH: {cmd}: {str(err)}")
-            return "0"  #str(err)
+            self.disconnect()
+            return "Error communicating to the motor"  #str(err)
         else:
-            return "1"
+            return "Not connected"
+
+
+
+
+
+def is_convertible_to_int(value):
+    try:
+        int(value)
+        return True
+    except:
+        return False

@@ -60,6 +60,8 @@ class ClientSimulator(QtWidgets.QMainWindow):
         self.btnDown: QPushButton = self.btnDown
         self.btnUpdateStatus = self.findChild(QtWidgets.QPushButton, 'btnUpdateStatus')
         self.btnUpdateStatus: QPushButton = self.btnUpdateStatus
+        self.btnHome_Park = self.findChild(QtWidgets.QPushButton, 'btnHome_Park')
+        self.btnHome_Park: QPushButton = self.btnHome_Park
 
         self.BarFocuser = self.findChild(QtWidgets.QProgressBar, 'BarFocuser')
         self.BarFocuser: QProgressBar = self.BarFocuser
@@ -107,6 +109,7 @@ class ClientSimulator(QtWidgets.QMainWindow):
         self.btnDown.clicked.connect(self._move_in)
         self.btnConnectClient.clicked.connect(self._connect_to_server)
         self.btnUpdateStatus.clicked.connect(self._get_status)
+        self.btnHome_Park.clicked.connect(self._home_park)
 
         self.BarFocuser.setStyleSheet("QProgressBar::chunk { background-color: rgb(26, 26, 26) } QProgressBar { color: indianred; }")
         self.BarFocuser.setTextDirection(QProgressBar.Direction.BottomToTop) 
@@ -300,6 +303,9 @@ class ClientSimulator(QtWidgets.QMainWindow):
     def _home(self):
         self._send_command("HOME")
 
+    def _home_park(self):
+        self._send_command("PARK")
+
     def _disconnect(self):
         self._send_command("DISCONNECT")
         # If the updater thread is active it is necessary to safely close it
@@ -318,14 +324,14 @@ class ClientSimulator(QtWidgets.QMainWindow):
     def _move_in(self):
         if not self.is_moving:
             if TEST_SETUP:
-                self._send_command("FOCUSIN=5")   #TEST_VALUE -> ORIGINAL VALUE => FOCUSIN=200
+                self._send_command("FOCUSIN=10")   #TEST_VALUE -> ORIGINAL VALUE => FOCUSIN=200
             else:
                 self._send_command("FOCUSIN=200")
 
     def _move_out(self):
         if not self.is_moving:
             if TEST_SETUP:
-                self._send_command("FOCUSOUT=5")  #TEST_VALUE -> ORIGINAL VALUE => FOCUSOUT=200
+                self._send_command("FOCUSOUT=10")  #TEST_VALUE -> ORIGINAL VALUE => FOCUSOUT=200
             else:
                 self._send_command("FOCUSOUT=200")
                 

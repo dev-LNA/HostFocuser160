@@ -588,7 +588,7 @@ background-color: qradialgradient(spread:pad, cx:0.255, cy:0.267, radius:0.856, 
         <property name="geometry">
          <rect>
           <x>220</x>
-          <y>200</y>
+          <y>160</y>
           <width>89</width>
           <height>25</height>
          </rect>
@@ -680,7 +680,7 @@ background-color: qradialgradient(spread:pad, cx:0.255, cy:0.267, radius:0.856, 
         <property name="geometry">
          <rect>
           <x>220</x>
-          <y>260</y>
+          <y>220</y>
           <width>89</width>
           <height>25</height>
          </rect>
@@ -696,7 +696,7 @@ background-color: qradialgradient(spread:pad, cx:0.255, cy:0.267, radius:0.856, 
         <property name="geometry">
          <rect>
           <x>220</x>
-          <y>230</y>
+          <y>190</y>
           <width>89</width>
           <height>25</height>
          </rect>
@@ -1120,6 +1120,22 @@ border-radius: 2px;
           </widget>
          </item>
         </layout>
+       </widget>
+       <widget class="QPushButton" name="btnHome_Park">
+        <property name="geometry">
+         <rect>
+          <x>220</x>
+          <y>250</y>
+          <width>89</width>
+          <height>25</height>
+         </rect>
+        </property>
+        <property name="styleSheet">
+         <string notr="true">background-color: forestGreen;</string>
+        </property>
+        <property name="text">
+         <string>Home + Park</string>
+        </property>
        </widget>
       </widget>
      </widget>

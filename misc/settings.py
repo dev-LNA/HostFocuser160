@@ -76,8 +76,8 @@ class SettingsWindow(QMainWindow):
         lineEdits = self.findChildren(QLineEdit)                                        # Makes a list of all QLineEdit widgets
         for _ in lineEdits:                                                             # Connects the engineering mode signal to each QLineEdit setEnabled
             self._signal_engineering_mode.connect(_.setEnabled)                         #  this way when engineering mode is activated the line edits automatically become enabled    
-        self._signal_engineering_mode.disconnect(self.ui_elements.txtPark.setEnabled)   # Park position not implemented in DMX-ETH
-        self.ui_elements.txtPark.setEnabled(False)                                      # Always false because is not implemented #TODO: Implementar posição Park no DMX-ETH
+        # self._signal_engineering_mode.disconnect(self.ui_elements.txtPark.setEnabled)   # Park position not implemented in DMX-ETH
+        # self.ui_elements.txtPark.setEnabled(False)                                      # Always false because is not implemented #TODO: Implementar posição Park no DMX-ETH
 
         self._signal_engineering_mode.connect(self.ui_elements.btnSave.setEnabled)      # Save is only allowed in engineering mode
 

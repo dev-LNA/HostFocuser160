@@ -104,6 +104,7 @@ class App(QObject):
         self._is_busy = False
         self._position = 0
         self._homing = False
+        self._parking = False
         self._initialized = False
         self._stopping = False
         self._client_id = 0
@@ -386,14 +387,33 @@ class App(QObject):
                 # self._homing = True
                 self._is_busy = True
             else:
-                self.status["alarm"] = self.device.alarm
+                self.status["alarm"] = self.device.alarm    #TODO: Acho que isso não faz nada pq o ALM no DMX é só relacionado à temperatura    
             self.logger.info(f'Device Homing {res}')
         except Exception as e:
             self.communicating_to_motor = False
-            self.status["alarm"] = self.device.alarm
+            self.status["alarm"] = self.device.alarm        #TODO: Acho que isso não faz nada pq o ALM no DMX é só relacionado à temperatura
             self.status["error"] = str(e)
             self.logger.error(f'Homing {e}')
             self._pub_status()
+
+    def _handle_park(self):
+        try:
+            self.communicating_to_motor = True
+            res = self.device.park()
+            self.communicating_to_motor = False
+            time.sleep(.1)
+            if res == "OK":
+                self._parking = self.device._parking
+                self._is_busy = True
+            else:
+                self.status["error"] = "Error during parking"
+        except Exception as e:
+            self.communicating_to_motor = False
+            self.status["alarm"] = self.device.alarm        #TODO: Acho que isso não faz nada pq o ALM no DMX é só relacionado à temperatura
+            self.status["error"] = str(e)
+            self.logger.error(f'Parking {e}')
+            self._pub_status()
+
 
     def handle_halt(self):
         """Stops the motor"""
@@ -677,6 +697,7 @@ class App(QObject):
             'CONNECT': self.handle_connect,
             'DISCONNECT': self.handle_disconnect,
             'STATUS': self._pub_status,
+            'PARK': self._handle_park
         }
         self.start_server()                                         # Starts the ZMQ server and publishes the current status
         self._stop_var = False                                       # Initializes variable used that keep the thread loop running
@@ -756,8 +777,8 @@ class App(QObject):
                 self._check_motor_moving()                  # Verifies if the motor is moving as expected.
                                           
                 self.device.initialized
-
-                self._homing = self.device.homing                           
+                self._homing = self.device.homing   
+                self._parking = self.device.parking                        
                                                                                                # Updates motor position             
                 # if self._homing:                                # (self._homing == True) indicates that the homing was not performed
                 #     self._homing = self.device.homing           # This means that while the homing is not performed this will keep checking if it was performed        #TODO: Qual o motivo de `_homing` ter que ser `true` para chamar `device.homing` para checar se está executando a rotina de inicialização?

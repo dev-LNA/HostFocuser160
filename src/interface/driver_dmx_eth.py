@@ -40,6 +40,7 @@ class FocuserDriver():
         self._tgt_position = 0
         self._stopped = True
         self._homing = False
+        self._parking = False
         self._at_home = False
         self._initialized = False
         self._alarm = 0
@@ -161,12 +162,14 @@ class FocuserDriver():
         """Device enconders position"""      
         try:
             # self._lock.acquire()
-            step = int(self._write("EX", max_retries=5)) 
+            response = self._write("EX", max_retries=5)
+            if is_convertible_to_int(response):
+                step = int(response) 
             
-            self._position = int(round(step/Config.enc_2_microns))
-            self._last_pos = self._position                             #TODO: Para que exatamente está servindo esse `_last_pos`?
-            #self._lock.release()
-            return self._position
+                self._position = int(round(step/Config.enc_2_microns))
+                self._last_pos = self._position                             #TODO: Para que exatamente está servindo esse `_last_pos`?
+                #self._lock.release()
+                return self._position
         except ValueError as e:
             self.logger.error(f'[Device] Error reading position: {str(e)}')
             #self._lock.release()  
@@ -201,6 +204,18 @@ class FocuserDriver():
         #self._lock.release()
         return self._homing
     
+    @property
+    def parking(self) -> bool:
+        # self._lock.acquire()
+        x = self._write("V16", max_retries=5)
+        if "1" in x:
+            self._parking = True                     
+        else:                                       
+            self._parking = False
+        #self._lock.release()
+        return self._parking
+
+
     @property
     def initialized(self) -> bool:
         """Checks if initialization was previously executed"""
@@ -355,10 +370,12 @@ class FocuserDriver():
     @property
     def backlash(self) -> str:
         # self._lock.acquire()
-        resp = int(self._write("V74", 5))
-        #self._lock.release()
-        value = f"{round(resp / Config.enc_2_microns, 0):.0f}"  # Converts to microns
-        return value
+        resp = self._write("V74", 5)
+        if is_convertible_to_int(resp):
+            resp = int(resp)
+            #self._lock.release()
+            value = f"{round(resp / Config.enc_2_microns, 0):.0f}"  # Converts to microns
+            return value
     @backlash.setter
     def backlash(self, value: str) -> str:
         value = str(int(value) * Config.enc_2_microns)    # Converts to encoder value
@@ -371,8 +388,9 @@ class FocuserDriver():
         # self._lock.acquire()
         resp = self._write("V71", 5)
         #self._lock.release()
-        pos = int(resp) / Config.enc_2_microns
-        return f"{pos:.0f}"
+        if is_convertible_to_int(resp):
+            pos = int(resp) / Config.enc_2_microns
+            return f"{pos:.0f}"
     @max_pos.setter
     def max_pos(self, value: str):
         pos = str(int(value) * Config.enc_2_microns)
@@ -383,12 +401,16 @@ class FocuserDriver():
     @property
     def park_pos(self) -> str:      # TODO: Implementar posição de 'park' no motor DMX-ETH
         """ Not implemented """
-        return "Not implemented"
+        resp = self._write("V83", 5)
+        if is_convertible_to_int(resp):
+            pos = int(resp) / Config.enc_2_microns
+            return f"{pos:.0f}"
+        else:
+            return constants.INVALID_RESPONSE
     @park_pos.setter
     def park_pos(self, value: str) -> str:      # TODO: Park position not implemented in DMX-ETH
-        # # self._lock.acquire()
-        # #self._lock.release()
-        pass
+        pos = str(int(value) * Config.enc_2_microns)
+        resp = self._write(f"V83={pos}", 5)
 
     @property
     def max_speed(self) -> str:     # TODO: Necessário alterar algumas coisas no firmware do motor pra essa infomração ficar consistente    
@@ -471,7 +493,7 @@ class FocuserDriver():
         if self._is_moving:                     #TODO: O `_is_moving` na verdade está verificando se alguma rotina está sendo executada (motor busy), mas essa checagem faz sentido, uma vez que não se pode iniciar uma rotina enquanto outra já está em execução.            
             raise RuntimeError('Cannot start a move while the focuser is moving')
 
-        res = self._write("GS30", max_retries=5)     #TODO: Não precisa do `acquire/release` que nem foi utilizado para chamar o `_write` nos métodos anteriores? 
+        res = self._write("GS30", max_retries=5)    
         if res == 'OK':
             self.logger.info('[Device] home: Success')      #TODO: Não seria bom também executar o `initialized` para confirmar que deu tudo certo e manter `_initialized` atualizado?
             #self._lock.release()
@@ -484,6 +506,22 @@ class FocuserDriver():
         self.logger.error('[Device] home: Failed after retries')        #TODO: Informar quantidade de retries? O motor envia alguma outra mensagem de erro com mais informações do que aconteceu?
         #self._lock.release()
         return res      
+    
+    def park(self):
+        if self._is_moving:                     #TODO: O `_is_moving` na verdade está verificando se alguma rotina está sendo executada (motor busy), mas essa checagem faz sentido, uma vez que não se pode iniciar uma rotina enquanto outra já está em execução.            
+            raise RuntimeError('Cannot start a move while the focuser is moving')
+        res = self._write("GS5", max_retries=5)   
+        if res == 'OK':
+            self.logger.info('[Device] parking: Success')      #TODO: Não seria bom também executar o `initialized` para confirmar que deu tudo certo e manter `_initialized` atualizado?
+            return res  
+        else:
+            alarm = self.alarm                              #TODO: Não existe um `self.alarm` só `self._alarm`
+            if alarm == 1:
+                self.logger.error('[Device] parking: Failed and Alarm flag is up') 
+
+        self.logger.error('[Device] parking: Failed after retries')        #TODO: Informar quantidade de retries? O motor envia alguma outra mensagem de erro com mais informações do que aconteceu?
+        #self._lock.release()
+        return res     
 
     def move(self, position: int):                      #TODO: Deixar configurar quantidade de retries?
         """Moves device position to the given position
@@ -605,7 +643,7 @@ class FocuserDriver():
         retries = 0
         if self._connected:  
             self._lock.acquire()  
-            time.sleep(0.2)         
+            time.sleep(0.05)         # time.sleep(0.1)  #TODO: Avaliar o motivo de precisar desse tempo morto
             while retries < max_retries:  
                 try:   
                     self.motor_socket.sendall(bytes(f'{cmd}\x00', 'utf-8'))
@@ -615,15 +653,23 @@ class FocuserDriver():
                 except Exception as e:
                     err = e
                 retries += 1                                                               #TODO: Parece que esse retries tem que estar dentro do exception, mas talvez não faça diferença
-            self._connected = False
+            
+        # If the program reaches this points it means that a problem occurred in sending or receiving the data
             self.logger.error(f"[Device] Error writing {cmd}: {str(err)}")
             self._lock.release()
-            if "WinError" in str(err):                                                     #TODO: Isso aqui não tá fazendo nada de diferente de qualquer outro erro que possa dar
-                # If many retries were unsucessful, says the device is not connected
-                # self._connected = False 
-                self._lock.release()     
-                self.disconnect()                                                
-            # print(f"Error writing ETH: {cmd}: {str(err)}")
-            return "0"  #str(err)
+            self.disconnect() 
+            # if "WinError" in str(err):                                                     #TODO: Isso aqui não tá fazendo nada de diferente de qualquer outro erro que possa dar
+            #     # If many retries were unsucessful, says the device is not connected
+            #     self.disconnect()                
+            return "Error communicating to the motor"  # "0"  #str(err)
         else:
-            return "1"
+            return "Not connected" #"1"
+        
+
+
+def is_convertible_to_int(value):
+    try:
+        int(value)
+        return True
+    except:
+        return False

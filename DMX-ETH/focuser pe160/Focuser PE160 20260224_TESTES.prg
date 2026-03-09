@@ -23,6 +23,7 @@
 ; - IN SUB30 THE INITIAL MOVEMENT WAS CHANGED TO JOGX-
 ; - ALLOCATE FIRMWARE VERSION IN MEMORY POSITIONS V90, V91 and V92 [VERSION V90.V91.V92]
 ; - ALLOCATE CONFIGURED HSPD AND LSPD IN V75 AND V76, RESPECTIVELY
+; - CREATED SUB5 TO MAKE MOTOR PARKING (V16 INDICATES WHEN PARKING IS BEING PERFORMED)
 ; - #TODO: V77 -> Normal speed
 ; - #TODO: V78 -> corrente idle
 ; - #TODO: V79 -> desaceleração
@@ -165,6 +166,44 @@ SUB 0	; STATUS REQUEST
 ENDSUB
 ;
 ;
+;
+;=================
+SUB 5	; PARK
+;=================
+;			Unit: 					encoder units
+;			Range:					1 - 2165440 (1 - 50700 um)
+; 		SUB 31 REQUIRED
+;--------------------
+; V83: park position (configured by server)
+; V71: Maximum position in encoder units = 2165440 : 50700 um
+; V74: overtravel pulses to eliminate backlash = 5360 encoder units (125 um)
+; V16: indicates parking running 
+
+	GOSUB 30
+	V46 = 1			 			; Set start SUB code
+	V42 = 0						; Clear stop flag
+	V16 = 1						; Set parking flag
+	ABS								; Select absolute mode
+	EO = 1						; Enable motor driver
+	; Move in forward direction towards maximum position
+	V10 = 10 * V83		; Convert encoder unit to step unit
+	XV10							; Start movement
+	V8 = 1
+		WHILE V8 > 0
+			V11 = MSTX	; Read status
+			V8 = V11 & 7;	Motor moving bits
+			IF V42 = 1	; Check stop command
+				STOPX
+				DELAY = 500	; Desacceleration time = 300
+				V8 = 0			; Exit while loop
+			ENDIF
+		ENDWHILE
+	EO = 0						; Disable motor driver
+	V16 = 0						; Clear parking flag
+	V42 = 0						; Clear stop command
+	V46 = 0			 			; Set end SUB code
+	ENDSUB 
+
 ;=================
 SUB 20	; FOCUSOUT
 ;=================
