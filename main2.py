@@ -147,6 +147,7 @@ class FocuserOPD(QtWidgets.QMainWindow):
         self.control._signals_lim_min.info.connect(self.ui_elements.ledLimMin.setProperty)
         self.control._signals_lim_max.info.connect(self.ui_elements.ledLimMax.setProperty)
         self.control._signals_initialized.info.connect(self.ui_elements.ledHome.setProperty)
+        self.control._signals_parking.info.connect(self.ui_elements.ledPark.setProperty)
 
         self.control._signals_motor.status.connect(self.ui_elements.gbConnectivity.setEnabled)
         self.control._signals_motor.status.connect(self.ui_elements.gbCommandInfo.setEnabled)
@@ -210,6 +211,7 @@ class FocuserOPD(QtWidgets.QMainWindow):
         self.ui_elements.ledLimMax.installEventFilter(self)
         self.ui_elements.ledLimMin.installEventFilter(self)
         self.ui_elements.ledHome.installEventFilter(self)
+        self.ui_elements.ledPark.installEventFilter(self)
 
 ######### OUTROS TESTES ##########
         self.ui_elements.btnTestes.clicked.connect(self.control._testes)
@@ -470,7 +472,7 @@ class FocuserOPD(QtWidgets.QMainWindow):
         self.ui_elements.lblClientID_val.setText(str(data["cmd"]["clientId"]))
         self.ui_elements.lblTransactionId_val.setText(str(data["cmd"]["clientTransactionId"]))
         self.ui_elements.lblCommand_val.setText(data["cmd"]["action"])
-        if(data["cmd"]["action"] == "HOME"):
+        if(data["cmd"]["action"] == "HOME" or data["cmd"]["action"] == "PARK"):
             self.ui_elements.lblLastHoming_val.setText(data["timestamp"])
 
     def _expanded_ended(self):

@@ -60,7 +60,8 @@ class FocuserDriver():
                 'LOW_SPEED': 'low_speed'
             }
         
-
+    def acionar(self):
+        print(self.initialized)
 
     @property
     def connected(self):

@@ -65,6 +65,7 @@ class App(QObject):
     _signals_lim_min = PropertySignals()
     _signals_lim_max = PropertySignals()
     _signals_initialized = PropertySignals()
+    _signals_parking = PropertySignals()
 
     _signal_max_pos = pyqtSignal(int)
     _signal_backlash = pyqtSignal(int)
@@ -94,6 +95,8 @@ class App(QObject):
         self._stop_var = False
         self.previous_is_mov = False
         self.previous_homing = False
+        self.previous_initialized = False
+        self.previous_parking = False
         self.previous_pos = 0
         self.last_ping_time = datetime.now()
         self.last_pub = datetime.now()
@@ -140,6 +143,7 @@ class App(QObject):
             "homing": False,            # Homing solicited
             "initialized": False,       # Homing finalized
             "isMoving": False,          # Executing a function inside the motor
+            "parking": False,
             "maxSpeed": Config.max_speed,
             "maxStep": Config.max_step,
             "position": 0,
@@ -153,7 +157,8 @@ class App(QObject):
         # self.device = Focuser(self.logger, constants.ARCUS_DMX_ETH)
         self.device = None
 
-        self._signals_initialized.status.connect(lambda value:setattr(self, "initialized", value))
+        # self._signals_initialized.status.connect(lambda value:setattr(self, "initialized", value))
+        # self._signals_parking.status.connect(lambda value:setattr(self, "initialized", value))
 
     # Reaching the device and starting the server at this point is not necessary        
         # self.reach_device()
@@ -520,22 +525,35 @@ class App(QObject):
         if self.is_moving != self.previous_is_mov:
             self.status["isMoving"] = self.is_moving
             self.previous_is_mov = self.is_moving 
-            self.status["initialized"] = self.device.initialized        # This method checks if the homing was performed
             # self._check_homing()
             self._flag_change = True
             # self._pub_status()
 
+        if self._initialized != self.previous_initialized:
+            self.previous_initialized = self._initialized
+            self.status["initialized"] = self._initialized        # This method checks if the homing was performed
+            self._check_homing()
+            self._flag_change = True
+
         if self._homing != self.previous_homing:    
             self.status["homing"] = self._homing            
             self.previous_homing = self._homing
+            self._check_homing()
             self._flag_change = True
             # self._pub_status()
         
+        if self._parking != self.previous_parking:    
+            self.status["parking"] = self._parking            
+            self.previous_parking = self._parking
+            self._check_parking()
+            self._flag_change = True
+
         self._read_motor_status()               # Issues command to read the current motor status.
 
         if self._flag_change:   # Publishes in 0MQ if a change occurred
             self._flag_change = False
-            self._check_homing()
+            # self._check_homing()
+            self._check_parking()
             self._pub_status()
 
         # if self._is_moving and self._homing:
@@ -548,6 +566,12 @@ class App(QObject):
             self._signals_initialized.emit(True,"statusLed", "OK")
         else:
             self._signals_initialized.emit(False,"statusLed", "NOK")
+
+    def _check_parking(self):
+        if self.status["parking"]:
+            self._signals_parking.emit(True,"statusLed", "WAIT")
+        else:
+            self._signals_parking.emit(False,"statusLed", "NOK")
 
 
     def reply(self, msg):
@@ -776,13 +800,13 @@ class App(QObject):
 
                 self._check_motor_moving()                  # Verifies if the motor is moving as expected.
                                           
-                self.device.initialized
+                self.initialized = self.device.initialized
                 self._homing = self.device.homing   
                 self._parking = self.device.parking                        
                                                                                                # Updates motor position             
                 # if self._homing:                                # (self._homing == True) indicates that the homing was not performed
                 #     self._homing = self.device.homing           # This means that while the homing is not performed this will keep checking if it was performed        #TODO: Qual o motivo de `_homing` ter que ser `true` para chamar `device.homing` para checar se está executando a rotina de inicialização?
-                if self.initialized and not self._is_moving:    # indicates that the homing was performed
+                if self._initialized and not self._is_moving:    # indicates that the homing was performed
                                                                 # The homing was performed and the motor is not moving -> Indicates the motor is not busy
                     self.clientID = 0                           # Sets client not busy
                     self.transaction_id = 0                     # Resets transaction ID

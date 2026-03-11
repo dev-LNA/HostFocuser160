@@ -87,6 +87,7 @@ class UiWidgets(QWidget):
             self.toolBar = window.findChild(QToolBar, 'toolBar')
             self.toolBar: QToolBar = self.toolBar
 
+        # LEDS
             self.ledServer = window.findChild(QLabel, 'ledServer')
             self.ledServer: QLabel = self.ledServer
 
@@ -162,6 +163,9 @@ class UiWidgets(QWidget):
 
             self.ledHome = window.findChild(QLabel, 'ledHome')
             self.ledHome: QLabel = self.ledHome
+
+            self.ledPark = window.findChild(QLabel, 'ledPark')
+            self.ledPark: QLabel = self.ledPark
 
             self.ledLimMin = window.findChild(QLabel, 'ledLimMin')
             self.ledLimMin: QLabel = self.ledLimMin
