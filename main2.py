@@ -13,7 +13,7 @@ import time
 from src.utils.constants import constants
 
 try:
-    from src.core.config import Config    
+    from src.core.config import Config, get_toml
     CONFIG_FILE = True
     ERR_VALUE = None
 except Exception as e:
@@ -284,14 +284,14 @@ class FocuserOPD(QtWidgets.QMainWindow):
         if self.ui_elements.rb160.isChecked():
             print("INICIAR FOCALIZADOR DO 160")
             Config.focuser = "160"
-            Config.device_ip = "192.168.0.250"                  #TODO: Alterar em config.toml o device_ip por 'f160_ip' e 'fiag_IP'
+            Config.device_ip = get_toml('Device', 'ip_160')                  #TODO: Alterar em config.toml o device_ip por 'f160_ip' e 'fiag_IP'
             self.ui_elements.lblTitle.setText("Focuser 160")
             self.control.init_device(constants.ARCUS_DMX_ETH)
             self._init_focuser()
         elif self.ui_elements.rbIAG.isChecked():
             print("INICIAR FOCALIZADOR DO IAG")
             Config.focuser = "IAG"
-            Config.device_ip = "192.168.60.27" #120  #"200.131.64.172" #TEST_VALUE: Usando o valor do ip do DMX para poder fazer testes     #TODO: Alterar em config.toml o device_ip por 'f160_ip' e 'fiag_IP'
+            Config.device_ip = get_toml('Device', 'ip_iag') #120  #"200.131.64.172" #TEST_VALUE: Usando o valor do ip do DMX para poder fazer testes     #TODO: Alterar em config.toml o device_ip por 'f160_ip' e 'fiag_IP'
             self.ui_elements.lblTitle.setText("Focuser IAG")
             self.control.init_device(constants.AMP_MOTOR)
             self._init_focuser()
@@ -533,7 +533,7 @@ class FocuserOPD(QtWidgets.QMainWindow):
                     # Animations related to labels
                     self._update_gui_element(obj)
                     return True 
-            
+                
         # For all other events or objects, return False to allow normal handling
         return super().eventFilter(obj, event)
 
@@ -543,6 +543,14 @@ class FocuserOPD(QtWidgets.QMainWindow):
         if self._run_thread and self._run_thread.is_alive():
             print("Still Alive")
             return
+
+        # if Config.focuser == "160":                                 # When the server is started it is important to guarantee that the IP value is updated according to the config file, the value could have been changed in the settings
+        #     Config.device_ip = get_toml('Device', 'ip_160')
+        # elif Config.focuser == "IAG":
+        #     Config.device_ip = get_toml('Device', 'ip_iag')
+        # else:
+        #     RuntimeError("Invalid focuser value")
+
         self._run_thread = Thread(target = self.control.run)
         self._run_thread.start()
         # self._run_thread.daemon = True

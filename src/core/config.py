@@ -10,14 +10,16 @@ import toml
 
 config_file = "src/config/config.toml"
 
-_dict = {}
-_dict = toml.load(config_file)
+# _dict = {}
+# _dict = toml.load(config_file)
 def get_toml(sect: str, item: str):
+    _dict = toml.load(config_file)
     if not _dict is {}:
         return _dict[sect][item]
     else:
         return ''
 
+#TODO: Pensar em uma forma que evite ter que carregar toda a configuração cada vez que for mudar uma única configuração no Config
 class Config:
     """Device configuration in ``config.toml``"""
     focuser: str = ""
@@ -37,7 +39,7 @@ class Config:
     # Device Section
     # --------------
     device_name: str = get_toml('Device', 'device_name')
-    device_ip: str = get_toml('Device', 'device_ip')
+    device_ip: str = get_toml('Device', 'ip_160')
     router_ip: str = get_toml('Device', 'router_ip')
     device_port: int = get_toml('Device', 'device_port')
     absolute: bool = get_toml('Device', 'absolute')

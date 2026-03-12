@@ -10,7 +10,8 @@ startup = false
 absolute = true
 device_name = "2ndMirror"
 deviceID = "3285e9af-8d1d-4f9d-b368-d129d8e9a24b"
-device_ip = "192.168.0.250"
+ip_160 = "192.168.0.250"
+ip_iag = "192.168.60.120"
 router_ip = "192.168.0.1"
 device_port = 5001
 encoder2microns = 42.2047244
@@ -22,6 +23,7 @@ temp_comp = false
 speed_security = 215000
 speedFactor = 428
 step_size = 0
+device_ip = "192.168.0.250"
 
 [Network]
 ip_address = "*"

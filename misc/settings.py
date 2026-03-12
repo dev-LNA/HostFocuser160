@@ -12,7 +12,7 @@ from misc.verification import VerificationDialog
 
 # from src.interface.dmx_eth import FocuserDriver
 # from src.interface.focuser_driver import FocuserDriver
-from src.core.config import Config  
+from src.core.config import Config, get_toml  
 
 from src.utils.constants import constants
 from src.utils.motor import MotorData
@@ -247,18 +247,6 @@ class SettingsWindow(QMainWindow):
             # self._changed_settings.clear()          # Resets changes dictionary         
         # Device IP
             self._set_motor_settings("DEVICE_IP", self.ui_elements.txtMotorIP.text())
-            if self._settings_changed:
-                # self._changed_settings["DEVICE_IP"] = self._motor_settings["DEVICE_IP"]
-                self.driver.device_IP = self._motor_settings["DEVICE_IP"]
-
-            # If the motor IP is changed it is important to keep the config file updated so that when the server is restarted the new IP address is saved
-                with open(config_file, 'r') as f:
-                    config = toml.load(f)
-
-                config['Device']['device_ip'] = self._motor_settings["DEVICE_IP"]
-
-                with open(config_file, 'w') as f:
-                    toml.dump(config, f)
 
         # Backlash compensation
             self._set_motor_settings("BACKLASH", self.ui_elements.txtBackComp.text())
@@ -280,7 +268,7 @@ class SettingsWindow(QMainWindow):
         # Normal speed
             self._set_motor_settings("LOW_SPEED", self.ui_elements.txtLowSpeed.text())
 
-            if self._changed_settings:                       # If the changes dictionary has any elements than a setting was changed and the command store must be executed
+            if self._changed_settings:                       # If the changes dictionary has any elements then a setting was changed and the command store must be executed
                 verify = VerificationDialog()
                 text = ""
                 keys, values = zip(*self._changed_settings.items())
@@ -299,7 +287,23 @@ class SettingsWindow(QMainWindow):
 
                 if verify.exec() == QDialog.DialogCode.Accepted: 
                     try:
-                        for _ in keys:
+                        # If the motor IP is changed it is important to keep the config file updated so that when the server is restarted the new IP address is saved   
+                        if 'DEVICE_IP' in keys:
+                            self.driver.device_IP = self._motor_settings["DEVICE_IP"]
+                            with open(config_file, 'r') as f:
+                                config = toml.load(f)
+
+                            if Config.focuser == '160':
+                                config['Device']['ip_160'] = self._changed_settings["DEVICE_IP"]
+                                Config.device_ip = config['Device']['ip_160'] # get_toml('Device', 'ip_160')
+                            elif Config.focuser == 'IAG':
+                                config['Device']['ip_iag'] = self._changed_settings["DEVICE_IP"]
+                                Config.device_ip = config['Device']['ip_iag'] # get_toml('Device', 'ip_iag')
+
+                            with open(config_file, 'w') as f:
+                                toml.dump(config, f)
+
+                        for _ in keys:  # Uses the driver properties to send the new values to the motor
                             setattr(self.driver, self.driver.property_handlers[_], self._changed_settings[_]) 
 
                         self._signals_changed_settings.emit(self._changed_settings)     # Emits the changes to the main UI

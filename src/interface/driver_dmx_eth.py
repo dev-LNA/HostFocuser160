@@ -124,6 +124,7 @@ class FocuserDriver():
             try:
                 while self._lock.locked(): pass     # Waits if a message is being transfered so that the socket is not closed mid-transfer
                 self.motor_socket.close()
+                self.motor_socket = None
                 self._connected = False
             except:
                 raise RuntimeError('Cannot disconnect')     #TODO: Daria para fornecer mais informação do motivo de não ter dado certo?
