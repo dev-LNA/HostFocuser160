@@ -63,7 +63,7 @@ class FocuserDriver():
 
     def acionar(self):
         print (self._connected)
-        self._write("7643")
+        self._write("V20")
 
     @property
     def connected(self):
@@ -199,6 +199,17 @@ class FocuserDriver():
          
         return self._homing
     
+    @property
+    def parking(self) -> bool:
+        # self._lock.acquire()
+        x = self._write("V16", max_retries=5)
+        if "1" in x:
+            self._parking = True                     
+        else:                                       
+            self._parking = False
+        #self._lock.release()
+        return self._parking
+
     @property
     def initialized(self) -> bool:
         """Checks if initialization was previously executed"""

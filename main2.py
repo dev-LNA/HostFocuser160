@@ -20,14 +20,14 @@ except Exception as e:
     ERR_VALUE = str(e)
     CONFIG_FILE = False
 
-if CONFIG_FILE:
-    from src.core.app import App
-    
-    from misc.client_sample import ClientSimulator
-    from misc.settings import SettingsWindow
-    from misc.load_bar import LoadBar
-    from misc.ui_intellisense import UiWidgets
-    from misc.log_box import LogBox
+# if CONFIG_FILE:               #INFO: Se colocar isso aqui o programa não vai inicializar no caso de falta do arquivo config, e nenhuma informação é passada para o usuário. Melhor fazer essa checagem somente no __init__ mesmo
+from src.core.app import App
+
+from misc.client_sample import ClientSimulator
+from misc.settings import SettingsWindow
+from misc.load_bar import LoadBar
+from misc.ui_intellisense import UiWidgets
+from misc.log_box import LogBox
     
 
 def resource_path(relative_path):
@@ -47,51 +47,53 @@ class FocuserOPD(QtWidgets.QMainWindow):
 
     # Signals
     _expanding = pyqtSignal(bool)               # Informs that the expanding animation is in process  
-    _expanded = False
+    _expanded = False                           # Informs expansion ended
 
-    _reachable = False
     _run_thread = None
     _cooldown = time.time()
 
     def __init__(self):
         super(FocuserOPD, self).__init__()
-        uic.loadUi(main_ui_path, self)
+        uic.loadUi(main_ui_path, self)          # Loads UI file
 
-        self.clients = list[ClientSimulator]()
-        self._num_clients = 0
-        self._settings_window = None
-        self.log_box = None
-        self.load_window = None
+        self.clients = list[ClientSimulator]()  # Initializes client simulators list
+        self._num_clients = 0                   # Number of opened clients
+        self._settings_window = None            # Initialize settings window as None
+        self.log_box = None                     # Initialize log window as None
+        self.load_window = None                 # Initialize load window as None
 
-        if not CONFIG_FILE:
-            close = QMessageBox()
-            close.setText(f"Arquivo de configuração com problemas!\n{ERR_VALUE}")
-            close.setStandardButtons(QMessageBox.Ok)
-            close = close.exec()
+        if not CONFIG_FILE:                     # If configuration file was not found a message is displayed and the program will close after check
+            close = QMessageBox()                                                       # Creates message window
+            close.setText(f"Arquivo de configuração com problemas!\n{ERR_VALUE}")       # Config window message
+            close.setStandardButtons(QMessageBox.StandardButton.Ok)                     # Config window button
+            close = close.exec()                                                        # Opens window and waits button press
 
-            if close == QMessageBox.Ok:   
-                sys.exit()
+            if close == QMessageBox.StandardButton.Ok:                                  # After press ok button
+                sys.exit()                                                                  # Ends program
 
         # self.control = App(logger)
 
         self.config_file = r"src/config/config.toml"                    # Path to configuration file
         self.log_file = r"logs/focuser.log"                             # Path to log file              # TODO: inicializar o arquivo com o nome padronizado, de acordo com a data (dia inicia ao meio dia)
 
-        # Creates "ui_elements" widget to hold intellisense references to the widgets
-        self.ui_elements = UiWidgets(self, "main")
-        self.setFixedSize(QSize(310, 488))
-        self.ui_elements.pageSelect.setCurrentIndex(0)
+        
+        self.ui_elements = UiWidgets(self, "main")                      # Creates "ui_elements" widget to hold intellisense references to the widgets
+        self.setFixedSize(QSize(310, 488))                              # Sets a fixed size for the main window
+        self.ui_elements.pageSelect.setCurrentIndex(0)                  # Initializes the main window in the focalizer seletion page
 
         self.ui_elements.btnStartServer.clicked.connect(self._config_server)
-        self.menuBar().setVisible(False)
-        self.ui_elements.toolBar.setVisible(False)
+        self.menuBar().setVisible(False)                                        # The menu bar is not displayed in the focalizer selection page
+        self.ui_elements.toolBar.setVisible(False)                              # The tool bar is not displayed in the focalizer selection page
 
-        self.control = App(logger)
+        self.control = App(logger)                                              # Instantiates the server app class
 
-        # Ui elements initialization and configuration
+    #--- UI elements initialization and configuration
+    #   Initializes every UI element of the main window.
+    #   The initialization will set the initial values and the behavior of the elements.
         self.ui_elements.lblSocketIP.setText(f"{self.control.ip_address}")
         self.ui_elements.lblPortPUB.setText(f"{self.control.port_pub}")
         self.ui_elements.lblPortREP.setText(f"{self.control.port_rep}")
+
         self.ui_elements.actionShow_Log.triggered.connect(self._toggle_log_box)
         self.ui_elements.actionClient_Simulator.triggered.connect(self._run_simulator)
         self.ui_elements.actionHide.triggered.connect(self._minimize_to_tray)
@@ -112,7 +114,7 @@ class FocuserOPD(QtWidgets.QMainWindow):
             lambda checked: self.ui_elements.toolBar.setVisible(checked)    # Action to toggle toolbar
         )   
 
-        self._conIcon = QLabel()
+        self._conIcon = QLabel()                            #TODO: Mudar o _conIcon para operar da mesma forma que os outros leds, usar a propriedade ledStatus ao invés de um pixmap com um ícone
         # self._conIcon.setPixmap(QPixmap(icon_con_ok))
         self._conIcon.setMaximumSize(21,21)
         self.statusBar().addPermanentWidget(self._conIcon)
@@ -131,9 +133,6 @@ class FocuserOPD(QtWidgets.QMainWindow):
         self.control._statusMessage.connect(self.statusBar().showMessage)
         self.control._statusBar_led.connect(self._conIcon.setPixmap)
         self.control._connection_speed.connect(self.ui_elements.lblComSpeed.setText)
-
-        # self.control._signal_client_id.connect(self.ui_elements.lblClientID_val.setText)
-        # self.control._signal_transaction_id.connect(self.ui_elements.lblTransactionId_val.setText)
         
         self.control._signal_position_str.connect(self.ui_elements.lblPosition_val.setText)
         self.control._signal_encoder.connect(self.ui_elements.lblEncoder_val.setText)
@@ -161,7 +160,7 @@ class FocuserOPD(QtWidgets.QMainWindow):
 
 
 
-        # Imports the box to show log files                             # TODO: Adicionar mais funcionalidades ao log box, como pesquisar no log e escolher o log que se deseja abrir
+        # Imports the box to show log files                             # TODO: Adicionar mais funcionalidades ao log box, como pesquisar no log e escolher o log que se deseja abrir de acordo com a data
         self.log_box = LogBox()                                         # TODO: Também é necessário alterar a forma que os arquivos são salvos, colocando um nome padrão de acordo com a data    
         self.log_box.closed.connect(self._closed_log_box)               # Signal to inform the main window that the log box was closed by pressing the X button            
         
@@ -186,25 +185,33 @@ class FocuserOPD(QtWidgets.QMainWindow):
         self.tray_icon.activated.connect(self._tray_activated)          # Method executed when tray icon is activated by an event
 
 
-        # Events definitions
+    #--- Events definitions
         #   sets animations and install event filter on objects
         self.ui_elements.conBarServerRouter.setValue(0)
-        self.ui_elements.conBarServerRouter.animation = QPropertyAnimation(
-            self.ui_elements.conBarServerRouter, b'value', self
+        self.ui_elements.conBarServerRouter.animation = QPropertyAnimation(                         # Animation for the connection bar between server and router
+            self.ui_elements.conBarServerRouter, b'value', self                                     # The animation is triggered when the property value is changed
         )
         self.ui_elements.conBarServerRouter.animation.setEasingCurve(QEasingCurve.Type.OutCubic)
         self.ui_elements.conBarServerRouter.animation.setDuration(300)
         self.ui_elements.conBarServerRouter.installEventFilter(self)
 
         self.ui_elements.conBarRouterMotor.setValue(0)
-        self.ui_elements.conBarRouterMotor.animation = QPropertyAnimation(
-            self.ui_elements.conBarRouterMotor, b'value', self
+        self.ui_elements.conBarRouterMotor.animation = QPropertyAnimation(                          # Animation for the connection bar between router and motor
+            self.ui_elements.conBarRouterMotor, b'value', self                                      # The animation is triggered when the property value is changed
         )
         self.ui_elements.conBarRouterMotor.animation.setEasingCurve(QEasingCurve.Type.OutCubic)
         self.ui_elements.conBarRouterMotor.animation.setDuration(300)
         self.ui_elements.conBarRouterMotor.installEventFilter(self)
 
-        self.ui_elements.ledServer.installEventFilter(self)
+        self._starting_size = QSize(310, self.height())                                             # Holds the initial screen size
+        self.animation = QPropertyAnimation(self, b"size")                                          # Animation for the window expansion
+        self.animation.setEasingCurve(QEasingCurve.Type.InOutCubic)
+        self.animation.setDuration(1000)
+        self.animation.finished.connect(self._expanded_ended)                                       # Connects a function to run after the animation is over
+        self._expanding.connect(self.ui_elements.btnArrow.setDisabled)                              # Disables the arrow expansion button while the animation is being executed
+
+        # Install event filters in the LEDs so that when a property is changed the values are automatically updated
+        self.ui_elements.ledServer.installEventFilter(self)                                         
         self.ui_elements.ledRouter.installEventFilter(self)
         self.ui_elements.ledMotor.installEventFilter(self)
         self.ui_elements.ledMoving.installEventFilter(self)
@@ -216,28 +223,13 @@ class FocuserOPD(QtWidgets.QMainWindow):
 ######### OUTROS TESTES ##########
         self.ui_elements.btnTestes.clicked.connect(self.control._testes)
 
-        # self._starting_size = QSize(self.width(), self.height())    # Holds the initial screen size
-        self._starting_size = QSize(310, self.height())    # Holds the initial screen size
-        
-
-    
-        
-        # self.ui_elements.pushButton.clicked.connect(self.teste1)
-        self.ui_elements.btnTestes.clicked.connect(self.teste2)
+        # self.ui_elements.pushButton.clicked.connect(self.teste1)      #|  Selects a function to be executed when
+        self.ui_elements.btnTestes.clicked.connect(self.teste2)         #| the test button is pressed
 
 
-        self.animation = QPropertyAnimation(self, b"size")
-        self.animation.setEasingCurve(QEasingCurve.Type.InOutCubic)
-        self.animation.setDuration(1000)
-
-        self.animation.finished.connect(self._expanded_ended)
-
-
-        # self._expanding.connect(self.ui_elements.pushButton_2.setDisabled)
-        self._expanding.connect(self.ui_elements.btnArrow.setDisabled)
 
     def teste1(self):
-
+        """Function for general tests"""
         if(self.ui_elements.ledServer.property("statusLed") == "OK"):
             self.ui_elements.ledServer.setProperty("statusLed", "NOK")
         else:
@@ -247,26 +239,17 @@ class FocuserOPD(QtWidgets.QMainWindow):
 
 
         if(self.ui_elements.conBarServerRouter.value() == 0):
-            # self.ui_elements.conBarServerRouter.setValue(50)
-            # self.conBarServerRouterAnimation.setEndValue(50)
-            # self.conBarServerRouterAnimation.start()
             self.ui_elements.conBarServerRouter.setProperty("conStatusBar", "connecting")
         elif(self.ui_elements.conBarServerRouter.value() == 50):
-            # self.ui_elements.conBarServerRouter.setValue(100)
-            # self.conBarServerRouterAnimation.setEndValue(100)
-            # self.conBarServerRouterAnimation.start()
             self.ui_elements.conBarServerRouter.setProperty("conStatusBar", "connected")
         elif(self.ui_elements.conBarServerRouter.value() == 100):
-            # self.ui_elements.conBarServerRouter.setValue(0)
-            # self.conBarServerRouterAnimation.setEndValue(0)
-            # self.conBarServerRouterAnimation.start()
             self.ui_elements.conBarServerRouter.setProperty("conStatusBar", "waiting")
         
         self._update_gui_element(self.ui_elements.conBarServerRouter)
 
 
     def teste2(self):
-
+        """Function for general tests"""
         if self._expanded is True:
             self.animation.setEndValue(self._starting_size)
             self._expanded = False
@@ -280,26 +263,27 @@ class FocuserOPD(QtWidgets.QMainWindow):
 ######### FIM OUTROS TESTES ##########
 
     def _config_server(self):
-        """Sets configurations according to the selected focuser"""
-        if self.ui_elements.rb160.isChecked():
-            print("INICIAR FOCALIZADOR DO 160")
-            Config.focuser = "160"
-            Config.device_ip = get_toml('Device', 'ip_160')                  #TODO: Alterar em config.toml o device_ip por 'f160_ip' e 'fiag_IP'
-            self.ui_elements.lblTitle.setText("Focuser 160")
-            self.control.init_device(constants.ARCUS_DMX_ETH)
-            self._init_focuser()
-        elif self.ui_elements.rbIAG.isChecked():
-            print("INICIAR FOCALIZADOR DO IAG")
-            Config.focuser = "IAG"
-            Config.device_ip = get_toml('Device', 'ip_iag') #120  #"200.131.64.172" #TEST_VALUE: Usando o valor do ip do DMX para poder fazer testes     #TODO: Alterar em config.toml o device_ip por 'f160_ip' e 'fiag_IP'
-            self.ui_elements.lblTitle.setText("Focuser IAG")
-            self.control.init_device(constants.AMP_MOTOR)
-            self._init_focuser()
-        else:
-            QMessageBox.information(
-                None,  # Parent widget (None centers on the screen; 'self' for a parent window)
+        """Sets configurations according to the selected focuser.
+        The focuser is selected in the focuser selection page when the server is initialized and cannot be changed after the initial selection."""
+        if self.ui_elements.rb160.isChecked():                              # Checks radio button value
+            print("INICIAR FOCALIZADOR DO 160")                                 # If the PE 160 was chosen
+            Config.focuser = "160"                                              # Changes Config according to selection
+            Config.device_ip = get_toml('Device', 'ip_160')                     # Sets the IP address according to selection
+            self.ui_elements.lblTitle.setText("Focuser 160")                    # Sets main window label according to selection
+            self.control.init_device(constants.ARCUS_DMX_ETH)                   # Initializes the motor driver according to the focuser
+            self._init_focuser()                                                # Changes to the server page                                  
+        elif self.ui_elements.rbIAG.isChecked():                            # Checks radio button value
+            print("INICIAR FOCALIZADOR DO IAG")                                 # If the IAG was chosen
+            Config.focuser = "IAG"                                              # Changes Config according to selection
+            Config.device_ip = get_toml('Device', 'ip_iag') #120  #"200.131.64.172" #TEST_VALUE: Usando o valor do ip do DMX para poder fazer testes    # Sets the IP address according to selection
+            self.ui_elements.lblTitle.setText("Focuser IAG")                    # Sets main window label according to selection
+            self.control.init_device(constants.AMP_MOTOR)                       # Initializes the motor driver according to the focuser
+            self._init_focuser()                                                # Changes to the server page      
+        else:                                                               # If the 'start server' button is pressed with no focuser selected shows a message
+            QMessageBox.information(                                            
+                None,                                                           # Parent widget (None centers on the screen; 'self' for a parent window)
                 "Attention",  
-                "A focuser must be selected."  
+                "A focuser must be selected."                                   # Informs the user that a focuser must be selected
     )
 
     def _init_focuser(self):
@@ -307,30 +291,31 @@ class FocuserOPD(QtWidgets.QMainWindow):
         Sets the visibility for the menuBar an toolBar, changes the 
         page to show the focuser main window and starts the server if
         auto startup is configured """
-        self.menuBar().setVisible(True)
-        self.ui_elements.toolBar.setVisible(True)
-        self.ui_elements.pageSelect.setCurrentIndex(1)  
-        if Config.startup:
-            self._start()          
+        self.menuBar().setVisible(True)                                     # Sets menu bar visibility
+        self.ui_elements.toolBar.setVisible(True)                           # Sets tool bar visibility
+        self.ui_elements.pageSelect.setCurrentIndex(1)                      # Changes view to the main server page
+        if Config.startup:                                                  # If configured to 'auto start'
+            self._start()                                                       # Starts the server
             
 
     def _show_info(self):
-        if self._expanded is True:
-            self.setMinimumWidth(310)
-            self.animation.setEndValue(self._starting_size)
-            self._expanded = False
-        else:
-            self.setMaximumWidth(630)
-            self.ui_elements.infoFrame.setVisible(True)
-            self.animation.setEndValue(QSize(630, self.height()))
-            self._expanded = True
+        """Expands or shrinks the main window"""
+        if self._expanded is True:                                          # If the window is already expanded   
+            self.setMinimumWidth(310)                                           # Sets new minimal width
+            self.animation.setEndValue(self._starting_size)                     # Sets window size after animation
+            self._expanded = False                                              # Resets '_expanded' value
+        else:                                                               # Else if the window is not expanded 
+            self.setMaximumWidth(630)                                           # Sets new max width  
+            self.ui_elements.infoFrame.setVisible(True)                         # Sets 'infoFrame' visibility        
+            self.animation.setEndValue(QSize(630, self.height()))               # Sets window size after animation
+            self._expanded = True                                               # Sets '_expanded' value
 
-        self._expanding.emit(True)
-        self.animation.start()
+        self._expanding.emit(True)                                          # Emits signal informing that the window is expanding
+        self.animation.start()                                              # Starts expantion/shrinking animation
 
     def _closed_log_box(self):
         """Guarantees that the action is unchecked if the Log Box is closed by pressing the X button"""
-        self.ui_elements.actionShow_Log.setChecked(False)
+        self.ui_elements.actionShow_Log.setChecked(False)                   # Unchecks logBox action when the logBox is closed
 
     def _toggle_log_box(self, checked):
         """Toggles the log box
@@ -340,11 +325,17 @@ class FocuserOPD(QtWidgets.QMainWindow):
         checked : bool
             State of the action "actionShow_Log"
         """
-        if checked is True:
+        if checked is True:                                 #TODO: Abre por padrão o último logger (o da data atual caso exista), mas possibita a abertura de outros logs de outras datas
             try:
-                if self.log_file is not None:
-                    self._read_log_file(self.log_file)
-                    self.log_box.show()
+                if self.log_file is not None:               # Checks if the log file path is defined
+                    self._read_log_file(self.log_file)          # Reads the log file and saves its content
+                    self.log_box.show()                         # Show log content in a separate window
+                else:                                       # If the log file path is not defined
+                    QMessageBox.information(                                            
+                        None,                           # Parent widget (None centers on the screen; 'self' for a parent window)
+                        "Attention",  
+                        "Log file path was not defined."   # Informs the user that the log file path was not defined
+                    )
             except Exception as e:
                 print(f"{str(e)}")
         else:
@@ -352,10 +343,11 @@ class FocuserOPD(QtWidgets.QMainWindow):
 
 
     def _read_log_file(self, file_path):
-        """Open LOG file"""
-        with open(file_path, "r") as file:
-            log_content = file.read()
-            self.log_box.txtLog.setPlainText(log_content)   
+        """Open LOG file and read its content"""
+        with open(file_path, "r") as file:                  # Opens log file in read only mode  
+            log_content = file.read()                           # Saves log content
+            self.log_box.txtLog.setPlainText(log_content)       # Puts the log content in the log window text box
+            file.close()                                        # Closes the log file
 
     def _minimize_to_tray(self):
         """Minimize to tray"""
@@ -381,70 +373,59 @@ class FocuserOPD(QtWidgets.QMainWindow):
     def _run_simulator(self, checked):
         """Opens the simulator window"""
 
-        client = ClientSimulator()
+        client = ClientSimulator()                              # Instantiates the client simulator
         client.client_ID = self._num_clients + 100              # Clients ID number beging in 100
-        client.name = f"Simulador {str(self._num_clients)}"
-        client.transaction_ID = 0
+        client.name = f"Simulador {str(self._num_clients)}"     # Names the client simulator according to the number of clients
+        client.transaction_ID = 0                               # Resets the client transaction ID
 
-        client.sig.connect(self._simulator_closed)
-        client.move(self.pos() + QPoint(self.width(), 0))
+        client.sig.connect(self._simulator_closed)              # Connects closed signal to the function that must be executed when a client is closed
+        client.move(self.pos() + QPoint(self.width(), 0))       # Positions the client window next to the main window
 
-        self.clients.append(client)
+        self.clients.append(client)                             # Adds the new client to the 'clients' pool
         
-        self.clients[len(self.clients)-1].show()
-        self._num_clients+=1
+        self.clients[len(self.clients)-1].show()                # Shows the client that was created
+        self._num_clients+=1                                    # Adds the number of clients
 
-        print(self.clients)
-
-        # if checked is True:
-        # if self.second_window is None:
-        #     self.second_window = ClientSimulator()
-        #     self.second_window.sig.connect(self._simulator_closed)          # Signal to inform the main window that the simulator was closed    
-        #     self.second_window.move(self.pos() + QPoint(self.width(), 0))   # Positions the simulator window next to the main window
-        #     self.second_window.show()                                       # Opens the simulator window
-        # else:
-        #     self.second_window.close()                                          # Closes the simulator if already opened
+        print(self.clients)                                     # Prints the list of clients
 
     def _simulator_closed(self, msg):
         """ Receives closed window signal from the simulator """
+        for index, client in enumerate(self.clients):               # Enumerates all clients in the pool
+            if msg == client.client_ID:                                 # Selects the client that was closed according to the ID sent by the signal 'msg'
+                removed = self.clients.pop(index)                       # Removes the closed client from the pool
+                print(f"Cliente {removed.client_ID} encerrado")         # Prints the client that was removed
 
-        for index, client in enumerate(self.clients):
-            if msg == client.client_ID:
-                removed = self.clients.pop(index)
-                print(f"Cliente {removed.client_ID} encerrado")
-
-        # self._num_clients-=1
-
-        print(self.clients)
-                
-        # if msg is True:    
-        #     self.second_window = None                                       # "Deletes" the simulator window from the main window
-        #     self.ui_elements.actionClient_Simulator.setChecked(False)       # Unchecks action to open client simulator
-        #     print("simulador fechado")
-
+        print(self.clients)                                         # Prints the list of clients
 
     def _open_settings(self):
         """Opens settings window"""
     # To open the settings the motor must be connected
-        if self.control.device.connected:
-            if self._settings_window is None:
-                self._settings_window = SettingsWindow(self.control.device)
-                self._settings_window._signal_window_closed.connect(self._settings_closed)
-                self._settings_window._signals_changed_settings.connect(self._parse_changed_settings)
-                self._settings_window.move(self.pos() + QPoint(self.width(), 0))
-                self._settings_window.show()
-        else:                                                                                   # If the motor is not connected asks the user if they would like to connect #TODO: Talvez dê só para conectar sem perguntar para o usuário
-            msg = QMessageBox.information(
+        if self.control.device.connected:                                                                   # Checks if the motor is connected
+            if self._settings_window is None:                                                                   # If the settings window is not instantiated
+                self._settings_window = SettingsWindow(self.control.device)                                         # Starts the main window according to the initialized focuser
+                self._settings_window._signal_window_closed.connect(self._settings_closed)                          # Connects function that must be executed when the settings window is closed
+                self._settings_window._signals_changed_settings.connect(self._parse_changed_settings)               # Connects function to be executed when settings are changed
+                self._settings_window.move(self.pos() + QPoint(self.width(), 0))                                    # Positions settings window next to the main window
+                self._settings_window.show()                                                                        # Shows settings window
+        else:                                                                                               # If the motor is not connected asks the user if they would like to connect #TODO: Talvez dê só para conectar sem perguntar para o usuário
+            msg = QMessageBox.information(                                                                      # Shows message to the user
                 self,  # Parent widget (None centers on the screen; 'self' for a parent window)
                 "Attention",  
-                "To open settings the focuser motor must be connected. \nConnect to motor?",
-                buttons=QMessageBox.StandardButton.Yes | QMessageBox.StandardButton.No)
+                "To open settings the focuser motor must be connected. \nConnect to motor?",                    # Asks the user if they want to connect to the motor
+                buttons=QMessageBox.StandardButton.Yes | QMessageBox.StandardButton.No)                         # Configures the message buttons
             if(msg == QMessageBox.StandardButton.Yes):                                                          # If the user whishes to connect the motor
-                self._start()                                                                                   # Connects the server to the motor and starts server operation #TODO: Talvez seja bom ter essas coisas separadas, com um método só para conectar (criar o socket) e outro para iniciar a thread de App, pois a thread de App vai começar a fazer o polling de informações sem parar uma vez iniciada
-                t = time.time()                                                                                 # Keeps current time
-                while not self.control.device.connected:                                                        # Waits 5 seconds while the server tries to connect to the motor
-                    if round(time.time()-t, 3) > 5:                                                             # If the server cannot connect in 5 seconds the code continues executing
-                        break                                                                                       # Break the while loop
+                self._start()                                                                                       # Connects the server to the motor and starts server operation #TODO: Talvez seja bom ter essas coisas separadas, com um método só para conectar (criar o socket) e outro para iniciar a thread de App, pois a thread de App vai começar a fazer o polling de informações sem parar uma vez iniciada
+                t = time.time()                                                                                     # Keeps current time
+                while not self.control.device.connected:                                                            # Waits 5 seconds while the server tries to connect to the motor
+                    pass
+                    if round(time.time()-t, 3) > 5:                                                                     # If the server cannot connect after 5 seconds informs the user
+                        QMessageBox.information(                                                                        # Shows message to the user
+                            self,  # Parent widget (None centers on the screen; 'self' for a parent window)
+                            "Attention",  
+                            "The motor could not be reached after 5 seconds",                                           # Informs the user that the motor is not reachable
+                            buttons=QMessageBox.StandardButton.Ok)                                                      # Configures the message button
+                        self._stop()
+                        break                                                                                           # Break the while loop and continues operation
                 if self.control.device.connected:                                                               # If the connection to the motor was successful
                     if self._settings_window is None:                                                               # If the settings windows was not yet defined
                         self._settings_window = SettingsWindow(self.control.device)                                 # Instantiate settings window
@@ -452,39 +433,62 @@ class FocuserOPD(QtWidgets.QMainWindow):
                         self._settings_window._signals_changed_settings.connect(self._parse_changed_settings)       # Connects signal to show the settings in the GUI
                         self._settings_window.move(self.pos() + QPoint(self.width(), 0))                            # Positions the settings window according to the main window position
                         self._settings_window.show()                                                                # Shows the settings window
-                else:
-                    raise Exception("Could not connect")                                                        # Exception if the connection was not successful
+
 
 
     def _parse_changed_settings(self, data: dict):
-        if "MAX_POS" in data:
-            self.ui_elements.posSlider.setMaximum(int(data["MAX_POS"]) + 5)
-            self.ui_elements.posSlider.setMinimum(-12)
+        """Parses the settings that were changed in the moto configuration and updates GUI elements that depends on the settings
+
+        Parameters
+        ----------
+        data : dict
+            Dictionary with all the changed settings
+        """
+        if "MAX_POS" in data:                                                   # If the 'MAX_POS' is changed the slider must be resized accordingly
+            self.ui_elements.posSlider.setMaximum(int(data["MAX_POS"]) + 5)         # Sets slider max value
+            self.ui_elements.posSlider.setMinimum(-12)                              # Sets slider min value #TODO: Acho que esse valor vai ser dependente do 'backlash'
 
     def _settings_closed(self, msg):
-        if msg is True:
-            self._settings_window = None
+        """Function executed when the settings window is closed.
+
+        Parameters
+        ----------
+        msg : bool
+            If true indicates that the window was closed
+        """
+        if msg is True:                         # If the settings window was closed
+            self._settings_window = None            # Reassign the settings window to allow a new instantiation
             print("Configurações fechadas")
 
     def _parse_last_command(self, data: dict):
-        self.ui_elements.lblTime.setText(data["timestamp"])
-        self.ui_elements.lblClientName_val.setText(data["cmd"]["clientName"])
-        self.ui_elements.lblClientID_val.setText(str(data["cmd"]["clientId"]))
-        self.ui_elements.lblTransactionId_val.setText(str(data["cmd"]["clientTransactionId"]))
-        self.ui_elements.lblCommand_val.setText(data["cmd"]["action"])
-        if(data["cmd"]["action"] == "HOME" or data["cmd"]["action"] == "PARK"):
-            self.ui_elements.lblLastHoming_val.setText(data["timestamp"])
+        """Parses the information about the last command received by the server.
+        This function is called according to the 'app' signal '_signal_last_command', which indicates that a new signal was received.
+
+        Parameters
+        ----------
+        data : dict
+            Dictionary holding the last command information
+        """
+        self.ui_elements.lblTime.setText(data["timestamp"])                                     # Updates last command time
+        self.ui_elements.lblClientName_val.setText(data["cmd"]["clientName"])                   # Updates last command client name
+        self.ui_elements.lblClientID_val.setText(str(data["cmd"]["clientId"]))                  # Updates last command client ID
+        self.ui_elements.lblTransactionId_val.setText(str(data["cmd"]["clientTransactionId"]))  # Updates last command client transaction number
+        self.ui_elements.lblCommand_val.setText(data["cmd"]["action"])                          # Updates last command action
+        if(data["cmd"]["action"] == "HOME" or data["cmd"]["action"] == "PARK"):                 # If the last command was 'HOME' or 'PARK'
+            self.ui_elements.lblLastHoming_val.setText(data["timestamp"])                           # Updates the last homing time
 
     def _expanded_ended(self):
-        if self._expanded == False:
-            self.setMaximumWidth(self.width())
-            self.ui_elements.infoFrame.setVisible(False)
-        else:
-            self.setMinimumWidth(self.width())
-        self._expanding.emit(False)      
+        """Function executed after an expansion/shrinking animation ended."""
+        if self._expanded == False:                             # If the window is not expanded
+            self.setMaximumWidth(self.width())                      # Saves maximum width as the current size (avoids resizing)
+            self.ui_elements.infoFrame.setVisible(False)            # Hides info frame
+        else:                                                   # If the window is expanded
+            self.setMinimumWidth(self.width())                      # Saves maximum width as the current size (avoids resizing)
+        self._expanding.emit(False)                             # Emits signal informing that the expansion animation ended
 
     def _update_gui_element(self, widget: QtWidgets):
-        """Updates the GUI element style after an event occured
+        """Updates the GUI element style after an event occured.
+        According to QT framework this functions must be executed to update visual elements when a property is changed.
 
         Parameters
         ----------
@@ -497,7 +501,8 @@ class FocuserOPD(QtWidgets.QMainWindow):
 
 
     def eventFilter(self, obj: QObject, event: QEvent) -> bool:
-        """Process events
+        """Process events.
+        The events are processed according to the class of the object that called the event.
 
         Parameters
         ----------
@@ -516,23 +521,24 @@ class FocuserOPD(QtWidgets.QMainWindow):
         if event.type() == QEvent.Type.DynamicPropertyChange:
 
             if obj.__class__ is QtWidgets.QProgressBar:
-                    # Animations related to progress bars
-                    if obj.property("conStatusBar") == "waiting":
-                        obj.animation.setEndValue(0)
-                        obj.animation.start()
-                    elif obj.property("conStatusBar") == "connecting":
-                        obj.animation.setEndValue(50)
-                        obj.animation.start()
-                    elif obj.property("conStatusBar") == "connected":
-                        obj.animation.setEndValue(100)
-                        obj.animation.start()
-                    self._update_gui_element(obj)
-                    return True   
+                # Animations related to progress bars
+                    # The 'conStatusBar' property describes the current situation of the connection between 'server/router' and 'router/motor'
+                    if obj.property("conStatusBar") == "waiting":           # Waiting to start connection
+                        obj.animation.setEndValue(0)                            # The progress bar is set to 0 (not shown) and changes color to red (The color change is defined in the stylesheet)
+                        obj.animation.start()                                   # Triggers the start of the animation
+                    elif obj.property("conStatusBar") == "connecting":      # Connecting to the next device 'server to router' or 'router to motor'
+                        obj.animation.setEndValue(50)                           # The progress bar is set to 50 and changes color to yellow (The color change is defined in the stylesheet)
+                        obj.animation.start()                                   # Triggers the start of the animation
+                    elif obj.property("conStatusBar") == "connected":       # The connection was estabilished
+                        obj.animation.setEndValue(100)                          # The progress bar is set to 100 and changes color to green (The color change is defined in the stylesheet)
+                        obj.animation.start()                                   # Triggers the start of the animation
+                    self._update_gui_element(obj)                           # Updates the color of the progress bar
+                    return True                                             # Returns OK
                     
             if obj.__class__ is QtWidgets.QLabel:
-                    # Animations related to labels
-                    self._update_gui_element(obj)
-                    return True 
+                # Animations related to labels
+                    self._update_gui_element(obj)                           # Updates the color of the label
+                    return True                                             # Returns OK
                 
         # For all other events or objects, return False to allow normal handling
         return super().eventFilter(obj, event)
@@ -540,30 +546,17 @@ class FocuserOPD(QtWidgets.QMainWindow):
 
     def _start(self):
         """Start server"""
-        if self._run_thread and self._run_thread.is_alive():
+        if self._run_thread and self._run_thread.is_alive():                # Checks if the thread is already being executed
             print("Still Alive")
-            return
+            return                                                              # If already running do nothing
 
-        # if Config.focuser == "160":                                 # When the server is started it is important to guarantee that the IP value is updated according to the config file, the value could have been changed in the settings
-        #     Config.device_ip = get_toml('Device', 'ip_160')
-        # elif Config.focuser == "IAG":
-        #     Config.device_ip = get_toml('Device', 'ip_iag')
-        # else:
-        #     RuntimeError("Invalid focuser value")
-
-        self._run_thread = Thread(target = self.control.run)
-        self._run_thread.start()
-        # self._run_thread.daemon = True
+        self._run_thread = Thread(target = self.control.run)                # If thread no running creates thread to execute the funtion 'run' on 'App'
+        self._run_thread.start()                                            # Starts the thread
     
     def _stop(self):
         """Stops main program and the main loop at Application interface with Device"""
-    # Also closes second window if it is opened
-        # if self.second_window is not None:
-        #     self.second_window.close()
-
-
         while self.clients:             # Closes all opened client simulators
-            self.clients[0].close()     # The close method will 'pop' the client from the list, so the client in position 0 is removed until there are no more clients opened
+            self.clients[0].close()         # The close method will 'pop' the client from the list, so the client in position 0 is removed until there are no more clients opened
 
 
         if self._run_thread and self._run_thread.is_alive():    # If the server thread is running 
@@ -571,18 +564,8 @@ class FocuserOPD(QtWidgets.QMainWindow):
             self._run_thread.join()                                 # Joins the thread to wait until it is finished
             self.control.stop_poller()                              # Unregisters server ZMQ poll
 
-
         if self.control:
-            self.control.disconnect()                           # Closes the socket to communicate to the motor
-
-        # if self.control:
-        #     self.control.disconnect()
-        # if self._run_thread and self._run_thread.is_alive():    # If the server thread is running 
-        #     self.control._stop()                                    # Stops the thread loop and unregister zmq.poll #TODO: Separar isso em mais de uma função, o zmq.poll acho que tem que ser fechado depois que a thread finaliza
-        #     self._run_thread.join()                                 # Joins the thread to wait until it is finished
-
-        
-
+            self.control.disconnect()                           # Closes the socket to communicate to the motor and ends PUB and SUB
 
 
     def closeEvent(self, event):
@@ -593,25 +576,24 @@ class FocuserOPD(QtWidgets.QMainWindow):
         event : _type_
             _description_
         """
-        close = QMessageBox()
-        close.setWindowTitle("Close")
-        close.setText("Deseja sair?")
-        close.setStandardButtons(QMessageBox.StandardButton.Yes | QMessageBox.StandardButton.No)
-        close = close.exec()
+        close = QMessageBox()                                                                           # Creates confirmation window
+        close.setWindowTitle("Close")                                                                   # Sets window title
+        close.setText("Deseja sair?")                                                                   # Sets window message
+        close.setStandardButtons(QMessageBox.StandardButton.Yes | QMessageBox.StandardButton.No)        # Sets window buttons
+        close = close.exec()                                                                            # Shows window
 
-        if close == QMessageBox.StandardButton.Yes:   
-            self._stop()
-            event.accept()
-        else:
-            event.ignore()
+        if close == QMessageBox.StandardButton.Yes:                                                     # If button 'Yes' pressed
+            self._stop()                                                                                    # Stops the server execution
+            event.accept()                                                                                  # Accepts the close event
+        else:                                                                                           # If button "No" or X pressed
+            event.ignore()                                                                                  # Ignores the close event
 
 if __name__ == "__main__":
 
-    logger = init_logging() 
-    app = QtWidgets.QApplication([])       
+    logger = init_logging()                     # Configures and initializes the logger
+    app = QtWidgets.QApplication([])            # Instantiates QApplication
 
-    main_window1 = FocuserOPD()
-    main_window1.show()
-    
+    main_window1 = FocuserOPD()                 # Instantiates main window
+    main_window1.show()                         # Shows main window    
 
-    sys.exit(app.exec()) 
+    sys.exit(app.exec())                        # Executes and waits for end of execution

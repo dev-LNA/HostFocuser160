@@ -319,7 +319,7 @@ class App(QObject):
 
     def disconnect(self):
         """Stops main loop and close all sockets"""
-        self._stop()
+        # self._stop()                                  # This function was separated in "stop_server_loop" and "stop_poller" to allow correct order of disconnection
         self._close_connection()
         self.logger.info(f'Server Disconnecting')
     
