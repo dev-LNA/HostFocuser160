@@ -602,7 +602,7 @@ class FocuserDriver():
         resp = self._write(command)
         return resp
 
-    def _write(self, cmd, max_retries = 5):
+    def _write(self, cmd, max_retries = 10):
         """Send commands to device socket.
         Args:  
             cmd (str): Command.
