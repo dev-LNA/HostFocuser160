@@ -16,7 +16,8 @@ import zmq
 import json
 import socket
 from datetime import datetime
-from pythonping import ping
+# from pythonping import ping
+from icmplib import ping
 from os import path
 import sys
 
@@ -25,6 +26,9 @@ from src.core.config import Config
 import src.core.exceptions as AlpacaExceptions
 from src.utils.constants import constants
 from src.utils.signals import PropertySignals
+
+import socket
+from contextlib import closing
 
 # from src.interface.dmx_eth import FocuserDriver as Focuser
 # from src.interface.focuser_driver import FocuserDriver as Focuser
@@ -388,11 +392,39 @@ class App(QObject):
             True -> Motor reachable
             False -> Motor NOT reachable
         """
-        response = ping(Config.device_ip, count=1, timeout=0.6)         # Ping the motor
-        if(response.success()):                                             
-            return True
-        else:
-            return False
+        # response = ping(Config.device_ip, count=1, timeout=0.6)         # Ping the motor
+        # if(response.success()):   
+        # response = ping(Config.device_ip, count=1, timeout=0.6, privileged=False)         # Ping the motor
+        # if(response.is_alive):                                              
+        #     return True
+        # else:
+        #     return False
+
+        # try:
+        #     s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+        #     s.settimeout(0.6)
+        #     s.connect((Config.device_ip, Config.device_port))   
+
+        #     return True
+        
+        # except Exception as e:
+        #     print({str(e)})
+        #     return False
+        
+        # finally:
+        #     s.close() 
+
+        with closing(socket.socket(socket.AF_INET, socket.SOCK_STREAM)) as sock:
+            sock.settimeout(1)
+            result = sock.connect_ex((Config.device_ip, Config.device_port))
+            if result == 0:
+                return True
+            else:
+                return False
+
+
+
+            
 
     def ping_router(self) -> bool:
         """Check if router is reachable
@@ -403,11 +435,24 @@ class App(QObject):
             True -> Router reachable
             False -> Router NOT reachable
         """
-        response = ping(Config.router_ip, count=1, timeout=0.6)         # Ping the router
-        if(response.success()):
+        # response = ping(Config.router_ip, count=1, timeout=0.6)         # Ping the router
+        # if(response.success()):   
+        response = ping(Config.router_ip, count=1, timeout=0.6, privileged=False)         # Ping the motor
+        if(response.is_alive):       
             return True
         else:
             return False
+        # try:
+        #     s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+        #     s.settimeout(0.6)
+        #     s.connect((Config.device_ip, Config.device_port))     
+        #     return True
+        
+        # except socket.error:
+        #     return False
+        
+        # finally:
+        #     s.close() 
 
     def handle_home(self):
         """Executes the INIT routine, which means moving motor axis to the LIM-
@@ -907,7 +952,7 @@ class App(QObject):
                                             }                    
                 
                 # self._position = self.device.position
-                self.busy_id = self.clientID                                              # Keeps the ID of the client that sent the last command
+                # self.busy_id = self.clientID                                              # Keeps the ID of the client that sent the last command
                 self._update_status()                                                        # Updates motor readings and publishes the current status to ZMQ             
                 self.status["alarm"] = 0                                                    # Resets "alarm"
                 self.communicating_to_motor = False         # Communication to motor ended
