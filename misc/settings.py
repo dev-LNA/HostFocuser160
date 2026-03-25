@@ -411,7 +411,7 @@ class RetrieveSettings(QThread):
         p += step_size
         self._signal_progress.emit(p)
         # self._signal_park_pos.emit(self.driver.park_pos)
-        self.motor_data.park_pos = self.driver.park_pos
+        self.motor_data.park_pos = str(self.driver.park_pos)
         p += step_size
         self._signal_progress.emit(p)
         # self._signal_max_speed.emit(self.driver.max_speed)

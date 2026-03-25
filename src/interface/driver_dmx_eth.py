@@ -7,6 +7,7 @@ from src.core.config import Config
 from src.core.exceptions import DriverException
 from src.utils.constants import constants
 
+from contextlib import closing
 import socket
 import time
 
@@ -16,7 +17,7 @@ class FocuserDriver():
         self.name: str = 'LNA Focuser'
         self.logger = logger
 
-        self._model = model
+        self.model = model
 
         self.motor_socket = None
         
@@ -130,6 +131,15 @@ class FocuserDriver():
                 raise RuntimeError('Cannot disconnect')     #TODO: Daria para fornecer mais informação do motivo de não ter dado certo?
         #self._lock.release()
         
+    def ping(self):
+        with closing(socket.socket(socket.AF_INET, socket.SOCK_STREAM)) as sock:
+                sock.settimeout(1)
+                result = sock.connect_ex((Config.device_ip, Config.device_port))
+                if result == 0:
+                    return True
+                else:
+                    return False
+                
     @property
     def temp(self):
         # self._lock.acquire()

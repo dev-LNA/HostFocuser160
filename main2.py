@@ -224,7 +224,7 @@ class FocuserOPD(QtWidgets.QMainWindow):
         self.ui_elements.btnTestes.clicked.connect(self.control._testes)
 
         # self.ui_elements.pushButton.clicked.connect(self.teste1)      #|  Selects a function to be executed when
-        self.ui_elements.btnTestes.clicked.connect(self.teste2)         #| the test button is pressed
+        # self.ui_elements.btnTestes.clicked.connect(self.teste2)         #| the test button is pressed
 
 
 
@@ -293,6 +293,7 @@ class FocuserOPD(QtWidgets.QMainWindow):
         auto startup is configured """
         self.menuBar().setVisible(True)                                     # Sets menu bar visibility
         self.ui_elements.toolBar.setVisible(True)                           # Sets tool bar visibility
+        self.control.server_connected = False                               # Emits signal with initial server status as disconnected
         self.ui_elements.pageSelect.setCurrentIndex(1)                      # Changes view to the main server page
         if Config.startup:                                                  # If configured to 'auto start'
             self._start()                                                       # Starts the server

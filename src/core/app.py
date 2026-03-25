@@ -11,10 +11,8 @@ from PyQt6.QtGui import QPixmap
 from logging import Logger
 
 import time
-import numpy
 import zmq
 import json
-import socket
 from datetime import datetime
 # from pythonping import ping
 from icmplib import ping
@@ -28,7 +26,6 @@ from src.utils.constants import constants
 from src.utils.signals import PropertySignals
 
 import socket
-from contextlib import closing
 
 # from src.interface.dmx_eth import FocuserDriver as Focuser
 # from src.interface.focuser_driver import FocuserDriver as Focuser
@@ -121,6 +118,8 @@ class App(QObject):
         self._status_lim_minus = False                  #|
         self._status_lim_max = False                    #|
         self._transaction_id = 0                        #|
+        self.router_reachable = False                   #|
+        self.motor_reachable = False                    #|
 
         # Status Message
         if TESTE_TCSPD:                                 #TEST: O json do tcspd não está atualizado então é necessário usar o antigo para testar com o tcspd
@@ -208,9 +207,11 @@ class App(QObject):
             if motor_model == constants.ARCUS_DMX_ETH:                                      # Checks motor model
                 from src.interface.driver_dmx_eth import FocuserDriver as Focuser               # If motor is Arcus DMX-ETH imports 'driver_dmx_eth'
             elif motor_model == constants.AMP_MOTOR:                    
-                from src.interface.driver_amp import FocuserDriver as Focuser                   # If motor im AMP imports 'driver_amp'
+                # from src.interface.driver_amp import FocuserDriver as Focuser                   # If motor im AMP imports 'driver_amp'
+                from src.interface.driver_amp_modbus import FocuserDriver as Focuser                   # If motor im AMP imports 'driver_amp_modbus'
             
             self.device = Focuser(self.logger, motor_model)                                 # Instantiates the motor according to the selected focuser
+            self.device.model = motor_model                                                 # Initiates motor model
         else:
             raise ValueError("Invalid motor model")                                         # Raises an exception if the motor value is not valid
 
@@ -392,39 +393,7 @@ class App(QObject):
             True -> Motor reachable
             False -> Motor NOT reachable
         """
-        # response = ping(Config.device_ip, count=1, timeout=0.6)         # Ping the motor
-        # if(response.success()):   
-        # response = ping(Config.device_ip, count=1, timeout=0.6, privileged=False)         # Ping the motor
-        # if(response.is_alive):                                              
-        #     return True
-        # else:
-        #     return False
-
-        # try:
-        #     s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-        #     s.settimeout(0.6)
-        #     s.connect((Config.device_ip, Config.device_port))   
-
-        #     return True
-        
-        # except Exception as e:
-        #     print({str(e)})
-        #     return False
-        
-        # finally:
-        #     s.close() 
-
-        with closing(socket.socket(socket.AF_INET, socket.SOCK_STREAM)) as sock:
-            sock.settimeout(1)
-            result = sock.connect_ex((Config.device_ip, Config.device_port))
-            if result == 0:
-                return True
-            else:
-                return False
-
-
-
-            
+        return self.device.ping()       # The way the ping is realized depends on the motor
 
     def ping_router(self) -> bool:
         """Check if router is reachable
@@ -435,24 +404,11 @@ class App(QObject):
             True -> Router reachable
             False -> Router NOT reachable
         """
-        # response = ping(Config.router_ip, count=1, timeout=0.6)         # Ping the router
-        # if(response.success()):   
         response = ping(Config.router_ip, count=1, timeout=0.6, privileged=False)         # Ping the motor
         if(response.is_alive):       
             return True
         else:
             return False
-        # try:
-        #     s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-        #     s.settimeout(0.6)
-        #     s.connect((Config.device_ip, Config.device_port))     
-        #     return True
-        
-        # except socket.error:
-        #     return False
-        
-        # finally:
-        #     s.close() 
 
     def handle_home(self):
         """Executes the INIT routine, which means moving motor axis to the LIM-
@@ -715,6 +671,7 @@ class App(QObject):
         
         Setting a new value will update the reachable status and emit '_signals_router.status' """
         return self._router_reachable
+    
     @router_reachable.setter
     def router_reachable(self, value: bool):
         self._router_reachable = value
@@ -964,8 +921,8 @@ class App(QObject):
             else:                                                                       # If the device is not configured or not connected or the poller is not configured              
                 # if (abs(current_time.second - self.last_ping_time.second) >= 5) or (self._router_reachable is False):           # Runs every 5 seconds
                 # if self._router_reachable is False:
-                self.router_reachable = self.ping_router()                                                                     # Updates if router is reachable      #INFO: self.reach_device() já faz esses dois
-                self.motor_reachable = self.ping_motor()                                                                      # Updates if moto is reachable
+                # self.router_reachable = self.ping_router()                                                                     # Updates if router is reachable      #INFO: self.reach_device() já faz esses dois
+                # self.motor_reachable = self.ping_motor()                                                                      # Updates if motor is reachable
                 self.reach_device()                                                                                             # Tries to reach device
                 
                 self.status["connected"] = self.device.connected                                                                # Updates "connected" state
@@ -979,7 +936,6 @@ class App(QObject):
         self._signals_router_connection("waiting")
         self.communicating_to_motor = False         # Communication to motor ended
         self._connection_speed.emit(" ")                                                                                   # Clears connection speed value message
-
 
     def _check_motor_moving(self):
         """Verifies if the motor is moving as expected.
