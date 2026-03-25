@@ -187,7 +187,20 @@ class App(QObject):
 
 #----TESTES #TEST
     def _testes(self):        
-        self.device.acionar()
+        # self.device.acionar()
+
+        self.device._conv_num_bits(42,8)
+
+        self.device._conv_num_bits(-42,8)
+
+        # self.device.mb_server.server.data_bank.set_discrete_inputs(761, self.device._conv_num_bits(150,8))
+        # time.sleep(10)
+        # self.device.mb_server.server.data_bank.set_discrete_inputs(761, self.device._conv_num_bits(-150,8))
+        # time.sleep(10)
+        # self.device.mb_server.server.data_bank.set_discrete_inputs(825, self.device._conv_num_bits(123456789,32))
+        # time.sleep(10)
+        # self.device.mb_server.server.data_bank.set_discrete_inputs(825, self.device._conv_num_bits(-123456789,32))
+
 
 #----TESTES
     def init_device(self, motor_model: str):

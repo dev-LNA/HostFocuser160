@@ -1,5 +1,6 @@
 from pyModbusTCP.server import ModbusServer as mbServer
 from pyModbusTCP.server import DataBank
+from src.utils.modbus_regs import dig_inputs_regs
 
 from PyQt6.QtCore import pyqtSignal
 from PyQt6.QtWidgets import QWidget
@@ -25,7 +26,7 @@ class ModbusServer(QWidget):
 
     signal_stop = pyqtSignal(bool)
 
-    def __init__(self, host: str='localhost', port: int=5005, no_block: bool=False, ipv6: bool=False, device_id=None,
+    def __init__(self, host: str='0.0.0.0', port: int=5005, no_block: bool=False, ipv6: bool=False, device_id=None,
                  data_bank: DataBank | None = None,):
         super().__init__()
 
@@ -54,7 +55,10 @@ class ModbusServer(QWidget):
             if self.server.data_bank.get_coils(10,1)[0]:
                 self.handshake = True
 
-            print(f"coils -> {self.server.data_bank.get_coils(0,10)}")
+            # print(f"coils -> {self.server.data_bank.get_coils(0,10)}")
+                                                                     # bit order  8     7      6     5       4    3      2     1 
+            # self.server.data_bank.set_discrete_inputs(dig_inputs_regs.TX_CGT_A, [True, True, False, False, True, False, True, True])
+            # print(f"Primeiro byte do IP: {self.server.data_bank.get_discrete_inputs(dig_inputs_regs.TX_CGT_A,1)[0]}")
 
         print("Stoping server")
 

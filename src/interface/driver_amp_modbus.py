@@ -60,7 +60,7 @@ class FocuserDriver():
                 'LOW_SPEED': 'low_speed'
             }
         
-        self.dataBank_shadow = DataBank(coils_size=554, coils_default_value=False,          #|
+        self.dataBank_shadow = DataBank(coils_size=1000, coils_default_value=False,          #|      554
                                         d_inputs_size=1127, d_inputs_default_value=False,   #|  Shadow value for the modbus data.
                                         h_regs_size=0, h_regs_default_value=0,              #|  Also used as initial values for the server.
                                         i_regs_size=0, i_regs_default_value=0)              #|
@@ -91,7 +91,7 @@ class FocuserDriver():
         _con = False
         while retries < max_retries and not _con:
             try:
-                self.mb_server = ModbusServer(host='localhost', port=5005 ,no_block=True, data_bank=self.dataBank_shadow)
+                self.mb_server = ModbusServer(host='0.0.0.0', port=5005 ,no_block=True, data_bank=self.dataBank_shadow)
                 self.mb_server.server.start()
                 self.mb_server.signal_stop.connect(self._stop_server)
                 self.mb_run_thread = Thread(target=self.mb_server.run)
@@ -322,9 +322,35 @@ class FocuserDriver():
         return "0"
             
 
+    def _conv_num_bits(self, num: int, size:int) -> list:
+        """Converts an int to a bitlist
+
+        Args:
+            num (int): Number to be converted
+            size (int): Number of output bits (8, 16, 32, 64)
+
+        Returns:
+            list: List with the 
+        """
+        print("---------------")
+        # print(f"num = {num} ----> {unsigned_value}")
 
 
 
+        num_mod = num                                               # Just to keep the original number
+
+        if num < 0:                                                 # If the number is negative gets the absolute value and subtracts 1
+            num_mod = abs(num) 
+            num_mod-=1
+
+        bits = [(num_mod >> i) & 1 for i in range(0, size, 1)]      # Generates a list with each bit in the correct endianess (lsb to msb)
+        if num < 0:                                                 # If the number is negative
+            for idx, b in enumerate(bits):                              # Loop to invert the bits and 
+                # bits[idx] = not b
+                if b: bits[idx] = 0
+                else: bits[idx] = 1
+        
+        return bits
 
     def get_firmware_status(self) -> str:
         return "OK"
