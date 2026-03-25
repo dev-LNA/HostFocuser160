@@ -189,17 +189,28 @@ class App(QObject):
     def _testes(self):        
         # self.device.acionar()
 
-        self.device._conv_num_bits(42,8)
+        # self.device._conv_num_bits(42,8)
 
-        self.device._conv_num_bits(-42,8)
+        # self.device._conv_num_bits(-42,8)
 
-        # self.device.mb_server.server.data_bank.set_discrete_inputs(761, self.device._conv_num_bits(150,8))
+        # self.device.mb_server.server.data_bank.set_discrete_inputs(761, self.device._conv_num_bits(127,8))
         # time.sleep(10)
-        # self.device.mb_server.server.data_bank.set_discrete_inputs(761, self.device._conv_num_bits(-150,8))
+        # self.device.mb_server.server.data_bank.set_discrete_inputs(761, self.device._conv_num_bits(-127,8))
         # time.sleep(10)
         # self.device.mb_server.server.data_bank.set_discrete_inputs(825, self.device._conv_num_bits(123456789,32))
         # time.sleep(10)
         # self.device.mb_server.server.data_bank.set_discrete_inputs(825, self.device._conv_num_bits(-123456789,32))
+
+        num_bits = self.device._conv_num_bits(-123456789,32)
+        high = num_bits[16:]
+        low = num_bits[:16]
+        print(high)
+        print(low)
+
+        self.device.mb_server.server.data_bank.set_discrete_inputs(825, high)
+        self.device.mb_server.server.data_bank.set_discrete_inputs(825+16, low)
+
+
 
 
 #----TESTES
