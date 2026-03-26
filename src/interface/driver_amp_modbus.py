@@ -7,6 +7,7 @@ from threading import Lock, Timer, Thread
 from src.core.config import Config
 from src.core.exceptions import DriverException
 from src.utils.constants import constants
+from src.utils.modbus_regs import RegsInfo, RegType, coils_regs, dig_inputs_regs
 
 import time
 
@@ -60,13 +61,30 @@ class FocuserDriver():
                 'LOW_SPEED': 'low_speed'
             }
         
-        self.dataBank_shadow = DataBank(coils_size=1000, coils_default_value=False,          #|      554
-                                        d_inputs_size=1127, d_inputs_default_value=False,   #|  Shadow value for the modbus data.
+        self.dataBank_shadow = DataBank(coils_size=619, coils_default_value=False,          #|      554
+                                        d_inputs_size=1295, d_inputs_default_value=False,   #|  Shadow value for the modbus data.
                                         h_regs_size=0, h_regs_default_value=0,              #|  Also used as initial values for the server.
                                         i_regs_size=0, i_regs_default_value=0)              #|
         
     def acionar(self):
         print (self._connected)
+        self._write(192, dig_inputs_regs.TX_IP_A)
+        self._write(168, dig_inputs_regs.TX_IP_B)
+        self._write(60, dig_inputs_regs.TX_IP_C)
+        self._write(39, dig_inputs_regs.TX_IP_D)
+        self._write(192, dig_inputs_regs.TX_CGT_A)
+        self._write(168, dig_inputs_regs.TX_CGT_B)
+        self._write(60, dig_inputs_regs.TX_CGT_C)
+        self._write(1, dig_inputs_regs.TX_CGT_D)
+        self._write(255, dig_inputs_regs.TX_CMK_A)
+        self._write(255, dig_inputs_regs.TX_CMK_B)
+        self._write(255, dig_inputs_regs.TX_CMK_C)
+        self._write(0, dig_inputs_regs.TX_CMK_D)
+        self._write(254863, dig_inputs_regs.TX_V20)
+        self._write(-1548, dig_inputs_regs.TX_V78)
+        self._write(True, dig_inputs_regs.TX_MOF)
+        self._write(True, dig_inputs_regs.TX_MON)
+        self._write(9888754, dig_inputs_regs.TX_SASTAT)
 
 
     @property
@@ -416,14 +434,45 @@ class FocuserDriver():
     def sendCommand(self, command: str) -> str:
         return "OK"
 
-    def _write(self, cmd, max_retries = 10):
-        """Send commands to device socket.
-        Args:  
-            cmd (str): Command.
-            max_retries (int): Number of retries if first one fails
-        Returns: 
-            Device response or Error message
-        """
+
+    def _write(self, value: int | bool, reg: RegsInfo):
+        
+        # When the register size is 1 the value must be 0, 1 or boolean
+        if (reg.SIZE==1 and not ( ( (value==0) or (value==1) or type(value) is bool ) )):
+            raise ValueError(f"Cannot write {value} to {reg.TYPE.name}:{reg.ADDRESS}. This Register supports only {reg.SIZE} bit(s).")
+        
+        # When a boolean was sent to a register that has more bits
+        if ( type(value) is bool ) and ( reg.SIZE != 1):
+            raise ValueError(f"Cannot write a boolean to {reg.TYPE.name}:{reg.ADDRESS}. This Register has {reg.SIZE} bits")
+
+        if reg.TYPE is RegType.COIL:
+            if (type(value) is bool) or (reg.SIZE==1 and ( (value==0) or (value==1) ) ):                # If the value is a bool or the register has only one bit than no conversion is needed
+                self.mb_server.server.data_bank.set_coils(reg.ADDRESS, [value])                 
+            else:                                                                                       #| If the register has multiple bits than the value must be converted
+                num_bits = self._conv_num_bits(value, reg.SIZE)                                         #| The conversion already considers negative values as two's complement
+                self.mb_server.server.data_bank.set_coils(reg.ADDRESS, num_bits)
+
+        elif reg.TYPE is RegType.DISCRETE_INPUT:
+            if (type(value) is bool) or (reg.SIZE==1 and ( (value==0) or (value==1) ) ):                # If the value is a bool or the register has only one bit than no conversion is needed
+                self.mb_server.server.data_bank.set_discrete_inputs(reg.ADDRESS, [value])
+            else:                                                                                       #| If the register has multiple bits than the value must be converted
+                num_bits = self._conv_num_bits(value, reg.SIZE)                                         #| The conversion already considers negative values as two's complement
+                if reg.SIZE == 8:                                                                       
+                    self.mb_server.server.data_bank.set_discrete_inputs(reg.ADDRESS, num_bits)          # If the register is only 8 bits the value is saved directly to the register
+                else:                                                                                   
+                    self.mb_server.server.data_bank.set_discrete_inputs(reg.ADDRESS, num_bits[16:])     #|  If the register is 32 bits the higher bits must be saved to the first 16 bits of the address   
+                    self.mb_server.server.data_bank.set_discrete_inputs(reg.ADDRESS+16, num_bits[:16])  #| and the lower bits must be saved to next 16 bits
+
+
+
+    # def _write(self, cmd, max_retries = 10):
+    #     """Send commands to device socket.
+    #     Args:  
+    #         cmd (str): Command.
+    #         max_retries (int): Number of retries if first one fails
+    #     Returns: 
+    #         Device response or Error message
+    #     """
         
         #TODO: Para o motor AMP a função de escrita precisa operar de forma diferente do motor DMX-ETH
         #       O CLP ligado ao motor AMP consegue apenas responder imediatamente com o valor salvo em um buffer interno, sendo assim

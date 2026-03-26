@@ -1,6 +1,6 @@
 from pyModbusTCP.server import ModbusServer as mbServer
 from pyModbusTCP.server import DataBank
-from src.utils.modbus_regs import dig_inputs_regs
+from src.utils.modbus_regs import dig_inputs_regs, coils_regs
 
 from PyQt6.QtCore import pyqtSignal
 from PyQt6.QtWidgets import QWidget
@@ -52,8 +52,11 @@ class ModbusServer(QWidget):
                 print("Sent stop server signal")
                 break
 
-            if self.server.data_bank.get_coils(10,1)[0]:
+
+            if self.server.data_bank.get_coils(coils_regs.HANDSHAKE.ADDRESS,coils_regs.HANDSHAKE.SIZE)[0]:
                 self.handshake = True
+
+            
 
             # print(f"coils -> {self.server.data_bank.get_coils(0,10)}")
                                                                      # bit order  8     7      6     5       4    3      2     1 
