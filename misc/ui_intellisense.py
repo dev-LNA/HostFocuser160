@@ -194,6 +194,9 @@ class UiWidgets(QWidget):
             
             self.btnSave = window.findChild(QPushButton, 'btnSave')
             self.btnSave: QPushButton = self.btnSave
+            
+            self.btnDefault = window.findChild(QPushButton, 'btnDefault')
+            self.btnDefault: QPushButton = self.btnDefault
 
 
             # Labels

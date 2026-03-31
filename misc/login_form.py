@@ -14,7 +14,7 @@ def resource_path(relative_path):
     return path.join(base_path, relative_path)
 
 path_to_ui = resource_path('../assets/ui/login_form.ui')                # Path to login UI
-path_to_config = resource_path('psw.cfg')                               # Path to configurations        # TODO: colocar em outro lugar? Vai ter mais configurações no mesmo arquivo? mudar nome do arquivo?
+path_to_psw = resource_path('psw.cfg')                               # Path to configurations        # TODO: colocar em outro lugar? Vai ter mais configurações no mesmo arquivo? mudar nome do arquivo?
 
                                                         
 
@@ -42,7 +42,7 @@ class LoginForm(QDialog):
 
 
         self._config = ConfigParser()                                   # Creates configParse
-        self._config.read(resource_path(path_to_config))                # Reads and parses the config file
+        self._config.read(resource_path(path_to_psw))                # Reads and parses the config file
 
             
         
@@ -52,7 +52,7 @@ class LoginForm(QDialog):
             if self.txtPassword.text() == self._config['USER']['password']:         # Checks if entered password matches the one configured
                 self.user.emit("admin")                                                 # If matches signals to settings window that the new user is "admin"
                 self.accept()                                                           # Signals accept and closes dialog box
-            else:                                                                   
+            else:
                 QMessageBox.warning(                                                    # If don't match shows error message and keeps dialog box open
                     self, 'Error', 'Bad user or password')
         else:                                                                   # If already logged in

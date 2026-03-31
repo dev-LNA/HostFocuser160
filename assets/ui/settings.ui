@@ -539,7 +539,7 @@ background-color: white;
      <rect>
       <x>17</x>
       <y>73</y>
-      <width>130</width>
+      <width>141</width>
       <height>22</height>
      </rect>
     </property>
@@ -756,6 +756,50 @@ background-color: white;
      </item>
     </layout>
    </widget>
+   <widget class="QPushButton" name="btnDefault">
+    <property name="geometry">
+     <rect>
+      <x>360</x>
+      <y>300</y>
+      <width>81</width>
+      <height>21</height>
+     </rect>
+    </property>
+    <property name="acceptDrops">
+     <bool>true</bool>
+    </property>
+    <property name="toolTip">
+     <string>Default configuration</string>
+    </property>
+    <property name="statusTip">
+     <string>Return to default configurations</string>
+    </property>
+    <property name="text">
+     <string>Default</string>
+    </property>
+   </widget>
+   <widget class="QPushButton" name="btnBackup">
+    <property name="geometry">
+     <rect>
+      <x>340</x>
+      <y>330</y>
+      <width>121</width>
+      <height>21</height>
+     </rect>
+    </property>
+    <property name="acceptDrops">
+     <bool>true</bool>
+    </property>
+    <property name="toolTip">
+     <string>Default configuration</string>
+    </property>
+    <property name="statusTip">
+     <string>Return to default configurations</string>
+    </property>
+    <property name="text">
+     <string>Back to previous</string>
+    </property>
+   </widget>
   </widget>
   <widget class="QMenuBar" name="menubar">
    <property name="enabled">
@@ -766,7 +810,7 @@ background-color: white;
      <x>0</x>
      <y>0</y>
      <width>518</width>
-     <height>22</height>
+     <height>23</height>
     </rect>
    </property>
    <property name="defaultUp">

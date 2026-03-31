@@ -7,4 +7,5 @@ logs
 .vscode
 .venv
 *.uxf
+TODO.md
 /misc/psw.cfg

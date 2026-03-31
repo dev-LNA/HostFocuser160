@@ -8,6 +8,7 @@ from PyQt6.QtGui import QFontMetrics, QKeyEvent
 from misc.load_bar import LoadBar
 from misc.ui_intellisense import UiWidgets
 from misc.login_form import LoginForm
+from misc.default_settings import DefaultForm
 from misc.verification import VerificationDialog
 
 # from src.interface.dmx_eth import FocuserDriver
@@ -20,6 +21,7 @@ from src.utils.motor import MotorData
 import sys
 from os import path
 import toml
+import shutil
 
 import time
 
@@ -33,6 +35,7 @@ def resource_path(relative_path):
 
 path_to_ui = resource_path('../assets/ui/settings.ui')              # Path to settings window UI
 config_file = "src/config/config.toml"
+config_file_backup = "src/config/config_backup.toml"                #TODO: Possibilitar definir o nome do arquivo?
 
 
 
@@ -85,9 +88,13 @@ class SettingsWindow(QMainWindow):
 
         self.ui_elements.btnEngineering.clicked.connect(self._log_engineering_mode)     # Connects engineering login button
         self.ui_elements.btnSave.clicked.connect(self._save_settings)                   # Connects save settings button
+        self.ui_elements.btnDefault.clicked.connect(self._default_values_window)
         
         self.ui_elements.frameCommand.setVisible(False)                                 # Send commands frame begins not visible
         self._signal_engineering_mode.connect(self.ui_elements.frameCommand.setVisible) # The commands frame is only visible when in engineering mode
+
+        self.ui_elements.btnDefault.setVisible(False)                                   # Defaul configurations button begins not visible
+        self._signal_engineering_mode.connect(self.ui_elements.btnDefault.setVisible)   # The default configurations button is only visible in engineering mode
 
         self.ui_elements.btnSendCommand.clicked.connect(self._send_test_command)
         self.ui_elements.txtCommand.returnPressed.connect(self._send_test_command)
@@ -96,6 +103,16 @@ class SettingsWindow(QMainWindow):
         self.ui_elements.lblServerVer_val.setText(Config.server_version)
 
         self._signal_command_response.connect(self.ui_elements.lblResponse_Val.setText)
+
+        self._config_txt_boxes = {
+            "MOTOR_IP":self.ui_elements.txtMotorIP,
+            "BACKLASH":self.ui_elements.txtBackComp,
+            "POS_MAX":self.ui_elements.txtMaxPos,
+            "PARK":self.ui_elements.txtPark,
+            "MAX_SPEED":self.ui_elements.txtMaxSpeed,
+            "NORMAL_SPEED":self.ui_elements.txtNormalSpeed,
+            "LOW_SPEED":self.ui_elements.txtLowSpeed,
+        }
         
 
         # self._progress_bar = QProgressBar()
@@ -139,6 +156,22 @@ class SettingsWindow(QMainWindow):
         """Updates current settings by reading the values from the motor"""
         self._updater.start()               # Starts the thread
         
+    def _default_values_window(self):
+        """Opens the dialog window to confirm loading of default configurations"""
+        self._default_widget = DefaultForm()
+        if self._default_widget.exec() == QDialog.DialogCode.Accepted:
+            # If accepted must take the selected values and load them in the boxes
+            print("RETURN TO DEFAULT VALUES")
+            for conf_key in self._config_txt_boxes.keys():
+                if conf_key in self._default_widget.selected_items:    # Checar se a chave está entre os valores selecionados 
+                    print(f"chave {conf_key} encontrada")
+
+
+
+        else:
+            print("DO NOT RETURN TO DEFAULT VALUES")
+
+        self._default_widget.destroy()
 
     def _log_engineering_mode(self):
         """Opens the dialog window to login/logoff of engineering mode"""
@@ -235,14 +268,13 @@ class SettingsWindow(QMainWindow):
         return super().closeEvent(a0)
     
 
-
-
-
     def _save_settings(self):                                                                       # TODO: Terminar de implementar
             """Save the values in the text boxes in the motor                                           # TODO: Vai ser necessário rodar em uma thread pra não travar a gui?
             Checks if the value in the text box changed in relation to the one read from the motor
         during the initialization, and if the value has changed sends the command to the motor to 
         change the setting value."""
+            
+            self._create_backup_config()
  
             # self._changed_settings.clear()          # Resets changes dictionary         
         # Device IP
@@ -320,6 +352,17 @@ class SettingsWindow(QMainWindow):
                     self.ui_elements.txtNormalSpeed.setText(self._motor_settings["NORMAL_SPEED"])
                     self.ui_elements.txtLowSpeed.setText(self._motor_settings["LOW_SPEED"])
 
+
+    def _create_backup_config(self):
+        try:
+            shutil.copy(config_file, config_file_backup)            #TODO: 'copy' do not retain the metadata, if metadata is needed change to '.copy2'
+
+        except FileNotFoundError:
+            print("The source file was not found.")
+        except PermissionError:
+            print("Permission denied to access files or destination.")
+        except shutil.SameFileError:
+            print("Source and destination are the same file.")
 
 
 class RetrieveSettings(QThread):
