@@ -1,5 +1,6 @@
 from src.interface.modbus_server import ModbusServer
-from pyModbusTCP.server import DataBank
+# from pyModbusTCP.server import DataBank
+from src.interface.modbus_data_bank import MB_DataBank
 
 from logging import Logger
 from threading import Lock, Timer, Thread
@@ -61,10 +62,10 @@ class FocuserDriver():
                 'LOW_SPEED': 'low_speed'
             }
         
-        self.dataBank_shadow = DataBank(coils_size=619, coils_default_value=False,          #|      554
-                                        d_inputs_size=1295, d_inputs_default_value=False,   #|  Shadow value for the modbus data.
-                                        h_regs_size=0, h_regs_default_value=0,              #|  Also used as initial values for the server.
-                                        i_regs_size=0, i_regs_default_value=0)              #|
+        # self.dataBank_shadow = MB_DataBank(coils_size=619, coils_default_value=False,       #|      554
+        #                                 d_inputs_size=1295, d_inputs_default_value=False,   #|  Shadow value for the modbus data.
+        #                                 h_regs_size=0, h_regs_default_value=0,              #|  Also used as initial values for the server.
+        #                                 i_regs_size=0, i_regs_default_value=0)              #|
         
     def acionar(self):
         print (self._connected)
@@ -72,19 +73,19 @@ class FocuserDriver():
         self._write(168, dig_inputs_regs.TX_IP_B)
         self._write(60, dig_inputs_regs.TX_IP_C)
         self._write(39, dig_inputs_regs.TX_IP_D)
-        self._write(192, dig_inputs_regs.TX_CGT_A)
-        self._write(168, dig_inputs_regs.TX_CGT_B)
-        self._write(60, dig_inputs_regs.TX_CGT_C)
-        self._write(1, dig_inputs_regs.TX_CGT_D)
-        self._write(255, dig_inputs_regs.TX_CMK_A)
-        self._write(255, dig_inputs_regs.TX_CMK_B)
-        self._write(255, dig_inputs_regs.TX_CMK_C)
-        self._write(0, dig_inputs_regs.TX_CMK_D)
-        self._write(254863, dig_inputs_regs.TX_V20)
-        self._write(-1548, dig_inputs_regs.TX_V78)
-        self._write(True, dig_inputs_regs.TX_MOF)
-        self._write(True, dig_inputs_regs.TX_MON)
-        self._write(9888754, dig_inputs_regs.TX_SASTAT)
+        # self._write(192, dig_inputs_regs.TX_CGT_A)
+        # self._write(168, dig_inputs_regs.TX_CGT_B)
+        # self._write(60, dig_inputs_regs.TX_CGT_C)
+        # self._write(1, dig_inputs_regs.TX_CGT_D)
+        # self._write(255, dig_inputs_regs.TX_CMK_A)
+        # self._write(255, dig_inputs_regs.TX_CMK_B)
+        # self._write(255, dig_inputs_regs.TX_CMK_C)
+        # self._write(0, dig_inputs_regs.TX_CMK_D)
+        # self._write(254863, dig_inputs_regs.TX_V20)
+        # self._write(-1548, dig_inputs_regs.TX_V78)
+        # self._write(True, dig_inputs_regs.TX_MOF)
+        # self._write(True, dig_inputs_regs.TX_MON)
+        # self._write(9888754, dig_inputs_regs.TX_SASTAT)
 
 
     @property
@@ -109,8 +110,12 @@ class FocuserDriver():
         _con = False
         while retries < max_retries and not _con:
             try:
-                self.mb_server = ModbusServer(host='0.0.0.0', port=5005 ,no_block=True, data_bank=self.dataBank_shadow)
-                self.mb_server.server.start()
+                dataBank_config = MB_DataBank(coils_size=618, coils_default_value=False,        #|      
+                                d_inputs_size=1391, d_inputs_default_value=False,               #|  Config value for the modbus data bank.
+                                h_regs_size=0, h_regs_default_value=0,                          #|  
+                                i_regs_size=0, i_regs_default_value=0)                          #|
+                self.mb_server = ModbusServer(host='0.0.0.0', port=5005 ,no_block=True, data_bank=dataBank_config)
+                self.mb_server.start()
                 self.mb_server.signal_stop.connect(self._stop_server)
                 self.mb_run_thread = Thread(target=self.mb_server.run)
                 self.mb_run_thread.start()
@@ -119,7 +124,7 @@ class FocuserDriver():
                 print("Modbus server started")
                 self.logger.info("Modbus server started")
             except Exception as e:
-                print("Error starting modbus server")
+                print(f"Error starting modbus server: {e}")
                 self.logger.error(f'Failed to start modbus server after {retries} retries.')
                 self.logger.error(f'Error code: {e}')
 
@@ -146,7 +151,7 @@ class FocuserDriver():
         if self.mb_server:
             self.mb_server.stop_server = True
             self.mb_run_thread.join()
-            self.mb_server.server.stop()
+            self.mb_server.stop()
             self.mb_server = None
             print("Server closed")
 
@@ -340,35 +345,33 @@ class FocuserDriver():
         return "0"
             
 
-    def _conv_num_bits(self, num: int, size:int) -> list:
-        """Converts an int to a bitlist
+    # def _conv_num_bits(self, num: int, size:int) -> list:
+    #     """Converts an int to a bitlist for transmition considering
+    #     two's complement for negativa numbers.
 
-        Args:
-            num (int): Number to be converted
-            size (int): Number of output bits (8, 16, 32, 64)
+    #     Args:
+    #         num (int): Number to be converted
+    #         size (int): Number of output bits (8, 16, 32, 64)
 
-        Returns:
-            list: List with the 
-        """
-        print("---------------")
-        # print(f"num = {num} ----> {unsigned_value}")
+    #     Returns:
+    #         list: List with the 
+    #     """
+    #     print("---------------")
+    #     # print(f"num = {num} ----> {unsigned_value}")
+    #     num_mod = num                                               # Just to keep the original number
 
+    #     if num < 0:                                                 # If the number is negative gets the absolute value and subtracts 1
+    #         num_mod = abs(num) 
+    #         num_mod-=1
 
-
-        num_mod = num                                               # Just to keep the original number
-
-        if num < 0:                                                 # If the number is negative gets the absolute value and subtracts 1
-            num_mod = abs(num) 
-            num_mod-=1
-
-        bits = [(num_mod >> i) & 1 for i in range(0, size, 1)]      # Generates a list with each bit in the correct endianess (lsb to msb)
-        if num < 0:                                                 # If the number is negative
-            for idx, b in enumerate(bits):                              # Loop to invert the bits and 
-                # bits[idx] = not b
-                if b: bits[idx] = 0
-                else: bits[idx] = 1
+    #     bits = [(num_mod >> i) & 1 for i in range(0, size, 1)]      # Generates a list with each bit in the correct endianess (lsb to msb)
+    #     if num < 0:                                                 # If the number is negative
+    #         for idx, b in enumerate(bits):                              # Loop to invert the bits and 
+    #             # bits[idx] = not b
+    #             if b: bits[idx] = 0
+    #             else: bits[idx] = 1
         
-        return bits
+    #     return bits
 
     def get_firmware_status(self) -> str:
         return "OK"
@@ -445,24 +448,37 @@ class FocuserDriver():
         if ( type(value) is bool ) and ( reg.SIZE != 1):
             raise ValueError(f"Cannot write a boolean to {reg.TYPE.name}:{reg.ADDRESS}. This Register has {reg.SIZE} bits")
 
-        if reg.TYPE is RegType.COIL:
-            if (type(value) is bool) or (reg.SIZE==1 and ( (value==0) or (value==1) ) ):                # If the value is a bool or the register has only one bit than no conversion is needed
-                self.mb_server.server.data_bank.set_coils(reg.ADDRESS, [value])                 
-            else:                                                                                       #| If the register has multiple bits than the value must be converted
-                num_bits = self._conv_num_bits(value, reg.SIZE)                                         #| The conversion already considers negative values as two's complement
-                self.mb_server.server.data_bank.set_coils(reg.ADDRESS, num_bits)
+        # if reg.TYPE is RegType.COIL:
+        #     if (type(value) is bool) or (reg.SIZE==1 and ( (value==0) or (value==1) ) ):                # If the value is a bool or the register has only one bit than no conversion is needed
+        #         self.mb_server.data_bank.set_coils(reg.ADDRESS, [value])                 
+        #     else:                                                                                       #| If the register has multiple bits than the value must be converted
+        #         num_bits = self._conv_num_bits(value, reg.SIZE)                                         #| The conversion already considers negative values as two's complement
+        #         self.mb_server.data_bank.set_coils(reg.ADDRESS, num_bits)
 
-        elif reg.TYPE is RegType.DISCRETE_INPUT:
+        # elif reg.TYPE is RegType.DISCRETE_INPUT:
+        #     if (type(value) is bool) or (reg.SIZE==1 and ( (value==0) or (value==1) ) ):                # If the value is a bool or the register has only one bit than no conversion is needed
+        #         self.mb_server.data_bank.set_discrete_inputs(reg.ADDRESS, [value])
+        #     else:                                                                                       #| If the register has multiple bits than the value must be converted
+        #         num_bits = self._conv_num_bits(value, reg.SIZE)                                         #| The conversion already considers negative values as two's complement
+        #         if reg.SIZE == 8:                                                                       
+        #             self.mb_server.data_bank.set_discrete_inputs(reg.ADDRESS, num_bits)          # If the register is only 8 bits the value is saved directly to the register
+        #         else:                                                                                   
+        #             self.mb_server.data_bank.set_discrete_inputs(reg.ADDRESS, num_bits[16:])     #|  If the register is 32 bits the higher bits must be saved to the first 16 bits of the address   
+        #             self.mb_server.data_bank.set_discrete_inputs(reg.ADDRESS+16, num_bits[:16])  #| and the lower bits must be saved to next 16 bits
+
+        if reg.TYPE is RegType.DISCRETE_INPUT:
             if (type(value) is bool) or (reg.SIZE==1 and ( (value==0) or (value==1) ) ):                # If the value is a bool or the register has only one bit than no conversion is needed
-                self.mb_server.server.data_bank.set_discrete_inputs(reg.ADDRESS, [value])
+                self.mb_server.data_bank.set_discrete_inputs(reg.ADDRESS, [value])
             else:                                                                                       #| If the register has multiple bits than the value must be converted
-                num_bits = self._conv_num_bits(value, reg.SIZE)                                         #| The conversion already considers negative values as two's complement
+                num_bits = self.mb_server._conv_num_bits(value, reg.SIZE)                                         #| The conversion already considers negative values as two's complement
                 if reg.SIZE == 8:                                                                       
-                    self.mb_server.server.data_bank.set_discrete_inputs(reg.ADDRESS, num_bits)          # If the register is only 8 bits the value is saved directly to the register
+                    self.mb_server.data_bank.set_discrete_inputs(reg.ADDRESS, num_bits)          # If the register is only 8 bits the value is saved directly to the register
                 else:                                                                                   
-                    self.mb_server.server.data_bank.set_discrete_inputs(reg.ADDRESS, num_bits[16:])     #|  If the register is 32 bits the higher bits must be saved to the first 16 bits of the address   
-                    self.mb_server.server.data_bank.set_discrete_inputs(reg.ADDRESS+16, num_bits[:16])  #| and the lower bits must be saved to next 16 bits
+                    self.mb_server.data_bank.set_discrete_inputs(reg.ADDRESS, num_bits[16:])     #|  If the register is 32 bits the higher bits must be saved to the first 16 bits of the address   
+                    self.mb_server.data_bank.set_discrete_inputs(reg.ADDRESS+16, num_bits[:16])  #| and the lower bits must be saved to next 16 bits
 
+            self.mb_server.data_bank.set_discrete_inputs(dig_inputs_regs.TX_WAIT.ADDRESS, [False])  # Informs CLP that there is a valid data ready for readi
+            self.mb_server.wait_confirmation(reg)
 
 
     # def _write(self, cmd, max_retries = 10):
