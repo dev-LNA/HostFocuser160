@@ -584,7 +584,8 @@ class FocuserOPD(QtWidgets.QMainWindow):
         close = close.exec()                                                                            # Shows window
 
         if close == QMessageBox.StandardButton.Yes:                                                     # If button 'Yes' pressed
-            self._stop()                                                                                    # Stops the server execution
+            if self.ui_elements.pageSelect.currentIndex() == 1:                                             # In the first page no configuration was made so trying to disconnect generates errors
+                self._stop()                                                                                # Stops the server execution
             event.accept()                                                                                  # Accepts the close event
         else:                                                                                           # If button "No" or X pressed
             event.ignore()                                                                                  # Ignores the close event
@@ -596,5 +597,7 @@ if __name__ == "__main__":
 
     main_window1 = FocuserOPD()                 # Instantiates main window
     main_window1.show()                         # Shows main window    
-
+    
+    logger.info("Focuser was started")
+    
     sys.exit(app.exec())                        # Executes and waits for end of execution

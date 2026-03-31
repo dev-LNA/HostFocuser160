@@ -8,12 +8,13 @@
 import logging
 import logging.handlers
 import time
-import os
+from datetime import datetime
 try:
     from src.core.config import Config    
     CONFIG_FILE = True
 except:
     CONFIG_FILE = False
+
 
 def init_logging():
     if not CONFIG_FILE:
@@ -21,9 +22,25 @@ def init_logging():
     
     log_path = r"logs/focuser.log"
 
+    try:
+        with open(log_path, 'x') as file:
+            file.write("-------------------\n")
+            file.write("     LOG FILE      \n")
+            file.write("-------------------\n\n")
+            file.write("This is a file to log all the important events occurred during the execution of the Focuser.\n\n")
+
+            # file.write(f"This file was created in: {datetime.month}/{datetime.day}/{datetime.year} {datetime.hour}:{datetime.minute}:{datetime.second}")
+            file.write(f"This file was created in: {datetime.now().strftime("%m/%d/%Y %I:%M:%S %p")}\n")
+            file.write(f"The log level is: {Config.log_level}\n\n\n")
+
+            file.close()
+    except Exception as e:
+        print(f"{e}")
+
     logging.basicConfig(level=Config.log_level)
     logger = logging.getLogger()                # Root logger, see above
-    formatter = logging.Formatter('%(asctime)s.%(msecs)03d %(levelname)s %(message)s', '%Y-%m-%dT%H:%M:%S')
+    # formatter = logging.Formatter('%(asctime)s.%(msecs)03d %(levelname)s %(message)s', '%Y-%m-%dT%H:%M:%S')
+    formatter = logging.Formatter('%(asctime)s.%(msecs)03d [ %(levelname)s ] --> %(message)s', '%Y-%m-%dT%H:%M:%S')
     formatter.converter = time.gmtime           # UTC time
     logger.handlers[0].setFormatter(formatter)  # This is the stdout handler, level set above
     # Add a logfile handler, same formatter and level
@@ -32,7 +49,7 @@ def init_logging():
                                                     delay=True,     # Prevent creation of empty logs
                                                     maxBytes=Config.log_max_size_mb * 1000000,
                                                     backupCount=Config.log_num_keep)
-
+ 
     handler.setLevel(Config.log_level)
     handler.setFormatter(formatter)
     # handler.doRollover()                                            

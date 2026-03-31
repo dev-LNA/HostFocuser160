@@ -369,7 +369,7 @@ class App(QObject):
         json_string = json.dumps(self.status)                                                               # Serializes the current Status in a JSON formatted string
         try:      
             self.publisher.send_string(json_string)                                                         # Publishes Status JSON string
-            self.logger.info(f'Status published: {self.status}')                                            # If no error occurred while publishing logs the published JSON string
+            self.logger.debug(f'Status published: {self.status}')                                            # If no error occurred while publishing logs the published JSON string
             return datetime.now()                                                                           # Returns time after publish #TODO: Isso não é necessário
         except Exception as e:
             self.logger.error(f'Error: {str(e)}')
