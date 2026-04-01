@@ -6,7 +6,7 @@
    <rect>
     <x>0</x>
     <y>0</y>
-    <width>260</width>
+    <width>479</width>
     <height>194</height>
    </rect>
   </property>
@@ -17,7 +17,7 @@
    <item row="0" column="0" colspan="2">
     <layout class="QHBoxLayout" name="horizontalLayout">
      <item>
-      <widget class="QLabel" name="label">
+      <widget class="QLabel" name="lblInfo">
        <property name="minimumSize">
         <size>
          <width>231</width>
@@ -25,7 +25,7 @@
         </size>
        </property>
        <property name="text">
-        <string>Checked itens will go back to its default value</string>
+        <string>Checked items will go back to its default value</string>
        </property>
       </widget>
      </item>
@@ -117,13 +117,13 @@
      <item row="2" column="1">
       <widget class="QCheckBox" name="cbMinSpeed">
        <property name="text">
-        <string>Min. Speed</string>
+        <string>Low Speed</string>
        </property>
        <property name="checked">
         <bool>true</bool>
        </property>
        <property name="TAG" stdset="0">
-        <string>MIN_SPEED</string>
+        <string>LOW_SPEED</string>
        </property>
       </widget>
      </item>

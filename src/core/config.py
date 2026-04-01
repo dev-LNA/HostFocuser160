@@ -12,8 +12,8 @@ config_file = "src/config/config.toml"
 
 # _dict = {}
 # _dict = toml.load(config_file)
-def get_toml(sect: str, item: str):
-    _dict = toml.load(config_file)
+def get_toml(sect: str, item: str, cfg_file: str = config_file):
+    _dict = toml.load(cfg_file)
     if not _dict is {}:
         return _dict[sect][item]
     else:

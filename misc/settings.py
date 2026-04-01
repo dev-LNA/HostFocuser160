@@ -8,7 +8,7 @@ from PyQt6.QtGui import QFontMetrics, QKeyEvent
 from misc.load_bar import LoadBar
 from misc.ui_intellisense import UiWidgets
 from misc.login_form import LoginForm
-from misc.default_settings import DefaultForm
+from misc.default_settings import LoadConfigForm
 from misc.verification import VerificationDialog
 
 # from src.interface.dmx_eth import FocuserDriver
@@ -17,6 +17,9 @@ from src.core.config import Config, get_toml
 
 from src.utils.constants import constants
 from src.utils.motor import MotorData
+
+from logging import Logger
+from datetime import datetime
 
 import sys
 from os import path
@@ -34,8 +37,10 @@ def resource_path(relative_path):
     return path.join(base_path, relative_path)
 
 path_to_ui = resource_path('../assets/ui/settings.ui')              # Path to settings window UI
-config_file = "src/config/config.toml"
-config_file_backup = "src/config/config_backup.toml"                #TODO: Possibilitar definir o nome do arquivo?
+config_dir = "src/config/"
+config_file = config_dir + "config.toml" #"src/config/config.toml"
+config_file_backup = config_dir + "config_backup.toml" #"src/config/config_backup.toml"                #TODO: Possibilitar definir o nome do arquivo? Talvez nomear de acordo com a data que foi criado
+config_file_default = config_dir + "config_default.toml" #"src/config/config_default.toml"
 
 
 
@@ -55,7 +60,7 @@ class SettingsWindow(QMainWindow):
 
     _signals_changed_settings = pyqtSignal(dict)
 
-    def __init__(self, driver):
+    def __init__(self, driver, logger: Logger):
         super().__init__()
 
         if Config.focuser == "160":
@@ -70,6 +75,7 @@ class SettingsWindow(QMainWindow):
 
         # self.driver: FocuserDriver
         self.driver = driver                                        # Reference to the motor driver
+        self.logger = logger
         
         uic.loadUi(path_to_ui, self)                                # Loads the window UI
 
@@ -88,13 +94,18 @@ class SettingsWindow(QMainWindow):
 
         self.ui_elements.btnEngineering.clicked.connect(self._log_engineering_mode)     # Connects engineering login button
         self.ui_elements.btnSave.clicked.connect(self._save_settings)                   # Connects save settings button
-        self.ui_elements.btnDefault.clicked.connect(self._default_values_window)
+        self.ui_elements.btnDefault.clicked.connect(self._load_config_values)           # Connects default settings button
+        self.ui_elements.btnBackup.clicked.connect(self._load_config_values)            # Connects default settings button
+        
         
         self.ui_elements.frameCommand.setVisible(False)                                 # Send commands frame begins not visible
         self._signal_engineering_mode.connect(self.ui_elements.frameCommand.setVisible) # The commands frame is only visible when in engineering mode
 
         self.ui_elements.btnDefault.setVisible(False)                                   # Defaul configurations button begins not visible
         self._signal_engineering_mode.connect(self.ui_elements.btnDefault.setVisible)   # The default configurations button is only visible in engineering mode
+
+        self.ui_elements.btnBackup.setVisible(False)                                    # Defaul configurations button begins not visible
+        self._signal_engineering_mode.connect(self.ui_elements.btnBackup.setVisible)    # The default configurations button is only visible in engineering mode
 
         self.ui_elements.btnSendCommand.clicked.connect(self._send_test_command)
         self.ui_elements.txtCommand.returnPressed.connect(self._send_test_command)
@@ -104,7 +115,7 @@ class SettingsWindow(QMainWindow):
 
         self._signal_command_response.connect(self.ui_elements.lblResponse_Val.setText)
 
-        self._config_txt_boxes = {
+        self._config_txt_boxes = {                      # Dictionary holding the txtBoxes objects of the configurations
             "MOTOR_IP":self.ui_elements.txtMotorIP,
             "BACKLASH":self.ui_elements.txtBackComp,
             "POS_MAX":self.ui_elements.txtMaxPos,
@@ -156,15 +167,48 @@ class SettingsWindow(QMainWindow):
         """Updates current settings by reading the values from the motor"""
         self._updater.start()               # Starts the thread
         
-    def _default_values_window(self):
+    def _load_config_values(self):
         """Opens the dialog window to confirm loading of default configurations"""
-        self._default_widget = DefaultForm()
+        if self.sender() is self.ui_elements.btnDefault:
+            cfg_file = config_file_default
+            msg = "DEFAULT"
+            self.logger.info("Loading default motor configuration")
+        elif self.sender() is self.ui_elements.btnBackup:
+            cfg_file = config_file_backup
+            msg = "BACKUP"
+            self.logger.info("Loading backup motor configuration")
+
+        self._default_widget = LoadConfigForm(msg)
         if self._default_widget.exec() == QDialog.DialogCode.Accepted:
             # If accepted must take the selected values and load them in the boxes
-            print("RETURN TO DEFAULT VALUES")
-            for conf_key in self._config_txt_boxes.keys():
-                if conf_key in self._default_widget.selected_items:    # Checar se a chave está entre os valores selecionados 
-                    print(f"chave {conf_key} encontrada")
+            for conf_key in self._config_txt_boxes.keys():              # Check each 
+                if conf_key in self._default_widget.selected_items:     # If a configuration was selected in the Default Window
+                    # default_config = self._get_config(conf_key, config_file_default)
+                    # self._config_txt_boxes[conf_key].setText(default_config)
+                    if conf_key == "MOTOR_IP":
+                        if Config.focuser == "160":
+                            config = get_toml('Device', 'ip_160', cfg_file)
+                        elif Config.focuser == "IAG":
+                            config = get_toml('Device', 'ip_iag', cfg_file)
+                    else:
+                        config = str(get_toml('Device', conf_key.lower(), cfg_file))
+
+                    self._config_txt_boxes[conf_key].setText(config)       
+
+    # def _get_config(self, key: str, cfg_file_path: str) -> str:
+    #     if key == "MOTOR_IP":
+    #         if Config.focuser == '"160':
+    #             return get_toml('Device', 'ip_160', cfg_file_path)
+    #         elif Config.focuser == "IAG":
+    #             return get_toml('Device', 'ip_iag', cfg_file_path)
+    #     elif key == "BACKLASH":
+    #         return str(get_toml('Device', 'backlash', cfg_file_path))
+    #     elif key == "POS_MAX":
+    #         return str(get_toml('Device', 'pos_max', cfg_file_path))
+
+
+
+
 
 
 
@@ -242,14 +286,20 @@ class SettingsWindow(QMainWindow):
 
     def _initialize_motor_settings(self, value):
         if value is False:                                                                  # The motor reading finishes when the _running signal goes to False
-            self._motor_settings["DEVICE_IP"] = self.ui_elements.txtMotorIP.text()
+            self._motor_settings["MOTOR_IP"] = self.ui_elements.txtMotorIP.text()
             self._motor_settings["BACKLASH"] = self.ui_elements.txtBackComp.text()
             self._motor_settings["MAX_POS"] = self.ui_elements.txtMaxPos.text()
-            self._motor_settings["PARK_POS"] = self.ui_elements.txtPark.text()
+            self._motor_settings["PARK"] = self.ui_elements.txtPark.text()
             self._motor_settings["MAX_SPEED"] = self.ui_elements.txtMaxSpeed.text()
             self._motor_settings["NORMAL_SPEED"] = self.ui_elements.txtNormalSpeed.text()
             self._motor_settings["LOW_SPEED"] = self.ui_elements.txtLowSpeed.text()
-        
+        # "MOTOR_IP":self.ui_elements.txtMotorIP,
+#             "BACKLASH":self.ui_elements.txtBackComp,
+#             "POS_MAX":self.ui_elements.txtMaxPos,
+#             "PARK":self.ui_elements.txtPark,
+#             "MAX_SPEED":self.ui_elements.txtMaxSpeed,
+#             "NORMAL_SPEED":self.ui_elements.txtNormalSpeed,
+#             "LOW_SPEED":self.ui_elements.txtLowSpeed,
 
     def closeEvent(self, a0):
         """Event called when the settings window is closed
@@ -273,12 +323,10 @@ class SettingsWindow(QMainWindow):
             Checks if the value in the text box changed in relation to the one read from the motor
         during the initialization, and if the value has changed sends the command to the motor to 
         change the setting value."""
-            
-            self._create_backup_config()
  
             # self._changed_settings.clear()          # Resets changes dictionary         
         # Device IP
-            self._set_motor_settings("DEVICE_IP", self.ui_elements.txtMotorIP.text())
+            self._set_motor_settings("MOTOR_IP", self.ui_elements.txtMotorIP.text())
 
         # Backlash compensation
             self._set_motor_settings("BACKLASH", self.ui_elements.txtBackComp.text())
@@ -292,7 +340,7 @@ class SettingsWindow(QMainWindow):
                 # if int(self._motor_settings["MAX_POS"]) < current_pos:            # If the new max position is lower than the current position informs that a homing is needed    #TODO: É necessário mesmo?                
                 #     print("Necessário realizar homing")                            # TODO: Se o novo valor máximo for menor que a posição atual vai ser necessário realizar o homing para garantir que a posição atual vai ser válida dentro do novo limite
         # Park position
-            self._set_motor_settings("PARK_POS", self.ui_elements.txtPark.text())
+            self._set_motor_settings("PARK", self.ui_elements.txtPark.text())
         # Max speed
             self._set_motor_settings("MAX_SPEED", self.ui_elements.txtMaxSpeed.text())  #TODO: No firmware do motor está limitado em 214400
         # Normal speed
@@ -319,35 +367,43 @@ class SettingsWindow(QMainWindow):
 
                 if verify.exec() == QDialog.DialogCode.Accepted: 
                     try:
+
+                        self.logger.info("Starting motor configuration")
+                        self._create_backup_config()                        # Salva um backup das configurações atuais do motor
                         # If the motor IP is changed it is important to keep the config file updated so that when the server is restarted the new IP address is saved   
-                        if 'DEVICE_IP' in keys:
-                            self.driver.device_IP = self._motor_settings["DEVICE_IP"]
-                            with open(config_file, 'r') as f:
-                                config = toml.load(f)
+                        #TODO: Vai ser necessário salvar todas as novas configurações e não só o IP
+                        self._update_config_file(keys)
+                        # if 'DEVICE_IP' in keys:
+                        #     self.driver.device_IP = self._motor_settings["DEVICE_IP"]
+                        #     with open(config_file, 'r') as f:
+                        #         config = toml.load(f)
 
-                            if Config.focuser == '160':
-                                config['Device']['ip_160'] = self._changed_settings["DEVICE_IP"]
-                                Config.device_ip = config['Device']['ip_160'] # get_toml('Device', 'ip_160')
-                            elif Config.focuser == 'IAG':
-                                config['Device']['ip_iag'] = self._changed_settings["DEVICE_IP"]
-                                Config.device_ip = config['Device']['ip_iag'] # get_toml('Device', 'ip_iag')
+                        #     if Config.focuser == '160':
+                        #         config['Device']['ip_160'] = self._changed_settings["DEVICE_IP"]
+                        #         Config.device_ip = config['Device']['ip_160'] # get_toml('Device', 'ip_160')
+                        #     elif Config.focuser == 'IAG':
+                        #         config['Device']['ip_iag'] = self._changed_settings["DEVICE_IP"]
+                        #         Config.device_ip = config['Device']['ip_iag'] # get_toml('Device', 'ip_iag')
 
-                            with open(config_file, 'w') as f:
-                                toml.dump(config, f)
+                        #     with open(config_file, 'w') as f:
+                        #         toml.dump(config, f)
 
                         for _ in keys:  # Uses the driver properties to send the new values to the motor
-                            setattr(self.driver, self.driver.property_handlers[_], self._changed_settings[_]) 
+                            setattr(self.driver, self.driver.property_handlers[_], self._changed_settings[_])
+                            self.logger.info(f"Motor parameter changed: [{_}] Previous value -> {self._motor_settings[_]} | New value -> {self._changed_settings[_]}") 
 
                         self._signals_changed_settings.emit(self._changed_settings)     # Emits the changes to the main UI
                         self.driver._store_to_flash()                                   # Store the new settings to flash.
                         self._changed_settings.clear()                                  # Resets changes dictionary   
+                        self.logger.info("Ended motor configuration")
                     except Exception as e:
+                        self.logger.info(f"Error saving new configuration to motor. {e}")
                         print(e)
                 else:
-                    self.ui_elements.txtMotorIP.setText(self._motor_settings["DEVICE_IP"])
+                    self.ui_elements.txtMotorIP.setText(self._motor_settings["MOTOR_IP"])
                     self.ui_elements.txtBackComp.setText(self._motor_settings["BACKLASH"])
                     self.ui_elements.txtMaxPos.setText(self._motor_settings["MAX_POS"])
-                    self.ui_elements.txtPark.setText(self._motor_settings["PARK_POS"])
+                    self.ui_elements.txtPark.setText(self._motor_settings["PARK"])
                     self.ui_elements.txtMaxSpeed.setText(self._motor_settings["MAX_SPEED"])
                     self.ui_elements.txtNormalSpeed.setText(self._motor_settings["NORMAL_SPEED"])
                     self.ui_elements.txtLowSpeed.setText(self._motor_settings["LOW_SPEED"])
@@ -356,13 +412,35 @@ class SettingsWindow(QMainWindow):
     def _create_backup_config(self):
         try:
             shutil.copy(config_file, config_file_backup)            #TODO: 'copy' do not retain the metadata, if metadata is needed change to '.copy2'
+            self.logger.info(f"Created backup configuration file: {config_file_backup}")
 
         except FileNotFoundError:
             print("The source file was not found.")
+            self.logger.error(f"Could not create configuration backup file. The source file was not found.")
         except PermissionError:
             print("Permission denied to access files or destination.")
+            self.logger.error(f"Could not create configuration backup file. Permission denied to access files or destination.")
         except shutil.SameFileError:
             print("Source and destination are the same file.")
+            self.logger.error(f"Could not create configuration backup file. Source and destination are the same file.")
+
+    def _update_config_file(self, keys: str):
+
+        with open(config_file, 'r') as f:
+            config = toml.load(f)
+            for k in keys:
+                if k == 'MOTOR_IP':
+                    if Config.focuser == '160':
+                        config['Device']['ip_160'] = self._changed_settings["MOTOR_IP"]
+                        Config.device_ip = config['Device']['ip_160'] # get_toml('Device', 'ip_160')
+                    elif Config.focuser == 'IAG':
+                        config['Device']['ip_iag'] = self._changed_settings["MOTOR_IP"]
+                        Config.device_ip = config['Device']['ip_iag'] # get_toml('Device', 'ip_iag')
+                else:
+                    config['Device'][k.lower()] = int(self._changed_settings[k])
+
+        with open(config_file, 'w') as f:
+            toml.dump(config, f)
 
 
 class RetrieveSettings(QThread):
@@ -396,7 +474,7 @@ class RetrieveSettings(QThread):
     #             "DEVICE_IP":'',
     #             "BACKLASH":'',
     #             "MAX_POS":'',
-    #             "PARK_POS":'',
+    #             "PARK":'',
     #             "MAX_SPEED":'',
     #             "NORMAL_SPEED":'',
     #             "LOW_SPEED":''}

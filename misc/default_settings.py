@@ -1,6 +1,6 @@
 import string
 from PyQt6 import uic
-from PyQt6.QtWidgets import QDialog, QLineEdit, QPushButton, QMessageBox, QCheckBox, QDialogButtonBox
+from PyQt6.QtWidgets import QDialog, QLineEdit, QPushButton, QMessageBox, QCheckBox, QDialogButtonBox, QLabel
 from PyQt6.QtCore import pyqtSignal
 
 from configparser import ConfigParser
@@ -14,12 +14,12 @@ def resource_path(relative_path):
 
 path_to_ui = resource_path('../assets/ui/default_select.ui')                # Path to login UI
 
-class DefaultForm(QDialog):
+class LoadConfigForm(QDialog):
 
     _signal_selected_list = pyqtSignal(object)
 
-    def __init__(self):
-        super(DefaultForm, self).__init__()
+    def __init__(self, message: str):
+        super(LoadConfigForm, self).__init__()
 
         # Loads Ui file
         uic.loadUi(path_to_ui, self)
@@ -49,11 +49,16 @@ class DefaultForm(QDialog):
         self.buttonBox = self.findChild(QDialogButtonBox, 'buttonBox')     
         self.buttonBox: QDialogButtonBox = self.buttonBox
 
+        self.lblInfo = self.findChild(QLabel, 'lblInfo')     
+        self.lblInfo: QLabel = self.lblInfo
+
         self.check_list = (self.cbIpAddress, self.cbBacklash, self.cbPosMax, self.cbPark,
                            self.cbMaxSpeed, self.cbNormalSpeed, self.cbMinSpeed)
 
         self.buttonBox.accepted.connect(self.accept)
         self.buttonBox.rejected.connect(self.reject)
+
+        self.lblInfo.setText(f"Checked items will be changed to its {message} value")
 
         #Variables
         self.selected_items=[]

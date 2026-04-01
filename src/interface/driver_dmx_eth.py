@@ -55,7 +55,7 @@ class FocuserDriver():
                 'DEVICE_IP': 'device_IP',
                 'BACKLASH': 'backlash',
                 'MAX_POS': 'max_pos',
-                'PARK_POS': 'park_pos',
+                'PARK': 'park_pos',
                 'MAX_SPEED': 'max_speed',
                 'NORMAL_SPEED': 'normal_speed',
                 'LOW_SPEED': 'low_speed'

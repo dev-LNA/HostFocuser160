@@ -336,14 +336,14 @@ class App(QObject):
         self._pub_status()                              # Publishes current status
         try:    
             if(self.publisher):                                                         # If publisher is instantiated
-                self.publisher.unbind(f"tcp://{self.ip_address}:{self.port_pub}")           # Unbinds publisher
-                self.logger.info(f'Disconnecting Publisher')                        #TODO: Será que precisa fazer self.publisher = None ?
+                self.publisher.unbind(f"{self.publisher.last_endpoint.decode()}")           # Unbinds publisher considering last endpoint
+                self.logger.info(f'Disconnecting Publisher')                                #TODO: Será que precisa fazer self.publisher = None ?
         except Exception as e:
             self.logger.error(f'Error closing Publisher connection: {str(e)}')
         try:
             if(self.replier):                                                           # If replier is instantiated
-                self.replier.unbind(f"tcp://{self.ip_address}:{self.port_rep}")             # Unbinds replier
-                self.logger.info(f'Disconnecting Replier')                          #TODO: Será que precisa fazer self.replier = None ? 
+                self.replier.unbind(f"{self.replier.last_endpoint.decode()}")               # Unbinds replier considering last endpoint    
+                self.logger.info(f'Disconnecting Replier')                                  #TODO: Será que precisa fazer self.replier = None ? 
         except Exception as e:
             self.logger.error(f'Error closing Replier connection: {str(e)}')
         

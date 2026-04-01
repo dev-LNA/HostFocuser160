@@ -403,7 +403,7 @@ class FocuserOPD(QtWidgets.QMainWindow):
     # To open the settings the motor must be connected
         if self.control.device.connected:                                                                   # Checks if the motor is connected
             if self._settings_window is None:                                                                   # If the settings window is not instantiated
-                self._settings_window = SettingsWindow(self.control.device)                                         # Starts the main window according to the initialized focuser
+                self._settings_window = SettingsWindow(self.control.device, logger)                                         # Starts the main window according to the initialized focuser
                 self._settings_window._signal_window_closed.connect(self._settings_closed)                          # Connects function that must be executed when the settings window is closed
                 self._settings_window._signals_changed_settings.connect(self._parse_changed_settings)               # Connects function to be executed when settings are changed
                 self._settings_window.move(self.pos() + QPoint(self.width(), 0))                                    # Positions settings window next to the main window
@@ -429,7 +429,7 @@ class FocuserOPD(QtWidgets.QMainWindow):
                         break                                                                                           # Break the while loop and continues operation
                 if self.control.device.connected:                                                               # If the connection to the motor was successful
                     if self._settings_window is None:                                                               # If the settings windows was not yet defined
-                        self._settings_window = SettingsWindow(self.control.device)                                 # Instantiate settings window
+                        self._settings_window = SettingsWindow(self.control.device, logger)                                 # Instantiate settings window
                         self._settings_window._signal_window_closed.connect(self._settings_closed)                  # Connects closed window signal
                         self._settings_window._signals_changed_settings.connect(self._parse_changed_settings)       # Connects signal to show the settings in the GUI
                         self._settings_window.move(self.pos() + QPoint(self.width(), 0))                            # Positions the settings window according to the main window position
