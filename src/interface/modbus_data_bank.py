@@ -8,9 +8,9 @@ class MB_DataBank(DataBank):
         self.handshake = False
 
     def on_coils_change(self, address, from_value, to_value, srv_info):
-        # print("-------------------")
-        # print(f"Coil recebida:\n Endereço: {address}\n Valor antigo: {from_value}\n Valor atual: {to_value}")
-        # print("-------------------")
+        print("-------------------")
+        print(f"Coil recebida:\n Endereço: {address}\n Valor antigo: {from_value}\n Valor atual: {to_value}")
+        print("-------------------")
         
         # if address == coils_regs.RX_ALM.ADDRESS:
         #     self.set_discrete_inputs(dig_inputs_regs.TX_ALM.ADDRESS, [to_value])

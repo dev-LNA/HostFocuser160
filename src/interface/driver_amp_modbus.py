@@ -69,10 +69,10 @@ class FocuserDriver():
         
     def acionar(self):
         print (self._connected)
-        self._write(192, dig_inputs_regs.TX_IP_A)
-        self._write(168, dig_inputs_regs.TX_IP_B)
-        self._write(60, dig_inputs_regs.TX_IP_C)
-        self._write(39, dig_inputs_regs.TX_IP_D)
+        # self._write(192, dig_inputs_regs.TX_IP_A)
+        # self._write(168, dig_inputs_regs.TX_IP_B)
+        # self._write(60, dig_inputs_regs.TX_IP_C)
+        # self._write(39, dig_inputs_regs.TX_IP_D)
         # self._write(192, dig_inputs_regs.TX_CGT_A)
         # self._write(168, dig_inputs_regs.TX_CGT_B)
         # self._write(60, dig_inputs_regs.TX_CGT_C)
@@ -86,6 +86,29 @@ class FocuserDriver():
         # self._write(True, dig_inputs_regs.TX_MOF)
         # self._write(True, dig_inputs_regs.TX_MON)
         # self._write(9888754, dig_inputs_regs.TX_SASTAT)
+        # self._write(True, dig_inputs_regs.HANDSHAKE)
+        # time.sleep(2)
+        # self._write(False, dig_inputs_regs.HANDSHAKE)
+        for reg in coils_regs:
+            print("-------------------------------")
+            print(f"Registrador {reg.TAG}:")
+            if reg.SIZE > 1:
+                print(f"{self.mb_server._conv_reg_to_value(reg, self.mb_server.data_bank)}")
+                
+                bit_list = self.mb_server.data_bank.get_coils(reg.ADDRESS, reg.SIZE)
+                # conv: list = []
+                # for cont in range(0,4):
+                #     bit_list = self.mb_server.data_bank.get_coils(reg.ADDRESS+8*cont, 8)
+                #     bit_list.reverse()
+                #     for item in bit_list:      
+                #         if item == True:
+                #             conv.append(1)
+                #         else:
+                #             conv.append(0)
+
+                print(bit_list)
+            else:
+                print(f"{self.mb_server.data_bank.get_coils(reg.ADDRESS, reg.SIZE)}")
 
 
     @property

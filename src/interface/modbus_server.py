@@ -197,9 +197,9 @@ class ModbusServer(QWidget, mbServer):
         if resp_reg is None:
             print(f"Não foi encontrado registrador de resposta para DI {reg.TAG}")
         
-        while self.data_bank.get_coils(resp_reg.ADDRESS, resp_reg.SIZE) != self.data_bank.get_discrete_inputs(reg.ADDRESS, reg.SIZE):
-            print(f"Waiting confirmation for register {reg.TAG}")
-            time.sleep(0.5)
+        # while self.data_bank.get_coils(resp_reg.ADDRESS, resp_reg.SIZE) != self.data_bank.get_discrete_inputs(reg.ADDRESS, reg.SIZE):
+        #     print(f"Waiting confirmation for register {reg.TAG}")
+        #     time.sleep(0.5)
 
 
         return True
@@ -222,8 +222,32 @@ class ModbusServer(QWidget, mbServer):
             int_val = int(binary_string, base=2)
 
             if reg.SIZE > 8:                            # Two's complement only applies for 32 bit numbers
+                print(f"inside function inicial -> {binary_string}")
+                conv: list = []
+                for cont in range(0,4):
+                    # inv_bytes = binary_string[(8*(cont)-1):(8*(cont-1)-1):-1]
+                    inv_byte = "".join(reversed(binary_string[8*(cont):8*(cont+1)]))
+
+                    print(f"inv bytes {cont} -> {inv_byte}")
+                    for item in inv_byte:   
+                        conv.append(item)
+                    
+                print(f"inside function final -> {conv}")
+
+
                 if binary_string[0] == '1':
                     int_val = int_val - (1 << reg.SIZE)
+
+                #     conv: list = []
+                # for cont in range(0,4):
+                #     bit_list = self.data_bank.get_coils(reg.ADDRESS+8*cont, 8)
+                #     bit_list.reverse()
+                #     for item in bit_list:   
+                #         conv.append(1) if item == True else conv.append(0)   
+                #         # if item == True:
+                #         #     conv.append(1)
+                #         # else:
+                #         #     conv.append(0)
 
         
         # if reg.TAG == "RX_V50":
