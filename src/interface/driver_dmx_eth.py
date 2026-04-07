@@ -494,29 +494,34 @@ class FocuserDriver():
         #self._lock.release()
 
 
-    def home(self):                             #TODO: Deixar configurar quantidade de retries?
+    def home(self, op: str = "command"):                             #TODO: Deixar configurar quantidade de retries?
         """Executes the INIT routine        
         Returns: 
             Device response or Error message
         Raises:
             RuntimeError if device is busy
         """    
-        # self._lock.acquire()  
-        if self._is_moving:                     #TODO: O `_is_moving` na verdade está verificando se alguma rotina está sendo executada (motor busy), mas essa checagem faz sentido, uma vez que não se pode iniciar uma rotina enquanto outra já está em execução.            
-            raise RuntimeError('Cannot start a move while the focuser is moving')
+        if op.lower() == "command":
+            # self._lock.acquire()  
+            if self._is_moving:                     #TODO: O `_is_moving` na verdade está verificando se alguma rotina está sendo executada (motor busy), mas essa checagem faz sentido, uma vez que não se pode iniciar uma rotina enquanto outra já está em execução.            
+                raise RuntimeError('Cannot start a move while the focuser is moving')
 
-        res = self._write("GS30", max_retries=5)    
-        if res == 'OK':
-            self.logger.info('[Device] home: Success')      #TODO: Não seria bom também executar o `initialized` para confirmar que deu tudo certo e manter `_initialized` atualizado?
+            res = self._write("GS30", max_retries=5)    
+            if res == 'OK':
+                self.logger.info('[Device] home: Started homing')      #TODO: Não seria bom também executar o `initialized` para confirmar que deu tudo certo e manter `_initialized` atualizado?
+                #self._lock.release()
+                return res  
+            else:
+                alarm = self.alarm                              #TODO: Não existe um `self.alarm` só `self._alarm`
+                if alarm == 1:
+                    self.logger.error('[Device] home: Failed and Alarm flag is up') 
+
+            self.logger.error('[Device] home: Failed after retries')        #TODO: Informar quantidade de retries? O motor envia alguma outra mensagem de erro com mais informações do que aconteceu?
             #self._lock.release()
-            return res  
-        else:
-            alarm = self.alarm                              #TODO: Não existe um `self.alarm` só `self._alarm`
-            if alarm == 1:
-                self.logger.error('[Device] home: Failed and Alarm flag is up') 
-
-        self.logger.error('[Device] home: Failed after retries')        #TODO: Informar quantidade de retries? O motor envia alguma outra mensagem de erro com mais informações do que aconteceu?
-        #self._lock.release()
+        elif op.lower() == "reset": 
+            res = self._write("V44=0")      # Reseta a informação de Home
+            res = self._write("V15=0")      # Reseta a informação de Homing
+            res = self._write("V16=0")      # Reseta a informação de Parking
         return res      
     
     def park(self):

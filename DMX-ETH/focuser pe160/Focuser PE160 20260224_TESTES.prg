@@ -179,29 +179,29 @@ SUB 5	; PARK
 ; V74: overtravel pulses to eliminate backlash = 5360 encoder units (125 um)
 ; V16: indicates parking running 
 
-	GOSUB 30
-	V46 = 1			 			; Set start SUB code
-	V42 = 0						; Clear stop flag
-	V16 = 1						; Set parking flag
-	ABS								; Select absolute mode
-	EO = 1						; Enable motor driver
-	; Move in forward direction towards maximum position
-	V10 = 10 * V83		; Convert encoder unit to step unit
-	XV10							; Start movement
+	GOSUB 30					;* Starts by homing the motor
+	V46 = 1			 			;* Set start SUB code
+	V42 = 0						;* Clear stop flag
+	V16 = 1						;* Set parking flag
+	ABS							;* Select absolute mode
+	EO = 1						;* Enable motor driver
+								;* Move in forward direction towards maximum position
+	V10 = 10 * V83				;* Convert encoder unit to step unit
+	XV10						;* Start movement
 	V8 = 1
-		WHILE V8 > 0
-			V11 = MSTX	; Read status
-			V8 = V11 & 7;	Motor moving bits
-			IF V42 = 1	; Check stop command
+		WHILE V8 > 0		
+			V11 = MSTX			;* Read status
+			V8 = V11 & 7		;* Motor moving bits
+			IF V42 = 1			;* Check stop command
 				STOPX
-				DELAY = 500	; Desacceleration time = 300
-				V8 = 0			; Exit while loop
+				DELAY = 500		;* Deceleration time = 300
+				V8 = 0			;* Exit while loop
 			ENDIF
 		ENDWHILE
-	EO = 0						; Disable motor driver
-	V16 = 0						; Clear parking flag
-	V42 = 0						; Clear stop command
-	V46 = 0			 			; Set end SUB code
+	EO = 0						;* Disable motor driver
+	V16 = 0						;* Clear parking flag
+	V42 = 0						;* Clear stop command
+	V46 = 0			 			;* Set end SUB code
 	ENDSUB 
 
 ;=================
@@ -459,15 +459,24 @@ SUB 30	; FOCUS INIT
 	; Read LIM- sensor 
 	V11 = MSTX				; Read motor status
 	V3 = V11 & 16			; LIM- bit. If set exits from while loop
-	IF V3 > 0
-		; HOME with Z index 
-		WHILE V3 > 0
+	IF V42 = 0				;* Only tries next movement if stop was not issued
+		IF V3 > 0
+			; HOME with Z index 
 			ZOMEX+
-			WAITX
-			V11 = MSTX
-			V3 = V11 & 16
-		ENDWHILE 
-		V44 = V50					; Set INIT executed flag
+			WHILE V3 > 0
+;*				ZOMEX+
+;*				WAITX
+				V11 = MSTX
+				V3 = V11 & 7
+				IF V42 > 0
+					STOPX					; Stop motor
+					V3 = 1				; Exit from while loop
+				ENDIF
+			ENDWHILE 
+			IF V42 = 0					; If stop was issued the homing is not valid
+				V44 = V50					; Set INIT executed flag
+			ENDIF
+		ENDIF
 	ENDIF
 	EO = 0						; Disable motor driver
 	V42 = 0						; Clear stop flag

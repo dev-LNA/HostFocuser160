@@ -238,11 +238,11 @@ class App(QObject):
             self.communicating_to_motor = False         # Communication to motor ended                                                     # Not communicating to the motor
                         
             for _try in range(5):                                                                   # Tries 5 times to ping the router
-                print(f"Trying Connect to Router: Try number {_try+1}")                         
+                # print(f"Trying Connect to Router: Try number {_try+1}")                         
                 self._statusMessage.emit(f"Trying Connect to Router: Try number {_try+1}")              # Emits signals for GUI update
                 self.router_reachable = self.ping_router()                                              # Tries to ping the router IP
                 if self.router_reachable:                                                               # If the ping is succesful
-                    print("Connection succesfull after", (_try+1), "tries" )
+                    # print("Connection succesfull after", (_try+1), "tries" )
                     self._statusMessage.emit(f"Connection succesfull after {_try+1} tries")                 # Emits signals for GUI update
                     # self._signals_router_connection("connected")
                     break                                                                                   # Exits for loop
@@ -254,11 +254,11 @@ class App(QObject):
             self.communicating_to_motor = False         # Communication to motor ended                                                     # Not communicating to the motor
             
             for _try in range(5):                                                                   # Tries 5 times to ping the router
-                print(f"Trying Connect to Motor: Try number {_try+1}")
+                # print(f"Trying Connect to Motor: Try number {_try+1}")
                 self._statusMessage.emit(f"Trying Connect to Motor: Try number {_try+1}")               # Emits signals for GUI update
                 self._motor_reachable = self.ping_motor()                                              # Tries to ping the motor IP
                 if self._motor_reachable:                                                               # If the ping is successful
-                    print("Connection succesfull after", (_try+1), "tries" )
+                    # print("Connection succesfull after", (_try+1), "tries" )
                     self._statusMessage.emit(f"Connection succesfull after {_try+1} tries")                 # Emits signals for GUI update
                     break                                                                                   # Exits for loop
             
@@ -435,8 +435,8 @@ class App(QObject):
                 # self._homing = True
                 self._is_busy = True                            # Motor is busy (homing)    #TODO: Mudar essa lógica do 'is_busy'
             else:
+                self.logger.error(f'Device failed to start homing process')
                 self.status["alarm"] = self.device.alarm    #TODO: Acho que isso não faz nada pq o ALM no DMX é só relacionado à temperatura    
-            self.logger.info(f'Device Homing {res}')
         except Exception as e:      
             self.communicating_to_motor = False         # Communication to motor ended
             self.status["alarm"] = self.device.alarm        #TODO: Acho que isso não faz nada pq o ALM no DMX é só relacionado à temperatura
@@ -456,6 +456,7 @@ class App(QObject):
                 self._parking = self.device._parking            # Updates parking state
                 self._is_busy = True                            # Motor is busy (parking)    #TODO: Mudar essa lógica do 'is_busy'
             else:
+                self.logger.error(f'Device failed to start parking process')
                 self.status["error"] = "Error during parking"
         except Exception as e:
             self.communicating_to_motor = False         # Communication to motor ended
@@ -808,6 +809,7 @@ class App(QObject):
     @initialized.setter
     def initialized(self, value: bool):
         self._initialized = value
+        self.status["initialized"] = self._initialized
 
     def run(self):
         """Server Main Loop
@@ -835,10 +837,12 @@ class App(QObject):
 
             self._signal_firmware_status.emit(self.device.get_firmware_status())
 
+            self.position = self.device.position    # Updates position every cycle
+
             # if -1 >= (current_time.second - self.last_pub.second) or (current_time.second - self.last_pub.second) >= 1:       #TODO: Não daria pra só checar se o valor absoluto for >= 1?
             if abs(current_time.second - self.last_pub.second) >= 1:                                                            # Updates position and publishes status every 1 second
                 # self.device.position 
-                self.position = self.device.position                                                                            # Reads motor current position
+                # self.position = self.device.position                                                                            # Reads motor current position
                 self.status["position"] = self.position
                 self.last_pub = self._pub_status()                              # Publishes current status                                                                              # Publishes status  #TODO: Não adianta atualizar "_position" se não colocar em "Status" para publicar
                 # self.last_pub = current_time                                                                                    # Updates las publish moment
@@ -964,24 +968,41 @@ class App(QObject):
             try:
                 self._read_motor_status()    
                 pos_delta = self.position - self.device.position
-                if pos_delta == 0 and self.status_lim_minus == False:                                                      # If the driver says the motor is moving but there is no change in position reading than the motor is stalled
+            # If the driver says the motor is moving but there is no change in position reading means the motor is stalled
+                if pos_delta == 0 and self.status_lim_minus == False and self.status_lim_max == False and self.position != 0:          
                     # raise AlpacaExceptions.DriverException(1300, "Stalled Motor")       # Raises exception according to Alpaca      #TODO: Definir direito o código e a mensagem
-
+                    self.logger.error("Motor stalled during movement.")
                     print("Stalled Motor")   
                     _loop_count = 0                                                         # TODO: Isso pode ser configurável
                     while self.is_moving and _loop_count < 5:                               # If a stall occurs the server issues a 'halt' command and verifies if the motor responds as expected
-                        self.handle_halt()
-                        self.reply('ACK')
+                        # self.handle_halt()
+                        print(f" Resp V42=1 -> {self.device.sendCommand("V42=1")}")
+                        print(f" Resp STOP -> {self.device.sendCommand("STOP")}")
+                        print(f" Resp SR0=0 -> {self.device.sendCommand("SR0=0")}")
+                        
+                        print("ponto 1")
+                        print(self.device.sendCommand("EO=0"))
+                        print("ponto 2")
+                        # print(f" Resp GS31 -> {self.device.sendCommand("GS31")}")
+                        print("ponto 3")
+                        # self.reply('ACK')
                         self._read_motor_status()                                           # Issues command to read the current motor status.
+                        print("ponto 4")
+                        print(self.is_moving)
                         _loop_count+=1
                     if _loop_count == 5:
                         raise Exception("Motor is stalled and driver didn't respond to stop command after 5 tries")
                     self.status["timeout"]= True
-                    self._pub_status()                              # Publishes current status
+                    self.device.home("reset")                       # If a timeout occurs must reset Home since the position is not valid anymore
+                    self.initialized = self.device.initialized
+
+                    
+                    # self._pub_status()                              # Publishes current status
 
                 # Resets status. Required to accept new commands
-                    self._homing = False
-                    self._is_busy = False
+                    self.initialized = self.device.initialized
+                    self._homing = self.device.homing   
+                    self._parking = self.device.parking  
                     self.clientID = 0                         # Sets client not busy
                     self.status["cmd"] =  {                     # Resets "cmd" 
                                             "clientId": self._client_id,                #TODO: Esse valor pode ser 0? Checar arquivo do Ramon e documentação Alpaca. Talvez o 0 seja reservado para "not busy"
@@ -989,6 +1010,8 @@ class App(QObject):
                                             "clientName": "",
                                             "action": ""
                                             }         
+                    self.status["homing"] = self._homing
+                    self.status["parking"] = self._parking
 
                 else:
                     self.position = self.device.position
@@ -1001,7 +1024,7 @@ class App(QObject):
 
 
 
-    def _read_motor_status(self):
+    def _read_motor_status(self):   #TODO: mover método para dentro do driver do motor DMX_ETH e fazer outro para o motor AMP
         """Issues command to read the current motor status.
         """
         try:
@@ -1010,10 +1033,10 @@ class App(QObject):
             # print(motor_status)
 
 
-            if(motor_status[0] == '1'):         #| Bit '0' indicates the 'moving' status
-                self.is_moving = True           #|            
-            else:                               #|
-                self.is_moving = False          #|
+            if(motor_status[0] == '1' or motor_status[1] == '1' or motor_status[2] == '1'):     #| Bit '0' indicates the 'moving' status
+                self.is_moving = True                                                           #| Bit '1' indicates acceleration           
+            else:                                                                               #| Bit '2' indicates deceleration
+                self.is_moving = False                                                          #|  If any are set the motor is moving
 
             if(motor_status[4] == '1'):         #| Bit '4' indicates the lim minus microswitch status
                 self.status_lim_minus = True    #|
@@ -1024,6 +1047,8 @@ class App(QObject):
                 self.status_lim_max = True      #|
             else:                               #|
                 self.status_lim_max = False     #|
+
+            # print(f"Motor status -> {motor_status}")
             
 
 
