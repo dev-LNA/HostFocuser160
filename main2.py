@@ -120,42 +120,42 @@ class FocuserOPD(QtWidgets.QMainWindow):
         self.statusBar().addPermanentWidget(self._conIcon)
 
         # Configuration of signals
-        self.control._signals_router.info.connect(self.ui_elements.conBarServerRouter.setProperty)
-        self.control._signals_motor.info.connect(self.ui_elements.conBarRouterMotor.setProperty)
+        self.control.signals_router.info.connect(self.ui_elements.conBarServerRouter.setProperty)
+        self.control.signals_motor.info.connect(self.ui_elements.conBarRouterMotor.setProperty)
 
-        self.control._signals_router.info.connect(self.ui_elements.ledRouter.setProperty)
-        self.control._signals_motor.info.connect(self.ui_elements.ledMotor.setProperty)
+        self.control.signals_router.info.connect(self.ui_elements.ledRouter.setProperty)
+        self.control.signals_motor.info.connect(self.ui_elements.ledMotor.setProperty)
 
-        self.control._signals_server.status.connect(self.ui_elements.btnStart.setDisabled)
-        self.control._signals_server.status.connect(self.ui_elements.btnStop.setEnabled)
-        self.control._signals_server.info.connect(self.ui_elements.ledServer.setProperty)
+        self.control.signals_server.status.connect(self.ui_elements.btnStart.setDisabled)
+        self.control.signals_server.status.connect(self.ui_elements.btnStop.setEnabled)
+        self.control.signals_server.info.connect(self.ui_elements.ledServer.setProperty)
 
-        self.control._statusMessage.connect(self.statusBar().showMessage)
-        self.control._statusBar_led.connect(self._conIcon.setPixmap)
-        self.control._connection_speed.connect(self.ui_elements.lblComSpeed.setText)
+        self.control.signal_statusMessage.connect(self.statusBar().showMessage)
+        self.control.signal_statusBar_led.connect(self._conIcon.setPixmap)
+        self.control.signal_connection_speed.connect(self.ui_elements.lblComSpeed.setText)
         
-        self.control._signal_position_str.connect(self.ui_elements.lblPosition_val.setText)
-        self.control._signal_encoder.connect(self.ui_elements.lblEncoder_val.setText)
+        self.control.signal_position_str.connect(self.ui_elements.lblPosition_val.setText)
+        self.control.signal_encoder.connect(self.ui_elements.lblEncoder_val.setText)
 
-        self.control._signal_position_int.connect(self.ui_elements.posSlider.setValue)
-        self.control._signal_max_pos.connect(self.ui_elements.posSlider.setMaximum)
-        self.control._signal_backlash.connect(self.ui_elements.posSlider.setMinimum)
+        self.control.signal_position_int.connect(self.ui_elements.posSlider.setValue)
+        self.control.signal_max_pos.connect(self.ui_elements.posSlider.setMaximum)
+        self.control.signal_backlash.connect(self.ui_elements.posSlider.setMinimum)
 
         
-        self.control._signals_moving.info.connect(self.ui_elements.ledMoving.setProperty)
-        self.control._signals_lim_min.info.connect(self.ui_elements.ledLimMin.setProperty)
-        self.control._signals_lim_max.info.connect(self.ui_elements.ledLimMax.setProperty)
-        self.control._signals_initialized.info.connect(self.ui_elements.ledHome.setProperty)
-        self.control._signals_parking.info.connect(self.ui_elements.ledPark.setProperty)
+        self.control.signals_moving.info.connect(self.ui_elements.ledMoving.setProperty)
+        self.control.signals_lim_min.info.connect(self.ui_elements.ledLimMin.setProperty)
+        self.control.signals_lim_max.info.connect(self.ui_elements.ledLimMax.setProperty)
+        self.control.signals_initialized.info.connect(self.ui_elements.ledHome.setProperty)
+        self.control.signals_parking.info.connect(self.ui_elements.ledPark.setProperty)
 
-        self.control._signals_motor.status.connect(self.ui_elements.gbConnectivity.setEnabled)
-        self.control._signals_motor.status.connect(self.ui_elements.gbCommandInfo.setEnabled)
-        self.control._signals_motor.status.connect(self.ui_elements.gbFocuserStatus.setEnabled)
-        self.control._signals_motor.status.connect(self.ui_elements.posSlider.setEnabled)
+        self.control.signals_motor.status.connect(self.ui_elements.gbConnectivity.setEnabled)
+        self.control.signals_motor.status.connect(self.ui_elements.gbCommandInfo.setEnabled)
+        self.control.signals_motor.status.connect(self.ui_elements.gbFocuserStatus.setEnabled)
+        self.control.signals_motor.status.connect(self.ui_elements.posSlider.setEnabled)
 
-        self.control._signal_firmware_status.connect(self.ui_elements.lblStatus_val.setText)
+        self.control.signal_firmware_status.connect(self.ui_elements.lblStatus_val.setText)
 
-        self.control._signal_last_command.connect(self._parse_last_command)
+        self.control.signal_last_command.connect(self._parse_last_command)
 
 
 

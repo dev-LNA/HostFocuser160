@@ -43,39 +43,39 @@ icon_con_wait = resource_path('../../assets/ui/icons/status-away.png')
 
 class App(QObject):
 
-    _signals_router = PropertySignals()
-    _signals_motor = PropertySignals()
+    signals_router = PropertySignals()
+    signals_motor = PropertySignals()
 
-    _signal_server_started_status = pyqtSignal(str, str)
-    _signal_server_started_bool = pyqtSignal(bool)
+    signal_server_started_status = pyqtSignal(str, str)
+    signal_server_started_bool = pyqtSignal(bool)
 
-    _statusMessage = pyqtSignal(str)
-    _connection_speed = pyqtSignal(str)
+    signal_statusMessage = pyqtSignal(str)
+    signal_connection_speed = pyqtSignal(str)
 
-    _signal_communicating_to_motor_bool = pyqtSignal(bool)
-    _statusBar_led = pyqtSignal(QPixmap)
+    signal_communicating_to_motor_bool = pyqtSignal(bool)
+    signal_statusBar_led = pyqtSignal(QPixmap)
 
-    _signal_client_id = pyqtSignal(str)
-    _signal_transaction_id = pyqtSignal(str)
-    _signal_position_str = pyqtSignal(str)
-    _signal_position_int = pyqtSignal(int)
-    _signal_encoder = pyqtSignal(str)
+    signal_client_id = pyqtSignal(str)
+    signal_transaction_id = pyqtSignal(str)
+    signal_position_str = pyqtSignal(str)
+    signal_position_int = pyqtSignal(int)
+    signal_encoder = pyqtSignal(str)
     
-    _signal_firmware_status = pyqtSignal(str)
+    signal_firmware_status = pyqtSignal(str)
 
-    _signals_moving = PropertySignals()
-    _signals_lim_min = PropertySignals()
-    _signals_lim_max = PropertySignals()
-    _signals_initialized = PropertySignals()
-    _signals_parking = PropertySignals()
+    signals_moving = PropertySignals()
+    signals_lim_min = PropertySignals()
+    signals_lim_max = PropertySignals()
+    signals_initialized = PropertySignals()
+    signals_parking = PropertySignals()
 
-    _signal_max_pos = pyqtSignal(int)
-    _signal_backlash = pyqtSignal(int)
+    signal_max_pos = pyqtSignal(int)
+    signal_backlash = pyqtSignal(int)
 
-    _signals_server = PropertySignals()
+    signals_server = PropertySignals()
 
 
-    _signal_last_command = pyqtSignal(dict)
+    signal_last_command = pyqtSignal(dict)
 
 
     
@@ -224,11 +224,15 @@ class App(QObject):
             
             self.device = Focuser(self.logger, motor_model)                                 # Instantiates the motor according to the selected focuser
             self.device.model = motor_model                                                 # Initiates motor model
+
+            self.device.signal_motor_is_moving.connect(lambda val: setattr(self, 'is_moving', val))     # Sets the 'is_moving' property according to the motor driver signal
+
         else:
             raise ValueError("Invalid motor model")                                         # Raises an exception if the motor value is not valid
 
     def reach_device(self):
-        """Ping device and reads the position and initialized variables"""
+        """Verifies if the router and the motor are reachable. 
+        If its reachable updates status information"""
         _try = 0
         self.last_ping_time = datetime.now()                                                    # Saves the time when the method was called
 
@@ -239,11 +243,11 @@ class App(QObject):
                         
             for _try in range(5):                                                                   # Tries 5 times to ping the router
                 # print(f"Trying Connect to Router: Try number {_try+1}")                         
-                self._statusMessage.emit(f"Trying Connect to Router: Try number {_try+1}")              # Emits signals for GUI update
+                self.signal_statusMessage.emit(f"Trying Connect to Router: Try number {_try+1}")              # Emits signals for GUI update
                 self.router_reachable = self.ping_router()                                              # Tries to ping the router IP
                 if self.router_reachable:                                                               # If the ping is succesful
                     # print("Connection succesfull after", (_try+1), "tries" )
-                    self._statusMessage.emit(f"Connection succesfull after {_try+1} tries")                 # Emits signals for GUI update
+                    self.signal_statusMessage.emit(f"Connection succesfull after {_try+1} tries")                 # Emits signals for GUI update
                     # self._signals_router_connection("connected")
                     break                                                                                   # Exits for loop
         else:                                                                                   # If router already reachable
@@ -255,11 +259,11 @@ class App(QObject):
             
             for _try in range(5):                                                                   # Tries 5 times to ping the router
                 # print(f"Trying Connect to Motor: Try number {_try+1}")
-                self._statusMessage.emit(f"Trying Connect to Motor: Try number {_try+1}")               # Emits signals for GUI update
+                self.signal_statusMessage.emit(f"Trying Connect to Motor: Try number {_try+1}")               # Emits signals for GUI update
                 self._motor_reachable = self.ping_motor()                                              # Tries to ping the motor IP
                 if self._motor_reachable:                                                               # If the ping is successful
                     # print("Connection succesfull after", (_try+1), "tries" )
-                    self._statusMessage.emit(f"Connection succesfull after {_try+1} tries")                 # Emits signals for GUI update
+                    self.signal_statusMessage.emit(f"Connection succesfull after {_try+1} tries")                 # Emits signals for GUI update
                     break                                                                                   # Exits for loop
             
         if self.motor_reachable:                                                                # If the motor is reachable
@@ -279,12 +283,12 @@ class App(QObject):
 
             #--- Emits max pos and backlash to update GUI. The value is different in the test setup due to the size and gear differences
                 if TEST_SETUP:
-                    self._signal_max_pos.emit(int(self.device.max_pos) + 5)             # A small gap at the end to account the distance to the lim+ uswitch 
-                    self._signal_backlash.emit(-(int(self.device.backlash) + 10))       # A small gap at the end to account the distance to the lim+ uswitch 
+                    self.signal_max_pos.emit(int(self.device.max_pos) + 5)             # A small gap at the end to account the distance to the lim+ uswitch 
+                    self.signal_backlash.emit(-(int(self.device.backlash) + 10))       # A small gap at the end to account the distance to the lim+ uswitch 
                 else:
                     # TODO: Definir valores de excursão na montagem real
-                    self._signal_max_pos.emit(int(self.device.max_pos))                 # A small gap at the end to account the distance to the lim+ uswitch 
-                    self._signal_backlash.emit(-(int(self.device.backlash)))            # A small gap at the end to account the distance to the lim+ uswitch 
+                    self.signal_max_pos.emit(int(self.device.max_pos))                 # A small gap at the end to account the distance to the lim+ uswitch 
+                    self.signal_backlash.emit(-(int(self.device.backlash)))            # A small gap at the end to account the distance to the lim+ uswitch 
                 
                 self.logger.info(f'Device Reached.')
             except Exception as e:
@@ -376,7 +380,8 @@ class App(QObject):
             return datetime.now()                                                                           #TODO: Isso não é necessário
     
     def stop_server_loop(self):
-        """Sets flag to stop the execution of the server loop - stops the 'run' function"""
+        """Sets flag to stop the execution of the server loop 
+        - stops the 'run' function"""
         self._stop_var = True                                                                               # Sets stop flag
 
     def stop_poller(self):
@@ -385,16 +390,6 @@ class App(QObject):
             self.poller.unregister(self.replier)                    # Unregisters poller
             self.poller = None                                      # Reassigns poller to allow new instantiation
             time.sleep(.2)                                          # Delay     #TODO: É necessário esse tempo?
-
-
-    def _stop(self):
-        """(Deprecated) - Use 'stop_server_loop' and 'stop_poller' separately in the correct order to avoid disconnection problems
-        Stop main loop and unregister zmq.POLL"""
-        self._stop_var = True
-        if self.poller:
-            self.poller.unregister(self.replier)
-            self.poller = None
-            time.sleep(.2)
     
     def ping_motor(self) -> bool:
         """Check if motor is reachable
@@ -422,7 +417,7 @@ class App(QObject):
         else:
             return False
 
-    def handle_home(self):
+    def _handle_home(self):
         """Executes the INIT routine, which means moving motor axis to the LIM-
         microswitch and then removing the backlash until the encoder return 0"""
         try:
@@ -466,7 +461,7 @@ class App(QObject):
             self._pub_status()                              # Publishes current status
 
 
-    def handle_halt(self):
+    def _handle_halt(self):
         """Stops the motor movement"""
         self.communicating_to_motor = True              # Communication to motor started
         if self.device.Halt():                          # Sends HALT command to motor and if the motor recognized the command
@@ -479,8 +474,8 @@ class App(QObject):
             self.status["alarm"] = self.device.alarm    #TODO: Acho que isso não faz nada pq o ALM no DMX é só relacionado à temperatura
             self.logger.info(f'Halt Fail')
 
-    def handle_speed(self, vel):
-        """Configures the motor's speed"""
+    def _handle_speed(self, vel):
+        """Configures the motor speed"""
         if vel > Config.max_speed:                          #| 
             vel = Config.max_speed                          #| Checks if the velocity is whithin the min and max value
         elif vel <=0:                                       #|
@@ -497,21 +492,10 @@ class App(QObject):
         except Exception as e:
             self.communicating_to_motor = False             # Communication to motor ended
             self.logger.error(f"Error speed {str(e)}")
-
-    def handle_connect(self):
-        """(Deprecated) - Self explained"""
-        self.logger.info(f'Device Connected')
-        self.communicating_to_motor = True              # Communication to motor started
-        self.device.position
-        self.communicating_to_motor = False         # Communication to motor ended
-        self._pub_status()                              # Publishes current status
-
-    def handle_disconnect(self):
-        """(Deprecated) - Self explained"""
-        self.logger.info(f'Device Disconnected')
     
-    def handle_in_out(self, direction, speed):  #TODO: Talvez colocar uma velocidade default
-        """Move focuser to a position
+    def _handle_in_out(self, direction, speed):  #TODO: Talvez colocar uma velocidade default
+        """Move focuser to a direction (IN/OUT) until stopped or 
+        reaches min/max position
         Args: 
             direction (int): 1 for IN, 0 for OUT.
             speed microns/s(integer)
@@ -519,7 +503,7 @@ class App(QObject):
         try:
             self.communicating_to_motor = True              # Communication to motor started
             if int(speed) != Config.max_speed:              # If the movement speed is different from the default max speed
-                self.handle_speed(int(speed))                   # Configures the movement speed
+                self._handle_speed(int(speed))                   # Configures the movement speed
             if direction == 1:                              # Direction 1 indicates FOCUSIN
                 # FOCUS IN
                 self.device.focus_in_out(int(direction))        # Sends FOCUSIN command to the motor
@@ -538,8 +522,8 @@ class App(QObject):
             self.logger.error(f'Moving FOCUS IN | OUT')
             self._pub_status()                              # Publishes current status
 
-    def handle_move(self, pos, speed):
-        """Move focuser to a position
+    def _handle_move(self, pos, speed):
+        """Move focuser to a specific position
         Args: 
             position microns (integer)
             speed microns/s(integer)
@@ -558,7 +542,7 @@ class App(QObject):
             self.logger.error(f'Moving {pos}: {str(e)}')
             self._pub_status()                              # Publishes current status
 
-    def _update_status(self):
+    def _update_status(self):   #TODO: Com a utilização de signals talvez não seja necessário realizar essa verificação de forma recorrente
         """Verifies if there is a change in state variables, 
         such as _is_moving, _homing and _position and publishes in ZeroMQ"""
         if self._position != self.previous_pos:
@@ -594,7 +578,8 @@ class App(QObject):
             self._check_parking()
             self._flag_change = True
 
-        self._read_motor_status()               # Issues command to read the current motor status.
+        # self._read_motor_status()               # Issues command to read the current motor status.
+        self.device.read_motor_status()
 
         if self._flag_change:   # Publishes in 0MQ if a change occurred
             self._flag_change = False
@@ -609,22 +594,22 @@ class App(QObject):
         """Emits the HOMING status signal according to the current status.
         The transmitted signals will be aqcquired by every object that connects to it"""
         if self.status["homing"]:                                           # If 'Homing' is 'True'
-            self._signals_initialized.emit(False,"statusLed", "WAIT")           # Emits WAIT status to indicator LED (While homing the led is YELLOW)
+            self.signals_initialized.emit(False,"statusLed", "WAIT")           # Emits WAIT status to indicator LED (While homing the led is YELLOW)
         elif self.status["initialized"]:                                    # If 'Initialized' is 'True'
-            self._signals_initialized.emit(True,"statusLed", "OK")              # Emits OK status to indicator LED (When homing was performed the led is GREEN)
+            self.signals_initialized.emit(True,"statusLed", "OK")              # Emits OK status to indicator LED (When homing was performed the led is GREEN)
         else:                                                               # If none of the above is true
-            self._signals_initialized.emit(False,"statusLed", "NOK")            # Emits NOK status to indicator LED (When homing was NOT performed the led is RED)
+            self.signals_initialized.emit(False,"statusLed", "NOK")            # Emits NOK status to indicator LED (When homing was NOT performed the led is RED)
 
     def _check_parking(self):    #TODO: Change the method name
         """Emits the PARKING status signal according to the current status.
         The transmitted signals will be aqcquired by every object that connects to it"""
         if self.status["parking"]:                                          # If current parking status is 'True'
-            self._signals_parking.emit(True,"statusLed", "WAIT")                # Emits WAIT status to indicator LED (While parking the led is YELLOW)
+            self.signals_parking.emit(True,"statusLed", "WAIT")                # Emits WAIT status to indicator LED (While parking the led is YELLOW)
         else:                                                               # If parking is not being performed
-            self._signals_parking.emit(False,"statusLed", "NOK")                # Emits NOK status to indicator LED (When parking is NOT being performed the led is RED)
+            self.signals_parking.emit(False,"statusLed", "NOK")                # Emits NOK status to indicator LED (When parking is NOT being performed the led is RED)
 
 
-    def reply(self, msg: str):
+    def _reply(self, msg: str):
         """Replies to the client
 
         Parameters
@@ -636,19 +621,19 @@ class App(QObject):
 
     @property
     def clientID(self):
-        """The ID of the client
+        """The ID of the client.
 
         Setting a new value will update the client ID and emit '_signal_client_id' to
-        update the value in the GUI wherever it is needed.
+        update its value wherever it is needed.
         """
         return self._client_id                          
     @clientID.setter
     def clientID(self, ID: int):
         self._client_id = ID
         if ID != 0:
-            self._signal_client_id.emit(str(ID))
+            self.signal_client_id.emit(str(ID))
         else:
-            self._signal_client_id.emit("")
+            self.signal_client_id.emit("")
 
     @property
     def position(self):
@@ -663,12 +648,12 @@ class App(QObject):
     @position.setter
     def position(self, value: int):
         self._position = value
-        self._signal_position_str.emit(str(value))
-        self._signal_position_int.emit(value)
+        self.signal_position_str.emit(str(value))
+        self.signal_position_int.emit(value)
 
     @property
     def encoder(self):
-        """The current position of the encoder
+        """The current position of the encoder.
         
         Setting a new value will update the encoder position an emit '_signal_encoder'.
         """
@@ -676,31 +661,30 @@ class App(QObject):
     @encoder.setter
     def encoder(self, value: int):
         self._encoder = value
-        self._signal_encoder.emit(str(value))
+        self.signal_encoder.emit(str(value))
 
     @property
     def router_reachable(self):
-        """Status of the reachability of the router
+        """Status of the reachability of the router.
         
         Setting a new value will update the reachable status and emit '_signals_router.status' """
         return self._router_reachable
-    
     @router_reachable.setter
     def router_reachable(self, value: bool):
         self._router_reachable = value
         # self._signal_router_reachable_bool.emit(value)
-        self._signals_router.status.emit(value)
+        self.signals_router.status.emit(value)
 
     @property
     def motor_reachable(self):
-        """Status of the reachability of the motor
+        """Status of the reachability of the motor.
         
         Setting a new value will update the reachable status and emit '_signals_motor.status' """
         return self._motor_reachable
     @motor_reachable.setter
     def motor_reachable(self, value: bool):
         self._motor_reachable = value
-        self._signals_motor.status.emit(value)
+        self.signals_motor.status.emit(value)
 
     @property
     def server_connected(self):
@@ -713,9 +697,9 @@ class App(QObject):
         self._server_connected = value
         # self._signal_server_started_bool.emit(value)
         if value:
-            self._signals_server.emit(value,"statusLed", "OK")          # When server is connected the 'statusLed' is green (defined in the stylesheet)
+            self.signals_server.emit(value,"statusLed", "OK")          # When server is connected the 'statusLed' is green (defined in the stylesheet)
         else:
-            self._signals_server.emit(value,"statusLed", "NOK")         # When server is NOT connected the 'statusLed' is red (defined in the stylesheet)
+            self.signals_server.emit(value,"statusLed", "NOK")         # When server is NOT connected the 'statusLed' is red (defined in the stylesheet)
 
     @property
     def communicating_to_motor(self):
@@ -727,18 +711,18 @@ class App(QObject):
     @communicating_to_motor.setter
     def communicating_to_motor(self, value: bool):
         self._communicating_to_motor = value
-        self._signal_communicating_to_motor_bool.emit(value)
+        self.signal_communicating_to_motor_bool.emit(value)
         if value:
-            self._statusBar_led.emit(QPixmap(icon_con_ok))
+            self.signal_statusBar_led.emit(QPixmap(icon_con_ok))
         else:
             if (not self.motor_reachable) or (self._server_connected is False):
-                self._statusBar_led.emit(QPixmap(icon_con_nok))
+                self.signal_statusBar_led.emit(QPixmap(icon_con_nok))
             else:
-                self._statusBar_led.emit(QPixmap(icon_con_wait))
+                self.signal_statusBar_led.emit(QPixmap(icon_con_wait))
 
     @property
     def transaction_id(self):
-        """Client transaction ID
+        """Client transaction ID.
         
         Setting a new value will update the client transaction ID and emit '_signal_transaction_id' """
         return self._transaction_id
@@ -746,15 +730,15 @@ class App(QObject):
     def transaction_id(self, value: int):
         if self.clientID:                                   # The transaction ID must be related to a client
             self._transaction_id = value
-            self._signal_transaction_id.emit(str(value))
+            self.signal_transaction_id.emit(str(value))
         else:
             self._transaction_id = 0
-            self._signal_transaction_id.emit("")
+            self.signal_transaction_id.emit("")
     
 
     @property
     def is_moving(self):
-        """Motor moving status
+        """Motor moving status.
         
         Setting a new value will update the motor moving status and emit '_signals_moving'"""
         return self._is_moving
@@ -762,9 +746,9 @@ class App(QObject):
     def is_moving(self, value: bool):
         self._is_moving = value
         if value:
-            self._signals_moving.emit(value, "statusLed", "OK")
+            self.signals_moving.emit(value, "statusLed", "OK")
         else:
-            self._signals_moving.emit(value, "statusLed", "NOK")
+            self.signals_moving.emit(value, "statusLed", "NOK")
 
     @property
     def status_lim_minus(self):
@@ -778,9 +762,9 @@ class App(QObject):
     def status_lim_minus(self, value: bool):
         self._status_lim_minus = value
         if value:
-            self._signals_lim_min.emit(value, "statusLed", "OK")
+            self.signals_lim_min.emit(value, "statusLed", "OK")
         else:
-            self._signals_lim_min.emit(value, "statusLed", "NOK")
+            self.signals_lim_min.emit(value, "statusLed", "NOK")
 
     @property
     def status_lim_max(self):
@@ -794,9 +778,9 @@ class App(QObject):
     def status_lim_max(self, value: bool):
         self._status_lim_max = value
         if value:
-            self._signals_lim_max.emit(value, "statusLed", "OK")
+            self.signals_lim_max.emit(value, "statusLed", "OK")
         else:
-            self._signals_lim_max.emit(value, "statusLed", "NOK")
+            self.signals_lim_max.emit(value, "statusLed", "NOK")
 
     @property
     def initialized(self):
@@ -812,7 +796,7 @@ class App(QObject):
         self.status["initialized"] = self._initialized
 
     def run(self):
-        """Server Main Loop
+        """Server Main Loop (Runs on a thread started by main)
         
         The server main loop is responsible for:
         - Receiving commands from clients
@@ -821,10 +805,8 @@ class App(QObject):
         """
         self._client_id = 0                                         # Starts client not busy
         command_handlers = {                                        # Handles for the methods to be executed according to the commands
-            'HOME': self.handle_home,
+            'HOME': self._handle_home,
             # 'HALT': self.handle_halt,
-            'CONNECT': self.handle_connect,
-            'DISCONNECT': self.handle_disconnect,
             'STATUS': self._pub_status,
             'PARK': self._handle_park
         }
@@ -835,7 +817,7 @@ class App(QObject):
             t0 = time.time()                                        # Keeps the time when the loop began
             current_time = datetime.now()                           # Reads current time
 
-            self._signal_firmware_status.emit(self.device.get_firmware_status())
+            self.signal_firmware_status.emit(self.device.get_firmware_status())
 
             self.position = self.device.position    # Updates position every cycle
 
@@ -862,7 +844,7 @@ class App(QObject):
                             self.transaction_id = msg_rep.get("clientTransactionId")
                     except Exception as e:
                         print(e)
-                        self.reply('NAK')                                                                                       # If an error occurred during the reading of the JSON return 'NAK' to the client
+                        self._reply('NAK')                                                                                       # If an error occurred during the reading of the JSON return 'NAK' to the client
                     try:
                         # Handle all possible commands
                         self.status["error"] = ""                                                                               # Resets "error" status
@@ -870,34 +852,34 @@ class App(QObject):
                         command_processed = False                                                                               # Initializes "command_processed"
 
                         if "MOVE=" in cmd and self.busy_id == 0:                                                                # If the server is not busy and received the command "MOVE"
-                            self.handle_move(cmd[5:], Config.max_speed)                                                         # Calls function to handle move with the desired position and default speed
-                            self.reply('ACK')                                                                                   # Return 'ACK' to the client
+                            self._handle_move(cmd[5:], Config.max_speed)                                                         # Calls function to handle move with the desired position and default speed
+                            self._reply('ACK')                                                                                   # Return 'ACK' to the client
                             command_processed = True                                                                            # Sets "command_processed"
 
                         if "FOCUSIN" in cmd and self.busy_id == 0:                                                              # If the server is not busy and received the command "FOCUSIN"
-                            self.handle_in_out(1, cmd[8:])                                                                      # Calls the function to handle FOCUSIN and FOCUSOUT with '1' to select FOCUSIN
-                            self.reply('ACK')                                                                                   # Return 'ACK' to the client
+                            self._handle_in_out(1, cmd[8:])                                                                      # Calls the function to handle FOCUSIN and FOCUSOUT with '1' to select FOCUSIN
+                            self._reply('ACK')                                                                                   # Return 'ACK' to the client
                             command_processed = True                                                                            # Sets "command_processed"
 
                         if "FOCUSOUT" in cmd and self.busy_id == 0:                                                             # If the server is not busy and received the command "FOCUSOUT"
-                            self.handle_in_out(0, cmd[9:])                                                                      # Calls the function to handle FOCUSIN and FOCUSOUT with '0' to select FOCUSOUT    
-                            self.reply('ACK')                                                                                   # Return 'ACK' to the client            
+                            self._handle_in_out(0, cmd[9:])                                                                      # Calls the function to handle FOCUSIN and FOCUSOUT with '0' to select FOCUSOUT    
+                            self._reply('ACK')                                                                                   # Return 'ACK' to the client            
                             command_processed = True                                                                            # Sets "command_processed"            
 
                         if "HALT" in cmd and (self._client_id == self.busy_id or self.busy_id == 0):                            # If the server is not busy or the client is the same previously connected and the command "HALT" is received                            
-                            self.handle_halt()                                                                                  # Calls the function that handles "HALT"        
-                            self.reply('ACK')                                                                                   # Return 'ACK' to the client                    
+                            self._handle_halt()                                                                                  # Calls the function that handles "HALT"        
+                            self._reply('ACK')                                                                                   # Return 'ACK' to the client                    
                             command_processed = True                                                                            # Sets "command_processed"                 
 
                         if cmd in command_handlers and self.busy_id == 0:                                                       # If server not busy and other command is received              #TODO: O comando HALT está tanto no "command_handlers" quanto no `if` acima
                             command_handlers[cmd]()                                                                             # Calls the appropriate function to handle the received command #TODO: Todoas as funções podem ser chamadas dessa forma 
-                            self.reply('ACK')                                                                                   # Return 'ACK' to the client 
+                            self._reply('ACK')                                                                                   # Return 'ACK' to the client 
                             command_processed = True                                                                            # Sets "command_processed"
 
                         if command_processed:
-                            self._signal_last_command.emit(self.status)
+                            self.signal_last_command.emit(self.status)
                         else:                                                                                                   # If command was NOT processed
-                            self.reply('NAK')                                                                                   # Return 'NAK' to client
+                            self._reply('NAK')                                                                                   # Return 'NAK' to client
 
                         self.status["connected"] = self.device.connected                                                        # Updates connection status of the motor
 
@@ -942,16 +924,16 @@ class App(QObject):
                 self.reach_device()                                                                                             # Tries to reach device
                 
                 self.status["connected"] = self.device.connected                                                                # Updates "connected" state
-                self._statusMessage.emit("")                                                                                    # Clears status message
+                self.signal_statusMessage.emit("")                                                                                    # Clears status message
             # self.connection_speed = f"interval:  {round(time.time()-t0, 3)}"                                                # Calculates time to run thread loop
-            self._connection_speed.emit(f"{round(time.time()-t0, 3)}")      
+            self.signal_connection_speed.emit(f"{round(time.time()-t0, 3)}")      
     #----Code that needs to be executed when the server is disconnected
         # Updates signals status
         self.server_connected = False
         self._signals_motor_connection("waiting")
         self._signals_router_connection("waiting")
         self.communicating_to_motor = False         # Communication to motor ended
-        self._connection_speed.emit(" ")                                                                                   # Clears connection speed value message
+        self.signal_connection_speed.emit(" ")                                                                                   # Clears connection speed value message
 
     def _check_motor_moving(self):
         """Verifies if the motor is moving as expected.
@@ -966,7 +948,8 @@ class App(QObject):
         """
         if self.is_moving:                             #TODO: Qual o motivo de `_is_moving` ter que ser `true` para chamar `device.is_moving` para checar se está em movimento?
             try:
-                self._read_motor_status()    
+                # self._read_motor_status()
+                self.device.read_motor_status()    
                 pos_delta = self.position - self.device.position
             # If the driver says the motor is moving but there is no change in position reading means the motor is stalled
                 if pos_delta == 0 and self.status_lim_minus == False and self.status_lim_max == False and self.position != 0:          
@@ -986,7 +969,8 @@ class App(QObject):
                         # print(f" Resp GS31 -> {self.device.sendCommand("GS31")}")
                         print("ponto 3")
                         # self.reply('ACK')
-                        self._read_motor_status()                                           # Issues command to read the current motor status.
+                        # self._read_motor_status()                                           # Issues command to read the current motor status.
+                        self.device.read_motor_status()
                         print("ponto 4")
                         print(self.is_moving)
                         _loop_count+=1
@@ -1024,36 +1008,36 @@ class App(QObject):
 
 
 
-    def _read_motor_status(self):   #TODO: mover método para dentro do driver do motor DMX_ETH e fazer outro para o motor AMP
-        """Issues command to read the current motor status.
-        """
-        try:
-            resp = format(int(self.device.motor_status), '012b')        # TODO: Ver um jeito de converter para binário sem ser string
-            motor_status = "".join(reversed(resp))                      # This is only done so that the bit order is as shown in table 7 of the manual of the motor (DMX-ETH)
-            # print(motor_status)
+    # def _read_motor_status(self):   #TODO: mover método para dentro do driver do motor DMX_ETH e fazer outro para o motor AMP
+    #     """Issues command to read the current motor status.
+    #     """
+    #     try:
+    #         resp = format(int(self.device.motor_status), '012b')        # TODO: Ver um jeito de converter para binário sem ser string
+    #         motor_status = "".join(reversed(resp))                      # This is only done so that the bit order is as shown in table 7 of the manual of the motor (DMX-ETH)
+    #         # print(motor_status)
 
 
-            if(motor_status[0] == '1' or motor_status[1] == '1' or motor_status[2] == '1'):     #| Bit '0' indicates the 'moving' status
-                self.is_moving = True                                                           #| Bit '1' indicates acceleration           
-            else:                                                                               #| Bit '2' indicates deceleration
-                self.is_moving = False                                                          #|  If any are set the motor is moving
+    #         if(motor_status[0] == '1' or motor_status[1] == '1' or motor_status[2] == '1'):     #| Bit '0' indicates the 'moving' status
+    #             self.is_moving = True                                                           #| Bit '1' indicates acceleration           
+    #         else:                                                                               #| Bit '2' indicates deceleration
+    #             self.is_moving = False                                                          #|  If any are set the motor is moving
 
-            if(motor_status[4] == '1'):         #| Bit '4' indicates the lim minus microswitch status
-                self.status_lim_minus = True    #|
-            else:                               #|
-                self.status_lim_minus = False   #|
+    #         if(motor_status[4] == '1'):         #| Bit '4' indicates the lim minus microswitch status
+    #             self.status_lim_minus = True    #|
+    #         else:                               #|
+    #             self.status_lim_minus = False   #|
 
-            if(motor_status[5] == '1'):         #| Bit '5' indicates the lim max microswitch status
-                self.status_lim_max = True      #|
-            else:                               #|
-                self.status_lim_max = False     #|
+    #         if(motor_status[5] == '1'):         #| Bit '5' indicates the lim max microswitch status
+    #             self.status_lim_max = True      #|
+    #         else:                               #|
+    #             self.status_lim_max = False     #|
 
             # print(f"Motor status -> {motor_status}")
             
 
 
-        except Exception as e:                  # TODO: Verificar o que tem que ser feito se não conseguir obter essa informação 
-            print(e)
+        # except Exception as e:                  # TODO: Verificar o que tem que ser feito se não conseguir obter essa informação 
+        #     print(e)
 
 
     def _reset_timeout(self):
@@ -1073,12 +1057,12 @@ class App(QObject):
             connected -> connected
         """
         if status == "connected":
-            self._signals_router.info.emit("conStatusBar", "connected")
-            self._signals_router.info.emit("statusLed", "OK")
-            self.router_reachable = True
+            self.signals_router.info.emit("conStatusBar", "connected")
+            self.signals_router.info.emit("statusLed", "OK")
+            self.router_reachable = True                                #TODO: Fazer a conexão direta de 'statusLed = OK' com self.router_reachable=True
         else:
-            self._signals_router.info.emit("conStatusBar", status)      # status = "connecting" or "waiting"
-            self._signals_router.info.emit("statusLed", "NOK")
+            self.signals_router.info.emit("conStatusBar", status)      # status = "connecting" or "waiting"
+            self.signals_router.info.emit("statusLed", "NOK")
             self.router_reachable = False
 
     def _signals_motor_connection(self, status: str):               #TODO: Isso pode ser feito dentro da propriedade 'motor_reachable'
@@ -1092,10 +1076,10 @@ class App(QObject):
             connected -> connected
         """
         if status == "connected":
-            self._signals_motor.info.emit("conStatusBar", "connected")
-            self._signals_motor.info.emit("statusLed", "OK")
+            self.signals_motor.info.emit("conStatusBar", "connected")
+            self.signals_motor.info.emit("statusLed", "OK")
             self.motor_reachable = True
         else:
-            self._signals_motor.info.emit("conStatusBar", status)      # status = "connecting" or "waiting"
-            self._signals_motor.info.emit("statusLed", "NOK")
+            self.signals_motor.info.emit("conStatusBar", status)      # status = "connecting" or "waiting"
+            self.signals_motor.info.emit("statusLed", "NOK")
             self.motor_reachable = False

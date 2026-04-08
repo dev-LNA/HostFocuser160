@@ -1,3 +1,5 @@
+from PyQt6.QtCore import QObject, pyqtSignal
+
 from logging import Logger
 
 from threading import Lock
@@ -11,8 +13,11 @@ from contextlib import closing
 import socket
 import time
 
-class FocuserDriver():
+class FocuserDriver(QObject):
+    signal_motor_is_moving = pyqtSignal(bool)
+
     def __init__(self, logger: Logger, model: str):  
+        super(FocuserDriver, self).__init__()
         self._lock = Lock()
         self.name: str = 'LNA Focuser'
         self.logger = logger
@@ -62,6 +67,7 @@ class FocuserDriver():
             }
         
     def acionar(self):
+        self.signal_motor_is_moving.emit(True)
         print(self.initialized)
 
     @property
@@ -642,6 +648,34 @@ class FocuserDriver():
             return True  # Command executed successfully 
         #self._lock.release()
         return False 
+    
+
+    def read_motor_status(self):   #TODO: mover método para dentro do driver do motor DMX_ETH e fazer outro para o motor AMP
+        """Issues command to read the current motor status.
+        """
+        try:
+            resp = format(int(self.motor_status), '012b')        # TODO: Ver um jeito de converter para binário sem ser string
+            motor_status = "".join(reversed(resp))                      # This is only done so that the bit order is as shown in table 7 of the manual of the motor (DMX-ETH)
+            # print(motor_status)
+
+
+            if(motor_status[0] == '1' or motor_status[1] == '1' or motor_status[2] == '1'):     #| Bit '0' indicates the 'moving' status
+                self.signal_motor_is_moving.emit(True)                                                           #| Bit '1' indicates acceleration           
+            else:                                                                               #| Bit '2' indicates deceleration
+                self.signal_motor_is_moving.emit(False)                                                         #|  If any are set the motor is moving
+
+            # if(motor_status[4] == '1'):         #| Bit '4' indicates the lim minus microswitch status
+            #     self.status_lim_minus = True    #|
+            # else:                               #|
+            #     self.status_lim_minus = False   #|
+
+            # if(motor_status[5] == '1'):         #| Bit '5' indicates the lim max microswitch status
+            #     self.status_lim_max = True      #|
+            # else:                               #|
+            #     self.status_lim_max = False     #|
+
+        except Exception as e:                  # TODO: Verificar o que tem que ser feito se não conseguir obter essa informação 
+            print(e)
 
     def sendCommand(self, command: str) -> str:
         # # self._lock.acquire()
