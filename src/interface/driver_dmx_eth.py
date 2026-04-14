@@ -1,4 +1,5 @@
 from PyQt6.QtCore import QObject, pyqtSignal
+from src.utils.signals import PropertySignals
 
 from logging import Logger
 
@@ -15,6 +16,8 @@ import time
 
 class FocuserDriver(QObject):
     signal_motor_is_moving = pyqtSignal(bool)
+    signal_status_lim_min = pyqtSignal(bool)
+    signal_status_lim_max = pyqtSignal(bool)
 
     def __init__(self, logger: Logger, model: str):  
         super(FocuserDriver, self).__init__()
@@ -417,8 +420,7 @@ class FocuserDriver(QObject):
         #self._lock.release()
       
     @property
-    def park_pos(self) -> str:      # TODO: Implementar posição de 'park' no motor DMX-ETH
-        """ Not implemented """
+    def park_pos(self) -> str:  
         resp = self._write("V83", 5)
         if is_convertible_to_int(resp):
             pos = int(resp) / Config.enc_2_microns
@@ -658,23 +660,23 @@ class FocuserDriver(QObject):
             motor_status = "".join(reversed(resp))                      # This is only done so that the bit order is as shown in table 7 of the manual of the motor (DMX-ETH)
             # print(motor_status)
 
-
             if(motor_status[0] == '1' or motor_status[1] == '1' or motor_status[2] == '1'):     #| Bit '0' indicates the 'moving' status
-                self.signal_motor_is_moving.emit(True)                                                           #| Bit '1' indicates acceleration           
+                self.signal_motor_is_moving.emit(True)                                          #| Bit '1' indicates acceleration           
             else:                                                                               #| Bit '2' indicates deceleration
-                self.signal_motor_is_moving.emit(False)                                                         #|  If any are set the motor is moving
+                self.signal_motor_is_moving.emit(False)                                         #|  If any are set the motor is moving
 
-            # if(motor_status[4] == '1'):         #| Bit '4' indicates the lim minus microswitch status
-            #     self.status_lim_minus = True    #|
-            # else:                               #|
-            #     self.status_lim_minus = False   #|
+            if(motor_status[4] == '1'):                 #| Bit '4' indicates the lim minus microswitch status
+                self.signal_status_lim_min.emit(True)   #|
+            else:                                       #|
+                self.signal_status_lim_min.emit(False)  #|
 
-            # if(motor_status[5] == '1'):         #| Bit '5' indicates the lim max microswitch status
-            #     self.status_lim_max = True      #|
-            # else:                               #|
-            #     self.status_lim_max = False     #|
+            if(motor_status[5] == '1'):                 #| Bit '5' indicates the lim max microswitch status
+                self.signal_status_lim_max.emit(True)   #|
+            else:                                       #|
+                self.signal_status_lim_max.emit(False)  #|
 
-        except Exception as e:                  # TODO: Verificar o que tem que ser feito se não conseguir obter essa informação 
+        except Exception as e:                  # TODO: Verificar o que tem que ser feito se não conseguir obter essa informação
+            self.logger.error(f"Failed to read motor status [{str(e)}]") 
             print(e)
 
     def sendCommand(self, command: str) -> str:

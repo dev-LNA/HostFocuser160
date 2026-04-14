@@ -87,13 +87,15 @@ class ModbusServer(QWidget, mbServer):
 
         self.timeout = TimeoutCheck()
 
+        self.handshake_timer = time.time()
+
         
 
 
     def run(self):
         """A loop that fills the server data bank according to the commands sent/received"""
         while not self.stop_server:
-            time.sleep(.1)
+            time.sleep(.05) # 0.1
             # if self.data_bank.get_coils(0,1)[0]:        #DEBUG: usado para pausar o servidor pela comunicação
             #     self.signal_stop.emit(True)
             #     print("Sent stop server signal")
@@ -120,14 +122,20 @@ class ModbusServer(QWidget, mbServer):
 
 
             # To be operational the handshake must be valid  and 'RX_WAIT' must be False
-            if self.handshake and not self.data_bank.get_coils(coils_regs.RX_WAIT.ADDRESS, 1)[0]:
+            # if self.handshake and not self.data_bank.get_coils(coils_regs.RX_WAIT.ADDRESS, 1)[0]:
+            if self.handshake:
                 
-                self.data_bank.set_coils(coils_regs.RX_WAIT.ADDRESS, [True])        # Puts coil RX_WAIT back to True to avoid entering again this statement
+                # self.data_bank.set_coils(coils_regs.RX_WAIT.ADDRESS, [True])        # Puts coil RX_WAIT back to True to avoid entering again this statement
 
                 # for reg in coils_regs:
                 #     if reg.SIZE > 1:
                 #         self._conv_reg_to_value(reg)
-
+                if time.time() - self.handshake_timer > 1:
+                    self.handshake_timer = time.time()
+                    if self.data_bank.get_discrete_inputs(dig_inputs_regs.HANDSHAKE.ADDRESS, 1)[0] == True:
+                        self.data_bank.set_discrete_inputs(dig_inputs_regs.HANDSHAKE.ADDRESS, [False])
+                    else:
+                        self.data_bank.set_discrete_inputs(dig_inputs_regs.HANDSHAKE.ADDRESS, [True])
 
 
                 # Verifica se o DB shadow coil está diferente do DB coil (indica que uma informação foi recebida)
@@ -182,7 +190,24 @@ class ModbusServer(QWidget, mbServer):
         # print(self.server.data_bank.get_coils(0,10))
 
     def _operate(self, reg: RegsInfo):
-       ...
+        for resp_reg in dig_inputs_regs:
+            if resp_reg.TAG[1:] == reg.TAG[1:]:
+                num = self._conv_reg_to_value(reg, self.data_bank)
+                num_bits = self._conv_num_bits(num, reg.SIZE)
+                print(f"Recebido comando na coil {reg.TAG} e a resposta será dada pela DI {resp_reg.TAG}")    
+                if reg.SIZE == 8:                                                                       
+                    self.data_bank.set_discrete_inputs(resp_reg.ADDRESS, num_bits)          # If the register is only 8 bits the value is saved directly to the register
+                else:                                                                                   
+                    # self.data_bank.set_discrete_inputs(resp_reg.ADDRESS, num_bits[:15:-1])     #|  If the register is 32 bits the higher bits must be saved to the first 16 bits of the address   
+                    # self.data_bank.set_discrete_inputs(resp_reg.ADDRESS+16, num_bits[15::-1])  #| and the lower bits must be saved to next 16 bits
+                    self.data_bank.set_discrete_inputs(resp_reg.ADDRESS, num_bits[16:])     #|  If the register is 32 bits the higher bits must be saved to the first 16 bits of the address   
+                    self.data_bank.set_discrete_inputs(resp_reg.ADDRESS+16, num_bits[:16])  #| and the lower bits must be saved to next 16 bits
+
+
+                binary_string = "".join([str(int(b)) for b in self.data_bank.get_coils(reg.ADDRESS, reg.SIZE)])
+                print(f"Coil recebida {reg.TAG} = {binary_string}")
+                binary_string = "".join([str(int(b)) for b in self.data_bank.get_discrete_inputs(resp_reg.ADDRESS, resp_reg.SIZE)])
+                print(f"DI {resp_reg.TAG} = {binary_string}")
 
        
     def wait_confirmation(self, reg: RegsInfo) -> bool:
@@ -216,46 +241,48 @@ class ModbusServer(QWidget, mbServer):
 
 
         if reg.TYPE is RegType.COIL:
-            bits = db.get_coils(reg.ADDRESS, reg.SIZE)
-            binary_string = "".join(reversed([str(int(b)) for b in bits]))
-            # binary_string = "".join([str(int(b)) for b in bits])
-            int_val = int(binary_string, base=2)
+            # bits = db.get_coils(reg.ADDRESS, reg.SIZE)
+            # binary_string = "".join(reversed([str(int(b)) for b in bits]))
+            # # binary_string = "".join([str(int(b)) for b in bits])
+            # int_val = int(binary_string, base=2)
 
             if reg.SIZE > 8:                            # Two's complement only applies for 32 bit numbers
-                print(f"inside function inicial -> {binary_string}")
-                conv: list = []
-                for cont in range(0,4):
-                    # inv_bytes = binary_string[(8*(cont)-1):(8*(cont-1)-1):-1]
-                    inv_byte = "".join(reversed(binary_string[8*(cont):8*(cont+1)]))
 
-                    print(f"inv bytes {cont} -> {inv_byte}")
-                    for item in inv_byte:   
-                        conv.append(item)
+                bits = db.get_coils(reg.ADDRESS, reg.SIZE)
+                # binary_string = "".join(reversed([str(int(b)) for b in bits]))
+                binary_string = "".join([str(int(b)) for b in bits])
+                int_val = int(binary_string, base=2)
+
+                # print(f"inside function inicial -> {binary_string}")
+
+                # conv: list[str] = ['', '', '', '']      # Each position is a byte
+                # conv2: str = ""
+                # for cont in range(0,4):
+
+                #     # inv_byte = "".join(reversed(binary_string[8*(cont):8*(cont+1)]))        # Inverts the byte
+                #     inv_byte = "".join(binary_string[8*(cont):8*(cont+1)])              # gets byte by byte
+
+                #     print(f"inv bytes {cont} -> {inv_byte}")
+                #     for item in inv_byte:   
+                #         # conv += item
+                #         conv[cont] += item                      # saves each byte as an item in conv
                     
-                print(f"inside function final -> {conv}")
-
-
+                # conv2 += conv[3] + conv[2] + conv[1] + conv[0]  # conv2 receives the bytes in the correct order
+                
+                # print(f"inside function final -> {conv2}")
+                # int_val = int(conv2, base=2)
                 if binary_string[0] == '1':
                     int_val = int_val - (1 << reg.SIZE)
+                # if conv2[0] == '1':
+                #     int_val = int_val - (1 << reg.SIZE)
 
-                #     conv: list = []
-                # for cont in range(0,4):
-                #     bit_list = self.data_bank.get_coils(reg.ADDRESS+8*cont, 8)
-                #     bit_list.reverse()
-                #     for item in bit_list:   
-                #         conv.append(1) if item == True else conv.append(0)   
-                #         # if item == True:
-                #         #     conv.append(1)
-                #         # else:
-                #         #     conv.append(0)
+            else:
 
-        
-        # if reg.TAG == "RX_V50":
-        #     print("-------------------")
-        #     print(f"Convertendo número de {reg.SIZE} bits do registrador '{reg.TAG}': ")
-        #     print(f"Recebido -> {binary_string}")
-        #     print(f"Convertido -> {int_val}")
-        #     print("-------------------")
+                bits = db.get_coils(reg.ADDRESS, reg.SIZE)
+                binary_string = "".join(reversed([str(int(b)) for b in bits]))
+                # binary_string = "".join([str(int(b)) for b in bits])
+                int_val = int(binary_string, base=2)
+
         return int_val
 
 

@@ -1,3 +1,5 @@
+from PyQt6.QtCore import QObject, pyqtSignal
+
 from src.interface.modbus_server import ModbusServer
 # from pyModbusTCP.server import DataBank
 from src.interface.modbus_data_bank import MB_DataBank
@@ -8,13 +10,18 @@ from threading import Lock, Timer, Thread
 from src.core.config import Config
 from src.core.exceptions import DriverException
 from src.utils.constants import constants
-from src.utils.modbus_regs import RegsInfo, RegType, coils_regs, dig_inputs_regs
+from src.utils.modbus_regs import RegsInfo, RegType, coils_regs, dig_inputs_regs, DB_size
 
 import time
 
 
-class FocuserDriver():
+class FocuserDriver(QObject):
+    signal_motor_is_moving = pyqtSignal(bool)
+    signal_status_lim_min = pyqtSignal(bool)
+    signal_status_lim_max = pyqtSignal(bool)
+    
     def __init__(self, logger: Logger, model: str):
+        super(FocuserDriver, self).__init__()
         self._lock = Lock()
         self.name: str = 'LNA Focuser'
         self.logger = logger
@@ -73,7 +80,7 @@ class FocuserDriver():
         # self._write(168, dig_inputs_regs.TX_IP_B)
         # self._write(60, dig_inputs_regs.TX_IP_C)
         # self._write(39, dig_inputs_regs.TX_IP_D)
-        # self._write(192, dig_inputs_regs.TX_CGT_A)
+        self._write(192, dig_inputs_regs.TX_CGT_A)
         # self._write(168, dig_inputs_regs.TX_CGT_B)
         # self._write(60, dig_inputs_regs.TX_CGT_C)
         # self._write(1, dig_inputs_regs.TX_CGT_D)
@@ -90,23 +97,30 @@ class FocuserDriver():
         # time.sleep(2)
         # self._write(False, dig_inputs_regs.HANDSHAKE)
         for reg in coils_regs:
-            print("-------------------------------")
-            print(f"Registrador {reg.TAG}:")
+            # print("-------------------------------")
+            # print(f"Registrador {reg.TAG}:")
             if reg.SIZE > 1:
-                print(f"{self.mb_server._conv_reg_to_value(reg, self.mb_server.data_bank)}")
-                
-                bit_list = self.mb_server.data_bank.get_coils(reg.ADDRESS, reg.SIZE)
-                # conv: list = []
-                # for cont in range(0,4):
-                #     bit_list = self.mb_server.data_bank.get_coils(reg.ADDRESS+8*cont, 8)
-                #     bit_list.reverse()
-                #     for item in bit_list:      
-                #         if item == True:
-                #             conv.append(1)
-                #         else:
-                #             conv.append(0)
-
-                print(bit_list)
+                if reg.TAG == "RX_V20":
+                    print("-------------------------------")
+                    print(f"Registrador {reg.TAG}:")
+                    print(f"{self.mb_server._conv_reg_to_value(reg, self.mb_server.data_bank)}")
+                    
+                    bit_list = self.mb_server.data_bank.get_coils(reg.ADDRESS, reg.SIZE)
+                    # conv: list = []
+                    # for cont in range(0,4):
+                    #     bit_list = self.mb_server.data_bank.get_coils(reg.ADDRESS+8*cont, 8)
+                    #     bit_list.reverse()
+                    #     for item in bit_list:      
+                    #         if item == True:
+                    #             conv.append(1)
+                    #         else:
+                    #             conv.append(0)
+                    cont = 0
+                    for bit in bit_list:
+                        print(f"coil {reg.ADDRESS + cont} = {bit}")
+                        cont+=1
+                        
+                    # print(bit_list)
             else:
                 print(f"{self.mb_server.data_bank.get_coils(reg.ADDRESS, reg.SIZE)}")
 
@@ -133,8 +147,8 @@ class FocuserDriver():
         _con = False
         while retries < max_retries and not _con:
             try:
-                dataBank_config = MB_DataBank(coils_size=618, coils_default_value=False,        #|      
-                                d_inputs_size=1391, d_inputs_default_value=False,               #|  Config value for the modbus data bank.
+                dataBank_config = MB_DataBank(coils_size=DB_size.COIL_LAST_ADDRESS+1, coils_default_value=False,        #|      
+                                d_inputs_size=DB_size.DI_LAST_ADDRESS+1, d_inputs_default_value=True,               #|  Config value for the modbus data bank.
                                 h_regs_size=0, h_regs_default_value=0,                          #|  
                                 i_regs_size=0, i_regs_default_value=0)                          #|
                 self.mb_server = ModbusServer(host='0.0.0.0', port=5005 ,no_block=True, data_bank=dataBank_config)
@@ -455,6 +469,11 @@ class FocuserDriver():
     
     def Halt(self) -> bool:   
         """Send command STOP and stops main program with GS0=0 subroutine"""  
+        ...
+
+    def read_motor_status(self):   #TODO: mover método para dentro do driver do motor DMX_ETH e fazer outro para o motor AMP
+        """Issues command to read the current motor status.
+        """
         ...
 
     def sendCommand(self, command: str) -> str:

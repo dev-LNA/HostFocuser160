@@ -143,7 +143,7 @@ class FocuserOPD(QtWidgets.QMainWindow):
 
         
         self.control.signals_moving.info.connect(self.ui_elements.ledMoving.setProperty)
-        self.control.signals_lim_min.info.connect(self.ui_elements.ledLimMin.setProperty)
+        self.control.signals_lim_min.info.connect(self.ui_elements.ledLimMin.setProperty)       
         self.control.signals_lim_max.info.connect(self.ui_elements.ledLimMax.setProperty)
         self.control.signals_initialized.info.connect(self.ui_elements.ledHome.setProperty)
         self.control.signals_parking.info.connect(self.ui_elements.ledPark.setProperty)
@@ -284,7 +284,7 @@ class FocuserOPD(QtWidgets.QMainWindow):
                 None,                                                           # Parent widget (None centers on the screen; 'self' for a parent window)
                 "Attention",  
                 "A focuser must be selected."                                   # Informs the user that a focuser must be selected
-    )
+            )
 
     def _init_focuser(self):
         """Initializes the focuser

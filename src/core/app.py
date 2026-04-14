@@ -225,8 +225,9 @@ class App(QObject):
             self.device = Focuser(self.logger, motor_model)                                 # Instantiates the motor according to the selected focuser
             self.device.model = motor_model                                                 # Initiates motor model
 
-            self.device.signal_motor_is_moving.connect(lambda val: setattr(self, 'is_moving', val))     # Sets the 'is_moving' property according to the motor driver signal
-
+            self.device.signal_motor_is_moving.connect(lambda val: setattr(self, 'is_moving', val))         # Sets the 'is_moving' property according to the motor driver signal
+            self.device.signal_status_lim_min.connect(lambda val: setattr(self, 'status_lim_minus', val))   # Sets the 'status_lim_min' property according to the motor driver signal 
+            self.device.signal_status_lim_max.connect(lambda val: setattr(self, 'status_lim_max', val))     # Sets the 'status_lim_max' property according to the motor driver signal 
         else:
             raise ValueError("Invalid motor model")                                         # Raises an exception if the motor value is not valid
 

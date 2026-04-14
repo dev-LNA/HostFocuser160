@@ -3,9 +3,9 @@ from enum import Enum, IntEnum
 
 class DB_size(IntEnum):
     COIL_FIRST_ADDRESS=1,
-    COIL_LAST_ADDRES=617,
-    DI_FIRST_ADDRESS=761
-    DI_LAST_ADDRESS=1391
+    COIL_LAST_ADDRESS=620,
+    DI_FIRST_ADDRESS=761,
+    DI_LAST_ADDRESS=1394
 
 class RegType(Enum):
     COIL=0,
@@ -57,6 +57,9 @@ class CoilsRegs(NamedTuple):
     RX_CMK_C: RegsInfo
     RX_CMK_D: RegsInfo
     RX_WAIT: RegsInfo
+    RX_BUSY: RegsInfo
+    RX_SHDW_WAIT: RegsInfo
+    RX_SHDW_BUSY: RegsInfo
 
 coils_regs = CoilsRegs(
     RX_ALM=RegsInfo(TAG="RX_ALM", ADDRESS=DB_size.COIL_FIRST_ADDRESS, SIZE=1, TYPE=RegType.COIL),
@@ -95,7 +98,10 @@ coils_regs = CoilsRegs(
     RX_CMK_B=RegsInfo("RX_CMK_B", 593, 8, RegType.COIL),
     RX_CMK_C=RegsInfo("RX_CMK_C", 601, 8, RegType.COIL),
     RX_CMK_D=RegsInfo("RX_CMK_D", 609, 8, RegType.COIL),
-    RX_WAIT=RegsInfo("RX_WAIT", DB_size.COIL_LAST_ADDRES, 1, RegType.COIL)
+    RX_WAIT=RegsInfo("RX_WAIT", 617, 1, RegType.COIL),
+    RX_BUSY=RegsInfo("RX_BUSY", 618, 1, RegType.COIL),
+    RX_SHDW_WAIT=RegsInfo("RX_SHDW_WAIT", 619, 1, RegType.COIL),
+    RX_SHDW_BUSY=RegsInfo("RX_SHDW_BUSY", DB_size.COIL_LAST_ADDRESS, 1, RegType.COIL)
 )
 
 class DigInputsRegs(NamedTuple):
@@ -150,6 +156,9 @@ class DigInputsRegs(NamedTuple):
     NOK: RegsInfo
     HANDSHAKE: RegsInfo
     TX_WAIT: RegsInfo
+    TX_BUSY: RegsInfo
+    TX_SHDW_WAIT: RegsInfo
+    TX_SHDW_BUSY: RegsInfo
 
 
 
@@ -204,7 +213,10 @@ dig_inputs_regs = DigInputsRegs(
     OK=RegsInfo("OK", 1388, 1, RegType.DISCRETE_INPUT),
     NOK=RegsInfo("NOK", 1389, 1, RegType.DISCRETE_INPUT),
     HANDSHAKE=RegsInfo("HANDSHAKE", 1390, 1, RegType.DISCRETE_INPUT),
-    TX_WAIT=RegsInfo("TX_WAIT", DB_size.DI_LAST_ADDRESS, 1, RegType.DISCRETE_INPUT)
+    TX_WAIT=RegsInfo("TX_WAIT", 1391, 1, RegType.DISCRETE_INPUT),
+    TX_BUSY=RegsInfo("TX_BUSY", 1392, 1, RegType.DISCRETE_INPUT),
+    TX_SHDW_WAIT=RegsInfo("TX_SHDW_WAIT", 1393, 1, RegType.DISCRETE_INPUT),
+    TX_SHDW_BUSY=RegsInfo("TX_SHDW_BUSY", DB_size.DI_LAST_ADDRESS, 1, RegType.DISCRETE_INPUT)
 )
 
 class CLP_own(NamedTuple):
