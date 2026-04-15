@@ -16,7 +16,8 @@ from misc.verification import VerificationDialog
 from src.core.config import Config, get_toml  
 
 from src.utils.constants import constants
-from src.utils.motor import MotorData
+from src.interface.motor_driver import Driver
+from src.utils.motor import Motor, MotorParamsIdx
 
 from logging import Logger
 from datetime import datetime
@@ -60,21 +61,15 @@ class SettingsWindow(QMainWindow):
 
     _signals_changed_settings = pyqtSignal(dict)
 
-    def __init__(self, driver, logger: Logger):
+    def __init__(self, motor: Motor, logger: Logger):
         super().__init__()
 
-        if Config.focuser == "160":
-            from src.interface.driver_dmx_eth import FocuserDriver
-        elif Config.focuser == "IAG":
-            from src.interface.driver_amp import FocuserDriver
-        else:
-            raise RuntimeError("The configured focuser is not valid")
+        if motor.driver.__class__ is not Driver:
+            raise RuntimeError("Driver must be of Driver class")
         
-        if driver.__class__ is not FocuserDriver:
-            raise RuntimeError("Driver must be of FocuserDriver class")
-
-        # self.driver: FocuserDriver
-        self.driver = driver                                        # Reference to the motor driver
+        self.motor = motor
+        # self.motor.driver: FocuserDriver
+        # self.motor.driver = driver                                        # Reference to the motor driver
         self.logger = logger
         
         uic.loadUi(path_to_ui, self)                                # Loads the window UI
@@ -116,13 +111,13 @@ class SettingsWindow(QMainWindow):
         self._signal_command_response.connect(self.ui_elements.lblResponse_Val.setText)
 
         self._config_txt_boxes = {                      # Dictionary holding the txtBoxes objects of the configurations
-            "MOTOR_IP":self.ui_elements.txtMotorIP,
-            "BACKLASH":self.ui_elements.txtBackComp,
-            "POS_MAX":self.ui_elements.txtMaxPos,
-            "PARK":self.ui_elements.txtPark,
-            "MAX_SPEED":self.ui_elements.txtMaxSpeed,
-            "NORMAL_SPEED":self.ui_elements.txtNormalSpeed,
-            "LOW_SPEED":self.ui_elements.txtLowSpeed,
+            MotorParamsIdx.MOTOR_IP : self.ui_elements.txtMotorIP,
+            MotorParamsIdx.BACKLASH : self.ui_elements.txtBackComp,
+            MotorParamsIdx.MAX_POS : self.ui_elements.txtMaxPos,
+            MotorParamsIdx.PARK_POS : self.ui_elements.txtPark,
+            MotorParamsIdx.MAX_SPEED : self.ui_elements.txtMaxSpeed,
+            MotorParamsIdx.NORMAL_SPEED : self.ui_elements.txtNormalSpeed,
+            MotorParamsIdx.LOW_SPEED : self.ui_elements.txtLowSpeed,
         }
         
 
@@ -134,12 +129,12 @@ class SettingsWindow(QMainWindow):
 
         self.statusBar().addPermanentWidget(self._progress_bar)                         # Add load bar to status bar, it is not visible by default and is made visible when needed
 
-        self._updater = RetrieveSettings(self.driver)                                   # Initializes thread that reads current settings from the motor
+        self._updater = RetrieveSettings(self.motor)                                   # Initializes thread that reads current settings from the motor
 
         self._updater._running.connect(self._progress_bar.setVisible)                   # The progress bar visibility is connected to the updater method running signal
         self._updater._signal_progress.connect(self._progress_bar.progress.setValue)    # The progress bar value is connected to the updater method progress
     
-    # The motor data is kept in a dictionary and the parse function is responsible to parse the information
+        # The motor data is kept in a dictionary and the parse function is responsible to parse the information
         self._updater.signal_motor_data.connect(self._parse_motor_data)
 
         self._updater._running.connect(self._initialize_motor_settings)                 # When the updater finishes reading the motor the dictionary with the current values must be updated
@@ -152,16 +147,16 @@ class SettingsWindow(QMainWindow):
             raise RuntimeError("The IAG settings are not implemented yet")
 
 
-    def _parse_motor_data(self, data: MotorData):
+    def _parse_motor_data(self, data: Motor):
         self.ui_elements.lblFocuser.setText(data.ID)
-        self.ui_elements.txtMotorIP.setText(data.IP)
+        self.ui_elements.txtMotorIP.setText(data.parameters[MotorParamsIdx.MOTOR_IP])
         self.ui_elements.lblFirmVer_value.setText(data.firmware_version)
-        self.ui_elements.txtBackComp.setText(data.backlash)
-        self.ui_elements.txtMaxPos.setText(data.max_pos)
-        self.ui_elements.txtPark.setText(data.park_pos)
-        self.ui_elements.txtMaxSpeed.setText(data.max_speed)
-        self.ui_elements.txtNormalSpeed.setText(data.normal_speed)
-        self.ui_elements.txtLowSpeed.setText(data.low_speed)
+        self.ui_elements.txtBackComp.setText(data.parameters[MotorParamsIdx.BACKLASH])
+        self.ui_elements.txtMaxPos.setText(data.parameters[MotorParamsIdx.MAX_POS])
+        self.ui_elements.txtPark.setText(data.parameters[MotorParamsIdx.PARK_POS])
+        self.ui_elements.txtMaxSpeed.setText(data.parameters[MotorParamsIdx.MAX_SPEED])
+        self.ui_elements.txtNormalSpeed.setText(data.parameters[MotorParamsIdx.NORMAL_SPEED])
+        self.ui_elements.txtLowSpeed.setText(data.parameters[MotorParamsIdx.LOW_SPEED])
 
     def _update_settings(self):
         """Updates current settings by reading the values from the motor"""
@@ -194,23 +189,6 @@ class SettingsWindow(QMainWindow):
                         config = str(get_toml('Device', conf_key.lower(), cfg_file))
 
                     self._config_txt_boxes[conf_key].setText(config)       
-
-    # def _get_config(self, key: str, cfg_file_path: str) -> str:
-    #     if key == "MOTOR_IP":
-    #         if Config.focuser == '"160':
-    #             return get_toml('Device', 'ip_160', cfg_file_path)
-    #         elif Config.focuser == "IAG":
-    #             return get_toml('Device', 'ip_iag', cfg_file_path)
-    #     elif key == "BACKLASH":
-    #         return str(get_toml('Device', 'backlash', cfg_file_path))
-    #     elif key == "POS_MAX":
-    #         return str(get_toml('Device', 'pos_max', cfg_file_path))
-
-
-
-
-
-
 
         else:
             print("DO NOT RETURN TO DEFAULT VALUES")
@@ -256,7 +234,7 @@ class SettingsWindow(QMainWindow):
     def _send_test_command(self):
         if self.engineering_mode and self.ui_elements.txtCommand.text():   # The button is not supposed to be visible when not in engineering mode, this is just a safeguard
             try:
-                self._signal_command_response.emit(self.driver.sendCommand(self.ui_elements.txtCommand.text()))
+                self._signal_command_response.emit(self.motor.driver.sendCommand(self.ui_elements.txtCommand.text()))
             except Exception as e:
                 print(e)
 
@@ -264,7 +242,7 @@ class SettingsWindow(QMainWindow):
         self.ui_elements.txtCommand.setText(self.ui_elements.txtCommand.text().upper())
 
 
-    def _set_motor_settings(self, key:str, value:str):
+    def _set_motor_settings(self, key:MotorParamsIdx, value:str):
 
         if value == self._motor_settings[key]:
             if key in self._changed_settings:
@@ -286,20 +264,14 @@ class SettingsWindow(QMainWindow):
 
     def _initialize_motor_settings(self, value):
         if value is False:                                                                  # The motor reading finishes when the _running signal goes to False
-            self._motor_settings["MOTOR_IP"] = self.ui_elements.txtMotorIP.text()
-            self._motor_settings["BACKLASH"] = self.ui_elements.txtBackComp.text()
-            self._motor_settings["MAX_POS"] = self.ui_elements.txtMaxPos.text()
-            self._motor_settings["PARK"] = self.ui_elements.txtPark.text()
-            self._motor_settings["MAX_SPEED"] = self.ui_elements.txtMaxSpeed.text()
-            self._motor_settings["NORMAL_SPEED"] = self.ui_elements.txtNormalSpeed.text()
-            self._motor_settings["LOW_SPEED"] = self.ui_elements.txtLowSpeed.text()
-        # "MOTOR_IP":self.ui_elements.txtMotorIP,
-#             "BACKLASH":self.ui_elements.txtBackComp,
-#             "POS_MAX":self.ui_elements.txtMaxPos,
-#             "PARK":self.ui_elements.txtPark,
-#             "MAX_SPEED":self.ui_elements.txtMaxSpeed,
-#             "NORMAL_SPEED":self.ui_elements.txtNormalSpeed,
-#             "LOW_SPEED":self.ui_elements.txtLowSpeed,
+            self._motor_settings[MotorParamsIdx.MOTOR_IP] = self.ui_elements.txtMotorIP.text()
+            self._motor_settings[MotorParamsIdx.BACKLASH] = self.ui_elements.txtBackComp.text()
+            self._motor_settings[MotorParamsIdx.MAX_POS] = self.ui_elements.txtMaxPos.text()
+            self._motor_settings[MotorParamsIdx.PARK_POS] = self.ui_elements.txtPark.text()
+            self._motor_settings[MotorParamsIdx.MAX_SPEED] = self.ui_elements.txtMaxSpeed.text()
+            self._motor_settings[MotorParamsIdx.NORMAL_SPEED] = self.ui_elements.txtNormalSpeed.text()
+            self._motor_settings[MotorParamsIdx.LOW_SPEED] = self.ui_elements.txtLowSpeed.text()
+            
 
     def closeEvent(self, a0):
         """Event called when the settings window is closed
@@ -326,27 +298,27 @@ class SettingsWindow(QMainWindow):
  
             # self._changed_settings.clear()          # Resets changes dictionary         
         # Device IP
-            self._set_motor_settings("MOTOR_IP", self.ui_elements.txtMotorIP.text())
+            self._set_motor_settings(MotorParamsIdx.MOTOR_IP, self.ui_elements.txtMotorIP.text())
 
         # Backlash compensation
-            self._set_motor_settings("BACKLASH", self.ui_elements.txtBackComp.text())
+            self._set_motor_settings(MotorParamsIdx.BACKLASH, self.ui_elements.txtBackComp.text())
             # if self._settings_changed:
-            #     self.driver.backlash = self._motor_settings["BACKLASH"]
+            #     self.motor.driver.backlash = self._motor_settings["BACKLASH"]
         # Max position
-            self._set_motor_settings("MAX_POS", self.ui_elements.txtMaxPos.text())
+            self._set_motor_settings(MotorParamsIdx.MAX_POS, self.ui_elements.txtMaxPos.text())
             # if self._settings_changed:
-                # current_pos = self.driver.position                                  # Reads the current position
-                # self.driver.max_pos = self._motor_settings["MAX_POS"]         # Saves new max pos value
+                # current_pos = self.motor.driver.position                                  # Reads the current position
+                # self.motor.driver.max_pos = self._motor_settings["MAX_POS"]         # Saves new max pos value
                 # if int(self._motor_settings["MAX_POS"]) < current_pos:            # If the new max position is lower than the current position informs that a homing is needed    #TODO: É necessário mesmo?                
                 #     print("Necessário realizar homing")                            # TODO: Se o novo valor máximo for menor que a posição atual vai ser necessário realizar o homing para garantir que a posição atual vai ser válida dentro do novo limite
         # Park position
-            self._set_motor_settings("PARK", self.ui_elements.txtPark.text())
+            self._set_motor_settings(MotorParamsIdx.PARK_POS, self.ui_elements.txtPark.text())
         # Max speed
-            self._set_motor_settings("MAX_SPEED", self.ui_elements.txtMaxSpeed.text())  #TODO: No firmware do motor está limitado em 214400
+            self._set_motor_settings(MotorParamsIdx.MAX_SPEED, self.ui_elements.txtMaxSpeed.text())  #TODO: No firmware do motor está limitado em 214400
         # Normal speed
-            self._set_motor_settings("NORMAL_SPEED", self.ui_elements.txtNormalSpeed.text())
+            self._set_motor_settings(MotorParamsIdx.NORMAL_SPEED, self.ui_elements.txtNormalSpeed.text())
         # Normal speed
-            self._set_motor_settings("LOW_SPEED", self.ui_elements.txtLowSpeed.text())
+            self._set_motor_settings(MotorParamsIdx.LOW_SPEED, self.ui_elements.txtLowSpeed.text())
 
             if self._changed_settings:                       # If the changes dictionary has any elements then a setting was changed and the command store must be executed
                 verify = VerificationDialog()
@@ -374,7 +346,7 @@ class SettingsWindow(QMainWindow):
                         #TODO: Vai ser necessário salvar todas as novas configurações e não só o IP
                         self._update_config_file(keys)
                         # if 'DEVICE_IP' in keys:
-                        #     self.driver.device_IP = self._motor_settings["DEVICE_IP"]
+                        #     self.motor.driver.device_IP = self._motor_settings["DEVICE_IP"]
                         #     with open(config_file, 'r') as f:
                         #         config = toml.load(f)
 
@@ -389,11 +361,11 @@ class SettingsWindow(QMainWindow):
                         #         toml.dump(config, f)
 
                         for _ in keys:  # Uses the driver properties to send the new values to the motor
-                            setattr(self.driver, self.driver.property_handlers[_], self._changed_settings[_])
+                            setattr(self.motor.driver, self.motor.driver.property_handlers[_], self._changed_settings[_])
                             self.logger.info(f"Motor parameter changed: [{_}] Previous value -> {self._motor_settings[_]} | New value -> {self._changed_settings[_]}") 
 
                         self._signals_changed_settings.emit(self._changed_settings)     # Emits the changes to the main UI
-                        self.driver._store_to_flash()                                   # Store the new settings to flash.
+                        self.motor.driver._store_to_flash()                                   # Store the new settings to flash.
                         self._changed_settings.clear()                                  # Resets changes dictionary   
                         self.logger.info("Ended motor configuration")
                     except Exception as e:
@@ -429,15 +401,16 @@ class SettingsWindow(QMainWindow):
         with open(config_file, 'r') as f:
             config = toml.load(f)
             for k in keys:
-                if k == 'MOTOR_IP':
+                if k == MotorParamsIdx.MOTOR_IP:
                     if Config.focuser == '160':
-                        config['Device']['ip_160'] = self._changed_settings["MOTOR_IP"]
+                        config['Device']['ip_160'] = self._changed_settings[MotorParamsIdx.MOTOR_IP]
                         Config.device_ip = config['Device']['ip_160'] # get_toml('Device', 'ip_160')
                     elif Config.focuser == 'IAG':
-                        config['Device']['ip_iag'] = self._changed_settings["MOTOR_IP"]
+                        config['Device']['ip_iag'] = self._changed_settings[MotorParamsIdx.MOTOR_IP]
                         Config.device_ip = config['Device']['ip_iag'] # get_toml('Device', 'ip_iag')
                 else:
-                    config['Device'][k.lower()] = int(self._changed_settings[k])
+                    # config['Device'][k.lower()] = int(self._changed_settings[k])
+                    config['Device'][self.motor.parameters[k].NAME] = int(self._changed_settings[k])
 
         with open(config_file, 'w') as f:
             toml.dump(config, f)
@@ -457,34 +430,14 @@ class RetrieveSettings(QThread):
     """
 
     _running = pyqtSignal(bool)
-
-    _signal_device_ID = pyqtSignal(str)
-    _signal_device_IP = pyqtSignal(str)
-    _signal_backlash = pyqtSignal(str)
-    _signal_max_pos = pyqtSignal(str)
-    _signal_park_pos = pyqtSignal(str)
-    _signal_max_speed = pyqtSignal(str)
-    _signal_normal_speed = pyqtSignal(str)
-    _signal_low_speed = pyqtSignal(str)
-
     _signal_progress = pyqtSignal(int)
 
+    motor_data = Motor()
 
-    # motor_data = {"DEVICE_ID":'',
-    #             "DEVICE_IP":'',
-    #             "BACKLASH":'',
-    #             "MAX_POS":'',
-    #             "PARK":'',
-    #             "MAX_SPEED":'',
-    #             "NORMAL_SPEED":'',
-    #             "LOW_SPEED":''}
-
-    motor_data = MotorData()
-
-    signal_motor_data = pyqtSignal(MotorData)
+    signal_motor_data = pyqtSignal(Motor)
 
 
-    def __init__(self, driver: FocuserDriver):
+    def __init__(self, motor: Motor):
         """
         Parameters
         ----------
@@ -494,7 +447,7 @@ class RetrieveSettings(QThread):
         super().__init__()
 
 
-        self.driver = driver
+        self.motor = motor
 
 
     def run(self):
@@ -503,48 +456,43 @@ class RetrieveSettings(QThread):
         self._signal_progress.emit(p)
         self._running.emit(True)
 
-        resp = self.driver.device_ID
+        resp = self.motor.ID
         if resp == constants.ID_FOCUSER_160:
-            # self._signal_device_ID.emit("Focuser 160") 
             self.motor_data.ID = "Focuser 160"
         elif resp == constants.ID_FOCUSER_IAG:
-            # self._signal_device_ID.emit("Focuser IAG")
             self.motor_data.ID = "Focuser IAG"
         else:
-            # self._signal_device_ID.emit("*Invalid motor ID*")
             self.motor_data.ID = "*Invalid motor ID*"
 
-        self.motor_data.firmware_version = self.driver.device_Firmware_Version
+        self.motor_data.firmware_version = self.motor.driver.read_firmware_version()
             
-        
-        p += step_size
-        self._signal_progress.emit(p)
-        # self._signal_device_IP.emit(self.driver.device_IP)
-        self.motor_data.IP = self.driver.device_IP
-        p += step_size
-        self._signal_progress.emit(p)
-        # self._signal_backlash.emit(self.driver.backlash)
-        self.motor_data.backlash = self.driver.backlash
-        p += step_size
-        self._signal_progress.emit(p)
-        # self._signal_max_pos.emit(self.driver.max_pos)
-        self.motor_data.max_pos = self.driver.max_pos
-        p += step_size
-        self._signal_progress.emit(p)
-        # self._signal_park_pos.emit(self.driver.park_pos)
-        self.motor_data.park_pos = str(self.driver.park_pos)
-        p += step_size
-        self._signal_progress.emit(p)
-        # self._signal_max_speed.emit(self.driver.max_speed)
-        self.motor_data.max_speed = self.driver.max_speed
-        p += step_size
-        self._signal_progress.emit(p)
-        # self._signal_normal_speed.emit(self.driver.normal_speed)
-        self.motor_data.normal_speed = self.driver.normal_speed
-        p += step_size
-        self._signal_progress.emit(p)
-        # self._signal_low_speed.emit(self.driver.low_speed)
-        self.motor_data.low_speed = self.driver.low_speed
+        for param in MotorParamsIdx:
+            p += step_size
+            self._signal_progress.emit(p)
+            self.motor_data.parameters[param] = self.motor.get_param[param]
+
+        # p += step_size
+        # self._signal_progress.emit(p)
+        # self.motor_data.parameters[MotorParams.MOTOR_IP] = self.motor.get_param(MotorParams.MOTOR_IP)
+        # p += step_size
+        # self._signal_progress.emit(p)
+        # # self._signal_backlash.emit(self.motor.driver.backlash)
+        # self.motor_data.parameters[MotorParams.BACKLASH] = self.motor.get_param(MotorParams.BACKLASH)
+        # p += step_size
+        # self._signal_progress.emit(p)
+        # self.motor_data.parameters[MotorParams.MAX_POS] = self.motor.get_param(MotorParams.MAX_POS)
+        # p += step_size
+        # self._signal_progress.emit(p)
+        # self.motor_data.parameters[MotorParams.PARK_POS] = self.motor.get_param(MotorParams.PARK_POS)
+        # p += step_size
+        # self._signal_progress.emit(p)
+        # self.motor_data.parameters[MotorParams.MAX_SPEED] = self.motor.get_param(MotorParams.MAX_SPEED)
+        # p += step_size
+        # self._signal_progress.emit(p)
+        # self.motor_data.parameters[MotorParams.NORMAL_SPEED] = self.motor.get_param(MotorParams.NORMAL_SPEED)
+        # p += step_size
+        # self._signal_progress.emit(p)
+        # self.motor_data.parameters[MotorParams.LOW_SPEED] = self.motor.get_param(MotorParams.LOW_SPEED)
         p = 100
         self._signal_progress.emit(p)
         time.sleep(0.2)

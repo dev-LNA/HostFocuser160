@@ -24,7 +24,7 @@ except Exception as e:
 from src.core.app import App
 
 from misc.client_sample import ClientSimulator
-from misc.settings import SettingsWindow
+# from misc.settings import SettingsWindow
 from misc.load_bar import LoadBar
 from misc.ui_intellisense import UiWidgets
 from misc.log_box import LogBox
@@ -143,7 +143,7 @@ class FocuserOPD(QtWidgets.QMainWindow):
 
         
         self.control.signals_moving.info.connect(self.ui_elements.ledMoving.setProperty)
-        self.control.signals_lim_min.info.connect(self.ui_elements.ledLimMin.setProperty)       
+        self.control.signals_lim_min.info.connect(self.ui_elements.ledLimMin.setProperty)
         self.control.signals_lim_max.info.connect(self.ui_elements.ledLimMax.setProperty)
         self.control.signals_initialized.info.connect(self.ui_elements.ledHome.setProperty)
         self.control.signals_parking.info.connect(self.ui_elements.ledPark.setProperty)
@@ -400,40 +400,41 @@ class FocuserOPD(QtWidgets.QMainWindow):
 
     def _open_settings(self):
         """Opens settings window"""
+        ...
     # To open the settings the motor must be connected
-        if self.control.device.connected:                                                                   # Checks if the motor is connected
-            if self._settings_window is None:                                                                   # If the settings window is not instantiated
-                self._settings_window = SettingsWindow(self.control.device, logger)                                         # Starts the main window according to the initialized focuser
-                self._settings_window._signal_window_closed.connect(self._settings_closed)                          # Connects function that must be executed when the settings window is closed
-                self._settings_window._signals_changed_settings.connect(self._parse_changed_settings)               # Connects function to be executed when settings are changed
-                self._settings_window.move(self.pos() + QPoint(self.width(), 0))                                    # Positions settings window next to the main window
-                self._settings_window.show()                                                                        # Shows settings window
-        else:                                                                                               # If the motor is not connected asks the user if they would like to connect #TODO: Talvez dê só para conectar sem perguntar para o usuário
-            msg = QMessageBox.information(                                                                      # Shows message to the user
-                self,  # Parent widget (None centers on the screen; 'self' for a parent window)
-                "Attention",  
-                "To open settings the focuser motor must be connected. \nConnect to motor?",                    # Asks the user if they want to connect to the motor
-                buttons=QMessageBox.StandardButton.Yes | QMessageBox.StandardButton.No)                         # Configures the message buttons
-            if(msg == QMessageBox.StandardButton.Yes):                                                          # If the user whishes to connect the motor
-                self._start()                                                                                       # Connects the server to the motor and starts server operation #TODO: Talvez seja bom ter essas coisas separadas, com um método só para conectar (criar o socket) e outro para iniciar a thread de App, pois a thread de App vai começar a fazer o polling de informações sem parar uma vez iniciada
-                t = time.time()                                                                                     # Keeps current time
-                while not self.control.device.connected:                                                            # Waits 5 seconds while the server tries to connect to the motor
-                    pass
-                    if round(time.time()-t, 3) > 5:                                                                     # If the server cannot connect after 5 seconds informs the user
-                        QMessageBox.information(                                                                        # Shows message to the user
-                            self,  # Parent widget (None centers on the screen; 'self' for a parent window)
-                            "Attention",  
-                            "The motor could not be reached after 5 seconds",                                           # Informs the user that the motor is not reachable
-                            buttons=QMessageBox.StandardButton.Ok)                                                      # Configures the message button
-                        self._stop()
-                        break                                                                                           # Break the while loop and continues operation
-                if self.control.device.connected:                                                               # If the connection to the motor was successful
-                    if self._settings_window is None:                                                               # If the settings windows was not yet defined
-                        self._settings_window = SettingsWindow(self.control.device, logger)                                 # Instantiate settings window
-                        self._settings_window._signal_window_closed.connect(self._settings_closed)                  # Connects closed window signal
-                        self._settings_window._signals_changed_settings.connect(self._parse_changed_settings)       # Connects signal to show the settings in the GUI
-                        self._settings_window.move(self.pos() + QPoint(self.width(), 0))                            # Positions the settings window according to the main window position
-                        self._settings_window.show()                                                                # Shows the settings window
+        # if self.control.device.connected:                                                                   # Checks if the motor is connected
+        #     if self._settings_window is None:                                                                   # If the settings window is not instantiated
+        #         self._settings_window = SettingsWindow(self.control.device, logger)                                         # Starts the main window according to the initialized focuser
+        #         self._settings_window._signal_window_closed.connect(self._settings_closed)                          # Connects function that must be executed when the settings window is closed
+        #         self._settings_window._signals_changed_settings.connect(self._parse_changed_settings)               # Connects function to be executed when settings are changed
+        #         self._settings_window.move(self.pos() + QPoint(self.width(), 0))                                    # Positions settings window next to the main window
+        #         self._settings_window.show()                                                                        # Shows settings window
+        # else:                                                                                               # If the motor is not connected asks the user if they would like to connect #TODO: Talvez dê só para conectar sem perguntar para o usuário
+        #     msg = QMessageBox.information(                                                                      # Shows message to the user
+        #         self,  # Parent widget (None centers on the screen; 'self' for a parent window)
+        #         "Attention",  
+        #         "To open settings the focuser motor must be connected. \nConnect to motor?",                    # Asks the user if they want to connect to the motor
+        #         buttons=QMessageBox.StandardButton.Yes | QMessageBox.StandardButton.No)                         # Configures the message buttons
+        #     if(msg == QMessageBox.StandardButton.Yes):                                                          # If the user whishes to connect the motor
+        #         self._start()                                                                                       # Connects the server to the motor and starts server operation #TODO: Talvez seja bom ter essas coisas separadas, com um método só para conectar (criar o socket) e outro para iniciar a thread de App, pois a thread de App vai começar a fazer o polling de informações sem parar uma vez iniciada
+        #         t = time.time()                                                                                     # Keeps current time
+        #         while not self.control.device.connected:                                                            # Waits 5 seconds while the server tries to connect to the motor
+        #             pass
+        #             if round(time.time()-t, 3) > 5:                                                                     # If the server cannot connect after 5 seconds informs the user
+        #                 QMessageBox.information(                                                                        # Shows message to the user
+        #                     self,  # Parent widget (None centers on the screen; 'self' for a parent window)
+        #                     "Attention",  
+        #                     "The motor could not be reached after 5 seconds",                                           # Informs the user that the motor is not reachable
+        #                     buttons=QMessageBox.StandardButton.Ok)                                                      # Configures the message button
+        #                 self._stop()
+        #                 break                                                                                           # Break the while loop and continues operation
+        #         if self.control.device.connected:                                                               # If the connection to the motor was successful
+        #             if self._settings_window is None:                                                               # If the settings windows was not yet defined
+        #                 self._settings_window = SettingsWindow(self.control.device, logger)                                 # Instantiate settings window
+        #                 self._settings_window._signal_window_closed.connect(self._settings_closed)                  # Connects closed window signal
+        #                 self._settings_window._signals_changed_settings.connect(self._parse_changed_settings)       # Connects signal to show the settings in the GUI
+        #                 self._settings_window.move(self.pos() + QPoint(self.width(), 0))                            # Positions the settings window according to the main window position
+        #                 self._settings_window.show()                                                                # Shows the settings window
 
 
 
@@ -445,9 +446,10 @@ class FocuserOPD(QtWidgets.QMainWindow):
         data : dict
             Dictionary with all the changed settings
         """
-        if "MAX_POS" in data:                                                   # If the 'MAX_POS' is changed the slider must be resized accordingly
-            self.ui_elements.posSlider.setMaximum(int(data["MAX_POS"]) + 5)         # Sets slider max value
-            self.ui_elements.posSlider.setMinimum(-12)                              # Sets slider min value #TODO: Acho que esse valor vai ser dependente do 'backlash'
+        ...
+        # if "MAX_POS" in data:                                                   # If the 'MAX_POS' is changed the slider must be resized accordingly
+        #     self.ui_elements.posSlider.setMaximum(int(data["MAX_POS"]) + 5)         # Sets slider max value
+        #     self.ui_elements.posSlider.setMinimum(-12)                              # Sets slider min value #TODO: Acho que esse valor vai ser dependente do 'backlash'
 
     def _settings_closed(self, msg):
         """Function executed when the settings window is closed.
@@ -457,9 +459,10 @@ class FocuserOPD(QtWidgets.QMainWindow):
         msg : bool
             If true indicates that the window was closed
         """
-        if msg is True:                         # If the settings window was closed
-            self._settings_window = None            # Reassign the settings window to allow a new instantiation
-            print("Configurações fechadas")
+        ...
+        # if msg is True:                         # If the settings window was closed
+        #     self._settings_window = None            # Reassign the settings window to allow a new instantiation
+        #     print("Configurações fechadas")
 
     def _parse_last_command(self, data: dict):
         """Parses the information about the last command received by the server.
