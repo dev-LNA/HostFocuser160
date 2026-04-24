@@ -12,5 +12,6 @@ dependencies = [
     "pythonping>=1.1.4",
     "pyzmq>=27.1.0",
     "scipy>=1.17.0",
-    "toml>=0.10.2"
+    "toml>=0.10.2",
+    "icmplib==3.0.4"
 ]

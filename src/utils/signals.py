@@ -28,3 +28,20 @@ class PropertySignals(QObject):
         self.status.emit(value)
         if prop and prop_value:
             self.info.emit(prop, prop_value)    
+
+class MultiSignal(QObject):
+    """Some variables may need to be transmitted also as a string"""
+    value = pyqtSignal(object)
+    string = pyqtSignal(str)
+
+    def emit(self, value: bool|int|float, string: str=None):
+        """Emits the variable value and its string
+
+        :param value: Variable value to be transmitted
+        :type value: bool | int | float
+        """
+        self.value.emit(value)
+        if string is None:
+            self.string.emit(str(value))
+        else:            
+            self.string.emit(string)

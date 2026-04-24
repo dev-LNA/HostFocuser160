@@ -1,27 +1,16 @@
 
-from enum import IntEnum
+from enum import Enum, IntEnum
 from PyQt6.QtCore import QObject, pyqtSignal
 
 from typing import NamedTuple
 from dataclasses import dataclass
 
-class MotorParamsIdx(IntEnum):     
-    MOTOR_IP=0,
-    BACKLASH=1,
-    MAX_POS=2,
-    PARK_POS=3,
-    MAX_SPEED=4,
-    NORMAL_SPEED=5,
-    LOW_SPEED=6,
-    MAX_STEP=7,
-    INVALID=-1
-
 #The Driver must be imported after the definition of "MotoParams"
 from src.interface.motor_driver import Driver
 from src.interface.driver_DMX import  DriverDMX
 from src.interface.driver_AMP import DriverAMP
-
-from src.utils.constants import Constants
+from src.utils.constants import MotorModels, MotorParamsIdx, ServerCommands, constants
+from src.utils.signals import PropertySignals, MultiSignal
 
 
 @dataclass
@@ -33,16 +22,20 @@ class MotorParameter():
 
 class MotorSignals(QObject):
     connected = pyqtSignal(bool)
-    position = pyqtSignal(int)
-    encoder = pyqtSignal(int)
-    homing = pyqtSignal(bool)
+    # position = pyqtSignal(int)
+    # homing = pyqtSignal(bool)
     parking = pyqtSignal(bool)
-    moving = pyqtSignal(bool)
-    initialized = pyqtSignal(bool)
+    # moving = pyqtSignal(bool)
     alarm = pyqtSignal(bool)
-    status = pyqtSignal(int)
-    status_lim_min = pyqtSignal(bool)
-    status_lim_max = pyqtSignal(bool)
+    # status = pyqtSignal(int)
+    firmware_status = pyqtSignal(str)
+
+    moving = PropertySignals()
+    lim_min = PropertySignals()
+    lim_max = PropertySignals()
+    position = MultiSignal()
+    encoder = pyqtSignal(str)
+    initialized = PropertySignals()
 
     
 
@@ -50,12 +43,12 @@ class Motor():
 
     signals = MotorSignals()
 
-    def __init__(self, model: Constants, ID: int = 0):
+    def __init__(self, model: MotorModels, ID: str = '0', ):
         
         # General Information
-        self.model: Constants = model
+        self.model = model
         self.driver: Driver
-        self.ID: int = ID
+        self.ID: str = ID
         self.firmware_version: str = ''
 
         self.parameters = {
@@ -70,35 +63,52 @@ class Motor():
         }
 
         self._connected: bool = False
-        self._position: int = 0
-        self.last_position: int = 0
+        self._position: int = constants.INVALID_RESPONSE
+        self.last_position: int = constants.INVALID_RESPONSE
         self._is_moving: bool = False
-        self._encoder: int = 0
+        self._encoder: int = constants.INVALID_RESPONSE
         self._homing: bool = False
         self._parking: bool = False
         self._initialized: bool = False
         self._alarm: bool = False
+        self._firmware_status: str = 'invalid'
+        self._status: str = ""
 
-        if model == 'DMX':
+        if model == MotorModels.ARCUS_DMX_ETH:
             self.driver = DriverDMX(model)
-        elif model == 'AMP':
+        elif model == MotorModels.AMP_MOTOR:
             self.driver = DriverAMP(model)
+        else:
+            raise RuntimeError(f'Motor driver model {model} is invalid')
 
-    #_____PROPERTIES_____
+   #region  ========== PROPERTIES ========== # 
 
     @property
     def connected(self) -> bool:
         """Motor connected status
 
         :getter: Returns motor connection status.
-        :setter: Changes the connection status and emits a signal.
         :rtype: bool
         """
         return self._connected
     @connected.setter
-    def connected(self, value: bool):
-        self._connected = value
-        self.signals.connected.emit(self._connected)
+    def connected(self, status: bool):
+        self._connected = status
+        self.signals.connected.emit(status)
+
+    
+    @property
+    def is_moving(self) -> bool:
+        return self._is_moving
+    @is_moving.setter
+    def is_moving(self, val: bool):
+        if val != self._is_moving:
+            self._is_moving = val
+            if val:
+                self.signals.moving.emit(val, "statusLed", "OK")
+            else:
+                self.signals.moving.emit(val, "statusLed", "NOK")
+
 
     @property
     def position(self) -> int:
@@ -109,11 +119,12 @@ class Motor():
         :setter: Sends to the driver a command to move the motor to a new position.
         :rtype: int
         """
-        val = self.driver.read_position()
-        if val != self._position:
+        encoder_pos = self.encoder
+        pos = self.driver.conv_position(encoder_pos)
+        if pos != self._position:
             self.last_position = self._position
-            self._position = val
-            self.signals.position.emit(val)
+            self._position = pos
+            self.signals.position.emit(pos)
         return self._position
     @position.setter
     def position(self, value: int) -> str:
@@ -126,7 +137,9 @@ class Motor():
             if resp == "OK":
                 return f'[Device] move={str(value)}'
         except Exception as e:
-            return str(e)
+            self.disconnect()
+            raise e
+            # return str(e)
     
     @property
     def encoder(self) -> int:
@@ -136,10 +149,11 @@ class Motor():
                 the last encoder position the value is updated and a signal is emited.
         :rtype: int
         """
-        val = self.driver.read_encoder()
-        if val != self._encoder:
-            self._encoder = val
-            self.signals.encoder.emit(self._encoder)
+        encoder_pos = self.driver.read_encoder()
+        if encoder_pos != self._encoder:
+            self._encoder = encoder_pos
+            self.signals.encoder.emit(str(self._encoder))
+
         return self._encoder
     
     @property
@@ -153,10 +167,14 @@ class Motor():
             val = self.driver.read_homing()
             if val != self._homing:
                 self._homing = val
-                self.signals.homing.emit(self._homing)
+                # self.signals.homing.emit(self._homing)
+                if self._homing:
+                    self.signals.initialized.emit(False, "statusLed", "WAIT")
             return self._homing
         except Exception as e:
-            return f'[Device] Could not retrieve homing information: Error -> {str(e)}'
+            self.disconnect()
+            raise e
+            # return f'[Device] Could not retrieve homing information: Error -> {str(e)}'
 
 
     @property
@@ -173,7 +191,9 @@ class Motor():
                 self.signals.parking.emit(self._parking)
             return self._parking
         except Exception as e:
-            return f'[Device] Could not retrieve parking information: Error -> {str(e)}'
+            self.disconnect()
+            raise e
+            # return f'[Device] Could not retrieve parking information: Error -> {str(e)}'
     
     @property
     def initialized(self) -> bool:
@@ -187,26 +207,55 @@ class Motor():
             val = self.driver.read_initialized()
             if val != self._initialized:
                 self._initialized = val
-                self.signals.initialized.emit(self._initialized)
+                # self.signals.initialized.emit(self._initialized)
+                if self._initialized:
+                    self.signals.initialized.emit(True, "statusLed", "OK")
+                elif not self._homing:
+                    self.signals.initialized.emit(False, "statusLed", "NOK")
             return self._initialized
         except Exception as e:
-            return f'[Device] Could not retrieve initialized information: Error -> {str(e)}'
+            self.disconnect()
+            raise e
+            # return f'[Device] Could not retrieve initialized information: Error -> {str(e)}'
     
-    @property                   #TODO: A formatação do status é diferente, então vai ser necessário padronizar isso 
-    def status(self) -> str:    #       entre os motores e fazer com que a resposta de 'read_satus' seja independente do motor.
-        """Motor status                          
+#endregion
 
-        :getter: Reads motor status. If the value changes emits a signals.
-        :rtype: int
+                                        #TODO: A formatação do status é diferente, então vai ser necessário padronizar isso 
+    def update_status(self) -> str:    #       entre os motores e fazer com que a resposta de 'read_satus' seja independente do motor.
+        """Reads motor status. If the value changes emits a signals.
+
+        :return: motor status
+        :rtype: str
         """
+        #TODO: Precisa ser ajustado de acordo com o formato do status do motor do IAG
         try:
-            val = self.driver.read_status()
-            if val != self._status:
-                self._status = val
-                self.signals.status.emit(self._status)
+            if not self._homing and not self._initialized:
+                self.signals.initialized.emit(False, "statusLed", "NOK")
+
+            motor_status = self.driver.read_status()
+            if motor_status != self._status and motor_status != "NOK":
+                self._status = motor_status
+
+                if(motor_status[0] == '1' or motor_status[1] == '1' or motor_status[2] == '1'):     #| Bit '0' indicates the 'moving' status
+                    self.is_moving = True                                                           #| Bit '1' indicates acceleration           
+                else:                                                                               #| Bit '2' indicates deceleration
+                    self.is_moving = False                                                          #|  If any are set the motor is moving
+
+                if(motor_status[4] == '1'):                     #| Bit '4' indicates the lim minus microswitch status
+                    self.signals.lim_min.emit(True, "statusLed", "OK")      #|
+                else:                                           #|
+                    self.signals.lim_min.emit(False, "statusLed", "NOK")    #|
+
+                if(motor_status[5] == '1'):                     #| Bit '5' indicates the lim max microswitch status
+                    self.signals.lim_max.emit(True, "statusLed", "OK")      #|
+                else:                                           #|
+                    self.signals.lim_max.emit(False, "statusLed", "NOK")     #|
+
             return self._status
         except Exception as e:
-            return f'[Device] Could not retrieve motor status information: Error -> {str(e)}'
+            self.disconnect()
+            raise e
+            # raise RuntimeError(f'[Device] Could not retrieve motor status information: Error -> {str(e)}')
 
     
     @property
@@ -221,10 +270,21 @@ class Motor():
         return self._alarm
     
     @property
-    def firmware_status(self) -> int:
+    def firmware_status(self) -> str: 
+        try:
+            val = self.driver.read_firmware_status()
+            if val != self._firmware_status:
+                self._firmware_status = val
+                self.signals.firmware_status.emit(self._firmware_status)
+            return self._firmware_status
+        except Exception as e:
+            self.disconnect()
+            raise e
+            # return f'[Device] Could not retrieve firmware status information: Error -> {str(e)}'
+
 
     
-    def connect(self, max_retries: int = 5, delay: float = 0.1) -> str:
+    def connect(self, max_retries: int = 5, delay: float = 0.1) -> bool:
         """Connects to the motor
 
         :param max_retries: Max tries to connect to the motor, defaults to 5
@@ -235,16 +295,23 @@ class Motor():
         :rtype: str
         """
         if not self.connected:
-            resp = self.driver.connect_motor(max_retries=max_retries, delay=delay)
-            if resp == "OK":
-                self.connected = True
-                print('Motor Connected')
-                # self.logger.info('Motor Connected')
-                return "OK"
-            else:
+            try:
+                resp = self.driver.connect_motor(max_retries=max_retries, delay=delay)
+                if resp == "OK":
+                    # self._connected = True
+                    # self.signals.connected.emit(self._connected)
+                    self.connected = True
+
+                    print('Motor Connected')
+                    # self.logger.info('Motor Connected')
+                    return True
+                else:
+                    return False
+            except Exception as e:
                 print('Failed to establish a connection to the motor')
                 # self.logger.error('Failed to establish a connection to the motor')
-                return  "NOK"
+                raise e
+                # return  False
             
     def disconnect(self) -> str:
         """Disconnects the motor
@@ -255,16 +322,36 @@ class Motor():
         if self.connected:
             resp = self.driver.disconnect_motor()
             if resp == "OK":
+                # self._connected = False
+                # self.signals.connected.emit(self._connected)
                 self.connected = False
                 print("Motor disconnected")
-                # self.logger.info('Motor Disconnected')
+
+                self._reset_state()
+
                 return "OK"
             else:
                 print('Failed to disconnect the motor')
-                # self.logger.error('Failed to disconnect the motor')
                 return "NOK"
+        return "OK"
 
-    def ping(self) -> str:
+    def _reset_state(self):
+        """Resets the motor state to the default values. 
+        Also resets the signals."""
+        self._connected = False
+        self._position = constants.INVALID_RESPONSE
+        self.last_position = constants.INVALID_RESPONSE
+        self._is_moving = False
+        self._encoder = constants.INVALID_RESPONSE
+        self._homing = False
+        self._parking = False
+        self._initialized = False
+        self._alarm = False
+        self._firmware_status = 'invalid'
+        self._status = ""
+
+
+    def ping(self) -> bool:
         """Pings the motor to check if it is reachable
 
         :return: Ping was successful [OK / NOK]
@@ -273,9 +360,10 @@ class Motor():
         resp = self.driver.ping_motor()
         if resp == "OK":
             print('Ping to motor successful')
+            return True
         else:
             print('Failed to ping motor')
-        return resp
+            return False
 
     def set_param(self, ParamIndex: MotorParamsIdx, value: int | bool | str) -> str:
         """Sets values for motor parameters
@@ -288,17 +376,21 @@ class Motor():
         :return: Parameter change successful [OK / NOK]
         :rtype: str
         """
-        var = self.parameters[ParamIndex]
-        if var.IDX in self.driver.methods:  
-            resp = self.driver.methods[var.IDX](value)
-            if resp == "OK":
-                var.VALUE = value
-                self.parameters[var.IDX] = var
-                return resp
+        try:
+            var = self.parameters[ParamIndex]
+            if var.IDX in self.driver.param_methods:  
+                resp = self.driver.param_methods[var.IDX](value)
+                if resp == "OK":
+                    var.VALUE = value
+                    self.parameters[var.IDX] = var
+                    return resp
+                else:
+                    raise Exception(f'[Device] Error setting parameter "{var.NAME.upper()}": {resp}')
             else:
-                raise Exception(f'[Device] Error setting parameter "{var.NAME.upper()}": {resp}')
-        else:
-            raise ValueError(f'Invalid command. Motor variable "{var.NAME.upper()}" is not defined.')
+                raise ValueError(f'Invalid command. Motor variable "{var.NAME.upper()}" is not defined.')
+        except Exception as e:
+            self.disconnect()
+            raise e
         
     def get_param(self, ParamIndex: MotorParamsIdx) -> int | str | bool:
         """Reads a parameter value from the motor
@@ -309,15 +401,33 @@ class Motor():
         :return: Parameter read from the motor
         :rtype: int | str | bool
         """
-        var = self.parameters[ParamIndex]
-        if var.IDX in self.driver.methods:
-            resp = self.driver.methods[var.IDX]()
-            if resp != "NOK":
-                var.VALUE = resp
-                self.parameters[var.IDX] = var
-                return resp
+        try:
+            var = self.parameters[ParamIndex]
+            if var.IDX in self.driver.param_methods:
+                resp = self.driver.param_methods[var.IDX]()
+                if resp != "NOK":
+                    var.VALUE = resp
+                    self.parameters[var.IDX] = var
+                    return resp
+                else:
+                    raise Exception(f'[Device] Failed to read parameter {var.NAME.upper()} from the motor')
             else:
-                raise Exception(f'[Device] Failed to read parameter {var.NAME.upper()} from the motor')
-        else:
-            raise ValueError(f'Invalid command. Motor variable "{var.NAME.upper()}" is not defined.')
+                raise ValueError(f'Invalid command. Motor variable "{var.NAME.upper()}" is not defined.')
+        except Exception as e:
+            self.disconnect()
+            raise e
+
+    def send_command(self, cmd: dict) -> str:
+        try:
+            if hasattr(ServerCommands, cmd["COMMAND"]):
+                if cmd['PARAMETER']:
+                    return self.driver.command_methods[cmd["COMMAND"]](cmd["PARAMETER"])
+                else:
+                    return self.driver.command_methods[cmd["COMMAND"]]()
+            else:
+                raise RuntimeError(f'"{cmd["COMMAND"]}" is not a valid command')
+        except Exception as e:
+            self.disconnect()
+            raise e
+
 

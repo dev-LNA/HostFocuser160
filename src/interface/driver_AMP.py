@@ -17,7 +17,7 @@ class DriverAMP(Driver):
         """Precisa ser implementada pelo driver"""
         return "OK"
 
-    def read_position(self) -> int:
+    def conv_position(self) -> int:
         """Precisa ser implementada pelo driver"""
         ...
 

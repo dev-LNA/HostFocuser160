@@ -32,8 +32,8 @@ low_speed = 1000
 
 [Network]
 ip_address = "*"
-port_pub = 7001
-port_rep = 7002
+port_pub = 7003
+port_rep = 7004
 
 [Logging]
 log_level = "INFO"

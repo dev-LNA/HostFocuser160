@@ -24,7 +24,7 @@ from src.core.config import Config
 import src.core.exceptions as AlpacaExceptions
 from src.utils.constants import constants
 from src.utils.signals import PropertySignals
-from src.utils.motor import Motor
+
 import socket
 
 # from src.interface.dmx_eth import FocuserDriver as Focuser
@@ -182,21 +182,21 @@ class App(QObject):
                 "timeout": False,               # Timeout
             }
 
-        self.motor = None              # Initiates motor as None
+        self.device = None              # Initiates motor as None
 
 
 #----TESTES #TEST
     def _testes(self):        
-        self.motor.acionar()
+        self.device.acionar()
     
-        # num_bits = self.motor._conv_num_bits(-123456789,32)
+        # num_bits = self.device._conv_num_bits(-123456789,32)
         # high = num_bits[16:]
         # low = num_bits[:16]
         # print(high)
         # print(low)
 
-        # self.motor.mb_server.server.data_bank.set_discrete_inputs(825, high)
-        # self.motor.mb_server.server.data_bank.set_discrete_inputs(825+16, low)
+        # self.device.mb_server.server.data_bank.set_discrete_inputs(825, high)
+        # self.device.mb_server.server.data_bank.set_discrete_inputs(825+16, low)
 
 
 
@@ -215,12 +215,19 @@ class App(QObject):
         ValueError
             Raises exception if the motor model is not valid
         """
-        if self.motor == None:              # If motor was not instantiated
-            self.motor = Motor(motor_model)
+        if self.device == None:                                                         # If motor was not instantiated
+            if motor_model == constants.ARCUS_DMX_ETH:                                      # Checks motor model
+                from src.interface.driver_dmx_eth import FocuserDriver as Focuser               # If motor is Arcus DMX-ETH imports 'driver_dmx_eth'
+            elif motor_model == constants.AMP_MOTOR:                    
+                # from src.interface.driver_amp import FocuserDriver as Focuser                   # If motor im AMP imports 'driver_amp'
+                from src.interface.driver_amp_modbus import FocuserDriver as Focuser                   # If motor im AMP imports 'driver_amp_modbus'
+            
+            self.device = Focuser(self.logger, motor_model)                                 # Instantiates the motor according to the selected focuser
+            self.device.model = motor_model                                                 # Initiates motor model
 
-            self.motor.signals.moving.connect(lambda val: setattr(self, 'is_moving', val))      # Sets the 'is_moving' property according to the motor driver signal       
-            self.motor.signals.status_lim_min.connect(lambda val: setattr(self, 'status_lim_minus', val))   # Sets the 'status_lim_min' property according to the motor driver signal 
-            self.motor.signals.status_lim_max.connect(lambda val: setattr(self, 'status_lim_max', val))     # Sets the 'status_lim_max' property according to the motor driver signal 
+            self.device.signal_motor_is_moving.connect(lambda val: setattr(self, 'is_moving', val))         # Sets the 'is_moving' property according to the motor driver signal
+            self.device.signal_status_lim_min.connect(lambda val: setattr(self, 'status_lim_minus', val))   # Sets the 'status_lim_min' property according to the motor driver signal 
+            self.device.signal_status_lim_max.connect(lambda val: setattr(self, 'status_lim_max', val))     # Sets the 'status_lim_max' property according to the motor driver signal 
         else:
             raise ValueError("Invalid motor model")                                         # Raises an exception if the motor value is not valid
 
@@ -265,24 +272,24 @@ class App(QObject):
             self._signals_motor_connection("connected")                                             # Emits signals for GUI update
                             
             try:
-                self.motor.connected = True                                                        # Creates the socket and connects the server to the motor
-                self.position =self.motor.position                                                 # Reads current motor position
+                self.device.connected = True                                                        # Creates the socket and connects the server to the motor
+                self.position =self.device.position                                                 # Reads current motor position
                 self.status["position"] = self.position                                             # Updates status
-                self.status["initialized"] = self.motor.initialized                                # Updates status
-                self.status["device_IP"] = self.motor.device_IP                                    # Updates status
-                self.status["device_ID"] = self.motor.device_ID                                    # Updates status
-                self.status["device_Firmware_Version"] = self.motor.device_Firmware_Version        # Updates status
+                self.status["initialized"] = self.device.initialized                                # Updates status
+                self.status["device_IP"] = self.device.device_IP                                    # Updates status
+                self.status["device_ID"] = self.device.device_ID                                    # Updates status
+                self.status["device_Firmware_Version"] = self.device.device_Firmware_Version        # Updates status
 
                 self._check_homing()                                                                # Emits homing signals      #TODO: Trocar nome do método
 
             #--- Emits max pos and backlash to update GUI. The value is different in the test setup due to the size and gear differences
                 if TEST_SETUP:
-                    self.signal_max_pos.emit(int(self.motor.max_pos) + 5)             # A small gap at the end to account the distance to the lim+ uswitch 
-                    self.signal_backlash.emit(-(int(self.motor.backlash) + 10))       # A small gap at the end to account the distance to the lim+ uswitch 
+                    self.signal_max_pos.emit(int(self.device.max_pos) + 5)             # A small gap at the end to account the distance to the lim+ uswitch 
+                    self.signal_backlash.emit(-(int(self.device.backlash) + 10))       # A small gap at the end to account the distance to the lim+ uswitch 
                 else:
                     # TODO: Definir valores de excursão na montagem real
-                    self.signal_max_pos.emit(int(self.motor.max_pos))                 # A small gap at the end to account the distance to the lim+ uswitch 
-                    self.signal_backlash.emit(-(int(self.motor.backlash)))            # A small gap at the end to account the distance to the lim+ uswitch 
+                    self.signal_max_pos.emit(int(self.device.max_pos))                 # A small gap at the end to account the distance to the lim+ uswitch 
+                    self.signal_backlash.emit(-(int(self.device.backlash)))            # A small gap at the end to account the distance to the lim+ uswitch 
                 
                 self.logger.info(f'Device Reached.')
             except Exception as e:
@@ -329,8 +336,8 @@ class App(QObject):
     
     def _close_connection(self):
         """Unbind all sockets and destroy context"""
-        self.motor.disconnect()                                                        # Disconnects motor and closes socket
-        self.status["connected"] = self.motor.connected                                # Updates status
+        self.device.disconnect()                                                        # Disconnects motor and closes socket
+        self.status["connected"] = self.device.connected                                # Updates status
         self._pub_status()                              # Publishes current status
         try:    
             if(self.publisher):                                                         # If publisher is instantiated
@@ -394,7 +401,7 @@ class App(QObject):
             True -> Motor reachable
             False -> Motor NOT reachable
         """
-        return self.motor.ping()       # The way the ping is realized depends on the motor
+        return self.device.ping()       # The way the ping is realized depends on the motor
 
     def ping_router(self) -> bool:
         """Check if router is reachable
@@ -416,19 +423,19 @@ class App(QObject):
         microswitch and then removing the backlash until the encoder return 0"""
         try:
             self.communicating_to_motor = True              # Communication to motor started
-            res = self.motor.home()                        # Sends INIT command to motor
+            res = self.device.home()                        # Sends INIT command to motor
             self.communicating_to_motor = False         # Communication to motor ended
             time.sleep(.1)                                  # Delay after command sent              #TODO: É necessário esse delay?
             if res == "OK":                                 # If the motor recognized the command
-                self._homing = self.motor._homing              # Updates homing state
+                self._homing = self.device._homing              # Updates homing state
                 # self._homing = True
                 self._is_busy = True                            # Motor is busy (homing)    #TODO: Mudar essa lógica do 'is_busy'
             else:
                 self.logger.error(f'Device failed to start homing process')
-                self.status["alarm"] = self.motor.alarm    #TODO: Acho que isso não faz nada pq o ALM no DMX é só relacionado à temperatura    
+                self.status["alarm"] = self.device.alarm    #TODO: Acho que isso não faz nada pq o ALM no DMX é só relacionado à temperatura    
         except Exception as e:      
             self.communicating_to_motor = False         # Communication to motor ended
-            self.status["alarm"] = self.motor.alarm        #TODO: Acho que isso não faz nada pq o ALM no DMX é só relacionado à temperatura
+            self.status["alarm"] = self.device.alarm        #TODO: Acho que isso não faz nada pq o ALM no DMX é só relacionado à temperatura
             self.status["error"] = str(e)                   # Sets JSON error
             self.logger.error(f'Homing {e}')
             self._pub_status()                              # Publishes current status
@@ -438,18 +445,18 @@ class App(QObject):
         the focus to a pre-defined value."""
         try:
             self.communicating_to_motor = True              # Communication to motor started
-            res = self.motor.park()                        # Sends PARK command to motor
+            res = self.device.park()                        # Sends PARK command to motor
             self.communicating_to_motor = False         # Communication to motor ended
             time.sleep(.1)                                  # Delay after command sent              #TODO: É necessário esse delay?
             if res == "OK":                                 # If the motor recognized the command
-                self._parking = self.motor._parking            # Updates parking state
+                self._parking = self.device._parking            # Updates parking state
                 self._is_busy = True                            # Motor is busy (parking)    #TODO: Mudar essa lógica do 'is_busy'
             else:
                 self.logger.error(f'Device failed to start parking process')
                 self.status["error"] = "Error during parking"
         except Exception as e:
             self.communicating_to_motor = False         # Communication to motor ended
-            self.status["alarm"] = self.motor.alarm        #TODO: Acho que isso não faz nada pq o ALM no DMX é só relacionado à temperatura
+            self.status["alarm"] = self.device.alarm        #TODO: Acho que isso não faz nada pq o ALM no DMX é só relacionado à temperatura
             self.status["error"] = str(e)
             self.logger.error(f'Parking {e}')               # Sets JSON error
             self._pub_status()                              # Publishes current status
@@ -458,14 +465,14 @@ class App(QObject):
     def _handle_halt(self):
         """Stops the motor movement"""
         self.communicating_to_motor = True              # Communication to motor started
-        if self.motor.Halt():                          # Sends HALT command to motor and if the motor recognized the command
+        if self.device.Halt():                          # Sends HALT command to motor and if the motor recognized the command
             self.communicating_to_motor = False         # Communication to motor ended
             time.sleep(.1)                                  # Delay after command sent              #TODO: É necessário esse delay?
             self._is_busy = True                            # Motor is busy (parking)    #TODO: Mudar essa lógica do 'is_busy'
             self.logger.info(f'Device Stopped')
         else:                                           # If the motor do not recognize the command
             self.communicating_to_motor = False         # Communication to motor ended
-            self.status["alarm"] = self.motor.alarm    #TODO: Acho que isso não faz nada pq o ALM no DMX é só relacionado à temperatura
+            self.status["alarm"] = self.device.alarm    #TODO: Acho que isso não faz nada pq o ALM no DMX é só relacionado à temperatura
             self.logger.info(f'Halt Fail')
 
     def _handle_speed(self, vel):
@@ -476,7 +483,7 @@ class App(QObject):
             vel = Config.max_speed                          #|    
         try:
             self.communicating_to_motor = True              # Communication to motor started
-            if self.motor.speed(vel):                      # Sends change vel command to motor and if the motor recognized the command
+            if self.device.speed(vel):                      # Sends change vel command to motor and if the motor recognized the command
                 self.communicating_to_motor = False             # Communication to motor ended
                 time.sleep(.1)                                  # Delay after command sent              #TODO: É necessário esse delay?
                 self.logger.info(f'Speed changed')
@@ -500,18 +507,18 @@ class App(QObject):
                 self._handle_speed(int(speed))                   # Configures the movement speed
             if direction == 1:                              # Direction 1 indicates FOCUSIN
                 # FOCUS IN
-                self.motor.focus_in_out(int(direction))        # Sends FOCUSIN command to the motor
+                self.device.focus_in_out(int(direction))        # Sends FOCUSIN command to the motor
                 self.logger.info(f'Moving FOCUSIN')         
             elif direction == 0:                            # Direction 0 indicates FOCUSOUT
                 # FOCUS OUT
-                self.motor.focus_in_out(int(direction))        # Sends FOCUSOUT command to the motor
+                self.device.focus_in_out(int(direction))        # Sends FOCUSOUT command to the motor
                 self.logger.info(f'Moving FOCUSOUT')
             time.sleep(.1)                              # Delay after command sent              #TODO: É necessário esse delay?
             self._is_busy = True                        # Motor is busy (focusin/focusout)    #TODO: Mudar essa lógica do 'is_busy'
             self.communicating_to_motor = False         # Communication to motor ended
         except Exception as e:
             self.communicating_to_motor = False         # Communication to motor ended
-            self.status["alarm"] = self.motor.alarm    #TODO: Acho que isso não faz nada pq o ALM no DMX é só relacionado à temperatura    
+            self.status["alarm"] = self.device.alarm    #TODO: Acho que isso não faz nada pq o ALM no DMX é só relacionado à temperatura    
             self.status["error"] = str(e)
             self.logger.error(f'Moving FOCUS IN | OUT')
             self._pub_status()                              # Publishes current status
@@ -524,14 +531,14 @@ class App(QObject):
         """   
         try:
             self.communicating_to_motor = True              # Communication to motor started
-            self.motor.move(int(pos))                      # Sends MOVETO command to motor
+            self.device.move(int(pos))                      # Sends MOVETO command to motor
             self.communicating_to_motor = False             # Communication to motor ended
             self.logger.info(f'Moving to {pos} position')       
             time.sleep(.1)                                  # Delay after command sent              #TODO: É necessário esse delay?
             self._is_busy = True                            # Motor is busy (focusin/focusout)    #TODO: Mudar essa lógica do 'is_busy'
         except Exception as e:
             self.communicating_to_motor = False             # Communication to motor ended
-            self.status["alarm"] = self.motor.alarm        #TODO: Acho que isso não faz nada pq o ALM no DMX é só relacionado à temperatura    
+            self.status["alarm"] = self.device.alarm        #TODO: Acho que isso não faz nada pq o ALM no DMX é só relacionado à temperatura    
             self.status["error"] = str(e)
             self.logger.error(f'Moving {pos}: {str(e)}')
             self._pub_status()                              # Publishes current status
@@ -573,7 +580,7 @@ class App(QObject):
             self._flag_change = True
 
         # self._read_motor_status()               # Issues command to read the current motor status.
-        self.motor.read_motor_status()
+        self.device.read_motor_status()
 
         if self._flag_change:   # Publishes in 0MQ if a change occurred
             self._flag_change = False
@@ -806,23 +813,23 @@ class App(QObject):
         }
         self.start_server()                                         # Starts the ZMQ server and publishes the current status
         self._stop_var = False                                       # Initializes variable used that keep the thread loop running
-        self.status["connected"] = self.motor.connected            # Reads "_connected" from the motor
+        self.status["connected"] = self.device.connected            # Reads "_connected" from the motor
         while not self._stop_var:                                    # Start of the thread loop
             t0 = time.time()                                        # Keeps the time when the loop began
             current_time = datetime.now()                           # Reads current time
 
-            self.signal_firmware_status.emit(self.motor.firmware_status)
+            self.signal_firmware_status.emit(self.device.get_firmware_status())
 
-            self.position = self.motor.position    # Updates position every cycle
+            self.position = self.device.position    # Updates position every cycle
 
             # if -1 >= (current_time.second - self.last_pub.second) or (current_time.second - self.last_pub.second) >= 1:       #TODO: Não daria pra só checar se o valor absoluto for >= 1?
             if abs(current_time.second - self.last_pub.second) >= 1:                                                            # Updates position and publishes status every 1 second
-                # self.motor.position 
-                # self.position = self.motor.position                                                                            # Reads motor current position
+                # self.device.position 
+                # self.position = self.device.position                                                                            # Reads motor current position
                 self.status["position"] = self.position
                 self.last_pub = self._pub_status()                              # Publishes current status                                                                              # Publishes status  #TODO: Não adianta atualizar "_position" se não colocar em "Status" para publicar
                 # self.last_pub = current_time                                                                                    # Updates las publish moment
-            if self.motor and self.motor.connected and self.poller:                                                           # Continues the loop if the device is configured and connected and the poller is configured
+            if self.device and self.device.connected and self.poller:                                                           # Continues the loop if the device is configured and connected and the poller is configured
                 socks = dict(self.poller.poll(50))                                                                              # Polls the information from the ZMQ to receive commands from the client
                 if socks.get(self.replier) == zmq.POLLIN:                                                                       # If the socket is configured as Pollin   #TODO: Necessário?
                     msg_rep = self.replier.recv_string()                                                                        # Receives the JSON from the client
@@ -875,7 +882,7 @@ class App(QObject):
                         else:                                                                                                   # If command was NOT processed
                             self._reply('NAK')                                                                                   # Return 'NAK' to client
 
-                        self.status["connected"] = self.motor.connected                                                        # Updates connection status of the motor
+                        self.status["connected"] = self.device.connected                                                        # Updates connection status of the motor
 
                     except Exception as e:                                                                                      # If an exception occurs during the handling of the command 
                         self._pub_status()                              # Publishes current status                                                                                       # Published current status
@@ -883,12 +890,12 @@ class App(QObject):
 
                 self._check_motor_moving()                  # Verifies if the motor is moving as expected.
                                           
-                self.initialized = self.motor.initialized
-                self._homing = self.motor.homing   
-                self._parking = self.motor.parking                        
+                self.initialized = self.device.initialized
+                self._homing = self.device.homing   
+                self._parking = self.device.parking                        
                                                                                                # Updates motor position             
                 # if self._homing:                                # (self._homing == True) indicates that the homing was not performed
-                #     self._homing = self.motor.homing           # This means that while the homing is not performed this will keep checking if it was performed        #TODO: Qual o motivo de `_homing` ter que ser `true` para chamar `device.homing` para checar se está executando a rotina de inicialização?
+                #     self._homing = self.device.homing           # This means that while the homing is not performed this will keep checking if it was performed        #TODO: Qual o motivo de `_homing` ter que ser `true` para chamar `device.homing` para checar se está executando a rotina de inicialização?
                 if self._initialized and not self._is_moving:    # indicates that the homing was performed
                                                                 # The homing was performed and the motor is not moving -> Indicates the motor is not busy
                     self.clientID = 0                           # Sets client not busy
@@ -900,14 +907,14 @@ class App(QObject):
                                             "action": ""
                                             }                    
                 
-                # self._position = self.motor.position
+                # self._position = self.device.position
                 # self.busy_id = self.clientID                                              # Keeps the ID of the client that sent the last command
                 self._update_status()                                                        # Updates motor readings and publishes the current status to ZMQ             
                 self.status["alarm"] = 0                                                    # Resets "alarm"
                 self.communicating_to_motor = False         # Communication to motor ended
             
             
-            if self.motor.connected:
+            if self.device.connected:
                 pass
 
             else:                                                                       # If the device is not configured or not connected or the poller is not configured              
@@ -917,7 +924,7 @@ class App(QObject):
                 # self.motor_reachable = self.ping_motor()                                                                      # Updates if motor is reachable
                 self.reach_device()                                                                                             # Tries to reach device
                 
-                self.status["connected"] = self.motor.connected                                                                # Updates "connected" state
+                self.status["connected"] = self.device.connected                                                                # Updates "connected" state
                 self.signal_statusMessage.emit("")                                                                                    # Clears status message
             # self.connection_speed = f"interval:  {round(time.time()-t0, 3)}"                                                # Calculates time to run thread loop
             self.signal_connection_speed.emit(f"{round(time.time()-t0, 3)}")      
@@ -943,8 +950,8 @@ class App(QObject):
         if self.is_moving:                             #TODO: Qual o motivo de `_is_moving` ter que ser `true` para chamar `device.is_moving` para checar se está em movimento?
             try:
                 # self._read_motor_status()
-                self.motor.read_motor_status()    
-                pos_delta = self.position - self.motor.position
+                self.device.read_motor_status()    
+                pos_delta = self.position - self.device.position
             # If the driver says the motor is moving but there is no change in position reading means the motor is stalled
                 if pos_delta == 0 and self.status_lim_minus == False and self.status_lim_max == False and self.position != 0:          
                     # raise AlpacaExceptions.DriverException(1300, "Stalled Motor")       # Raises exception according to Alpaca      #TODO: Definir direito o código e a mensagem
@@ -953,34 +960,34 @@ class App(QObject):
                     _loop_count = 0                                                         # TODO: Isso pode ser configurável
                     while self.is_moving and _loop_count < 5:                               # If a stall occurs the server issues a 'halt' command and verifies if the motor responds as expected
                         # self.handle_halt()
-                        print(f" Resp V42=1 -> {self.motor.sendCommand("V42=1")}")
-                        print(f" Resp STOP -> {self.motor.sendCommand("STOP")}")
-                        print(f" Resp SR0=0 -> {self.motor.sendCommand("SR0=0")}")
+                        print(f" Resp V42=1 -> {self.device.sendCommand("V42=1")}")
+                        print(f" Resp STOP -> {self.device.sendCommand("STOP")}")
+                        print(f" Resp SR0=0 -> {self.device.sendCommand("SR0=0")}")
                         
                         print("ponto 1")
-                        print(self.motor.sendCommand("EO=0"))
+                        print(self.device.sendCommand("EO=0"))
                         print("ponto 2")
-                        # print(f" Resp GS31 -> {self.motor.sendCommand("GS31")}")
+                        # print(f" Resp GS31 -> {self.device.sendCommand("GS31")}")
                         print("ponto 3")
                         # self.reply('ACK')
                         # self._read_motor_status()                                           # Issues command to read the current motor status.
-                        self.motor.read_motor_status()
+                        self.device.read_motor_status()
                         print("ponto 4")
                         print(self.is_moving)
                         _loop_count+=1
                     if _loop_count == 5:
                         raise Exception("Motor is stalled and driver didn't respond to stop command after 5 tries")
                     self.status["timeout"]= True
-                    self.motor.home("reset")                       # If a timeout occurs must reset Home since the position is not valid anymore
-                    self.initialized = self.motor.initialized
+                    self.device.home("reset")                       # If a timeout occurs must reset Home since the position is not valid anymore
+                    self.initialized = self.device.initialized
 
                     
                     # self._pub_status()                              # Publishes current status
 
                 # Resets status. Required to accept new commands
-                    self.initialized = self.motor.initialized
-                    self._homing = self.motor.homing   
-                    self._parking = self.motor.parking  
+                    self.initialized = self.device.initialized
+                    self._homing = self.device.homing   
+                    self._parking = self.device.parking  
                     self.clientID = 0                         # Sets client not busy
                     self.status["cmd"] =  {                     # Resets "cmd" 
                                             "clientId": self._client_id,                #TODO: Esse valor pode ser 0? Checar arquivo do Ramon e documentação Alpaca. Talvez o 0 seja reservado para "not busy"
@@ -992,7 +999,7 @@ class App(QObject):
                     self.status["parking"] = self._parking
 
                 else:
-                    self.position = self.motor.position
+                    self.position = self.device.position
                     self.status["timeout"] = False
                     self._pub_status()                              # Publishes current status   
             except Exception as e:                                                      # At this point could the exception also be due to a communication issue?
@@ -1006,7 +1013,7 @@ class App(QObject):
     #     """Issues command to read the current motor status.
     #     """
     #     try:
-    #         resp = format(int(self.motor.motor_status), '012b')        # TODO: Ver um jeito de converter para binário sem ser string
+    #         resp = format(int(self.device.motor_status), '012b')        # TODO: Ver um jeito de converter para binário sem ser string
     #         motor_status = "".join(reversed(resp))                      # This is only done so that the bit order is as shown in table 7 of the manual of the motor (DMX-ETH)
     #         # print(motor_status)
 

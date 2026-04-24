@@ -6,10 +6,12 @@ import time
 import socket
 
 from contextlib import closing
+from src.utils.constants import constants
 
 
 class DriverDMX(Driver):
-    def __init__(self, model, config: Config):  #TODO: Criar classe (IntNum) com os modelos possíveis de motores
+
+    def __init__(self, model):  #TODO: Criar classe (IntNum) com os modelos possíveis de motores
         super().__init__(model)
         self.socket = None
         self._lock = Lock()
@@ -40,16 +42,18 @@ class DriverDMX(Driver):
                 time.sleep(delay)
                 print(e)
             
-        if not connected_successfully:          
-            return "NOK"
+        if not connected_successfully:   
+            raise ConnectionError(f'Failed to connecto to the motor: {str(e)}')       
+            # return "NOK"
         else:
             return "OK"
 
     def disconnect_motor(self) -> str:
         try:
-            while self._lock.locked(): pass     # Waits if a message is being transfered so that the socket is not closed mid-transfer
-            self.socket.close()
-            self.socket = None
+            if self.socket:
+                while self._lock.locked(): pass     # Waits if a message is being transfered so that the socket is not closed mid-transfer
+                self.socket.close()
+                self.socket = None
             return "OK"
         except Exception as e:
             raise RuntimeError(f'Cannot disconnect -> {e}') 
@@ -66,19 +70,17 @@ class DriverDMX(Driver):
                 return "NOK"
         
 
-    def read_position(self) -> int | Exception:
+    def conv_position(self, encoder_pos: int = None) -> int:
         """Reads motor encoder position and converts to microns
 
         :raises ValueError: If the reading is not valid
         :return: _description_
         :rtype: int | Exception
         """
-        try:
-            encoder = self.read_encoder()
-            pos = int(round(encoder/Config.enc_2_microns))
-            return pos
-        except Exception as e:
-            return e
+        if encoder_pos is None:
+            encoder_pos = self.read_encoder()
+        pos = int(round(encoder_pos/Config.enc_2_microns))
+        return pos
         
     def set_position(self, position: int) -> str:
         """Moves the motor to a specific position in microns
@@ -91,24 +93,24 @@ class DriverDMX(Driver):
         """
         # self._lock.acquire()
         pos_conv = int(round((Config.enc_2_microns * position), 0)) 
-        resp = self._write(f"V20={pos_conv}", max_retries=5)
+        resp = self._write(f"V20={pos_conv}")
         if resp == "OK":            
-            resp = self._write(f"GS29", max_retries=5)
+            resp = self._write(f"GS29")
             if resp == "OK":
                 return resp
         raise Exception(f'[Device] Error moving motor to target position {position}: Error info -> {str(resp)}')
         
-    def read_encoder(self):
-        response = self._write("EX", max_retries=5)
+    def read_encoder(self) -> int:
+        response = self._write("EX")
         if self.is_convertible_to_int(response):
             enc = int(response)
             return enc
         else:
-            raise ValueError(f'[Device] Error reading encoder position -> Motor response: {response}')
+            return constants.INVALID_RESPONSE
 
     
     def read_homing(self) -> bool:  
-        x = self._write("V15", max_retries=5)
+        x = self._write("V15")
         if "1" in x:
             return True                     
         else:                                       
@@ -117,7 +119,7 @@ class DriverDMX(Driver):
 
     def read_parking(self) -> bool:
         # self._lock.acquire()
-        x = self._write("V16", max_retries=5)
+        x = self._write("V16")
         if "1" in x:
             return True                     
         else:                                       
@@ -126,27 +128,31 @@ class DriverDMX(Driver):
 
     def read_initialized(self) -> bool:
         """Checks if initialization was previously executed"""
-        x = self._write("V44", max_retries=5)
+        x = self._write("V44")
         if "64" in x:                               #TODO: O valor 64 é o ID desse motor específico, seriam utilizados valores diferentes para cada motor?
             return True
         else:
             return False
     
     def read_status(self) -> str:       #TODO: Adicionar tratamento da mensagem de status para padronizar independente do motor
-        return self._write("MST", 5)
+        resp = self._write("MST")
+        if resp != "NOK":
+            resp = format(int(resp), '012b') #TODO: Montar a mensagem de acordo com o padrão do IAG
+            return "".join(reversed(resp))
+        return resp
     
 
 
    
     def param_IP(self, value = None) -> str:
         if value:
-            resp = self._write(f"IP={value}", 5)
+            resp = self._write(f"IP={value}")
             if resp == "NOK":
                 return f'[Device] Failed to configure new IP'
             else: 
                 return "OK"
         else:
-            return self._write("IP", 5)
+            return self._write("IP")
    
     def param_backlash(self, value = None) -> str:
         if value:
@@ -157,7 +163,7 @@ class DriverDMX(Driver):
             else: 
                 return "OK"
         else:
-            resp = self._write("V74", 5)
+            resp = self._write("V74")
             if self.is_convertible_to_int(resp):
                 resp = int(resp)
                 return f"{round(resp / Config.enc_2_microns, 0):.0f}"  # Converts to microns
@@ -168,13 +174,13 @@ class DriverDMX(Driver):
     def param_max_pos(self, value = None) -> str:
         if value:
             pos = str(int(value) * Config.enc_2_microns)    # Converts to encoder value
-            resp = self._write(f"V71={pos}", 5)
+            resp = self._write(f"V71={pos}")
             if resp == "NOK":
                 return f'[Device] Failed to configure new MAX_POS'
             else: 
                 return "OK"
         else:
-            resp = self._write("V71", 5)
+            resp = self._write("V71")
             if self.is_convertible_to_int(resp):
                 pos = int(resp) / Config.enc_2_microns
                 return f"{pos:.0f}"
@@ -189,14 +195,17 @@ class DriverDMX(Driver):
             # If this point is reached an error occured
             return f'[Device] Failed to configure new MAX_SPEED'
         else:
-            resp = self._write("HSPD", 5)
+            resp = self._write("HSPD")
             if self.is_convertible_to_int(resp):
                 return resp
             else:
                 return "NOK"
     
     def param_normal_speed(self, value = None) -> str: # No DMX não está implementada uma "normal speed", então "normal speed == max speed"
-        return self.param_max_speed(self, value=value)
+        if value:
+            return self.param_max_speed(value)
+        else:
+            return self.param_max_speed()
     
     def param_low_speed(self, value = None):
         if value:
@@ -208,7 +217,7 @@ class DriverDMX(Driver):
             # If this point is reached an error occured
             return f'[Device] Failed to configure new LOW_SPEED'
         else:
-            resp = self._write("LSPD", 5)
+            resp = self._write("LSPD")
             if self.is_convertible_to_int(resp):
                 return resp
             else:
@@ -217,21 +226,26 @@ class DriverDMX(Driver):
     def param_park_pos(self, value = None) -> str:
         if value:
             pos = str(int(value) * Config.enc_2_microns)
-            resp = self._write(f"V83={pos}", 5)
+            resp = self._write(f"V83={pos}")
             return resp
         else:
             print("Reading park pos value")
-            resp = self._write("V83", 5)
+            resp = self._write("V83")
             if self.is_convertible_to_int(resp):
                 pos = int(resp) / Config.enc_2_microns
                 return f"{pos:.0f}"
             else: 
                 return "NOK"
             
+    def param_max_step(self, value = None) -> str:
+        #TODO: Implementar
+        return "0"
+
+            
     def read_firmware_version(self) -> str:
-        V1 = self._write("V90", 5)    # Version number
-        V2 = self._write("V91", 5)    # Update number
-        V3 = self._write("V92", 5)    # Bug fix number
+        V1 = self._write("V90")    # Version number
+        V2 = self._write("V91")    # Update number
+        V3 = self._write("V92")    # Bug fix number
         if (V1 != "NOK") and (V2 != "NOK") and (V3 != "NOK"):
             return f"{V1}.{V2}.{V3}"
         else: 
@@ -251,11 +265,46 @@ class DriverDMX(Driver):
                     return "ERROR"
                 case _:
                     return "invalid" 
-        else:
-            return resp
+        return resp
         
     def sendCommand(self, command: str) -> str:
         return self._write(command)
+    
+
+    def move_to(self, pos: int) -> str:
+        print(f"Sending move to command to position {pos}...")
+        pos_conv = int(round((Config.enc_2_microns * pos), 0)) 
+        resp = self._write(f"V20={pos_conv}")
+        if resp == "OK":            
+            resp = self._write(f"GS29")
+            if resp == "OK":
+                return resp
+        raise Exception(f'[Device] Error moving motor to target position {pos}')
+        
+             
+
+    def focus_in(self, speed: int) -> str:
+        print(f"Sending focus in command with speed {speed}...")
+             
+
+    def focus_out(self, speed: int) -> str:
+        print(f"Sending focus out command with speed {speed}...")
+             
+
+    def halt(self) -> str:
+        print("Sending halt command...")
+             
+
+    def home(self) -> str:
+        print("Sending home command...")
+        return self._write("GS30")
+        
+             
+
+    def park(self) -> str:
+        print("Sending park command...")
+        return "NOK"
+
 
     def _store_to_flash(self) -> str:
         """Stores the settings to the motor flash
@@ -274,21 +323,24 @@ class DriverDMX(Driver):
         """
         retries = 0
         self._lock.acquire()  
-        time.sleep(0.05)         # time.sleep(0.1)  #TODO: Avaliar o motivo de precisar desse tempo morto
-        while retries < max_retries:  
-            try:   
-                self.socket.sendall(bytes(f'{cmd}\x00', 'utf-8'))
-                response = self.socket.recv(1024)
-                self._lock.release()
-                return response.decode('utf-8').replace("\x00", "")                    
-            except Exception as e:
-                err = e
-            retries += 1                                                               #TODO: Parece que esse retries tem que estar dentro do exception, mas talvez não faça diferença
+        # time.sleep(0.01)         # time.sleep(0.1)  #TODO: Avaliar o motivo de precisar desse tempo morto
+        if self.socket:
+            while retries < max_retries: 
+                time.sleep(0.01)         # time.sleep(0.1)  #TODO: Avaliar o motivo de precisar desse tempo morto
+                try:   
+                    self.socket.sendall(bytes(f'{cmd}\x00', 'utf-8'))
+                    response = self.socket.recv(1024)
+                    self._lock.release()
+                    return response.decode('utf-8').replace("\x00", "")                    
+                except Exception as e:
+                    err = e
+                retries += 1                                                               #TODO: Parece que esse retries tem que estar dentro do exception, mas talvez não faça diferença
             
         # If the program reaches this points it means that a problem occurred in sending or receiving the data
             # self.logger.error(f"[Device] Error writing {cmd}: {str(err)}")
-            self._lock.release()
+        print(f"RETRIES {retries}")
+        self._lock.release()
+        if self.socket:
             self.disconnect_motor() 
-            return 'NOK' #"Error communicating to the motor" 
-        else:
-            return 'NOK' #"Not connected"
+        # raise ConnectionError(f'Could not send command "{cmd}" to motor. Failed to reach motor after {retries} attempts.')
+        return 'NOK' #"Error communicating to the motor" 

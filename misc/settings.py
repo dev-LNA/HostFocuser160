@@ -432,7 +432,7 @@ class RetrieveSettings(QThread):
     _running = pyqtSignal(bool)
     _signal_progress = pyqtSignal(int)
 
-    motor_data = Motor()
+    motor_data = Motor(constants.ARCUS_DMX_ETH)
 
     signal_motor_data = pyqtSignal(Motor)
 

@@ -25,7 +25,7 @@ except Exception as e:
     CONFIG_FILE = False
 
 if CONFIG_FILE:
-    from src.core.app import App
+    from core.server import Server
     
     from misc.client_sample import ClientSimulator
 
@@ -52,7 +52,7 @@ class FocuserOPD(QtWidgets.QMainWindow):
             if close == QMessageBox.Ok:   
                 sys.exit()
             
-        self.control = App(logger)
+        self.control = Server(logger)
 
         self.config_file = r"src/config/config.toml"
         self.log_file = r"logs/focuser.log"

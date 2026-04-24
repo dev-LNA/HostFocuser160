@@ -21,10 +21,10 @@ except Exception as e:
     CONFIG_FILE = False
 
 # if CONFIG_FILE:               #INFO: Se colocar isso aqui o programa não vai inicializar no caso de falta do arquivo config, e nenhuma informação é passada para o usuário. Melhor fazer essa checagem somente no __init__ mesmo
-from src.core.app import App
+from core.server import Server
 
 from misc.client_sample import ClientSimulator
-# from misc.settings import SettingsWindow
+from misc.settings import SettingsWindow
 from misc.load_bar import LoadBar
 from misc.ui_intellisense import UiWidgets
 from misc.log_box import LogBox
@@ -85,7 +85,7 @@ class FocuserOPD(QtWidgets.QMainWindow):
         self.menuBar().setVisible(False)                                        # The menu bar is not displayed in the focalizer selection page
         self.ui_elements.toolBar.setVisible(False)                              # The tool bar is not displayed in the focalizer selection page
 
-        self.control = App(logger)                                              # Instantiates the server app class
+        self.control = Server(logger)                                              # Instantiates the server app class
 
     #--- UI elements initialization and configuration
     #   Initializes every UI element of the main window.
@@ -293,7 +293,7 @@ class FocuserOPD(QtWidgets.QMainWindow):
         auto startup is configured """
         self.menuBar().setVisible(True)                                     # Sets menu bar visibility
         self.ui_elements.toolBar.setVisible(True)                           # Sets tool bar visibility
-        self.control.server_connected = False                               # Emits signal with initial server status as disconnected
+        self.control.server_online = False                               # Emits signal with initial server status as disconnected
         self.ui_elements.pageSelect.setCurrentIndex(1)                      # Changes view to the main server page
         if Config.startup:                                                  # If configured to 'auto start'
             self._start()                                                       # Starts the server
