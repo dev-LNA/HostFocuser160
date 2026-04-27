@@ -418,7 +418,8 @@ class Server(QObject):
             t0 = time.time()                                        # Keeps the time when the loop began
             current_time = datetime.now()                           # Reads current time
             
-            if abs(current_time.second - self.last_pub_time.second) >= 1:   # Publishes status every second
+            if abs(current_time.second - self.last_pub_time.second) >= Config.pub_interval:   # Publishes status every second
+                print(self.status[SJson.TIMESTAMP])
                 self.last_pub_time = self.zmq_comm.pub(self.status)
 
             if self.motor.connected and self.zmq_comm.poller:
@@ -431,17 +432,14 @@ class Server(QObject):
                         parsed_cmd = self._parse_client_command(msg_json)                   # Parses client command
                         self._command_validation(parsed_cmd)                                # Validates the received command
                         self._handle_command(parsed_cmd)                                    # Executes the command
-                        self.status[SJson.CMD] = msg_json.get(SJson.CMD)                    # Updates status with the current command being executed
+                        self.status[SJson.CMD] = msg_json                                   # Updates status with the current command being executed
                         self.zmq_comm.reply('ACK')                                          # Replies 'ACK' to inform the client that everything went ok
                     except Exception as e: 
                         print(e)
                         self.zmq_comm.reply('NAK')          # Replies 'NAK' to inform the client that an error occured                     
                         self.zmq_comm.pub(self.status)  
                         self.logger.error(e)
-                               
-
-
-
+                  
                 self.motor.update_status()
                 self._update_status()
 
@@ -469,21 +467,17 @@ class Server(QObject):
         :return: Bool indicating if the command can be processed
         :rtype: bool
         """
-        # msg_json = json.loads(msg)
-
-        # cmd = msg_json.get(SJson.CMD_ACTION)
-        print(cmd["COMMAND"])
-        if cmd["COMMAND"] == ServerCommands.STATUS:
+        if cmd["COMMAND"] == ServerCommands.STATUS:     # 'STATUS' is a command to the server
             return
 
         elif cmd["COMMAND"] in MotorValidCommands:
             if self.motor.is_moving: 
-                if  cmd["CLIENT"] == self.status[SJson.CMD][SJson.CMD_CLIENT_NAME]:
+                if  cmd["CLIENT"] == self.status[SJson.CMD][SJson.CMD_CLIENT_NAME]:     # If the command was sent by the same client that sent the last command
                     return 
                 else:
                     raise RuntimeError(f'Motor already moving: Client "{self.status[SJson.CMD][SJson.CMD_CLIENT_NAME]}" '
-                                        'started the movement and client "{cmd["CLIENT"]}" tried to '
-                                        'start another movement')
+                                       f'started the movement and client "{cmd["CLIENT"]}" tried to '
+                                       f'start another movement')
             else:
                 return 
         else:
@@ -499,8 +493,6 @@ class Server(QObject):
         :return: Dictionary containing the command and parameters
         :rtype: dict
         """
-        # try:
-        # msg = json.loads(msg)
         cmd = msg_json.get(SJson.CMD_ACTION)
 
         parsed = {  'CLIENT': msg_json.get(SJson.CMD_CLIENT_NAME),   #TODO: Verificar como checar qual cliente enviou a mensagem, nem todo cliente vai ter um "CLIENT NAME"
@@ -517,45 +509,19 @@ class Server(QObject):
 
         return parsed    
 
-            # if cmd != ServerCommands.STATUS and \
-            #     (self.status[SJson.CMD][SJson.CMD_CLIENT_ID] == 0 or \
-            #      self.status[SJson.CMD][SJson.CMD_CLIENT_ID] == msg.get(SJson.CMD_CLIENT_ID) ):
-            #     # Only accept commands (except for status request) if it 
-            #     # was requested by the same client 
-            #     #TODO: Checar se essa lógica precisa ser utilizada, pode ser necessário que outro cliente precise parar o motor
-
-            #     self.status[SJson.CMD] = msg        # Saves command info in the JSON
-
-            #     p = cmd.find('=')                   # The '=' sign separates the command and its parameter
-
-            #     # 'p == -1' indicates that there is no '=' sign so the command has no parameter, in this case the 
-            #     # parsed message dont need to be changed. 
-            #     if p != -1:        
-            #         parsed["COMMAND"] = cmd[:p]
-            #         parsed["PARAMETER"] = int(cmd[p+1:])
-
-            #     return parsed
-            
-            # else:
-            #     raise RuntimeError(f'Motor already running command "{self.status[SJson.CMD][SJson.CMD_ACTION]}", cannot start command "{msg.get(SJson.CMD_ACTION)}"')
-            
-        
-        # except Exception as e:
-            # print(e)
-            # self.zmq_comm.reply('NAK')   # If an error occurred during the reading of the JSON return 'NAK' to the client
-            # self.logger.error(e)    # Logs error
-            # return {    'COMMAND': ServerCommands.INVALID,
-            #             'PARAMETER': None     
-            #         }
-
     def _handle_command(self, cmd: dict):
+        """Handles the command received by the client
 
+        :param cmd: Parsed command
+        :type cmd: dict
+        :raises RuntimeError: Returns an error if the motor responds 'NOK'
+        """
  
         self.status["error"] = ""             # Resets "error" status #TODO: Realizar um tratamento correto de erro
 
         # 'STATUS' is a command to the server and not to the motor
         if cmd["COMMAND"] == ServerCommands.STATUS:
-            self.zmq_comm.pub(self.status)
+            self.zmq_comm.pub(self.status)                  #TODO: Atualizar o status antes de publicar?
         else:
             self.communicating_to_motor = True              #TODO: Na verdade não é somente nesse ponto que está comunicando, as propriedades também comunicam com o motor
             motor_response = self.motor.send_command(cmd)
@@ -565,53 +531,19 @@ class Server(QObject):
         
         # self.zmq_comm.reply('ACK')                  # Replies 'ACK' to inform the client that everything went ok
         self.logger.info(f'Command issued: {cmd}')
-
-
-
-
-
-
-
-        # try:
-        #     # Handle all possible commands
-        #     self.status["error"] = ""             # Resets "error" status
-
-        #     # 'STATUS' is a command to the server and not to the motor
-        #     if cmd["COMMAND"] == ServerCommands.STATUS:
-        #         self.zmq_comm.pub(self.status)            
-        #     else:
-        #         if cmd["COMMAND"] == ServerCommands.INVALID:
-        #             raise ValueError(f'Motor already executing a command or an invalid command was received')
-                
-        #         if ( cmd["COMMAND"] in MotorValidCommands ) and self.motor.is_moving:
-        #             raise RuntimeError(f'Cannot issue "{cmd["COMMAND"].upper()}" command while motor is moving')
-
-        #         self.communicating_to_motor = True              #TODO: Na verdade não é somente nesse ponto que está comunicando, as propriedades também comunicam com o motor
-        #         motor_response = self.motor.send_command(cmd)
-        #         self.communicating_to_motor = False
-        #         if motor_response == "NOK":
-        #             raise RuntimeError(f'Motor returned "NOK" trying to run command "{cmd["COMMAND"].upper()}"')
-        #     self.zmq_comm.reply('ACK')
-        #     self.logger.info(f'Command issued: {cmd}')
-        # except Exception as e:                
-        #     self.zmq_comm.reply('NAK')                                
-        #     self.zmq_comm.pub(self.status)  
-        #     self.logger.error(f'Error: {str(e)}')   
-
             
     def _reset_client(self):
         """Verifies if the motor ended the execution of the
         last command and resets the command information"""
-        print(self.status)
+        # print(self.status)
         if self.motor.firmware_status == 'Idle' and \
-            self.status[SJson.CMD][SJson.CMD_CLIENT_ID] != 0:
+            self.status[SJson.CMD][SJson.CMD_CLIENT_ID] != 0:   
 
             self.status[SJson.CMD][SJson.CMD_CLIENT_ID] = 0
             self.status[SJson.CMD][SJson.CMD_CLIENT_TRANSACTION_ID] = 0
             self.status[SJson.CMD][SJson.CMD_CLIENT_NAME] = ''
             self.status[SJson.CMD][SJson.CMD_ACTION] = ''
 
-            print("Json CMD reset")   
 
 #endregion
 

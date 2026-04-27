@@ -592,9 +592,7 @@ class FocuserDriver(QObject):
         if self._is_moving:
             raise RuntimeError('Cannot set speed while the focuser is moving')  #TODO: O `_is_moving` na verdade está verificando se alguma rotina está sendo executada (motor busy), mas essa checagem faz sentido, uma vez que não se pode iniciar uma rotina enquanto outra já está em execução.
         # if 0 > vel >= self._max_speed:
-        #     raise RuntimeError('Invalid Steps') 
-        if vel_conv > Config.speed_security:
-            vel_conv = Config.speed_security       
+        #     raise RuntimeError('Invalid Steps')   
         resp = self._write(f"V21={vel_conv}", max_retries=5)                    #TODO: Não precisa do `acquire/release` que nem foi utilizado para chamar o `_write` nos métodos anteriores? 
         if "OK" in resp: 
             self.logger.info(f'[Device] speed={str(vel)}')

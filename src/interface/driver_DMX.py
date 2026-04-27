@@ -279,32 +279,61 @@ class DriverDMX(Driver):
             resp = self._write(f"GS29")
             if resp == "OK":
                 return resp
-        raise Exception(f'[Device] Error moving motor to target position {pos}')
+        raise RuntimeError(f'[Motor] Error moving motor to target position {pos}')
         
              
 
     def focus_in(self, speed: int) -> str:
         print(f"Sending focus in command with speed {speed}...")
-             
+        self._set_speed(speed)
+        resp = self._write('GS21')
+        if resp == "OK":
+            return resp
+        raise RuntimeError(f'[Motor] Error running "FOCUS_IN" command')
 
     def focus_out(self, speed: int) -> str:
         print(f"Sending focus out command with speed {speed}...")
-             
+        self._set_speed(speed)
+        resp = self._write('GS20')
+        if resp == "OK":
+            return resp
+        raise RuntimeError(f'[Motor] Error running "FOCUS_OUT" command')
 
     def halt(self) -> str:
         print("Sending halt command...")
+        resp = self._write('V42=1')
+        if resp == "OK":
+            return resp
+        raise RuntimeError(f'[Motor] Error running "HALT" command')
              
 
     def home(self) -> str:
         print("Sending home command...")
-        return self._write("GS30")
+        resp = self._write('GS30')
+        if resp == "OK":
+            return resp
+        raise RuntimeError(f'[Motor] Error running "HOME" command')
         
              
 
     def park(self) -> str:
         print("Sending park command...")
-        return "NOK"
+        resp = self._write('GS5')
+        if resp == "OK":
+            return resp
+        raise RuntimeError(f'[Motor] Error running "PARK" command')
 
+    def _set_speed(self, speed: int) -> str:
+        print(f"Setting motor movement speed")
+        vel_conv = speed*Config.speed_factor
+        if vel_conv > Config.speed_security:
+            vel_conv = Config.speed_security     
+        
+        resp = self._write(f'V21={str(vel_conv)}')
+        if resp == "OK":
+            return resp
+        else:
+            raise RuntimeError(f'[MOTOR] Error setting motor movement speed')
 
     def _store_to_flash(self) -> str:
         """Stores the settings to the motor flash

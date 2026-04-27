@@ -24,7 +24,6 @@ class MotorSignals(QObject):
     connected = pyqtSignal(bool)
     # position = pyqtSignal(int)
     # homing = pyqtSignal(bool)
-    parking = pyqtSignal(bool)
     # moving = pyqtSignal(bool)
     alarm = pyqtSignal(bool)
     # status = pyqtSignal(int)
@@ -36,6 +35,7 @@ class MotorSignals(QObject):
     position = MultiSignal()
     encoder = pyqtSignal(str)
     initialized = PropertySignals()
+    parking = PropertySignals()
 
     
 
@@ -188,7 +188,10 @@ class Motor():
             val = self.driver.read_parking()
             if val != self._parking:
                 self._parking = val
-                self.signals.parking.emit(self._parking)
+                if self._parking:
+                    self.signals.parking.emit(self._parking, "statusLed", "WAIT")
+                else:
+                    self.signals.parking.emit(self._parking, "statusLed", "NOK")
             return self._parking
         except Exception as e:
             self.disconnect()

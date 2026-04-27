@@ -5,6 +5,7 @@ name = "Focuser160"
 version = "1.0.0"
 description = "Interface for Perkin-Elmer Focuser"
 startup = false
+pub_interval = 1
 
 [Device]
 absolute = true

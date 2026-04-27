@@ -144,7 +144,7 @@ class FocuserOPD (QMainWindow):
         # self.server.signals.lim_min.info.connect(self.ui_elements.ledLimMin.setProperty)
         # self.server.signals.lim_max.info.connect(self.ui_elements.ledLimMax.setProperty)
         # self.server.signals.initialized.info.connect(self.ui_elements.ledHome.setProperty)
-        self.server.signals.parking.info.connect(self.ui_elements.ledPark.setProperty)
+        # self.server.signals.parking.info.connect(self.ui_elements.ledPark.setProperty)
 
         self.server.signals.motor_status.status.connect(self.ui_elements.gbConnectivity.setEnabled)
         self.server.signals.motor_status.status.connect(self.ui_elements.gbCommandInfo.setEnabled)
@@ -235,6 +235,7 @@ class FocuserOPD (QMainWindow):
         self.server.motor.signals.encoder.connect(self.ui_elements.lblEncoder_val.setText)
         self.server.motor.signals.initialized.info.connect(self.ui_elements.ledHome.setProperty)
         self.server.motor.signals.firmware_status.connect(self.ui_elements.lblStatus_val.setText)
+        self.server.motor.signals.parking.info.connect(self.ui_elements.ledPark.setProperty)
 
         self.menuBar().setVisible(True)                                     # Sets menu bar visibility
         self.ui_elements.toolBar.setVisible(True)                           # Sets tool bar visibility
