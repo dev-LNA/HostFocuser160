@@ -52,6 +52,9 @@ class ServerSignals(QObject):
     motor_status = PropertySignals()
     status_message = pyqtSignal(str)
     connection_speed = pyqtSignal(str)
+    socket_ip = pyqtSignal(str)
+    port_pub = pyqtSignal(str)
+    port_rep = pyqtSignal(str)
     
     # encoder = pyqtSignal(str)
     # position_str = pyqtSignal(str)
@@ -185,9 +188,14 @@ class Server(QObject):
         self._server_connected = value
         if value:
             self.signals.server_status.emit(value,"statusLed", "OK")          # When server is connected the 'statusLed' is green (defined in the stylesheet)
+            self.signals.socket_ip.emit(self.zmq_comm.ip_address)
+            self.signals.port_pub.emit(self.zmq_comm.port_pub)
+            self.signals.port_rep.emit(self.zmq_comm.port_rep)
         else:
             self.signals.server_status.emit(value,"statusLed", "NOK")         # When server is NOT connected the 'statusLed' is red (defined in the stylesheet)
-
+            self.signals.socket_ip.emit('')
+            self.signals.port_pub.emit('')
+            self.signals.port_rep.emit('')
 
     @property
     def router_reachable(self) -> bool:
@@ -268,8 +276,8 @@ class Server(QObject):
         
         # Instantiates the server ZMQ communication according to the Config file
         self.zmq_comm = zmqComm(Config.ip_address,
-                                    port_pub=Config.port_pub,
-                                    port_rep=Config.port_rep
+                                    port_pub=str(Config.port_pub),
+                                    port_rep=str(Config.port_rep)
                                 )
         # Tries to connect the ZMQ
         try:
@@ -287,18 +295,19 @@ class Server(QObject):
         When the server is stopped the motor is disconnected 
         and one last pub is performed with the current server status
         before the server communication is closed."""
-        try:
-            self.logger.info(f'Disconnecting motor')
-            self.motor.disconnect()
-            self.status[SJson.CONNECTED] = self.motor.connected
-            self.zmq_comm.pub(self.status)
-            self.logger.info(f'Disconnecting Server')
-            self.server_online = self.zmq_comm.disconnect()
-            self.zmq_comm = None
-            self.logger.info(f'Server disconnected')
-        except Exception as e:
-            print(e)
-            self.logger.error(e)
+        if self.server_online:
+            try:
+                self.logger.info(f'Disconnecting motor')
+                self.motor.disconnect()
+                self.status[SJson.CONNECTED] = self.motor.connected
+                self.zmq_comm.pub(self.status)
+                self.logger.info(f'Disconnecting Server')
+                self.server_online = self.zmq_comm.disconnect()
+                self.zmq_comm = None
+                self.logger.info(f'Server disconnected')
+            except Exception as e:
+                print(e)
+                self.logger.error(e)
 
     def stop_poll(self):
         """Stops the ZMQ poller"""
@@ -423,7 +432,7 @@ class Server(QObject):
                 self.last_pub_time = self.zmq_comm.pub(self.status)
 
             if self.motor.connected and self.zmq_comm.poller:
-                socks = dict(self.zmq_comm.poller.poll(10))  # poll(50)                                                                           # Polls the information from the ZMQ to receive commands from the client
+                socks = dict(self.zmq_comm.poller.poll(5))  # poll(50)                                                                           # Polls the information from the ZMQ to receive commands from the client
                 if socks.get(self.zmq_comm.replier) == zmq.POLLIN:                                                                       # If the socket is configured as Pollin   #TODO: Necessário?
                     
                     received_client_msg = self.zmq_comm.replier.recv_string()

@@ -119,6 +119,10 @@ class FocuserOPD (QMainWindow):
         self.ui_elements.conBarRouterMotor.setProperty("conStatusBar", "waiting")
 
         # Configuration of signals
+        self.server.signals.socket_ip.connect(self.ui_elements.lblSocketIP.setText)
+        self.server.signals.port_pub.connect(self.ui_elements.lblPortPUB.setText)
+        self.server.signals.port_rep.connect(self.ui_elements.lblPortREP.setText)
+
         self.server.signals.router_status.info.connect(self.ui_elements.conBarServerRouter.setProperty)
         self.server.signals.motor_status.info.connect(self.ui_elements.conBarRouterMotor.setProperty)
 
@@ -267,7 +271,6 @@ class FocuserOPD (QMainWindow):
             self._run_thread.join()                                 # Joins the thread to wait until it is finished
             self.server.stop_poll()                                 #| The 'stop_poll' was separeted from the 'server.disconnect' to
                                                                     #| avoid problems during the server shutdown procedure
-
         if self.server:    
             self.server.disconnect()                               # Unregisters server ZMQ poll
 
@@ -342,7 +345,6 @@ class FocuserOPD (QMainWindow):
         """Guarantees that the action is unchecked if the Log Box is closed by pressing the X button"""
         self.ui_elements.actionShow_Log.setChecked(False)                   # Unchecks logBox action when the logBox is closed
 
-
     def _read_log_file(self, file_path):
         """Open LOG file and read its content"""
         with open(file_path, "r") as file:                  # Opens log file in read only mode  
@@ -411,7 +413,6 @@ class FocuserOPD (QMainWindow):
         widget.style().polish(widget)
         widget.update()
 
-
     def eventFilter(self, obj: QObject, event: QEvent) -> bool:
         """Process events.
         The events are processed according to the class of the object that called the event.
@@ -455,6 +456,26 @@ class FocuserOPD (QMainWindow):
         # For all other events or objects, return False to allow normal handling
         return super().eventFilter(obj, event)
 
+    def closeEvent(self, event):
+        """Close event
+
+        Parameters
+        ----------
+        event : _type_
+            _description_
+        """
+        close = QMessageBox()                                                                           # Creates confirmation window
+        close.setWindowTitle("Close")                                                                   # Sets window title
+        close.setText("Deseja sair?")                                                                   # Sets window message
+        close.setStandardButtons(QMessageBox.StandardButton.Yes | QMessageBox.StandardButton.No)        # Sets window buttons
+        close = close.exec()                                                                            # Shows window
+
+        if close == QMessageBox.StandardButton.Yes:                                                     # If button 'Yes' pressed
+            if self.ui_elements.pageSelect.currentIndex() == 1:                                             # In the first page no configuration was made so trying to disconnect generates errors
+                self._stop()                                                                                # Stops the server execution
+            event.accept()                                                                                  # Accepts the close event
+        else:                                                                                           # If button "No" or X pressed
+            event.ignore()  
 
 if __name__ == "__main__":
 

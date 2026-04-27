@@ -297,7 +297,8 @@ class ClientSimulator(QtWidgets.QMainWindow):
             return f"Error sending command to server -> {str(e)}"
 
     def _connect(self):
-        self._send_command("CONNECT")
+        # self._send_command("CONNECT")
+        pass
         
 
     def _home(self):
@@ -307,7 +308,7 @@ class ClientSimulator(QtWidgets.QMainWindow):
         self._send_command("PARK")
 
     def _disconnect(self):
-        self._send_command("DISCONNECT")
+        # self._send_command("DISCONNECT")
         # If the updater thread is active it is necessary to safely close it
         self._clear_thread_updater()
         # If the sender thread is active it is necessary to safely close it
