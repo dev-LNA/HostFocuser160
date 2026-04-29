@@ -1,6 +1,6 @@
 from pyModbusTCP.server import ModbusServer as mbServer
 from pyModbusTCP.server import DataBank
-from src.utils.modbus_regs import dig_inputs_regs, coils_regs, RegsInfo, RegType, DB_size
+from src.utils.modbus_regs import dig_inputs_regs, coils_regs, RegsInfo, RegType, DB_size, CLP_Owned, TwosComplementReg
 from src.interface.modbus_data_bank import MB_DataBank
 
 from PyQt6.QtCore import pyqtSignal
@@ -130,26 +130,33 @@ class ModbusServer(QWidget, mbServer):
                 # for reg in coils_regs:
                 #     if reg.SIZE > 1:
                 #         self._conv_reg_to_value(reg)
-                if time.time() - self.handshake_timer > 1:
-                    self.handshake_timer = time.time()
-                    if self.data_bank.get_discrete_inputs(dig_inputs_regs.HANDSHAKE.ADDRESS, 1)[0] == True:
-                        self.data_bank.set_discrete_inputs(dig_inputs_regs.HANDSHAKE.ADDRESS, [False])
-                    else:
-                        self.data_bank.set_discrete_inputs(dig_inputs_regs.HANDSHAKE.ADDRESS, [True])
+
+                #Timed handshake for testing
+                # if time.time() - self.handshake_timer > 1:
+                #     self.handshake_timer = time.time()
+                #     if self.data_bank.get_discrete_inputs(dig_inputs_regs.HANDSHAKE.ADDRESS, 1)[0] == True:
+                #         self.data_bank.set_discrete_inputs(dig_inputs_regs.HANDSHAKE.ADDRESS, [False])
+                #     else:
+                #         self.data_bank.set_discrete_inputs(dig_inputs_regs.HANDSHAKE.ADDRESS, [True])
 
 
-                # Verifica se o DB shadow coil está diferente do DB coil (indica que uma informação foi recebida)
-                for reg in coils_regs:
-                    if not self._compare_regs(reg):   # If false means that the register value was changed
-                        if reg.SIZE == 1:
-                            print(f"Register {reg.TAG} old value {self.db_shadow.get_coils(reg.ADDRESS, reg.SIZE)} -> new value {self.data_bank.get_coils(reg.ADDRESS, reg.SIZE)}")
-                        else:
-                            print(f"Register {reg.TAG} old value {self._conv_reg_to_value(reg, self.db_shadow)} -> new value {self._conv_reg_to_value(reg, self.data_bank)}")
+                # 'RX_WRITTING == 0' indicates that the CLP is not writting, so the coils information is valid.
+                # This guarantees that the server will not read while the CLP is writting a new value.
+                if not self.data_bank.get_coils(coils_regs.RX_WRITTING.ADDRESS, 1)[0]:
 
-                        self._operate(reg)  # Operates according to the changed coil
+                    # Compares every coil register from 'DB coil' and 'DB coil shadow'
+                    # If 'DB coil' is different from 'DB coil shadow' some information was received
+                    for reg in coils_regs:
+                        if not self._compare_regs(reg):   # If false means that the register value was changed
+                            if reg.SIZE == 1:
+                                print(f"Register {reg.TAG} old value {self.db_shadow.get_coils(reg.ADDRESS, reg.SIZE)} -> new value {self.data_bank.get_coils(reg.ADDRESS, reg.SIZE)}")
+                            else:
+                                print(f"Register {reg.TAG} old value {self._conv_reg_to_value(reg, self.db_shadow)} -> new value {self._conv_reg_to_value(reg, self.data_bank)}")
 
-                        # Saves in the shadow register the update value
-                        self.db_shadow.set_coils(reg.ADDRESS, self.data_bank.get_coils(reg.ADDRESS, reg.SIZE))  
+                            self._operate(reg)  # Operates according to the changed coil
+
+                            # Saves in the shadow register the update value
+                            self.db_shadow.set_coils(reg.ADDRESS, self.data_bank.get_coils(reg.ADDRESS, reg.SIZE))  
 
 
             #DEBUG: Necessário fazer temporização para checagem de handshake
@@ -177,7 +184,6 @@ class ModbusServer(QWidget, mbServer):
                 self.db_shadow.set_coils(coils_regs.HANDSHAKE.ADDRESS, self.data_bank.get_coils(coils_regs.HANDSHAKE.ADDRESS, coils_regs.HANDSHAKE.SIZE)) 
 
 
-
             # print(f"coils -> {self.server.data_bank.get_coils(0,10)}")
                                                                      # bit order  8     7      6     5       4    3      2     1 
             # self.server.data_bank.set_discrete_inputs(dig_inputs_regs.TX_CGT_A, [True, True, False, False, True, False, True, True])
@@ -190,19 +196,20 @@ class ModbusServer(QWidget, mbServer):
         # print(self.server.data_bank.get_coils(0,10))
 
     def _operate(self, reg: RegsInfo):
-        for resp_reg in dig_inputs_regs:
-            if resp_reg.TAG[1:] == reg.TAG[1:]:
+
+        for clp_owned_reg in CLP_Owned:
+            if reg.TAG == clp_owned_reg.ORIGIN_COIL:
+                resp_reg = clp_owned_reg.RESPONSE_DI
                 num = self._conv_reg_to_value(reg, self.data_bank)
                 num_bits = self._conv_num_bits(num, reg.SIZE)
-                print(f"Recebido comando na coil {reg.TAG} e a resposta será dada pela DI {resp_reg.TAG}")    
-                if reg.SIZE == 8:                                                                       
-                    self.data_bank.set_discrete_inputs(resp_reg.ADDRESS, num_bits)          # If the register is only 8 bits the value is saved directly to the register
-                else:                                                                                   
-                    # self.data_bank.set_discrete_inputs(resp_reg.ADDRESS, num_bits[:15:-1])     #|  If the register is 32 bits the higher bits must be saved to the first 16 bits of the address   
-                    # self.data_bank.set_discrete_inputs(resp_reg.ADDRESS+16, num_bits[15::-1])  #| and the lower bits must be saved to next 16 bits
-                    self.data_bank.set_discrete_inputs(resp_reg.ADDRESS, num_bits[16:])     #|  If the register is 32 bits the higher bits must be saved to the first 16 bits of the address   
-                    self.data_bank.set_discrete_inputs(resp_reg.ADDRESS+16, num_bits[:16])  #| and the lower bits must be saved to next 16 bits
-
+                
+                #  If the register is 32 bits the higher bits must be saved to the first 16 bits of the address
+                # and the lower bits must be saved to next 16 bits
+                if reg.SIZE == 32:
+                    self.data_bank.set_discrete_inputs(resp_reg.ADDRESS, num_bits[16:])     
+                    self.data_bank.set_discrete_inputs(resp_reg.ADDRESS+16, num_bits[:16])
+                else:
+                    self.data_bank.set_discrete_inputs(resp_reg.ADDRESS, num_bits)
 
                 binary_string = "".join([str(int(b)) for b in self.data_bank.get_coils(reg.ADDRESS, reg.SIZE)])
                 print(f"Coil recebida {reg.TAG} = {binary_string}")
@@ -230,9 +237,18 @@ class ModbusServer(QWidget, mbServer):
         return True
 
     def _compare_regs(self, reg: RegsInfo) -> bool:
-        
+        """Compares the register value from the Data Bank and 
+        the Shadow Data Bank, if the register is equal returns true.
+
+        :param reg: Register to be compared
+        :type reg: RegsInfo
+        :return: True if registers are equal / False if registers are different
+        :rtype: bool
+        """
+
+        # For registers with more than 1 bit the comparison is realized based on the converted value
         if reg.SIZE == 1:
-            return self.data_bank.get_coils(reg.ADDRESS, reg.SIZE) == self.db_shadow.get_coils(reg.ADDRESS, reg.SIZE)   # If registers are equal returns 'true'
+            return self.data_bank.get_coils(reg.ADDRESS, reg.SIZE) == self.db_shadow.get_coils(reg.ADDRESS, reg.SIZE)   
         
         return self._conv_reg_to_value(reg, self.data_bank) == self._conv_reg_to_value(reg, self.db_shadow)
         
@@ -241,40 +257,18 @@ class ModbusServer(QWidget, mbServer):
 
 
         if reg.TYPE is RegType.COIL:
-            # bits = db.get_coils(reg.ADDRESS, reg.SIZE)
-            # binary_string = "".join(reversed([str(int(b)) for b in bits]))
-            # # binary_string = "".join([str(int(b)) for b in bits])
-            # int_val = int(binary_string, base=2)
 
-            if reg.SIZE > 8:                            # Two's complement only applies for 32 bit numbers
+            # Two's complement only applies for some registers
+            if reg.TAG.lower() in TwosComplementReg:
 
                 bits = db.get_coils(reg.ADDRESS, reg.SIZE)
                 # binary_string = "".join(reversed([str(int(b)) for b in bits]))
                 binary_string = "".join([str(int(b)) for b in bits])
                 int_val = int(binary_string, base=2)
 
-                # print(f"inside function inicial -> {binary_string}")
 
-                # conv: list[str] = ['', '', '', '']      # Each position is a byte
-                # conv2: str = ""
-                # for cont in range(0,4):
-
-                #     # inv_byte = "".join(reversed(binary_string[8*(cont):8*(cont+1)]))        # Inverts the byte
-                #     inv_byte = "".join(binary_string[8*(cont):8*(cont+1)])              # gets byte by byte
-
-                #     print(f"inv bytes {cont} -> {inv_byte}")
-                #     for item in inv_byte:   
-                #         # conv += item
-                #         conv[cont] += item                      # saves each byte as an item in conv
-                    
-                # conv2 += conv[3] + conv[2] + conv[1] + conv[0]  # conv2 receives the bytes in the correct order
-                
-                # print(f"inside function final -> {conv2}")
-                # int_val = int(conv2, base=2)
                 if binary_string[0] == '1':
                     int_val = int_val - (1 << reg.SIZE)
-                # if conv2[0] == '1':
-                #     int_val = int_val - (1 << reg.SIZE)
 
             else:
 

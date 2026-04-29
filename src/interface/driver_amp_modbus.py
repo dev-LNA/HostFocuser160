@@ -10,7 +10,7 @@ from threading import Lock, Timer, Thread
 from src.core.config import Config
 from src.core.exceptions import DriverException
 from src.utils.constants import constants
-from src.utils.modbus_regs import RegsInfo, RegType, coils_regs, dig_inputs_regs, DB_size
+from src.utils.modbus_regs import RegsInfo, RegType, coils_regs, dig_inputs_regs, DB_size, CLP_Owned, TwosComplementReg
 
 import time
 
@@ -73,14 +73,36 @@ class FocuserDriver(QObject):
         #                                 d_inputs_size=1295, d_inputs_default_value=False,   #|  Shadow value for the modbus data.
         #                                 h_regs_size=0, h_regs_default_value=0,              #|  Also used as initial values for the server.
         #                                 i_regs_size=0, i_regs_default_value=0)              #|
-        
+
+        self.num_teste:int = 0
+
     def acionar(self):
         print (self._connected)
+        self.mb_server.data_bank.set_discrete_inputs(dig_inputs_regs.TX_READING.ADDRESS, [True])
+        print("lendo variáveis, CLP não pode escrever")
+        time.sleep(1)
+
+
+        print("---CLP OWNED---")
+        for reg in CLP_Owned:
+            print(f'Origin: {reg.ORIGIN_COIL} -> Response: {reg.RESPONSE_DI}')
+        print("---------------")
+        
+
+        print("---TWOS COMPLEMENT---")
+        for reg in TwosComplementReg:
+            print(reg.upper())
+        print("---------------")
+
+        self.mb_server.data_bank.set_discrete_inputs(dig_inputs_regs.TX_READING.ADDRESS, [False])
+        print("Fim da leitura de variáveis, CLP pode escrever")
+
+
         # self._write(192, dig_inputs_regs.TX_IP_A)
         # self._write(168, dig_inputs_regs.TX_IP_B)
         # self._write(60, dig_inputs_regs.TX_IP_C)
         # self._write(39, dig_inputs_regs.TX_IP_D)
-        self._write(192, dig_inputs_regs.TX_CGT_A)
+        # self._write(self.num_teste, dig_inputs_regs.TX_CGT_A)
         # self._write(168, dig_inputs_regs.TX_CGT_B)
         # self._write(60, dig_inputs_regs.TX_CGT_C)
         # self._write(1, dig_inputs_regs.TX_CGT_D)
@@ -96,33 +118,38 @@ class FocuserDriver(QObject):
         # self._write(True, dig_inputs_regs.HANDSHAKE)
         # time.sleep(2)
         # self._write(False, dig_inputs_regs.HANDSHAKE)
-        for reg in coils_regs:
-            # print("-------------------------------")
-            # print(f"Registrador {reg.TAG}:")
-            if reg.SIZE > 1:
-                if reg.TAG == "RX_V20":
-                    print("-------------------------------")
-                    print(f"Registrador {reg.TAG}:")
-                    print(f"{self.mb_server._conv_reg_to_value(reg, self.mb_server.data_bank)}")
+
+        # self.num_teste += 1
+        # if self.num_teste >255:
+        #     self.num_teste = 0
+            
+        # for reg in coils_regs:
+        #     # print("-------------------------------")
+        #     # print(f"Registrador {reg.TAG}:")
+        #     if reg.SIZE > 1:
+        #         if reg.TAG == "RX_V20":
+        #             print("-------------------------------")
+        #             print(f"Registrador {reg.TAG}:")
+        #             print(f"{self.mb_server._conv_reg_to_value(reg, self.mb_server.data_bank)}")
                     
-                    bit_list = self.mb_server.data_bank.get_coils(reg.ADDRESS, reg.SIZE)
-                    # conv: list = []
-                    # for cont in range(0,4):
-                    #     bit_list = self.mb_server.data_bank.get_coils(reg.ADDRESS+8*cont, 8)
-                    #     bit_list.reverse()
-                    #     for item in bit_list:      
-                    #         if item == True:
-                    #             conv.append(1)
-                    #         else:
-                    #             conv.append(0)
-                    cont = 0
-                    for bit in bit_list:
-                        print(f"coil {reg.ADDRESS + cont} = {bit}")
-                        cont+=1
+        #             bit_list = self.mb_server.data_bank.get_coils(reg.ADDRESS, reg.SIZE)
+        #             # conv: list = []
+        #             # for cont in range(0,4):
+        #             #     bit_list = self.mb_server.data_bank.get_coils(reg.ADDRESS+8*cont, 8)
+        #             #     bit_list.reverse()
+        #             #     for item in bit_list:      
+        #             #         if item == True:
+        #             #             conv.append(1)
+        #             #         else:
+        #             #             conv.append(0)
+        #             cont = 0
+        #             for bit in bit_list:
+        #                 print(f"coil {reg.ADDRESS + cont} = {bit}")
+        #                 cont+=1
                         
-                    # print(bit_list)
-            else:
-                print(f"{self.mb_server.data_bank.get_coils(reg.ADDRESS, reg.SIZE)}")
+        #             # print(bit_list)
+        #     else:
+        #         print(f"{self.mb_server.data_bank.get_coils(reg.ADDRESS, reg.SIZE)}")
 
 
     @property
@@ -158,6 +185,8 @@ class FocuserDriver(QObject):
                 self.mb_run_thread.start()
                 self.mb_server.running = True
                 _con = True
+                self.mb_server.data_bank.set_discrete_inputs(dig_inputs_regs.TX_WRITTING.ADDRESS, [False])  #| TX_WAIT e TX_BUSY precisam ser 
+                self.mb_server.data_bank.set_discrete_inputs(dig_inputs_regs.TX_READING.ADDRESS, [False])  #| inicializados em 0
                 print("Modbus server started")
                 self.logger.info("Modbus server started")
             except Exception as e:
@@ -508,7 +537,13 @@ class FocuserDriver(QObject):
         #             self.mb_server.data_bank.set_discrete_inputs(reg.ADDRESS, num_bits[16:])     #|  If the register is 32 bits the higher bits must be saved to the first 16 bits of the address   
         #             self.mb_server.data_bank.set_discrete_inputs(reg.ADDRESS+16, num_bits[:16])  #| and the lower bits must be saved to next 16 bits
 
+
+        
+
         if reg.TYPE is RegType.DISCRETE_INPUT:
+
+            self.mb_server.data_bank.set_discrete_inputs(dig_inputs_regs.TX_WRITTING.ADDRESS, [True])
+            time.sleep(0.05)
             if (type(value) is bool) or (reg.SIZE==1 and ( (value==0) or (value==1) ) ):                # If the value is a bool or the register has only one bit than no conversion is needed
                 self.mb_server.data_bank.set_discrete_inputs(reg.ADDRESS, [value])
             else:                                                                                       #| If the register has multiple bits than the value must be converted
@@ -519,7 +554,7 @@ class FocuserDriver(QObject):
                     self.mb_server.data_bank.set_discrete_inputs(reg.ADDRESS, num_bits[16:])     #|  If the register is 32 bits the higher bits must be saved to the first 16 bits of the address   
                     self.mb_server.data_bank.set_discrete_inputs(reg.ADDRESS+16, num_bits[:16])  #| and the lower bits must be saved to next 16 bits
 
-            self.mb_server.data_bank.set_discrete_inputs(dig_inputs_regs.TX_WAIT.ADDRESS, [False])  # Informs CLP that there is a valid data ready for readi
+            self.mb_server.data_bank.set_discrete_inputs(dig_inputs_regs.TX_WRITTING.ADDRESS, [False])  # Informs CLP that there is a valid data ready for readi
             self.mb_server.wait_confirmation(reg)
 
 
