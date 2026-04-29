@@ -24,6 +24,7 @@
 ; - ALLOCATE FIRMWARE VERSION IN MEMORY POSITIONS V90, V91 and V92 [VERSION V90.V91.V92]
 ; - ALLOCATE CONFIGURED HSPD AND LSPD IN V75 AND V76, RESPECTIVELY
 ; - CREATED SUB5 TO MAKE MOTOR PARKING (V16 INDICATES WHEN PARKING IS BEING PERFORMED)
+; - V13 USED TO INDICATE THAT A STOP WAS ISSUED DURING HOMING SO THAT PARKING IS NOT EXECUTED
 ; - #TODO: V77 -> Normal speed
 ; - #TODO: V78 -> corrente idle
 ; - #TODO: V79 -> desaceleração
@@ -179,29 +180,32 @@ SUB 5	; PARK
 ; V74: overtravel pulses to eliminate backlash = 5360 encoder units (125 um)
 ; V16: indicates parking running 
 
-	GOSUB 30
-	V46 = 1			 			; Set start SUB code
-	V42 = 0						; Clear stop flag
-	V16 = 1						; Set parking flag
-	ABS								; Select absolute mode
-	EO = 1						; Enable motor driver
-	; Move in forward direction towards maximum position
-	V10 = 10 * V83		; Convert encoder unit to step unit
-	XV10							; Start movement
-	V8 = 1
-		WHILE V8 > 0
-			V11 = MSTX	; Read status
-			V8 = V11 & 7;	Motor moving bits
-			IF V42 = 1	; Check stop command
-				STOPX
-				DELAY = 500	; Desacceleration time = 300
-				V8 = 0			; Exit while loop
-			ENDIF
-		ENDWHILE
-	EO = 0						; Disable motor driver
-	V16 = 0						; Clear parking flag
-	V42 = 0						; Clear stop command
-	V46 = 0			 			; Set end SUB code
+	GOSUB 30						;* Starts by homing the motor
+	if V13 = 0						;* If V13 = 1 then an stop was issued during homing
+		V46 = 1			 			;* Set start SUB code
+		V42 = 0						;* Clear stop flag
+		V16 = 1						;* Set parking flag
+		ABS							;* Select absolute mode
+		EO = 1						;* Enable motor driver
+									;* Move in forward direction towards maximum position
+		V10 = 10 * V83				;* Convert encoder unit to step unit
+		XV10						;* Start movement
+		V8 = 1
+			WHILE V8 > 0		
+				V11 = MSTX			;* Read status
+				V8 = V11 & 7		;* Motor moving bits
+				IF V42 = 1			;* Check stop command
+					STOPX
+					DELAY = 500		;* Deceleration time = 300
+					V8 = 0			;* Exit while loop
+				ENDIF
+			ENDWHILE
+		EO = 0						;* Disable motor driver
+		V16 = 0						;* Clear parking flag
+		V42 = 0						;* Clear stop command
+		V46 = 0			 			;* Set end SUB code
+	ENDIF
+	V13 = 0							;* Resets stop issued flag
 	ENDSUB 
 
 ;=================
@@ -432,9 +436,11 @@ SUB 30	; FOCUS INIT
 ; V46: OUTPUT: routine status, =1 during execution, =0 for normal finish, or error code.
 ;--------------------
 ;
+	V15 = 1						; Indicates INIT is running
 	V46 = 1			 			; Set start SUB code
 	V44 = 0						; Reset INIT flag
-	V15 = 1						; Indicates INIT is running
+	V13 = 0						;* Indicates if STOP was issued during homing
+	
 
 	; Moves towards reference position, cheking stop command (V42)
 	EO = 1						; Enable motor driver
@@ -453,6 +459,7 @@ SUB 30	; FOCUS INIT
 		IF V42 > 0
 			STOPX					; Stop motor
 			V2 = 1				; Exit from while loop
+			V13 = 1				;* Stop issued
 		ENDIF
 	ENDWHILE
 	ECLEARX						; Clear any motor error
@@ -470,7 +477,8 @@ SUB 30	; FOCUS INIT
 				V3 = V11 & 7
 				IF V42 > 0
 					STOPX					; Stop motor
-					V3 = 1				; Exit from while loop
+					V3 = 0				; Exit from while loop
+					V13 = 1				;* Stop issued
 				ENDIF
 			ENDWHILE 
 			IF V42 = 0					; If stop was issued the homing is not valid
