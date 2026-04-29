@@ -34,7 +34,7 @@ class ReqSender(QRunnable):
         self._send = False
         self._timeout = 0
 
-        self.finished = False
+        self.finished = True    
         self._running = True
 
     @pyqtSlot()
@@ -97,3 +97,4 @@ class ReqSender(QRunnable):
             self._action = action
             self._timeout = timeout
             self._send = True
+            self.finished = False
