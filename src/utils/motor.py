@@ -9,15 +9,8 @@ from dataclasses import dataclass
 from src.interface.motor_driver import Driver
 from src.interface.driver_DMX import  DriverDMX
 from src.interface.driver_AMP import DriverAMP
-from src.utils.constants import MotorModels, MotorParamsIdx, ServerCommands, constants
+from src.utils.constants import MotorModels, MotorParamsIdx, ServerCommands, constants, MotorParameter
 from src.utils.signals import PropertySignals, MultiSignal
-
-
-@dataclass
-class MotorParameter():
-    IDX: MotorParamsIdx
-    NAME: str
-    VALUE: int | bool
 
 
 class MotorSignals(QObject):
@@ -43,7 +36,7 @@ class Motor():
 
     signals = MotorSignals()
 
-    def __init__(self, model: MotorModels, ID: str = '0', ):
+    def __init__(self, model: MotorModels = MotorModels.ARCUS_DMX_ETH, ID: str = '0', ):
         
         # General Information
         self.model = model
@@ -81,7 +74,7 @@ class Motor():
         else:
             raise RuntimeError(f'Motor driver model {model} is invalid')
 
-   #region  ========== PROPERTIES ========== # 
+#region  ========== PROPERTIES ========== # 
 
     @property
     def connected(self) -> bool:
@@ -95,8 +88,7 @@ class Motor():
     def connected(self, status: bool):
         self._connected = status
         self.signals.connected.emit(status)
-
-    
+   
     @property
     def is_moving(self) -> bool:
         return self._is_moving
@@ -221,7 +213,35 @@ class Motor():
             raise e
             # return f'[Device] Could not retrieve initialized information: Error -> {str(e)}'
     
+    @property
+    def alarm(self) -> bool:    #TODO: Talvez já colocar um tratamento para checar qual é o alarme
+        """Motor alarm status
+        The motor alarm is read using the 'status' property, this is only a way to
+        read the alarm.
+        
+        :getter: Returns the motor alarm status
+        :rtype: bool
+        """
+        return self._alarm
+    
+    @property
+    def firmware_status(self) -> str: 
+        try:
+            val = self.driver.read_firmware_status()
+            if val != self._firmware_status:
+                self._firmware_status = val
+                self.signals.firmware_status.emit(self._firmware_status)
+            return self._firmware_status
+        except Exception as e:
+            self.disconnect()
+            raise e
+            # return f'[Device] Could not retrieve firmware status information: Error -> {str(e)}'
+
+
 #endregion
+
+
+#region  ========== METHODS ========== # 
 
                                         #TODO: A formatação do status é diferente, então vai ser necessário padronizar isso 
     def update_status(self) -> str:    #       entre os motores e fazer com que a resposta de 'read_satus' seja independente do motor.
@@ -260,33 +280,7 @@ class Motor():
             raise e
             # raise RuntimeError(f'[Device] Could not retrieve motor status information: Error -> {str(e)}')
 
-    
-    @property
-    def alarm(self) -> bool:    #TODO: Talvez já colocar um tratamento para checar qual é o alarme
-        """Motor alarm status
-        The motor alarm is read using the 'status' property, this is only a way to
-        read the alarm.
         
-        :getter: Returns the motor alarm status
-        :rtype: bool
-        """
-        return self._alarm
-    
-    @property
-    def firmware_status(self) -> str: 
-        try:
-            val = self.driver.read_firmware_status()
-            if val != self._firmware_status:
-                self._firmware_status = val
-                self.signals.firmware_status.emit(self._firmware_status)
-            return self._firmware_status
-        except Exception as e:
-            self.disconnect()
-            raise e
-            # return f'[Device] Could not retrieve firmware status information: Error -> {str(e)}'
-
-
-    
     def connect(self, max_retries: int = 5, delay: float = 0.1) -> bool:
         """Connects to the motor
 
@@ -301,9 +295,9 @@ class Motor():
             try:
                 resp = self.driver.connect_motor(max_retries=max_retries, delay=delay)
                 if resp == "OK":
-                    # self._connected = True
-                    # self.signals.connected.emit(self._connected)
                     self.connected = True
+                    # self.ID = '2'                                                 #TODO: Cada motor deve ter um ID específico?
+                    self.firmware_version = self.driver.read_firmware_version()
 
                     print('Motor Connected')
                     # self.logger.info('Motor Connected')
@@ -352,7 +346,6 @@ class Motor():
         self._alarm = False
         self._firmware_status = 'invalid'
         self._status = ""
-
 
     def ping(self) -> bool:
         """Pings the motor to check if it is reachable
@@ -434,3 +427,4 @@ class Motor():
             raise e
 
 
+#endregion

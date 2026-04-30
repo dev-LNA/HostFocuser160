@@ -53,7 +53,6 @@ class UiWidgets(QWidget):
 
 
         # Buttons
-
             self.lblTitle = window.findChild(QLabel, 'lblTitle')
             self.lblTitle: QLabel = self.lblTitle
 
@@ -69,6 +68,7 @@ class UiWidgets(QWidget):
             self.menuOptions = window.findChild(QMenu, 'menuOptions')
             self.menuOptions: QMenu = self.menuOptions
 
+        # Actions
             self.actionHide = window.findChild(QAction, 'actionHide')
             self.actionHide: QAction = self.actionHide
 
@@ -233,6 +233,10 @@ class UiWidgets(QWidget):
 
             self.txtLowSpeed = window.findChild(QLineEdit, 'txtLowSpeed')
             self.txtLowSpeed: QLineEdit = self.txtLowSpeed
+
+            self.txtMaxStep = window.findChild(QLineEdit, 'txtMaxStep')
+            self.txtMaxStep: QLineEdit = self.txtMaxStep
+
 
         # Frame send command
 

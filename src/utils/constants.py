@@ -1,6 +1,7 @@
 from collections import namedtuple
 from enum import StrEnum, Enum, IntFlag
-from typing import NamedTuple
+from typing import NamedTuple, TypedDict
+from dataclasses import dataclass
 
 Constants = namedtuple('Constants',
                         ['ID_FOCUSER_160', 
@@ -53,6 +54,8 @@ class MotorModels(StrEnum):
     AMP_MOTOR = 'AMP'
 
 
+
+
 class MotorParamsIdx(Enum):     
     MOTOR_IP=0
     BACKLASH=1
@@ -62,7 +65,12 @@ class MotorParamsIdx(Enum):
     NORMAL_SPEED=5
     LOW_SPEED=6
     MAX_STEP=7
-    INVALID=-1
+
+@dataclass
+class MotorParameter():
+    IDX: MotorParamsIdx
+    NAME: str
+    VALUE: int | bool | str
 
 
 class ReachStatus(StrEnum):
