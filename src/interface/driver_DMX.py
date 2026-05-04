@@ -211,7 +211,7 @@ class DriverDMX(Driver):
         if value:
             resp = self._write(f"V76={value}")             # Flash memory position used to retain the low speed configuration after reboot
             if resp != "NOK":
-                resp = self._write(f"HSPD={value}")
+                resp = self._write(f"LSPD={value}")
                 if resp != "NOK":
                     return "OK"
             # If this point is reached an error occured
