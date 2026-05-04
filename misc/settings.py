@@ -401,14 +401,23 @@ class SettingsWindow(QMainWindow):
 
     def _validate_parameters(self):
         """Verifies if a new configuration for the parameters is avaiable"""
+        #TODO: Adicionar validação por parâmetro? Considerando limites entre os parâmetros Ex. 'Backlash' não pode ser maior que 'pos_max'
         for idx in MotorParamsIdx:
             self._set_motor_settings(idx, self._config_txt_boxes[idx].text())
-            if self._config_txt_boxes[idx].text() != self._motor_settings[idx]:
+            if self._config_txt_boxes[idx].text() == "":
+                self._config_txt_boxes[idx].setStyleSheet("""
+                    QLineEdit {border: 1px solid rgb(255,0,0);
+                                background-color: rgba(255,0,0, 20); 
+                    border-radius:3}
+                """
+                )
+            elif self._config_txt_boxes[idx].text() != self._motor_settings[idx]:
                 self._config_txt_boxes[idx].setStyleSheet("""
                     QLineEdit {border: 1px solid rgb(255,0,0);
                     border-radius:3}
                 """
                 )
+            
             else:
                 self._config_txt_boxes[idx].setStyleSheet(""" """
                 )
