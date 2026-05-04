@@ -4,14 +4,14 @@ from typing import NamedTuple
 from PyQt6.QtCore import pyqtSignal, QObject
 from src.utils.constants import MotorParamsIdx, ServerCommands
 
-
-# class DriverSignals(QObject):
-#     """Signals issued by the driver to pass information to the motor"""
-#     disconnect = pyqtSignal(bool)
+class DriverCommunicator(QObject):
+    status = pyqtSignal(bool)
 
 class Driver(ABC):
     def __init__(self, model: str):
         self._model = model
+
+        self.driver_comm = DriverCommunicator()
 
         self.param_methods = {
             MotorParamsIdx.MOTOR_IP : self.param_IP,

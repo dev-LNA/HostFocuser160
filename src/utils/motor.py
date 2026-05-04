@@ -73,6 +73,8 @@ class Motor():
             self.driver = DriverAMP(model)
         else:
             raise RuntimeError(f'Motor driver model {model} is invalid')
+        
+        self.driver.driver_comm.status.connect(lambda val: setattr(self, 'connected', val))
 
 #region  ========== PROPERTIES ========== # 
 

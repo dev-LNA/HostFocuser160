@@ -36,6 +36,7 @@ class DriverDMX(Driver):
                 self.socket.connect((Config.device_ip, Config.device_port)  )      
                 time.sleep(delay)
                 connected_successfully = True
+                self.driver_comm.status.emit(True)
             except Exception as e:
                 # self.logger.error(f'Connection attempt {retries + 1} failed: {e}')
                 retries += 1                    
@@ -54,6 +55,7 @@ class DriverDMX(Driver):
                 while self._lock.locked(): pass     # Waits if a message is being transfered so that the socket is not closed mid-transfer
                 self.socket.close()
                 self.socket = None
+                self.driver_comm.status.emit(False)
             return "OK"
         except Exception as e:
             raise RuntimeError(f'Cannot disconnect -> {e}') 

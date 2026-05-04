@@ -453,6 +453,8 @@ class Server(QObject):
                 self._reset_client()
 
             else:
+                self.router_reachable = False
+                self.motor_reachable = False
                 self._reach_device()
             
             self.signals.connection_speed.emit(f"{round(time.time()-t0, 3)}")
