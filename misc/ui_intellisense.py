@@ -200,6 +200,9 @@ class UiWidgets(QWidget):
             
             self.btnBackup = window.findChild(QPushButton, 'btnBackup')
             self.btnBackup: QPushButton = self.btnBackup
+            
+            self.btnReadMotor = window.findChild(QPushButton, 'btnReadMotor')
+            self.btnReadMotor: QPushButton = self.btnReadMotor
 
 
             # Labels

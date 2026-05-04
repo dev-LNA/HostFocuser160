@@ -90,6 +90,7 @@ class SettingsWindow(QMainWindow):
         self.ui_elements.btnSave.clicked.connect(self._save_settings)                   # Connects save settings button
         self.ui_elements.btnDefault.clicked.connect(self._load_config_values)           # Connects default settings button
         self.ui_elements.btnBackup.clicked.connect(self._load_config_values)            # Connects default settings button
+        self.ui_elements.btnReadMotor.clicked.connect(self._update_settings)            # Connects read motor settings button
         
         
         self.ui_elements.frameCommand.setVisible(False)                                 # Send commands frame begins not visible
@@ -100,6 +101,9 @@ class SettingsWindow(QMainWindow):
 
         self.ui_elements.btnBackup.setVisible(False)                                    # Defaul configurations button begins not visible
         self.signals.engineering_mode.connect(self.ui_elements.btnBackup.setVisible)    # The default configurations button is only visible in engineering mode
+
+        self.ui_elements.btnReadMotor.setVisible(False)                                    # Defaul configurations button begins not visible
+        self.signals.engineering_mode.connect(self.ui_elements.btnReadMotor.setVisible)    # The default configurations button is only visible in engineering mode
 
         self.ui_elements.btnSendCommand.clicked.connect(self._send_test_command)
         self.ui_elements.txtCommand.returnPressed.connect(self._send_test_command)
@@ -398,7 +402,6 @@ class SettingsWindow(QMainWindow):
             else:                                                                   # if no user set
                 self.engineering_mode = False                                           # Exits engineering mode 
 
-
     def _validate_parameters(self):
         """Verifies if a new configuration for the parameters is avaiable"""
         #TODO: Adicionar validação por parâmetro? Considerando limites entre os parâmetros Ex. 'Backlash' não pode ser maior que 'pos_max'
@@ -421,7 +424,6 @@ class SettingsWindow(QMainWindow):
             else:
                 self._config_txt_boxes[idx].setStyleSheet(""" """
                 )
-
 
     def closeEvent(self, event):
         """Event called when the settings window is closed
@@ -461,17 +463,7 @@ class SettingsWindow(QMainWindow):
             event.accept()
         
             
-   
-
-
-
-
 #endregion
-
-
-
-
-
 
 
 

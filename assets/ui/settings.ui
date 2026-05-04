@@ -911,49 +911,65 @@ background-color: white;
      </item>
     </layout>
    </widget>
-   <widget class="QPushButton" name="btnDefault">
+   <widget class="QWidget" name="">
     <property name="geometry">
      <rect>
       <x>360</x>
       <y>300</y>
-      <width>81</width>
-      <height>21</height>
+      <width>101</width>
+      <height>92</height>
      </rect>
     </property>
-    <property name="acceptDrops">
-     <bool>true</bool>
-    </property>
-    <property name="toolTip">
-     <string>Default configuration</string>
-    </property>
-    <property name="statusTip">
-     <string>Return to default configurations</string>
-    </property>
-    <property name="text">
-     <string>Default</string>
-    </property>
-   </widget>
-   <widget class="QPushButton" name="btnBackup">
-    <property name="geometry">
-     <rect>
-      <x>340</x>
-      <y>330</y>
-      <width>121</width>
-      <height>21</height>
-     </rect>
-    </property>
-    <property name="acceptDrops">
-     <bool>true</bool>
-    </property>
-    <property name="toolTip">
-     <string>Default configuration</string>
-    </property>
-    <property name="statusTip">
-     <string>Return to default configurations</string>
-    </property>
-    <property name="text">
-     <string>Load Backup</string>
-    </property>
+    <layout class="QVBoxLayout" name="verticalLayout_2">
+     <item>
+      <widget class="QPushButton" name="btnDefault">
+       <property name="acceptDrops">
+        <bool>true</bool>
+       </property>
+       <property name="toolTip">
+        <string>Default configuration</string>
+       </property>
+       <property name="statusTip">
+        <string>Return to default configurations</string>
+       </property>
+       <property name="text">
+        <string>Default</string>
+       </property>
+      </widget>
+     </item>
+     <item>
+      <widget class="QPushButton" name="btnBackup">
+       <property name="acceptDrops">
+        <bool>true</bool>
+       </property>
+       <property name="toolTip">
+        <string>Default configuration</string>
+       </property>
+       <property name="statusTip">
+        <string>Load backup configurations</string>
+       </property>
+       <property name="text">
+        <string>Load Backup</string>
+       </property>
+      </widget>
+     </item>
+     <item>
+      <widget class="QPushButton" name="btnReadMotor">
+       <property name="acceptDrops">
+        <bool>true</bool>
+       </property>
+       <property name="toolTip">
+        <string>Default configuration</string>
+       </property>
+       <property name="statusTip">
+        <string>Read current motor configurations</string>
+       </property>
+       <property name="text">
+        <string>Read motor</string>
+       </property>
+      </widget>
+     </item>
+    </layout>
    </widget>
   </widget>
   <widget class="QMenuBar" name="menubar">
