@@ -7,7 +7,7 @@
     <x>0</x>
     <y>0</y>
     <width>630</width>
-    <height>557</height>
+    <height>566</height>
    </rect>
   </property>
   <property name="minimumSize">
@@ -100,7 +100,7 @@ QProgressBar[conStatusBar=&quot;connected&quot;]::chunk {
           <x>50</x>
           <y>60</y>
           <width>171</width>
-          <height>77</height>
+          <height>83</height>
          </rect>
         </property>
         <layout class="QVBoxLayout" name="verticalLayout_36">
@@ -4021,8 +4021,8 @@ QSlider::handle:horizontal {
          <rect>
           <x>209</x>
           <y>100</y>
-          <width>77</width>
-          <height>86</height>
+          <width>82</width>
+          <height>92</height>
          </rect>
         </property>
         <layout class="QVBoxLayout" name="verticalLayout">
@@ -4060,7 +4060,7 @@ QSlider::handle:horizontal {
      <x>0</x>
      <y>0</y>
      <width>630</width>
-     <height>22</height>
+     <height>23</height>
     </rect>
    </property>
    <widget class="QMenu" name="menuOptions">
@@ -4134,6 +4134,9 @@ QSlider::handle:horizontal {
    <property name="shortcut">
     <string>Ctrl+S</string>
    </property>
+   <property name="autoRepeat">
+    <bool>false</bool>
+   </property>
   </action>
   <action name="actionShow_toolbar">
    <property name="checkable">
@@ -4202,6 +4205,9 @@ QSlider::handle:horizontal {
    </property>
    <property name="shortcut">
     <string>Ctrl+L</string>
+   </property>
+   <property name="visible">
+    <bool>true</bool>
    </property>
    <property name="iconVisibleInMenu">
     <bool>false</bool>

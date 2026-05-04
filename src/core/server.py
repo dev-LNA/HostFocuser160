@@ -259,8 +259,7 @@ class Server(QObject):
 
 #region ========== METHODS ========== # 
     def teste(self):
-        print(SJson.CMD_CLIENT_ID)
-        print(self.status[SJson.CMD][SJson.CMD_CLIENT_ID])
+        print(self.status)
 
     def _start_server(self):
         """Starts server communication
@@ -325,7 +324,6 @@ class Server(QObject):
         else:
             raise ValueError("Invalid motor model")
 
-
     def _reach_device(self):
         """Verifies if the router and the motor are reachable. 
         If its reachable connects to the motor and updates status information"""
@@ -372,9 +370,9 @@ class Server(QObject):
                 self._get_motor_params()
                 self._update_status()
                                               
-                self.status[SJson.DEVICE_IP] = self.motor.get_param(MotorParamsIdx.MOTOR_IP)                                  
-                self.status[SJson.DEVICE_ID] = self.motor.ID                                    
-                self.status[SJson.DEVICE_FIRMWARE_VERSION] = self.motor.firmware_version        
+                self.status[SJson.DEVICE_IP] = self.motor.get_param(MotorParamsIdx.MOTOR_IP)
+                self.status[SJson.DEVICE_ID] = self.motor.ID
+                self.status[SJson.DEVICE_FIRMWARE_VERSION] = self.motor.firmware_version
 
                 # self._check_homing()                                                                # Emits homing signals      #TODO: Trocar nome do método
 
@@ -406,7 +404,7 @@ class Server(QObject):
         #TODO: Adicionar os outros parâmetros no JSON
         for param in MotorParamsIdx:
             print(param)
-            if param != MotorParamsIdx.INVALID:
+            if param in MotorParamsIdx:
                 self.motor.get_param(param)
         self.status[SJson.DEVICE_IP] = self.motor.parameters[MotorParamsIdx.MOTOR_IP].VALUE
         self.status[SJson.MAX_SPEED] = self.motor.parameters[MotorParamsIdx.MAX_SPEED].VALUE
@@ -428,7 +426,6 @@ class Server(QObject):
             current_time = datetime.now()                           # Reads current time
             
             if abs(current_time.second - self.last_pub_time.second) >= Config.pub_interval:   # Publishes status every second
-                print(self.status[SJson.TIMESTAMP])
                 self.last_pub_time = self.zmq_comm.pub(self.status)
 
             if self.motor.connected and self.zmq_comm.poller:
@@ -441,8 +438,9 @@ class Server(QObject):
                         parsed_cmd = self._parse_client_command(msg_json)                   # Parses client command
                         self._command_validation(parsed_cmd)                                # Validates the received command
                         self._handle_command(parsed_cmd)                                    # Executes the command
-                        self.status[SJson.CMD] = msg_json                                   # Updates status with the current command being executed
+                        self.status[SJson.CMD] = msg_json                                   # Updates status with the current command being executed                         
                         self.zmq_comm.reply('ACK')                                          # Replies 'ACK' to inform the client that everything went ok
+                        self.signals.last_command.emit(self.status)
                     except Exception as e: 
                         print(e)
                         self.zmq_comm.reply('NAK')          # Replies 'NAK' to inform the client that an error occured                     
@@ -492,8 +490,6 @@ class Server(QObject):
         else:
             raise ValueError(f'Command "{cmd}" is not a valid command')
     
-        
-
     def _parse_client_command(self, msg_json: json) -> dict:
         """Parses received command and updates status
 

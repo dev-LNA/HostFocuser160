@@ -16,7 +16,6 @@ ip_iag = "192.168.60.120"
 router_ip = "192.168.0.1"
 device_port = 5001
 encoder2microns = 42.2047244
-max_step = 50700
 max_increment = 0
 tempcompavailable = false
 temp_comp = false
@@ -24,12 +23,13 @@ speed_security = 215000
 speedFactor = 428
 step_size = 0
 device_ip = "192.168.0.250"
-backlash = 4
-pos_max = 50
-park = 35
-max_speed = 3000
-normal_speed = 3000
+backlash = 6
+max_pos = 50
+park_pos = 20
+normal_speed = 3500
 low_speed = 1000
+max_step = 50700
+max_speed = 3500
 
 [Network]
 ip_address = "*"

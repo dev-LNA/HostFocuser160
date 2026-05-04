@@ -1,6 +1,6 @@
 from PyQt6 import QtWidgets, uic
 from PyQt6.QtCore import QTimer, Qt, QPoint, QPropertyAnimation, QSize, QEasingCurve, QDynamicPropertyChangeEvent, QObject, QEvent, pyqtSignal
-from PyQt6.QtGui import QAction, QIcon, QPixmap
+from PyQt6.QtGui import QAction, QIcon, QPixmap, QShortcut, QKeySequence
 from PyQt6.QtWidgets import QMainWindow, QMessageBox, QMenu, QSystemTrayIcon, QPushButton,QToolBar, QLabel, QWidget, QProgressBar
 
 import sys
@@ -23,7 +23,9 @@ from misc.ui_intellisense import UiWidgets
 from src.utils.constants import constants
 from src.utils.constants import ServerJsonKeys as SJson
 from src.utils.motor import MotorModels
+
 from misc.log_box import LogBox
+from misc.settings import SettingsWindow
 
 def resource_path(relative_path):
     """ Get absolute path to resource, works for dev and for PyInstaller """
@@ -85,7 +87,7 @@ class FocuserOPD (QMainWindow):
         self.tray_icon.setContextMenu(self.tray_menu)                   # Sets the tray icon context menu that opens when tray icon is right clicked
         self.tray_icon.activated.connect(self._tray_activated)          # Method executed when tray icon is activated by an event
 
-
+        
     #--- UI elements initialization and configuration
     #   Initializes every UI element of the main window.
     #   The initialization will set the initial values and the behavior of the elements.        
@@ -104,7 +106,7 @@ class FocuserOPD (QMainWindow):
         self.ui_elements.actionShow_Log.triggered.connect(self._toggle_log_box)
         self.ui_elements.actionClient_Simulator.triggered.connect(self._run_simulator)
         self.ui_elements.actionHide.triggered.connect(self._minimize_to_tray)    
-        # self.ui_elements.actionSettings.triggered.connect(self._open_settings)
+        self.ui_elements.actionSettings.triggered.connect(self._open_settings)
         self.ui_elements.actionShow_toolbar.triggered.connect(              
             lambda checked: self.ui_elements.toolBar.setVisible(checked)    # Action to toggle toolbar
         )   
@@ -118,7 +120,17 @@ class FocuserOPD (QMainWindow):
         self.ui_elements.conBarServerRouter.setProperty("conStatusBar", "waiting")
         self.ui_elements.conBarRouterMotor.setProperty("conStatusBar", "waiting")
 
-        # Configuration of signals
+
+    # Configuration of application wide shortcuts
+    # Shortcuts without a visual representation are configured as a 'QShortcut'
+        self.ui_elements.actionHide.setShortcutContext(Qt.ShortcutContext.ApplicationShortcut)
+        self.ui_elements.actionShow_Log.setShortcutContext(Qt.ShortcutContext.ApplicationShortcut)
+
+        shortcut = QShortcut(QKeySequence("Ctrl+M"), self)
+        shortcut.setContext(Qt.ShortcutContext.ApplicationShortcut)
+        shortcut.activated.connect(lambda: self.menuBar().setHidden(not self.menuBar().isHidden()))
+
+    # Configuration of signals
         self.server.signals.socket_ip.connect(self.ui_elements.lblSocketIP.setText)
         self.server.signals.port_pub.connect(self.ui_elements.lblPortPUB.setText)
         self.server.signals.port_rep.connect(self.ui_elements.lblPortREP.setText)
@@ -378,6 +390,65 @@ class FocuserOPD (QMainWindow):
                 print(f"Cliente {removed.client_ID} encerrado")         # Prints the client that was removed
 
         print(self.clients)                                         # Prints the list of clients
+
+    def _open_settings(self):
+        """Opens the settings window"""
+        #To open the settings the motor must be connected
+        if self.server.motor.connected:
+            self._settings_window = SettingsWindow(self.server.motor, logger)                                 # Starts the main window according to the initialized focuser
+            self._settings_window.signals.window_closed.connect(self._settings_closed)                          # Connects function that must be executed when the settings window is closed
+            self._settings_window.signals.changed_settings.connect(self._parse_changed_settings)               # Connects function to be executed when settings are changed
+            self._settings_window.move(self.pos() + QPoint(self.width(), 0))                                    # Positions settings window next to the main window
+            self._settings_window.show()                                                                        # Shows settings window
+        else:
+            msg = QMessageBox.information(                                                                      # Shows message to the user
+                self,                                                                                       # Parent widget (None centers on the screen; 'self' for a parent window)
+                "Attention",  
+                "To open settings the focuser motor must be connected. \nConnect to motor?",                    # Asks the user if they want to connect to the motor
+                buttons=QMessageBox.StandardButton.Yes | QMessageBox.StandardButton.No)                         # Configures the message buttons
+            if(msg == QMessageBox.StandardButton.Yes):                                                          # If the user whishes to connect the motor
+                self._start()                                                                                       # Connects the server to the motor and starts server operation #TODO: Talvez seja bom ter essas coisas separadas, com um método só para conectar (criar o socket) e outro para iniciar a thread de App, pois a thread de App vai começar a fazer o polling de informações sem parar uma vez iniciada
+                t = time.time()                                                                                     # Keeps current time
+                while not self.server.motor.connected:                                                            # Waits 5 seconds while the server tries to connect to the motor
+                    if round(time.time()-t, 3) > 5:                                                                     # If the server cannot connect after 5 seconds informs the user
+                        QMessageBox.information(                                                                        # Shows message to the user
+                            self,  # Parent widget (None centers on the screen; 'self' for a parent window)
+                            "Attention",  
+                            "The motor could not be reached after 5 seconds",                                           # Informs the user that the motor is not reachable
+                            buttons=QMessageBox.StandardButton.Ok)                                                      # Configures the message button
+                        self._stop()
+                        break                                                                                           # Break the while loop and continues operation
+                if self.server.motor.connected:                                                               # If the connection to the motor was successful
+                    if self._settings_window is None:                                                               # If the settings windows was not yet defined
+                        self._settings_window = SettingsWindow(self.server.motor, logger)                                 # Instantiate settings window
+                        self._settings_window.signals.window_closed.connect(self._settings_closed)                  # Connects closed window signal
+                        self._settings_window.signals.changed_settings.connect(self._parse_changed_settings)       # Connects signal to show the settings in the GUI
+                        self._settings_window.move(self.pos() + QPoint(self.width(), 0))                            # Positions the settings window according to the main window position
+                        self._settings_window.show()                                                                # Shows the settings window
+
+
+
+
+
+    def _settings_closed(self, msg: bool):
+        """Function executed when the settings window is closed.
+
+        :param msg: Indicates that the settings window was closed
+        :type msg: bool
+        """
+        if msg is True:                         # If the settings window was closed
+            self._settings_window = None            # Reassign the settings window to allow a new instantiation
+            print("Configurações fechadas")
+
+    def _parse_changed_settings(self, data: dict):
+        """Parses the settings that were changed in the moto configuration and updates GUI elements that depends on the settings
+
+        :param data: Dictionary with all the changed settings
+        :type data: dict
+        """
+        if "MAX_POS" in data:                                                   # If the 'MAX_POS' is changed the slider must be resized accordingly
+            self.ui_elements.posSlider.setMaximum(int(data["MAX_POS"]) + 5)         # Sets slider max value
+            self.ui_elements.posSlider.setMinimum(-12)                              # Sets slider min value #TODO: Acho que esse valor vai ser dependente do 'backlash'
 
     def _minimize_to_tray(self):
         """Minimize to tray"""
