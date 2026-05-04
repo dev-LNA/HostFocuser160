@@ -110,7 +110,7 @@
         <bool>true</bool>
        </property>
        <property name="TAG" stdset="0">
-        <string>POS_MAX</string>
+        <string>MAX_POS</string>
        </property>
       </widget>
      </item>
@@ -136,7 +136,7 @@
         <bool>true</bool>
        </property>
        <property name="TAG" stdset="0">
-        <string>PARK</string>
+        <string>PARK_POS</string>
        </property>
       </widget>
      </item>

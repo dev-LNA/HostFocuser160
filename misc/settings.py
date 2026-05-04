@@ -1,7 +1,7 @@
 from ast import Attribute
 
 from PyQt6 import uic
-from PyQt6.QtWidgets import QMainWindow, QLineEdit, QProgressBar, QDialog
+from PyQt6.QtWidgets import QMainWindow, QLineEdit, QProgressBar, QDialog, QMessageBox
 from PyQt6.QtCore import QThread, pyqtSignal, QObject
 from PyQt6.QtGui import QFontMetrics, QKeyEvent
 # from src.core.exceptions import NotImplementedException
@@ -80,7 +80,7 @@ class SettingsWindow(QMainWindow):
         lineEdits = self.findChildren(QLineEdit)                                        # Makes a list of all QLineEdit widgets
         for _ in lineEdits:                                                             # Connects the engineering mode signal to each QLineEdit setEnabled
             self.signals.engineering_mode.connect(_.setEnabled)                         #  this way when engineering mode is activated the line edits automatically become enabled   
-            
+
 
         self.signals.engineering_mode.connect(self.ui_elements.btnSave.setEnabled)      # Save button is only enabled in engineering mode
 
@@ -182,6 +182,7 @@ class SettingsWindow(QMainWindow):
         if value is False:                                                                  # The motor reading finishes when the _running signal goes to False
             for idx in MotorParamsIdx:
                 self._motor_settings[idx] = self._config_txt_boxes[idx].text()
+                self._config_txt_boxes[idx].textChanged.connect(self._validate_parameters)  # When a parameter changes the value is validated
 
     def _parse_motor_data(self, data: Motor):
         """Parses the motor data and updates the GUI with the information
@@ -280,13 +281,14 @@ class SettingsWindow(QMainWindow):
                         Config.device_ip = config['Device']['ip_iag'] # get_toml('Device', 'ip_iag')
                 else:
                     # config['Device'][k.lower()] = int(self._changed_settings[k])
-                    config['Device'][self.motor.parameters[k].NAME] = int(self._changed_settings[k])
+                    config['Device'][self.motor.parameters[k].NAME.lower()] = int(self._changed_settings[k])
 
         with open(config_file, 'w') as f:
             toml.dump(config, f)
 
     def _load_config_values(self):
-        """Opens the dialog window to confirm loading of default configurations"""
+        """Opens the dialog window to confirm loading of default or
+        backup configurations"""
         if self.sender() is self.ui_elements.btnDefault:
             cfg_file = config_file_default
             msg = "DEFAULT"
@@ -300,75 +302,32 @@ class SettingsWindow(QMainWindow):
         if self._default_widget.exec() == QDialog.DialogCode.Accepted:
             # If accepted must take the selected values and load them in the boxes
             for conf_key in self._config_txt_boxes.keys():              # Check each 
-                if conf_key in self._default_widget.selected_items:     # If a configuration was selected in the Default Window
+                if conf_key.name in self._default_widget.selected_items:     # If a configuration was selected in the Default Window
                     # default_config = self._get_config(conf_key, config_file_default)
                     # self._config_txt_boxes[conf_key].setText(default_config)
-                    if conf_key == "MOTOR_IP":
+                    if conf_key.name == "MOTOR_IP":
                         if Config.focuser == "160":
                             config = get_toml('Device', 'ip_160', cfg_file)
                         elif Config.focuser == "IAG":
                             config = get_toml('Device', 'ip_iag', cfg_file)
                     else:
-                        config = str(get_toml('Device', conf_key.lower(), cfg_file))
+                        config = str(get_toml('Device', conf_key.name.lower(), cfg_file))
 
-                    self._config_txt_boxes[conf_key].setText(config)       
+                    self._config_txt_boxes[conf_key].setText(config)   
+                    self._validate_parameters()    
 
         else:
             print("DO NOT RETURN TO DEFAULT VALUES")
         self._default_widget.destroy()
-
-
-    def _login_engineering_mode(self):
-        """Opens the dialog window to login/logoff of engineering mode"""
-        print(self._motor_settings)
-        self._login = LoginForm(self.logged_user)                               # Creates login widget
-        self._login.user.connect(self._logged_user_setter)                      # Connects the user name to the settings window logged user (A method is needed because a property setter cannot be directly used)
-        if self._login.exec() == QDialog.DialogCode.Accepted:                   # If the dialog box closes with an accepted signal
-            if self.logged_user:                                                    # If a user was set
-                self.engineering_mode = True                                            # Enters engineering mode
-            else:                                                                   # if no user set
-                self.engineering_mode = False                                           # Exits engineering mode 
-
-
-    def closeEvent(self, a0):
-        """Event called when the settings window is closed
-
-        Parameters
-        ----------
-        a0 : QCloseEvent
-            Event that caused the window to close
-
-        Returns
-        -------
-        Emits a signal informing that the window was closed, the main window uses this signal to delete the window
-        """
-
-        self.signals.window_closed.emit(True)
-        return super().closeEvent(a0)
-   
-
-
-
-
-#endregion
-
-
-
-
-        
-
-
-
-
 
     def _save_settings(self):                                                                       # TODO: Terminar de implementar
         """Save to the motor the values configured in the text boxes                                           # TODO: Vai ser necessário rodar em uma thread pra não travar a gui?
         Checks if the value in the text box changed in relation to the one read from the motor
         during the initialization, and if the value has changed sends the command to the motor to 
         change the setting value."""
- 
-        for idx in MotorParamsIdx:
-            self._set_motor_settings(idx, self._config_txt_boxes[idx].text())
+
+        # for idx in MotorParamsIdx:
+        #     self._set_motor_settings(idx, self._config_txt_boxes[idx].text())
 
         # If the "_changed_settings" dictionary has any elements than a setting was changed and the command store must be executed
         if self._changed_settings:                       
@@ -376,7 +335,7 @@ class SettingsWindow(QMainWindow):
             text = ""
             keys, values = zip(*self._changed_settings.items())
             for i in range(0, len(keys)):
-                text += f"<font color=red> {keys[i]}</font>: {self._motor_settings[keys[i]]} -> {values[i]} <br>"
+                text += f"<font color=red> {self.motor.parameters[keys[i]].NAME}</font>: {self._motor_settings[keys[i]]} -> {values[i]} <br>"
             
             text += f"<br>"
             text += f"<font color=red> * The motor must be restarted for the changes to take effect </font>"
@@ -410,6 +369,8 @@ class SettingsWindow(QMainWindow):
                     # must be updated in "_motor_settings"
                     for idx in keys:
                         self._motor_settings[idx] = self._changed_settings[idx]
+                        self._config_txt_boxes[idx].setStyleSheet(""" """
+                )
 
                     self._changed_settings.clear()                                  # Resets changes dictionary   
                     self.logger.info("Ended motor configuration")
@@ -417,9 +378,91 @@ class SettingsWindow(QMainWindow):
                     self.logger.info(f"Error saving new configuration to motor. {e}")
                     print(e)
             else:
+                # If the user do not accept the new configurations than the current configurations are
+                # written back in the text boxes
                 self._changed_settings.clear()
                 for idx in MotorParamsIdx:
+                    self._config_txt_boxes[idx].textChanged.disconnect()  # Signal must be disconnected because validation cannot be called now 
                     self._config_txt_boxes[idx].setText(self._motor_settings[idx])
+                    self._config_txt_boxes[idx].textChanged.connect(self._validate_parameters)  # Signal is connected again
+                self._validate_parameters()
+
+    def _login_engineering_mode(self):
+        """Opens the dialog window to login/logoff of engineering mode"""
+        print(self._motor_settings)
+        self._login = LoginForm(self.logged_user)                               # Creates login widget
+        self._login.user.connect(self._logged_user_setter)                      # Connects the user name to the settings window logged user (A method is needed because a property setter cannot be directly used)
+        if self._login.exec() == QDialog.DialogCode.Accepted:                   # If the dialog box closes with an accepted signal
+            if self.logged_user:                                                    # If a user was set
+                self.engineering_mode = True                                            # Enters engineering mode
+            else:                                                                   # if no user set
+                self.engineering_mode = False                                           # Exits engineering mode 
+
+
+    def _validate_parameters(self):
+        """Verifies if a new configuration for the parameters is avaiable"""
+        for idx in MotorParamsIdx:
+            if self._config_txt_boxes[idx].text() != self._motor_settings[idx]:
+                self._set_motor_settings(idx, self._config_txt_boxes[idx].text())
+                self._config_txt_boxes[idx].setStyleSheet("""
+                    QLineEdit {border: 1px solid rgb(255,0,0);
+                    border-radius:3}
+                """
+                )
+            else:
+                self._config_txt_boxes[idx].setStyleSheet(""" """
+                )
+
+
+    def closeEvent(self, a0):
+        """Event called when the settings window is closed
+
+        Parameters
+        ----------
+        a0 : QCloseEvent
+            Event that caused the window to close
+
+        Returns
+        -------
+        Emits a signal informing that the window was closed, the main window uses this signal to delete the window
+        """
+        # If there are changed settings that were not sent to the motor
+        # a window appears to inform the user
+        self._validate_parameters()
+
+        if self._changed_settings:
+            message_window = QMessageBox(self)
+            message_window.setWindowTitle("Confirmation")
+            message_window.setText("There are new configurations that were not sent to the motor, "
+                                   "are you sure you want to exit without saving the configurations?")
+            message_window.setStandardButtons(
+                QMessageBox.StandardButton.Yes | QMessageBox.StandardButton.No
+            )
+            message_window.setIcon(QMessageBox.Icon.Warning)
+            resp = message_window.exec()
+
+            if resp == QMessageBox.StandardButton.Yes:
+                self.signals.window_closed.emit(True)
+                return super().closeEvent(a0)
+            else:
+                a0.ignore()    
+            
+        else:
+            self.signals.window_closed.emit(True)
+            return super().closeEvent(a0)
+        
+            
+   
+
+
+
+
+#endregion
+
+
+
+
+
 
 
 

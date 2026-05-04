@@ -199,6 +199,9 @@ background-color: white;
      <property name="autoFillBackground">
       <bool>false</bool>
      </property>
+     <property name="styleSheet">
+      <string notr="true"/>
+     </property>
      <property name="inputMask">
       <string/>
      </property>
@@ -567,13 +570,13 @@ background-color: white;
       <string>Max Step</string>
      </property>
     </widget>
-    <widget class="QWidget" name="">
+    <widget class="QWidget" name="layoutWidget">
      <property name="geometry">
       <rect>
        <x>166</x>
        <y>230</y>
        <width>100</width>
-       <height>20</height>
+       <height>28</height>
       </rect>
      </property>
      <layout class="QHBoxLayout" name="horizontalLayout_3">
