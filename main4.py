@@ -395,11 +395,12 @@ class FocuserOPD (QMainWindow):
         """Opens the settings window"""
         #To open the settings the motor must be connected
         if self.server.motor.connected:
-            self._settings_window = SettingsWindow(self.server.motor, logger)                                 # Starts the main window according to the initialized focuser
-            self._settings_window.signals.window_closed.connect(self._settings_closed)                          # Connects function that must be executed when the settings window is closed
-            self._settings_window.signals.changed_settings.connect(self._parse_changed_settings)               # Connects function to be executed when settings are changed
-            self._settings_window.move(self.pos() + QPoint(self.width(), 0))                                    # Positions settings window next to the main window
-            self._settings_window.show()                                                                        # Shows settings window
+            if self._settings_window is None:
+                self._settings_window = SettingsWindow(self.server.motor, logger)                                 # Starts the main window according to the initialized focuser
+                self._settings_window.signals.window_closed.connect(self._settings_closed)                          # Connects function that must be executed when the settings window is closed
+                self._settings_window.signals.changed_settings.connect(self._parse_changed_settings)               # Connects function to be executed when settings are changed
+                self._settings_window.move(self.pos() + QPoint(self.width(), 0))                                    # Positions settings window next to the main window
+                self._settings_window.show()                                                                        # Shows settings window
         else:
             msg = QMessageBox.information(                                                                      # Shows message to the user
                 self,                                                                                       # Parent widget (None centers on the screen; 'self' for a parent window)
@@ -436,7 +437,12 @@ class FocuserOPD (QMainWindow):
         :param msg: Indicates that the settings window was closed
         :type msg: bool
         """
+        #   To avoid astacking the signals connections it is necessary to 
+        # disconnect the settings window signals before reassigning the 
+        # _setting_window.
         if msg is True:                         # If the settings window was closed
+            self._settings_window.signals.window_closed.disconnect(self._settings_closed)                          
+            self._settings_window.signals.changed_settings.disconnect(self._parse_changed_settings)  
             self._settings_window = None            # Reassign the settings window to allow a new instantiation
             print("Configurações fechadas")
 

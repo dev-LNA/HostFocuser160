@@ -414,7 +414,7 @@ class SettingsWindow(QMainWindow):
                 )
 
 
-    def closeEvent(self, a0):
+    def closeEvent(self, event):
         """Event called when the settings window is closed
 
         Parameters
@@ -443,13 +443,13 @@ class SettingsWindow(QMainWindow):
 
             if resp == QMessageBox.StandardButton.Yes:
                 self.signals.window_closed.emit(True)
-                return super().closeEvent(a0)
+                event.accept()
             else:
-                a0.ignore()    
+                event.ignore()    
             
         else:
             self.signals.window_closed.emit(True)
-            return super().closeEvent(a0)
+            event.accept()
         
             
    
