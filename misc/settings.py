@@ -402,8 +402,8 @@ class SettingsWindow(QMainWindow):
     def _validate_parameters(self):
         """Verifies if a new configuration for the parameters is avaiable"""
         for idx in MotorParamsIdx:
+            self._set_motor_settings(idx, self._config_txt_boxes[idx].text())
             if self._config_txt_boxes[idx].text() != self._motor_settings[idx]:
-                self._set_motor_settings(idx, self._config_txt_boxes[idx].text())
                 self._config_txt_boxes[idx].setStyleSheet("""
                     QLineEdit {border: 1px solid rgb(255,0,0);
                     border-radius:3}
