@@ -187,7 +187,7 @@ class DriverDMX(Driver):
     
     def param_max_speed(self, value = None) -> str:
         if value:
-            self._write(f"V75={value}")             # Flash memory position used to retain the high speed configuration after reboot
+            resp = self._write(f"V75={value}")             # Flash memory position used to retain the high speed configuration after reboot
             if resp != "NOK":
                 resp = self._write(f"HSPD={value}")
                 if resp != "NOK":
@@ -201,7 +201,7 @@ class DriverDMX(Driver):
             else:
                 return "NOK"
     
-    def param_normal_speed(self, value = None) -> str: # No DMX não está implementada uma "normal speed", então "normal speed == max speed"
+    def param_normal_speed(self, value = None) -> str: # DMX firmware do not implement a 'Normal speed'
         if value:
             return self.param_max_speed(value)
         else:
@@ -209,7 +209,7 @@ class DriverDMX(Driver):
     
     def param_low_speed(self, value = None):
         if value:
-            self._write(f"V76={value}")             # Flash memory position used to retain the high speed configuration after reboot
+            resp = self._write(f"V76={value}")             # Flash memory position used to retain the low speed configuration after reboot
             if resp != "NOK":
                 resp = self._write(f"HSPD={value}")
                 if resp != "NOK":

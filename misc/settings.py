@@ -231,11 +231,20 @@ class SettingsWindow(QMainWindow):
                 # self._settings_changed = False
                 print(f"{key} value NOT changed")
 
-
-
-
-
-
+    def _command_changed(self):
+        """Guarantees that the text in the command QLineEdit
+          will allways be uppercase""" # TODO: Deve ter outro jeito de fazer isso
+        self.ui_elements.txtCommand.setText(self.ui_elements.txtCommand.text().upper())
+   
+    def _send_test_command(self):
+        """Sends the command written in text box and 
+        emits the motor response"""
+        if self.engineering_mode and self.ui_elements.txtCommand.text():   # The button is not supposed to be visible when not in engineering mode, this is just a safeguard
+            try:
+                self.signals.command_response.emit(self.motor.driver.sendCommand(self.ui_elements.txtCommand.text()))
+            except Exception as e:
+                print(e)
+            
     def _create_backup_config(self, backup_file_path: str = config_file_backup):
         """Creates a backup file of the current motor configurations
 
@@ -309,6 +318,18 @@ class SettingsWindow(QMainWindow):
         self._default_widget.destroy()
 
 
+    def _login_engineering_mode(self):
+        """Opens the dialog window to login/logoff of engineering mode"""
+        print(self._motor_settings)
+        self._login = LoginForm(self.logged_user)                               # Creates login widget
+        self._login.user.connect(self._logged_user_setter)                      # Connects the user name to the settings window logged user (A method is needed because a property setter cannot be directly used)
+        if self._login.exec() == QDialog.DialogCode.Accepted:                   # If the dialog box closes with an accepted signal
+            if self.logged_user:                                                    # If a user was set
+                self.engineering_mode = True                                            # Enters engineering mode
+            else:                                                                   # if no user set
+                self.engineering_mode = False                                           # Exits engineering mode 
+
+
     def closeEvent(self, a0):
         """Event called when the settings window is closed
 
@@ -325,6 +346,10 @@ class SettingsWindow(QMainWindow):
         self.signals.window_closed.emit(True)
         return super().closeEvent(a0)
    
+
+
+
+
 #endregion
 
 
@@ -333,29 +358,9 @@ class SettingsWindow(QMainWindow):
         
 
 
-    def _login_engineering_mode(self):
-        """Opens the dialog window to login/logoff of engineering mode"""
-        print(self._motor_settings)
-        self._login = LoginForm(self.logged_user)                               # Creates login widget
-        self._login.user.connect(self._logged_user_setter)                      # Connects the user name to the settings window logged user (A method is needed because a property setter cannot be directly used)
-        if self._login.exec() == QDialog.DialogCode.Accepted:                   # If the dialog box closes with an accepted signal
-            if self.logged_user:                                                    # If a user was set
-                self.engineering_mode = True                                            # Enters engineering mode
-            else:                                                                   # if no user set
-                self.engineering_mode = False                                           # Exits engineering mode 
 
-    def _send_test_command(self):
-        if self.engineering_mode and self.ui_elements.txtCommand.text():   # The button is not supposed to be visible when not in engineering mode, this is just a safeguard
-            try:
-                self.signals.command_response.emit(self.motor.driver.sendCommand(self.ui_elements.txtCommand.text()))
-            except Exception as e:
-                print(e)
 
-    def _command_changed(self):
-        self.ui_elements.txtCommand.setText(self.ui_elements.txtCommand.text().upper())
 
-    
-   
     def _save_settings(self):                                                                       # TODO: Terminar de implementar
         """Save to the motor the values configured in the text boxes                                           # TODO: Vai ser necessário rodar em uma thread pra não travar a gui?
         Checks if the value in the text box changed in relation to the one read from the motor
@@ -398,8 +403,14 @@ class SettingsWindow(QMainWindow):
                         # setattr(self.motor.driver, self.motor.driver.property_handlers[_], self._changed_settings[_])
                         self.logger.info(f"Motor parameter changed: [{idx}] Previous value -> {self._motor_settings[idx]} | New value -> {self._changed_settings[idx]}") 
 
-                    self.signals.changed_settings.emit(self._changed_settings)     # Emits the changes to the main UI
-                    self.motor.driver._store_to_flash()                                   # Store the new settings to flash.
+                    self.signals.changed_settings.emit(self._changed_settings)      # Emits the changes to the main UI
+                    self.motor.driver._store_to_flash()                             # Store the new settings to flash.
+                    
+                    # If everything went ok and the motor parameter was updated than the current motor parameters 
+                    # must be updated in "_motor_settings"
+                    for idx in keys:
+                        self._motor_settings[idx] = self._changed_settings[idx]
+
                     self._changed_settings.clear()                                  # Resets changes dictionary   
                     self.logger.info("Ended motor configuration")
                 except Exception as e:
