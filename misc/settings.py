@@ -324,17 +324,27 @@ class SettingsWindow(QMainWindow):
             print("DO NOT RETURN TO DEFAULT VALUES")
         self._default_widget.destroy()
 
-    def _save_settings(self):                                                                       # TODO: Terminar de implementar
-        """Save to the motor the values configured in the text boxes                                           # TODO: Vai ser necessário rodar em uma thread pra não travar a gui?
+    def _save_settings(self):
+        """Save to the motor the values configured in the text boxes
         Checks if the value in the text box changed in relation to the one read from the motor
         during the initialization, and if the value has changed sends the command to the motor to 
         change the setting value."""
 
-        # for idx in MotorParamsIdx:
-        #     self._set_motor_settings(idx, self._config_txt_boxes[idx].text())
+        try:
+            ValError = False
+            for key, value in self._changed_settings.items():
+                if value == "":
+                    raise ValueError(f"Cannot save empty value to motor parameters")
+        except Exception as e:
+            dialog = QMessageBox(self)
+            dialog.setText(str(e))
+            dialog.setIcon(QMessageBox.Icon.Warning)
+            dialog.setStandardButtons(QMessageBox.StandardButton.Ok)
+            dialog.exec()
+            ValError = True
 
         # If the "_changed_settings" dictionary has any elements than a setting was changed and the command store must be executed
-        if self._changed_settings:                       
+        if self._changed_settings and not ValError:                       
             verify = VerificationDialog()
             text = ""
             keys, values = zip(*self._changed_settings.items())
@@ -385,11 +395,24 @@ class SettingsWindow(QMainWindow):
                 # If the user do not accept the new configurations than the current configurations are
                 # written back in the text boxes
                 self._changed_settings.clear()
-                for idx in MotorParamsIdx:
-                    self._config_txt_boxes[idx].textChanged.disconnect()  # Signal must be disconnected because validation cannot be called now 
-                    self._config_txt_boxes[idx].setText(self._motor_settings[idx])
-                    self._config_txt_boxes[idx].textChanged.connect(self._validate_parameters)  # Signal is connected again
-                self._validate_parameters()
+                self._reset_text_boxes(self._motor_settings)
+
+    def _reset_text_boxes(self, settings: dict):
+        """Resets the parameters text boxes according to the
+        'settings' dictionary
+
+        :param settings: Settings dictionary [MotorParametersIdx, str]
+        :type settings: dict
+        """
+        for idx in MotorParamsIdx:
+            # Signal must be disconnected because validation cannot be called when the
+            # values are reset
+            self._config_txt_boxes[idx].textChanged.disconnect()  
+            self._config_txt_boxes[idx].setText(settings[idx])
+            self._config_txt_boxes[idx].textChanged.connect(self._validate_parameters)  # Signal is connected again
+        self._validate_parameters()
+
+
 
     def _login_engineering_mode(self):
         """Opens the dialog window to login/logoff of engineering mode"""
