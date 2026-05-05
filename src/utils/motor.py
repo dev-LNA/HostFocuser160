@@ -268,20 +268,20 @@ class Motor():
                     self.is_moving = False                                                          #|  If any are set the motor is moving
 
                 if(motor_status[4] == '1'):                                                         #| Bit '4' indicates the lim minus microswitch status
-                        self.signals.lim_min.emit(True, "statusLed", "OK") 
+                        self.signals.lim_min.emit(True, "statusLed", "NOK") 
                 else:
                     if self._position < 0:
                         self.signals.lim_min.emit(False, "statusLed", "WAIT")
                     else:
-                        self.signals.lim_min.emit(False, "statusLed", "NOK")
+                        self.signals.lim_min.emit(False, "statusLed", "OFF")
 
                 if(motor_status[5] == '1'):                                                         #| Bit '5' indicates the lim max microswitch status
-                        self.signals.lim_max.emit(True, "statusLed", "OK") 
+                        self.signals.lim_max.emit(True, "statusLed", "NOK") 
                 else:
                     if self._position > int(self.parameters[MotorParamsIdx.MAX_POS].VALUE):
                         self.signals.lim_max.emit(False, "statusLed", "WAIT")
                     else:
-                        self.signals.lim_max.emit(False, "statusLed", "NOK")
+                        self.signals.lim_max.emit(False, "statusLed", "OFF")
 
 
 

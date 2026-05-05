@@ -46,7 +46,8 @@ margin:0px;
  border-radius: 10px;
 /*border:1px solid rgba(0, 0, 0, 50);*/
 padding: 0px;
-background-color: qradialgradient(spread:reflect, cx:0.5, cy:0.5, radius:0.486, fx:0.602, fy:0.630682, stop:0 rgba(255, 255, 255, 239), stop:1 rgba(157, 157, 157, 239))
+/*background-color: qradialgradient(spread:reflect, cx:0.5, cy:0.5, radius:0.486, fx:0.602, fy:0.630682, stop:0 rgba(255, 255, 255, 239), stop:1 rgba(157, 157, 157, 239))*/
+background-color: qradialgradient(spread:reflect, cx:0.5, cy:0.5, radius:0.486, fx:0.602, fy:0.602, stop:0 rgba(255, 255, 255, 239), stop:1 rgba(100, 100, 100, 239))
  } 
 
  *[statusLed=&quot;WAIT&quot;] {
@@ -1598,7 +1599,7 @@ border-right: none;
               <set>Qt::AlignmentFlag::AlignCenter</set>
              </property>
              <property name="statusLed" stdset="0">
-              <string>NOK</string>
+              <string>OFF</string>
              </property>
             </widget>
            </item>
@@ -1697,7 +1698,7 @@ QSlider::handle:horizontal {
               <set>Qt::AlignmentFlag::AlignCenter</set>
              </property>
              <property name="statusLed" stdset="0">
-              <string>NOK</string>
+              <string>OFF</string>
              </property>
             </widget>
            </item>
