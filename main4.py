@@ -92,7 +92,7 @@ class FocuserOPD (QMainWindow):
     #   Initializes every UI element of the main window.
     #   The initialization will set the initial values and the behavior of the elements.        
         self.ui_elements = UiWidgets(self, "main")                      # Creates "ui_elements" widget to hold intellisense references to the widgets
-        self.setFixedSize(QSize(310, 488))                              # Sets a fixed size for the main window
+        self.setFixedSize(QSize(310, 530))                              # Sets a fixed size for the main window
         self.ui_elements.pageSelect.setCurrentIndex(0)                  # Initializes the main window in the focalizer seletion page
 
         self.ui_elements.btnStartServer.clicked.connect(self._config_server)
