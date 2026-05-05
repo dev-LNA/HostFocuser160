@@ -19,6 +19,7 @@ from datetime import datetime
 from icmplib import ping
 from os import path
 import sys
+from threading import Thread
 
 from misc.client_sample import TEST_SETUP
 from src.core.config import Config
@@ -104,6 +105,7 @@ class Server(QObject):
         self._motor_reachable = False
         self.motor:Motor = None                               # Instantiates motor as None
         
+        self._reaching_device_thread = None
 
         # Status Message
         if TESTE_TCSPD:                                 #TEST: O json do tcspd não está atualizado então é necessário usar o antigo para testar com o tcspd
@@ -233,9 +235,11 @@ class Server(QObject):
 
         self.signals.motor_status.info.emit("conStatusBar", status)
         if status == ReachStatus.CONNECTED:
+            self.status[SJson.CONNECTED] = True
             self.signals.motor_status.emit(True, "statusLed", "OK")
             self._motor_reachable = True
         else:
+            self.status[SJson.CONNECTED] = False
             self.signals.motor_status.emit(False, "statusLed", "NOK")
             self._motor_reachable = False
 
@@ -389,6 +393,8 @@ class Server(QObject):
             except Exception as e:
                 self.logger.error(f'{str(e)}')     
 
+        self._reaching_device_thread = None
+
     def _update_status(self):
         """Updates motor status and saves to JSON"""
         self.status[SJson.CONNECTED] = self.motor.connected
@@ -425,10 +431,11 @@ class Server(QObject):
             t0 = time.time()                                        # Keeps the time when the loop began
             current_time = datetime.now()                           # Reads current time
             
-            if abs(current_time.second - self.last_pub_time.second) >= Config.pub_interval:   # Publishes status every second
+            if abs(current_time.second - self.last_pub_time.second) >= Config.pub_interval and self.server_online:   # Publishes status every second
                 self.last_pub_time = self.zmq_comm.pub(self.status)
 
-            if self.motor.connected and self.zmq_comm.poller:
+            # Motor must be connected, poller defined and the 'reach_device' thread must have finished
+            if self.motor.connected and self.zmq_comm.poller and self._reaching_device_thread is None:
                 socks = dict(self.zmq_comm.poller.poll(5))  # poll(50)                                                                           # Polls the information from the ZMQ to receive commands from the client
                 if socks.get(self.zmq_comm.replier) == zmq.POLLIN:                                                                       # If the socket is configured as Pollin   #TODO: Necessário?
                     
@@ -446,16 +453,20 @@ class Server(QObject):
                         self.zmq_comm.reply('NAK')          # Replies 'NAK' to inform the client that an error occured                     
                         self.zmq_comm.pub(self.status)  
                         self.logger.error(e)
-                  
+                
                 self.motor.update_status()
                 self._update_status()
 
                 self._reset_client()
 
             else:
-                self.router_reachable = False
-                self.motor_reachable = False
-                self._reach_device()
+                #  The device reaching is realized in a new thread to enhance the status 
+                # update time
+                if self._reaching_device_thread is None:
+                    self.router_reachable = False
+                    self.motor_reachable = False
+                    self._reaching_device_thread = Thread(target = self._reach_device)
+                    self._reaching_device_thread.start()
             
             self.signals.connection_speed.emit(f"{round(time.time()-t0, 3)}")
         self.router_reachable = False
