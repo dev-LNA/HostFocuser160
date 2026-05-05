@@ -23,13 +23,13 @@ speed_security = 215000
 speedFactor = 428
 step_size = 0
 device_ip = "192.168.0.250"
-backlash = 5
-max_pos = 45
-park_pos = 10
-normal_speed = 4000
-low_speed = 1500
+backlash = 4
+max_pos = 50
+park_pos = 20
+normal_speed = 3500
+low_speed = 1000
 max_step = 50700
-max_speed = 4000
+max_speed = 3500
 
 [Network]
 ip_address = "*"

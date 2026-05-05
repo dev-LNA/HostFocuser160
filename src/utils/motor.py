@@ -258,7 +258,8 @@ class Motor():
                 self.signals.initialized.emit(False, "statusLed", "NOK")
 
             motor_status = self.driver.read_status()
-            if motor_status != self._status and motor_status != "NOK":
+            # if motor_status != self._status and motor_status != "NOK":
+            if motor_status != "NOK":
                 self._status = motor_status
 
                 if(motor_status[0] == '1' or motor_status[1] == '1' or motor_status[2] == '1'):     #| Bit '0' indicates the 'moving' status
@@ -266,18 +267,29 @@ class Motor():
                 else:                                                                               #| Bit '2' indicates deceleration
                     self.is_moving = False                                                          #|  If any are set the motor is moving
 
-                if(motor_status[4] == '1'):                     #| Bit '4' indicates the lim minus microswitch status
-                    self.signals.lim_min.emit(True, "statusLed", "OK")      #|
-                else:                                           #|
-                    self.signals.lim_min.emit(False, "statusLed", "NOK")    #|
+                if(motor_status[4] == '1'):                                                         #| Bit '4' indicates the lim minus microswitch status
+                        self.signals.lim_min.emit(True, "statusLed", "OK") 
+                else:
+                    if self._position < 0:
+                        self.signals.lim_min.emit(False, "statusLed", "WAIT")
+                    else:
+                        self.signals.lim_min.emit(False, "statusLed", "NOK")
 
-                if(motor_status[5] == '1'):                     #| Bit '5' indicates the lim max microswitch status
-                    self.signals.lim_max.emit(True, "statusLed", "OK")      #|
-                else:                                           #|
-                    self.signals.lim_max.emit(False, "statusLed", "NOK")     #|
+                if(motor_status[5] == '1'):                                                         #| Bit '5' indicates the lim max microswitch status
+                        self.signals.lim_max.emit(True, "statusLed", "OK") 
+                else:
+                    if self._position > int(self.parameters[MotorParamsIdx.MAX_POS].VALUE):
+                        self.signals.lim_max.emit(False, "statusLed", "WAIT")
+                    else:
+                        self.signals.lim_max.emit(False, "statusLed", "NOK")
+
+
+
 
             return self._status
         except Exception as e:
+            print(self.parameters[MotorParamsIdx.MAX_POS].VALUE)
+            print(e)
             self.disconnect()
             raise e
             # raise RuntimeError(f'[Device] Could not retrieve motor status information: Error -> {str(e)}')
