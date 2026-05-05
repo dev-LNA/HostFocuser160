@@ -165,7 +165,6 @@ class FocuserOPD (QMainWindow):
         self.server.signals.motor_status.status.connect(self.ui_elements.gbConnectivity.setEnabled)
         self.server.signals.motor_status.status.connect(self.ui_elements.gbCommandInfo.setEnabled)
         self.server.signals.motor_status.status.connect(self.ui_elements.gbFocuserStatus.setEnabled)
-        self.server.signals.motor_status.status.connect(self.ui_elements.posSlider.setEnabled)
 
         # self.server.signals.firmware_status.connect(self.ui_elements.lblStatus_val.setText)
         self.server.signals.last_command.connect(self._parse_last_command)
