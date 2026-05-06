@@ -233,7 +233,7 @@ class Motor():
                 else:
                     self.signals.alarm.emit(False, "statusLed", "OFF")
 
-                return self._alarm
+            return self._alarm
         except Exception as e:
             self.disconnect()
             raise e
