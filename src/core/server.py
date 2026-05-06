@@ -67,7 +67,6 @@ class ServerSignals(QObject):
     # lim_max = PropertySignals()
     # initialized = PropertySignals()
     parking = PropertySignals()
-    firmware_status = pyqtSignal(str)
     last_command = pyqtSignal(dict)
     communicating_to_motor = pyqtSignal(bool)
     client_id = pyqtSignal(str)
@@ -263,6 +262,7 @@ class Server(QObject):
 
 #region ========== METHODS ========== # 
     def teste(self):
+        self.motor._alarm = not self.motor._alarm
         print(self.status)
 
     def _start_server(self):
@@ -398,11 +398,12 @@ class Server(QObject):
     def _update_status(self):
         """Updates motor status and saves to JSON"""
         self.status[SJson.CONNECTED] = self.motor.connected
-        self.status[SJson.POSITION] = self.motor.position                                             
-        self.status[SJson.INITIALIZED] = self.motor.initialized 
+        self.status[SJson.POSITION] = self.motor.position
+        self.status[SJson.INITIALIZED] = self.motor.initialized
         self.status[SJson.HOMING] = self.motor.homing
         self.status[SJson.PARKING] = self.motor.parking
         self.status[SJson.IS_MOVING] = self.motor.is_moving
+        self.status[SJson.ALARM] = self.motor.alarm
         self.motor.firmware_status
 
     def _get_motor_params(self):

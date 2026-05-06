@@ -18,7 +18,6 @@ class MotorSignals(QObject):
     # position = pyqtSignal(int)
     # homing = pyqtSignal(bool)
     # moving = pyqtSignal(bool)
-    alarm = pyqtSignal(bool)
     # status = pyqtSignal(int)
     firmware_status = pyqtSignal(str)
 
@@ -29,6 +28,7 @@ class MotorSignals(QObject):
     encoder = pyqtSignal(str)
     initialized = PropertySignals()
     parking = PropertySignals()
+    alarm = PropertySignals()
 
     
 
@@ -224,7 +224,19 @@ class Motor():
         :getter: Returns the motor alarm status
         :rtype: bool
         """
-        return self._alarm
+        try:
+            val = self.driver.read_alarm_status()
+            if val != self._alarm:
+                self._alarm = val
+                if self._alarm:
+                    self.signals.alarm.emit(True, "statusLed", "NOK")
+                else:
+                    self.signals.alarm.emit(False, "statusLed", "OFF")
+
+                return self._alarm
+        except Exception as e:
+            self.disconnect()
+            raise e
     
     @property
     def firmware_status(self) -> str: 
@@ -258,40 +270,39 @@ class Motor():
                 self.signals.initialized.emit(False, "statusLed", "NOK")
 
             motor_status = self.driver.read_status()
-            self._status = motor_status
+            if motor_status != MotorStatusFlags.INVALID:
+                self._status = motor_status
 
-            if(motor_status & MotorStatusFlags.MOVING):
-                self.is_moving = True
-            else:
-                self.is_moving = False
-
-            if(motor_status & MotorStatusFlags.LIM_MIN):
-                    self.signals.lim_min.emit(True, "statusLed", "NOK")
-            else:
-                if self._position < 0:
-                    self.signals.lim_min.emit(False, "statusLed", "WAIT")
+                if(motor_status & MotorStatusFlags.MOVING):
+                    self.is_moving = True
                 else:
-                    self.signals.lim_min.emit(False, "statusLed", "OFF")
+                    self.is_moving = False
 
-            if(motor_status & MotorStatusFlags.LIM_MAX):
-                    self.signals.lim_max.emit(True, "statusLed", "NOK")
-            else:
-                if self._position > int(self.parameters[MotorParamsIdx.MAX_POS].VALUE):
-                    self.signals.lim_max.emit(False, "statusLed", "WAIT")
+                if(motor_status & MotorStatusFlags.LIM_MIN):
+                        self.signals.lim_min.emit(True, "statusLed", "NOK")
                 else:
-                    self.signals.lim_max.emit(False, "statusLed", "OFF")
+                    if self._position < 0:
+                        self.signals.lim_min.emit(False, "statusLed", "WAIT")
+                    else:
+                        self.signals.lim_min.emit(False, "statusLed", "OFF")
+
+                if(motor_status & MotorStatusFlags.LIM_MAX):
+                        self.signals.lim_max.emit(True, "statusLed", "NOK")
+                else:
+                    if self._position > int(self.parameters[MotorParamsIdx.MAX_POS].VALUE):
+                        self.signals.lim_max.emit(False, "statusLed", "WAIT")
+                    else:
+                        self.signals.lim_max.emit(False, "statusLed", "OFF")
 
 
 
 
-            return self._status
+                return self._status
+            else:
+                raise ValueError('Invalid Motor Status Reading')
         except Exception as e:
-            print(self.parameters[MotorParamsIdx.MAX_POS].VALUE)
-            print(e)
             self.disconnect()
             raise e
-            # raise RuntimeError(f'[Device] Could not retrieve motor status information: Error -> {str(e)}')
-
         
     def connect(self, max_retries: int = 5, delay: float = 0.1) -> bool:
         """Connects to the motor

@@ -20,7 +20,7 @@ except Exception as e:
 from src.core.server import Server
 from misc.client_sample import ClientSimulator
 from misc.ui_intellisense import UiWidgets
-from src.utils.constants import constants
+from src.utils.constants import constants, DynamicProperties
 from src.utils.constants import ServerJsonKeys as SJson
 from src.utils.motor import MotorModels
 
@@ -178,7 +178,6 @@ class FocuserOPD (QMainWindow):
         )
         self.ui_elements.conBarServerRouter.animation.setEasingCurve(QEasingCurve.Type.OutCubic)
         self.ui_elements.conBarServerRouter.animation.setDuration(300)
-        self.ui_elements.conBarServerRouter.installEventFilter(self)
 
         self.ui_elements.conBarRouterMotor.setValue(0)
         self.ui_elements.conBarRouterMotor.animation = QPropertyAnimation(                          # Animation for the connection bar between router and motor
@@ -186,7 +185,6 @@ class FocuserOPD (QMainWindow):
         )
         self.ui_elements.conBarRouterMotor.animation.setEasingCurve(QEasingCurve.Type.OutCubic)
         self.ui_elements.conBarRouterMotor.animation.setDuration(300)
-        self.ui_elements.conBarRouterMotor.installEventFilter(self)
         
         # Window animation
         self.window_expand_animation = QPropertyAnimation(self, b"size")                                          # Animation for the window expansion
@@ -199,14 +197,11 @@ class FocuserOPD (QMainWindow):
 
 
         # Install event filters in the LEDs so that when a property is changed the values are automatically updated
-        self.ui_elements.ledServer.installEventFilter(self)                                         
-        self.ui_elements.ledRouter.installEventFilter(self)
-        self.ui_elements.ledMotor.installEventFilter(self)
-        self.ui_elements.ledMoving.installEventFilter(self)
-        self.ui_elements.ledLimMax.installEventFilter(self)
-        self.ui_elements.ledLimMin.installEventFilter(self)
-        self.ui_elements.ledHome.installEventFilter(self)
-        self.ui_elements.ledPark.installEventFilter(self)
+        for item in self.findChildren(QWidget):
+            for prop in DynamicProperties:
+                if item.property(prop):
+                    item.installEventFilter(self)
+
 
 ######### OUTROS TESTES ##########
         self.ui_elements.btnTestes.clicked.connect(self._testes)
@@ -251,6 +246,7 @@ class FocuserOPD (QMainWindow):
         self.server.motor.signals.initialized.info.connect(self.ui_elements.ledHome.setProperty)
         self.server.motor.signals.firmware_status.connect(self.ui_elements.lblStatus_val.setText)
         self.server.motor.signals.parking.info.connect(self.ui_elements.ledPark.setProperty)
+        self.server.motor.signals.alarm.info.connect(self.ui_elements.ledAlarm.setProperty)
 
         self.menuBar().setVisible(True)                                     # Sets menu bar visibility
         self.ui_elements.toolBar.setVisible(True)                           # Sets tool bar visibility
@@ -479,7 +475,8 @@ class FocuserOPD (QMainWindow):
     def _update_gui_element(self, widget: QtWidgets):
         """Updates the GUI element style after an event occured.
         According to QT framework this functions must be executed to update visual elements when a property is changed.
-
+        Re-polish the style to apply CSS changes linked to this property
+        
         Parameters
         ----------
         widget : QtWidgets

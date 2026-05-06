@@ -97,6 +97,9 @@ class UiWidgets(QWidget):
             self.ledMotor = window.findChild(QLabel, 'ledMotor')
             self.ledMotor: QLabel = self.ledMotor
 
+            self.ledAlarm = window.findChild(QLabel, 'ledAlarm')
+            self.ledAlarm: QLabel = self.ledAlarm
+
             self.conBarServerRouter = window.findChild(QProgressBar, 'conBarServerRouter')
             self.conBarServerRouter: QProgressBar = self.conBarServerRouter
 

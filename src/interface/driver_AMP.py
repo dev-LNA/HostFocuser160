@@ -1,4 +1,5 @@
 from src.interface.motor_driver import Driver
+from src.utils.constants import MotorProgramStatus
 
 class DriverAMP(Driver):
     def __init__(self, model):

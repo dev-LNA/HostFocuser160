@@ -156,8 +156,15 @@ class DriverDMX(Driver):
                 motor_status |= MotorStatusFlags.LIM_MAX
 
             return motor_status
-        return resp
+        return MotorStatusFlags.INVALID
     
+    def read_alarm_status(self) -> bool:
+        resp = self._write("ALM")
+        if resp != "NOK":
+            if resp == '1':
+                return True
+            else:
+                return False
 
 
    
