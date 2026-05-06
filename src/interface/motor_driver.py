@@ -75,7 +75,7 @@ class Driver(ABC):
     ...
 
     @abstractmethod
-    def read_status(self) -> str:
+    def read_status(self) -> int:
         """Precisa ser implementada pelo driver"""
     ...
 

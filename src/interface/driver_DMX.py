@@ -6,7 +6,7 @@ import time
 import socket
 
 from contextlib import closing
-from src.utils.constants import constants
+from src.utils.constants import constants, MotorStatusFlags
 
 
 class DriverDMX(Driver):
@@ -136,11 +136,26 @@ class DriverDMX(Driver):
         else:
             return False
     
-    def read_status(self) -> str:       #TODO: Adicionar tratamento da mensagem de status para padronizar independente do motor
+    def read_status(self) -> int:       #TODO: Adicionar tratamento da mensagem de status para padronizar independente do motor
+        
+        motor_status: int = 0
+
         resp = self._write("MST")
         if resp != "NOK":
-            resp = format(int(resp), '012b') #TODO: Montar a mensagem de acordo com o padrão do IAG
-            return "".join(reversed(resp))
+            resp = format(int(resp), '012b')
+            resp = "".join(reversed(resp))
+
+            if(resp[0] == '1' or resp[1] == '1' or resp[2] == '1'): 
+                # Bit '0' indicates the 'moving' status | Bit '1' indicates acceleration  | Bit '2' indicates deceleration     
+                motor_status |= MotorStatusFlags.MOVING
+
+            if(resp[4] == '1'):                                 # Bit '4' indicates the lim minus microswitch status
+                motor_status |= MotorStatusFlags.LIM_MIN
+
+            if(resp[5] == '1'):                                 # Bit '5' indicates the lim max microswitch status
+                motor_status |= MotorStatusFlags.LIM_MAX
+
+            return motor_status
         return resp
     
 

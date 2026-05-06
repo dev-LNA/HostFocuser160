@@ -9,7 +9,7 @@ from dataclasses import dataclass
 from src.interface.motor_driver import Driver
 from src.interface.driver_DMX import  DriverDMX
 from src.interface.driver_AMP import DriverAMP
-from src.utils.constants import MotorModels, MotorParamsIdx, ServerCommands, constants, MotorParameter
+from src.utils.constants import MotorModels, MotorParamsIdx, ServerCommands, constants, MotorParameter, MotorStatusFlags
 from src.utils.signals import PropertySignals, MultiSignal
 
 
@@ -65,7 +65,7 @@ class Motor():
         self._initialized: bool = False
         self._alarm: bool = False
         self._firmware_status: str = 'invalid'
-        self._status: str = ""
+        self._status: int = 0
 
         if model == MotorModels.ARCUS_DMX_ETH:
             self.driver = DriverDMX(model)
@@ -246,42 +246,40 @@ class Motor():
 #region  ========== METHODS ========== # 
 
                                         #TODO: A formatação do status é diferente, então vai ser necessário padronizar isso 
-    def update_status(self) -> str:    #       entre os motores e fazer com que a resposta de 'read_satus' seja independente do motor.
+    def update_status(self) -> int:    #       entre os motores e fazer com que a resposta de 'read_satus' seja independente do motor.
         """Reads motor status. If the value changes emits a signals.
 
         :return: motor status
         :rtype: str
         """
-        #TODO: Precisa ser ajustado de acordo com o formato do status do motor do IAG
+        #TODO: Adicionar os status específicos do IAG
         try:
             if not self._homing and not self._initialized:
                 self.signals.initialized.emit(False, "statusLed", "NOK")
 
             motor_status = self.driver.read_status()
-            # if motor_status != self._status and motor_status != "NOK":
-            if motor_status != "NOK":
-                self._status = motor_status
+            self._status = motor_status
 
-                if(motor_status[0] == '1' or motor_status[1] == '1' or motor_status[2] == '1'):     #| Bit '0' indicates the 'moving' status
-                    self.is_moving = True                                                           #| Bit '1' indicates acceleration           
-                else:                                                                               #| Bit '2' indicates deceleration
-                    self.is_moving = False                                                          #|  If any are set the motor is moving
+            if(motor_status & MotorStatusFlags.MOVING):
+                self.is_moving = True
+            else:
+                self.is_moving = False
 
-                if(motor_status[4] == '1'):                                                         #| Bit '4' indicates the lim minus microswitch status
-                        self.signals.lim_min.emit(True, "statusLed", "NOK") 
+            if(motor_status & MotorStatusFlags.LIM_MIN):
+                    self.signals.lim_min.emit(True, "statusLed", "NOK")
+            else:
+                if self._position < 0:
+                    self.signals.lim_min.emit(False, "statusLed", "WAIT")
                 else:
-                    if self._position < 0:
-                        self.signals.lim_min.emit(False, "statusLed", "WAIT")
-                    else:
-                        self.signals.lim_min.emit(False, "statusLed", "OFF")
+                    self.signals.lim_min.emit(False, "statusLed", "OFF")
 
-                if(motor_status[5] == '1'):                                                         #| Bit '5' indicates the lim max microswitch status
-                        self.signals.lim_max.emit(True, "statusLed", "NOK") 
+            if(motor_status & MotorStatusFlags.LIM_MAX):
+                    self.signals.lim_max.emit(True, "statusLed", "NOK")
+            else:
+                if self._position > int(self.parameters[MotorParamsIdx.MAX_POS].VALUE):
+                    self.signals.lim_max.emit(False, "statusLed", "WAIT")
                 else:
-                    if self._position > int(self.parameters[MotorParamsIdx.MAX_POS].VALUE):
-                        self.signals.lim_max.emit(False, "statusLed", "WAIT")
-                    else:
-                        self.signals.lim_max.emit(False, "statusLed", "OFF")
+                    self.signals.lim_max.emit(False, "statusLed", "OFF")
 
 
 

@@ -1,8 +1,9 @@
 from collections import namedtuple
-from enum import StrEnum, Enum, IntFlag
+from enum import StrEnum, Enum, IntFlag, auto
 from typing import NamedTuple, TypedDict
 from dataclasses import dataclass
 
+#region GENERAL
 Constants = namedtuple('Constants',
                         ['ID_FOCUSER_160', 
                          'ID_FOCUSER_IAG',
@@ -18,7 +19,25 @@ constants = Constants(
     INVALID_RESPONSE=-9999999,     # If a problem occurs in the reading an invalid value is published
     ) 
 
+class MotorStatusFlags(IntFlag):
+    ENABLED = 0
+    FAULT = auto()
+    MOVING = auto()
+    WAIT_INPUT = auto()
+    ALARM = auto()
+    WAIT_TIMER = auto()
+    RUNNING = auto()
+    PWR_UP = auto()
+    LIM_MIN = auto()
+    LIM_MAX = auto()
 
+    
+
+
+#endregion
+
+
+#region SERVER
 class ServerJsonKeys(StrEnum):
     ABSOLUTE = 'absolute'
     ALARM = 'alarm'
@@ -49,12 +68,12 @@ class ServerJsonKeys(StrEnum):
     DEVICE_FIRMWARE_VERSION = "device_Firmware_Version"     # Motor firmware version
     TIMEOUT = "timeout"                                     # Timeout
 
+#endregion
+
+#region MOTOR
 class MotorModels(StrEnum):
     ARCUS_DMX_ETH = 'DMX'
     AMP_MOTOR = 'AMP'
-
-
-
 
 class MotorParamsIdx(Enum):     
     MOTOR_IP=0
@@ -72,12 +91,10 @@ class MotorParameter():
     NAME: str
     VALUE: int | bool | str
 
-
 class ReachStatus(StrEnum):
     CONNECTED = 'connected'
     CONNECTING = 'connecting'
     WAITING = 'waiting'
-
 
 class ServerCommands(StrEnum):
     STATUS = 'STATUS'
@@ -94,7 +111,6 @@ class ServerMessageValidation(IntFlag):
     INVALID = 2
     MOVING = 4
 
-
 MotorValidCommands = (
     ServerCommands.MOVE,
     ServerCommands.FOCUSIN,
@@ -104,4 +120,4 @@ MotorValidCommands = (
     ServerCommands.PARK,
 )
 
-
+#endregion

@@ -454,10 +454,10 @@ class Server(QObject):
                         self.zmq_comm.pub(self.status)  
                         self.logger.error(e)
                 
-                self.motor.update_status()
                 self._update_status()
+                self.motor.update_status()
 
-                self._reset_client()
+                self._reset_client_info()
 
             else:
                 #  The device reaching is realized in a new thread to enhance the status 
@@ -550,7 +550,7 @@ class Server(QObject):
         # self.zmq_comm.reply('ACK')                  # Replies 'ACK' to inform the client that everything went ok
         self.logger.info(f'Command issued: {cmd}')
             
-    def _reset_client(self):
+    def _reset_client_info(self):
         """Verifies if the motor ended the execution of the
         last command and resets the command information"""
         # print(self.status)
