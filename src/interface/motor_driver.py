@@ -136,6 +136,10 @@ class Driver(ABC):
         ...      
 
     @abstractmethod
+    def parse_alarm_info(self) -> bool:
+        """Precisa ser implementada pelo driver"""
+
+    @abstractmethod
     def read_firmware_status(self) -> str:
         """Precisa ser implementada pelo driver"""
         ...

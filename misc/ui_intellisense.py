@@ -75,6 +75,9 @@ class UiWidgets(QWidget):
             self.actionSettings = window.findChild(QAction, 'actionSettings')
             self.actionSettings: QAction = self.actionSettings
 
+            self.actionEngineering = window.findChild(QAction, 'actionEngineering')
+            self.actionEngineering: QAction = self.actionEngineering
+
             self.actionShow_toolbar = window.findChild(QAction, 'actionShow_toolbar')
             self.actionShow_toolbar: QAction = self.actionShow_toolbar
 
@@ -99,6 +102,9 @@ class UiWidgets(QWidget):
 
             self.ledAlarm = window.findChild(QLabel, 'ledAlarm')
             self.ledAlarm: QLabel = self.ledAlarm
+
+            self.ledTeste = window.findChild(QLabel, 'ledTeste')
+            self.ledTeste: QLabel = self.ledTeste
 
             self.conBarServerRouter = window.findChild(QProgressBar, 'conBarServerRouter')
             self.conBarServerRouter: QProgressBar = self.conBarServerRouter

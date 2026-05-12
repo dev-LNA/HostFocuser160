@@ -9,7 +9,7 @@ from dataclasses import dataclass
 from src.interface.motor_driver import Driver
 from src.interface.driver_DMX import  DriverDMX
 from src.interface.driver_AMP import DriverAMP
-from src.utils.constants import MotorModels, MotorParamsIdx, ServerCommands, constants, MotorParameter, MotorStatusFlags
+from src.utils.constants import MotorModels, MotorParamsIdx, ServerCommands, constants, MotorParameter, MotorStatusFlags, MotorAlarmInfo
 from src.utils.signals import PropertySignals, MultiSignal
 
 
@@ -66,6 +66,8 @@ class Motor():
         self._alarm: bool = False
         self._firmware_status: str = 'invalid'
         self._status: int = 0
+
+        self._alarm_info: str = ''
 
         if model == MotorModels.ARCUS_DMX_ETH:
             self.driver = DriverDMX(model)
@@ -216,7 +218,7 @@ class Motor():
             # return f'[Device] Could not retrieve initialized information: Error -> {str(e)}'
     
     @property
-    def alarm(self) -> bool:    #TODO: Talvez já colocar um tratamento para checar qual é o alarme
+    def alarm(self) -> bool:
         """Motor alarm status
         The motor alarm is read using the 'status' property, this is only a way to
         read the alarm.
@@ -224,20 +226,38 @@ class Motor():
         :getter: Returns the motor alarm status
         :rtype: bool
         """
-        try:
-            val = self.driver.read_alarm_status()
-            if val != self._alarm:
-                self._alarm = val
-                if self._alarm:
-                    self.signals.alarm.emit(True, "statusLed", "NOK")
-                else:
-                    self.signals.alarm.emit(False, "statusLed", "OFF")
+        return self._alarm
+    @alarm.setter
+    def alarm(self, val):    #TODO: Talvez já colocar um tratamento para checar qual é o alarme
 
-            return self._alarm
-        except Exception as e:
-            self.disconnect()
-            raise e
+        # try:
+            # val = self.driver.read_alarm_status()
+        if val != self._alarm:
+            self._alarm = val
+            if self._alarm:
+                self.alarm_info = self.driver.parse_alarm_info()
+                self.signals.alarm.emit(True, "statusLed", "NOK")
+            else:
+                self.signals.alarm.emit(False, "statusLed", "OFF")
+
+        return self._alarm
+        # except Exception as e:
+        #     self.disconnect()
+        #     raise e
     
+    @property
+    def alarm_info(self):
+        return self._alarm_info
+    @alarm_info.setter
+    def alarm_info(self, msg: MotorAlarmInfo) -> str:
+        self._alarm_info = "Alarm details: "
+        for error in msg:
+            self._alarm_info += error.name + " / "
+        
+        self._alarm_info = self._alarm_info.removesuffix(" / ")
+        
+        return self._alarm_info
+
     @property
     def firmware_status(self) -> str: 
         try:
@@ -250,6 +270,7 @@ class Motor():
             self.disconnect()
             raise e
             # return f'[Device] Could not retrieve firmware status information: Error -> {str(e)}'
+
 
 
 #endregion
@@ -294,8 +315,10 @@ class Motor():
                     else:
                         self.signals.lim_max.emit(False, "statusLed", "OFF")
 
-
-
+                if(motor_status & MotorStatusFlags.ALARM):
+                    self.alarm = True
+                else:
+                    self.alarm = False
 
                 return self._status
             else:
@@ -304,6 +327,7 @@ class Motor():
             self.disconnect()
             raise e
         
+
     def connect(self, max_retries: int = 5, delay: float = 0.1) -> bool:
         """Connects to the motor
 
@@ -383,6 +407,7 @@ class Motor():
         else:
             print('Failed to ping motor')
             return False
+
 
     def set_param(self, ParamIndex: MotorParamsIdx, value: int | bool | str) -> str:
         """Sets values for motor parameters

@@ -6,7 +6,7 @@ import time
 import socket
 
 from contextlib import closing
-from src.utils.constants import constants, MotorStatusFlags
+from src.utils.constants import constants, MotorStatusFlags, MotorAlarmInfo
 
 
 class DriverDMX(Driver):
@@ -137,9 +137,16 @@ class DriverDMX(Driver):
             return False
     
     def read_status(self) -> int:       #TODO: Adicionar tratamento da mensagem de status para padronizar independente do motor
-        
+        """Checks motor status
+
+        To allow the code to work with both motors this method also calls
+        'read_alarm_status'
+        """
         motor_status: int = 0
 
+        if self.read_alarm_status() | self.check_stall():
+            motor_status |= MotorStatusFlags.ALARM
+        
         resp = self._write("MST")
         if resp != "NOK":
             resp = format(int(resp), '012b')
@@ -159,13 +166,35 @@ class DriverDMX(Driver):
         return MotorStatusFlags.INVALID
     
     def read_alarm_status(self) -> bool:
+        """Checks if the ALM bit is set
+        
+        In the DMX motor the ALM bit only indicates the over temperature error
+
+        :return: Bool indicating if an alarm is set
+        :rtype: bool
+        """
         resp = self._write("ALM")
         if resp != "NOK":
             if resp == '1':
                 return True
             else:
                 return False
+        return False            #TODO: verificar o que fazer nesse caso
 
+    def check_stall(self):
+        resp = self._write("V25")
+        if resp != "NOK":
+            if resp == '1':
+                return True
+            else:
+                return False
+        return False            #TODO: verificar o que fazer nesse caso
+
+
+    def parse_alarm_info(self) -> MotorAlarmInfo:
+        """Verifies the motor error responsible for setting the alarm bit"""
+        # The DMX motor only sets the alarm bit with an over temperature error (temp > 70º)
+        return MotorAlarmInfo.OVER_TEMP
 
    
     def param_IP(self, value = None) -> str:

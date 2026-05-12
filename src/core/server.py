@@ -72,6 +72,8 @@ class ServerSignals(QObject):
     client_id = pyqtSignal(str)
     transaction_id = pyqtSignal(str)
 
+    teste = PropertySignals()
+
 class Server(QObject):
 
     signals = ServerSignals()
@@ -262,8 +264,10 @@ class Server(QObject):
 
 #region ========== METHODS ========== # 
     def teste(self):
-        self.motor._alarm = not self.motor._alarm
-        print(self.status)
+        # self.motor._alarm = not self.motor._alarm
+        self.motor.driver.sendCommand("POL=0")
+        # self.motor.driver.sendCommand("SR1=1")
+        
 
     def _start_server(self):
         """Starts server communication
@@ -432,44 +436,60 @@ class Server(QObject):
             t0 = time.time()                                        # Keeps the time when the loop began
             current_time = datetime.now()                           # Reads current time
             
-            if abs(current_time.second - self.last_pub_time.second) >= Config.pub_interval and self.server_online:   # Publishes status every second
-                self.last_pub_time = self.zmq_comm.pub(self.status)
+            try:
 
-            # Motor must be connected, poller defined and the 'reach_device' thread must have finished
-            if self.motor.connected and self.zmq_comm.poller and self._reaching_device_thread is None:
-                socks = dict(self.zmq_comm.poller.poll(5))  # poll(50)                                                                           # Polls the information from the ZMQ to receive commands from the client
-                if socks.get(self.zmq_comm.replier) == zmq.POLLIN:                                                                       # If the socket is configured as Pollin   #TODO: Necessário?
+                if abs(current_time.second - self.last_pub_time.second) >= Config.pub_interval and self.server_online:   # Publishes status every second
+                    self.last_pub_time = self.zmq_comm.pub(self.status)
+
+                # Motor must be connected, poller defined and the 'reach_device' thread must have finished
+                if self.motor.connected and self.zmq_comm.poller and self._reaching_device_thread is None:
+                    socks = dict(self.zmq_comm.poller.poll(5))  # poll(50)                                                                           # Polls the information from the ZMQ to receive commands from the client
+                    if socks.get(self.zmq_comm.replier) == zmq.POLLIN:                                                                       # If the socket is configured as Pollin   #TODO: Necessário?
+                        
+                        received_client_msg = self.zmq_comm.replier.recv_string()
+                        try:
+                            msg_json = json.loads(received_client_msg)
+                            parsed_cmd = self._parse_client_command(msg_json)                   # Parses client command
+                            self._command_validation(parsed_cmd)                                # Validates the received command
+                            self._handle_command(parsed_cmd)                                    # Executes the command
+                            self.status[SJson.CMD] = msg_json                                   # Updates status with the current command being executed                         
+                            self.zmq_comm.reply('ACK')                                          # Replies 'ACK' to inform the client that everything went ok
+                            self.signals.last_command.emit(self.status)
+                        except Exception as e: 
+                            print(e)
+                            self.zmq_comm.reply('NAK')          # Replies 'NAK' to inform the client that an error occured                     
+                            self.zmq_comm.pub(self.status)  
+                            self.logger.error(e)
                     
-                    received_client_msg = self.zmq_comm.replier.recv_string()
-                    try:
-                        msg_json = json.loads(received_client_msg)
-                        parsed_cmd = self._parse_client_command(msg_json)                   # Parses client command
-                        self._command_validation(parsed_cmd)                                # Validates the received command
-                        self._handle_command(parsed_cmd)                                    # Executes the command
-                        self.status[SJson.CMD] = msg_json                                   # Updates status with the current command being executed                         
-                        self.zmq_comm.reply('ACK')                                          # Replies 'ACK' to inform the client that everything went ok
-                        self.signals.last_command.emit(self.status)
-                    except Exception as e: 
-                        print(e)
-                        self.zmq_comm.reply('NAK')          # Replies 'NAK' to inform the client that an error occured                     
-                        self.zmq_comm.pub(self.status)  
-                        self.logger.error(e)
+                    self._update_status()
+                    self.motor.update_status()
+
+                    self._reset_client_info()
+
+                    if( self.motor.driver.sendCommand("V39") == '1' ):
+                        self.signals.teste.emit(True, "statusLed", "OK")
+                    else:
+                        self.signals.teste.emit(True, "statusLed", "NOK")
+
+                    print(f"V25 = {self.motor.driver.sendCommand("V25")}")
+                    print(f"V24 = {self.motor.driver.sendCommand("V24")}")
+
+
+
+                else:
+                    #  The device reaching is realized in a new thread to enhance the status 
+                    # update time
+                    if self._reaching_device_thread is None:
+                        self.router_reachable = False
+                        self.motor_reachable = False
+                        self._reaching_device_thread = Thread(target = self._reach_device)
+                        self._reaching_device_thread.start()
                 
-                self._update_status()
-                self.motor.update_status()
+                self.signals.connection_speed.emit(f"{round(time.time()-t0, 3)}")
 
-                self._reset_client_info()
+            except Exception as e:
+                self.logger.error(f"{e}")
 
-            else:
-                #  The device reaching is realized in a new thread to enhance the status 
-                # update time
-                if self._reaching_device_thread is None:
-                    self.router_reachable = False
-                    self.motor_reachable = False
-                    self._reaching_device_thread = Thread(target = self._reach_device)
-                    self._reaching_device_thread.start()
-            
-            self.signals.connection_speed.emit(f"{round(time.time()-t0, 3)}")
         self.router_reachable = False
         self.motor_reachable = False
         self.communicating_to_motor = False 

@@ -26,6 +26,7 @@ from src.utils.motor import MotorModels
 
 from misc.log_box import LogBox
 from misc.settings import SettingsWindow
+from misc.server_settings import ServerSettingsWindow
 
 def resource_path(relative_path):
     """ Get absolute path to resource, works for dev and for PyInstaller """
@@ -55,6 +56,7 @@ class FocuserOPD (QMainWindow):
         self.clients = list[ClientSimulator]()  # Initializes client simulators list
         self._num_clients = 0                   # Number of opened clients
         self._settings_window = None            # Initialize settings window as None
+        self._server_settings_window = None
         self.log_box:LogBox = LogBox()          # Initialize log window
         self.log_box.closed.connect(self._closed_log_box)               # Signal to inform the main window that the log box was closed by pressing the X button            
         self.load_window = None                 # Initialize load window as None    
@@ -106,7 +108,8 @@ class FocuserOPD (QMainWindow):
         self.ui_elements.actionShow_Log.triggered.connect(self._toggle_log_box)
         self.ui_elements.actionClient_Simulator.triggered.connect(self._run_simulator)
         self.ui_elements.actionHide.triggered.connect(self._minimize_to_tray)    
-        self.ui_elements.actionSettings.triggered.connect(self._open_settings)
+        self.ui_elements.actionSettings.triggered.connect(self._open_server_settings)
+        self.ui_elements.actionEngineering.triggered.connect(self._open_settings)
         self.ui_elements.actionShow_toolbar.triggered.connect(              
             lambda checked: self.ui_elements.toolBar.setVisible(checked)    # Action to toggle toolbar
         )   
@@ -169,7 +172,6 @@ class FocuserOPD (QMainWindow):
         # self.server.signals.firmware_status.connect(self.ui_elements.lblStatus_val.setText)
         self.server.signals.last_command.connect(self._parse_last_command)
 
-
     #--- Events definitions
         #   sets animations and install event filter on objects
         self.ui_elements.conBarServerRouter.setValue(0)
@@ -205,6 +207,7 @@ class FocuserOPD (QMainWindow):
 
 ######### OUTROS TESTES ##########
         self.ui_elements.btnTestes.clicked.connect(self._testes)
+        self.server.signals.teste.info.connect(self.ui_elements.ledTeste.setProperty)
 
 
     def _config_server(self):
@@ -256,6 +259,7 @@ class FocuserOPD (QMainWindow):
             self._start()                                                       # Starts the server
 
     def _testes(self):
+        
         self.server.teste()
 
     def _start(self):
@@ -386,6 +390,18 @@ class FocuserOPD (QMainWindow):
 
         print(self.clients)                                         # Prints the list of clients
 
+    def _open_server_settings(self):
+        
+        if self._server_settings_window is None:
+            self._server_settings_window = ServerSettingsWindow(logger=logger)
+            self._server_settings_window.signals.window_closed.connect(self._server_settings_closed)
+            self._server_settings_window.show()
+
+    def _server_settings_closed(self, msg: bool):
+        if msg is True:
+            self._server_settings_window.signals.window_closed.disconnect(self._server_settings_closed)
+            self._server_settings_window = None
+
     def _open_settings(self):
         """Opens the settings window"""
         #To open the settings the motor must be connected
@@ -421,10 +437,6 @@ class FocuserOPD (QMainWindow):
                         self._settings_window.signals.changed_settings.connect(self._parse_changed_settings)       # Connects signal to show the settings in the GUI
                         self._settings_window.move(self.pos() + QPoint(self.width(), 0))                            # Positions the settings window according to the main window position
                         self._settings_window.show()                                                                # Shows the settings window
-
-
-
-
 
     def _settings_closed(self, msg: bool):
         """Function executed when the settings window is closed.

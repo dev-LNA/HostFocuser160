@@ -151,6 +151,7 @@ class MotorProgramStatus(IntFlag):
     INVALID = auto()
 
 class MotorAlarmInfo(IntFlag):
+    NO_ERROR = 0
     STALL = auto()
     INVALID_1 = auto()
     INVALID_2 = auto()

@@ -87,30 +87,6 @@
 ; contained in Program 0 and 
 ; respond to SASTAT0 and SR0. 
 ;
-;****************************************
-PRG 0	; HARDWARE MECHANISM IDENTIFICATION
-;****************************************
-; V44: INIT flag of all mechanisms.
-; V45: Motor polarity, set by S4DMX, used by ICS to write motor POL register.
-; V46: Running status. =0 for READY, =1 for BUSY, or error code otherwise.
-; V50: Mechanism hardware ID, set by S4DMX.
-; --------------------------------------------
-	V33 = 20260224		; Current S4DMX version.
-	V50 = 64					; Set ID=64 for unplugged motor
-	V49 = 64					; ICS sets V49 = V50 to enable movements
-;	V71 = 2165440			; Maximum target position (encoder units)
-;	V74 = 5360				; # overtravel encoder displacement to eliminate backlash. (5/8 rev)
-	HSPD = V75			; Equivalent to 500 microns/second
-	LSPD = V76
-	ACC = 300
-	DEC = 300
-	V44 = 0						; Clear INIT flag of all mechanisms
-	; Testar conexao uswitchs ?
-	V90 = 1					; Version number	
-	V91 = 0					; Update number
-	V92 = 0					; Bug fix number
-END									; End Program 0
-;
 ;=====================
 SUB 0	; STATUS REQUEST
 ;=====================
@@ -202,14 +178,6 @@ SUB 5	; PARK
 					V8 = 0			;* Exit while loop
 				ENDIF
 				GOSUB 6				;* Checks if motor is stalled
-				;IF V23 = EX			;* If the position did not change
-				;	STOPX			;* Stops movement
-				;	DELAY = 500		;* Deceleration time
-				;	V8 = 0			;* Exit while loop
-				;	V43 = 1			;* Activates stall bit
-				;ELSE
-				;	V23 = EX		;* If the position changed saves new position	
-				;ENDIF
 			ENDWHILE
 		EO = 0						;* Disable motor driver
 		V16 = 0						;* Clear parking flag
@@ -223,15 +191,23 @@ SUB 5	; PARK
 ;=================
 SUB 6	; STALL CHECK
 ;=================
-	IF V23 = EX			;* If the position did not change
-		STOPX			;* Stops movement
-		DELAY = 500		;* Deceleration time
-		V8 = 0			;* Exit while loop
-		V43 = 1			;* Activates stall bit
-	ELSE
-		V23 = EX		;* If the position changed saves new position	
+;	#TODO: O valor de limite de stall precisa ser ajustado quando for testar no 160
+
+	IF V8 > 0
+		V24 = V23 - EX
+		IF V24 < 2
+			IF V24 > -2
+				ABORTX			;* Stops movement immediately
+				DELAY = 500		;* Waits
+				V8 = 0			;* Exit while loop
+				V25 = 1			;* Activates stall bit
+				V42 = 1			;* Stops 
+				V39 = 1			;* teste led alarm
+			ENDIF
+		ENDIF
+		V23 = EX		;* If the position changed saves new position
 	ENDIF
-	ENDSUB
+ENDSUB
 
 
 
@@ -270,12 +246,13 @@ SUB 20	; FOCUSOUT
 	V8 = 1
 	WHILE V8 > 0
 		V11 = MSTX	; Read status
-		V8 = V11 & 3;	Motor moving bits
+		V8 = V11 & 7;	Motor moving bits
 		IF V42 = 1	; Check stop command
 			STOPX
 			DELAY = 500	; Desacceleration time = 300
 			V8 = 0			; Exit while loop
 		ENDIF
+		GOSUB 6				;* Checks if motor is stalled
 	ENDWHILE
 	EO = 0						; Disable motor driver
 ;	HSPD = 214400			; Return velocity to defalt value
@@ -320,21 +297,22 @@ SUB 21	; FOCUSIN
 	V8 = 1
 	WHILE V8 > 0
 		V11 = MSTX	; Read status
-		V8 = V11 & 3;	Motor moving bits
+		V8 = V11 & 7;	Motor moving bits
 		IF V42 = 1	; Check stop command
 			STOPX
 			DELAY = 500	; Desacceleration time = 300
 			V8 = 0			; Exit while loop
 		ENDIF
+		GOSUB 6				;* Checks if motor is stalled
 	ENDWHILE
 	; Move overtravel value in foward direction to remove backlash
 	V2 = EX						; Current motor position
 	V3 = V2 + V74			; Adds overtravel
 	V10 = 10 * V3			; Convert encoder unit to step unit
 	XV10							; Move (forward)
-	WAITX
+	WAITX	; #TODO: Trocar isso pelo while V8>0 para poder checar o stall
 	EO = 0						; Disable motor driver
-;	HSPD = 214400			; Return velocity to defalt value
+;	HSPD = 214400			; Return velocity to defalt value	#TODO: Remover atribuições de HSPD para não desconfigurar
 	V42 = 0						; Clear stop command
 	V46 = 0			 			; Set end SUB code
 ENDSUB 
@@ -392,7 +370,7 @@ SUB 29	; FOCUS GOTO
 			; Execute HOME to encoder index until LIM- is actuated
 			WHILE V5 > 0
 				ZOMEX+
-				WAITX
+				WAITX		;#TODO: Trocar por while V8>0
 				V11 = MSTX
 				V5 = V11 & 16
 			ENDWHILE
@@ -424,6 +402,7 @@ SUB 29	; FOCUS GOTO
 				V1 = V74	; Set overtravel as target position
 				V8 = 0		; Exit while loop
 			ENDIF
+			GOSUB 6				;* Checks if motor is stalled
 		ENDWHILE
 	ENDIF
 	; Move to target position in forward direction
@@ -439,6 +418,7 @@ SUB 29	; FOCUS GOTO
 			DELAY = 500	; Desacceleration time = 300
 			V8 = 0		; Exit while loop
 		ENDIF
+		GOSUB 6				;* Checks if motor is stalled
 	ENDWHILE
 	EO = 0						; Disable motor driver
 	V42 = 0						; Clear stop command
@@ -477,46 +457,45 @@ SUB 30	; FOCUS INIT
 	V42 = 0						; Clear stop flag
 ;	XV10							; Start moving
 	JOGX-
-	V2 = 0						; Enable while loop
-	WHILE V2 = 0
+	V8 = 0						; Enable while loop
+	WHILE V8 = 0
 		; Check LIM- sensor state
 		V11 = MSTX			; Read motor status
-		V2 = V11 & 16		; LIM- bit. If set exits from while loop
+		V8 = V11 & 16		; LIM- bit. If set exits from while loop
 		; Check stop flag
 		IF V42 > 0
 			STOPX					; Stop motor
-			V2 = 1				; Exit from while loop
+			V8 = 1				; Exit from while loop
 			V13 = 1				;* Stop issued
 		ENDIF
+		GOSUB 6				;* Checks if motor is stalled
 	ENDWHILE
 	ECLEARX						; Clear any motor error
 	; Read LIM- sensor 
 	V11 = MSTX				; Read motor status
-	V3 = V11 & 16			; LIM- bit. If set exits from while loop
-	IF V42 = 0				;* Only tries next movement if stop was not issued
-		IF V3 > 0
-			; HOME with Z index 
-			ZOMEX+
-			WHILE V3 > 0
-;*				ZOMEX+
-;*				WAITX
-				V11 = MSTX
-				V3 = V11 & 7
-				IF V42 > 0
-					STOPX					; Stop motor
-					V3 = 0				; Exit from while loop
-					V13 = 1				;* Stop issued
+	V8 = V11 & 16			; LIM- bit. If set exits from while loop
+	IF V42 = 0						;* Only tries next movement if stop was not issued
+		IF V8 > 0				
+			ZOMEX+					;* HOME with Z index 	
+			WHILE V8 > 0
+				V11 = MSTX			;* Reads motor status	
+				V8 = V11 & 7		;* Checks if motor is moving
+				IF V42 > 0			;* If HALT was issued
+					STOPX					;* Stop motor
+					V8 = 0					;* Exit from while loop
+					V13 = 1					;* Flag stop issued
 				ENDIF
+				GOSUB 6				;* Checks if motor is stalled
 			ENDWHILE 
-			IF V42 = 0					; If stop was issued the homing is not valid
-				V44 = V50					; Set INIT executed flag
+			IF V42 = 0					;* The init is only valid if stop was not issued when the movement finished
+				V44 = V50				;* Set INIT executed flag
 			ENDIF
 		ENDIF
 	ENDIF
-	EO = 0						; Disable motor driver
-	V42 = 0						; Clear stop flag
-	V15 = 0						; Indicates INIT is NOT running
-	V46 = 0			 			; Set end SUB code
+	EO = 0						;* Disable motor driver
+	V42 = 0						;* Clear stop flag
+	V15 = 0						;* Indicates INIT is NOT running
+	V46 = 0			 			;* Set end SUB code
 ENDSUB
 ;
 ;
@@ -524,8 +503,78 @@ ENDSUB
 SUB 31	; ERROR HANDLING
 ;=======================
 	; Bit 12 of POL register (Jump to line 0 on error) must be cleared
-	ECLEARX			 			; Clear error flag
+	SR1 = 0						;* Stops program 1
+	ECLEARX			 			;* Clear error flag
+	SR1 = 1						;* Restarts program 1
 ENDSUB
 ;
 END
 ;
+
+
+
+
+
+
+;****************************************
+PRG 0	; HARDWARE MECHANISM IDENTIFICATION
+;****************************************
+; V44: INIT flag of all mechanisms.
+; V45: Motor polarity, set by S4DMX, used by ICS to write motor POL register.
+; V46: Running status. =0 for READY, =1 for BUSY, or error code otherwise.
+; V50: Mechanism hardware ID, set by S4DMX.
+; --------------------------------------------
+	V33 = 20260224		; Current S4DMX version.
+	V50 = 64					; Set ID=64 for unplugged motor
+	V49 = 64					; ICS sets V49 = V50 to enable movements
+;	V71 = 2165440			; Maximum target position (encoder units)
+;	V74 = 5360				; # overtravel encoder displacement to eliminate backlash. (5/8 rev)
+	HSPD = V75			; Equivalent to 500 microns/second
+	LSPD = V76
+	ACC = 300
+	DEC = 300
+	V44 = 0						; Clear INIT flag of all mechanisms
+	; Testar conexao uswitchs ?
+	V90 = 1					; Version number	
+	V91 = 0					; Update number
+	V92 = 0					; Bug fix number
+END									; End Program 0
+
+
+
+;PRG 1
+;
+;	WHILE 1 = 1
+;		DELAY = 500
+;
+;		V23 = EX		;* Reads current encoder position
+;		V41 = MSTX & 3		;* Only chekcs if motor at constant speed or accelarating
+;		IF V41 > 0			;* If the motor is moving
+;			V39 = 1
+;			
+;			DELAY = 500
+;
+;			V25 = V23 - EX
+;			IF V25 < 3
+;				IF V25 > -3
+;					V42 = 1
+;					ABORTX			;* Immediately stops all motion
+;					V43 = 1			;* Activates stall bit
+;					V44 = 0			;* If stall homing must be done again
+;				ENDIF
+;			ENDIF
+;
+;			;IF V43 > 0			;* If sta
+;			;	STOPX			;* Stops movement with deceleration
+;			;	V42 = 1			;* Sets HALT command to any movement function
+;			;	DELAY = 500		;* Deceleration time
+;			;	V43 = 1			;* Activates stall bit
+;			;ENDIF
+;
+;			
+;		ENDIF
+;
+;		V39 = 0
+;	ENDWHILE
+;
+;END

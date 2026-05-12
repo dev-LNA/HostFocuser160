@@ -109,7 +109,52 @@ PRG 0	; HARDWARE MECHANISM IDENTIFICATION
 	V90 = 1					; Version number	
 	V91 = 0					; Update number
 	V92 = 0					; Bug fix number
+
+	;V39 = 0					; Initializes V39 to be used in program 1
+	;SR1 = 1					; Starts program 1
 END									; End Program 0
+
+
+;****************************************
+PRG 1	; STALL DETECTION
+;****************************************
+; V23: Holds current motor position
+; V24: Flag that indicates stall status [0 - NO STALL / 1 - STALL]
+; --------------------------------------------
+V39 = 0
+WHILE 1 = 1					;* Forever loop
+	DELAY = 500
+	IF V39 = 0
+		V39 = 1
+	ELSE
+		V39 = 0
+	ENDIF
+
+
+;	IF V8 > 0
+;		V39=1
+;		DELAY = 500
+;		V39=0
+;		DELAY = 500
+;	ENDIF
+
+
+;	IF V8 > 0				;* If the motor is moving
+;		V39 = ~V39
+;		V23 = EX			;* Reads current position
+;		DELAY = 500			;* Waits 500 ms
+;		IF V23 = EX			;* If the position did not change
+;			STOPX			;* Stops movement
+;			V42 = 1			;* Sets HALT command to any movement function
+;			DELAY = 500		;* Deceleration time
+;			V43 = 1			;* Activates stall bit
+;		ENDIF
+;	ENDIF
+ENDWHILE
+END									; End Program 1
+
+
+
 ;
 ;=====================
 SUB 0	; STATUS REQUEST
@@ -158,11 +203,11 @@ SUB 0	; STATUS REQUEST
 	V7 = V7 + DI
 	V7 = V7 << 2
 	V7 = V7 + V6
-	V8 = V7 << 25			; Shift the two bits of INIT done, DO, and DI	
+	V14 = V7 << 25			; Shift the two bits of INIT done, DO, and DI	
 	V9 = V1 + V2
 	V9 = V9 + V3
 	V9 = V9 + V5
-	V30 = V9 + V8
+	V30 = V9 + V14
 	V46 = 0			 			; Set end SUB code
 ENDSUB
 ;
@@ -190,7 +235,7 @@ SUB 5	; PARK
 		EO = 1						;* Enable motor driver
 									;* Move in forward direction towards maximum position
 		V10 = 10 * V83				;* Convert encoder unit to step unit
-		V23 = EX					;* Gets current position
+;		V23 = EX					;* Gets current position
 		XV10						;* Start movement
 		V8 = 1
 			WHILE V8 > 0		
@@ -201,7 +246,6 @@ SUB 5	; PARK
 					DELAY = 500		;* Deceleration time = 300
 					V8 = 0			;* Exit while loop
 				ENDIF
-				GOSUB 6				;* Checks if motor is stalled
 				;IF V23 = EX			;* If the position did not change
 				;	STOPX			;* Stops movement
 				;	DELAY = 500		;* Deceleration time
@@ -218,21 +262,6 @@ SUB 5	; PARK
 	ENDIF
 	V13 = 0							;* Resets stop issued flag
 	ENDSUB 
-
-
-;=================
-SUB 6	; STALL CHECK
-;=================
-	IF V23 = EX			;* If the position did not change
-		STOPX			;* Stops movement
-		DELAY = 500		;* Deceleration time
-		V8 = 0			;* Exit while loop
-		V43 = 1			;* Activates stall bit
-	ELSE
-		V23 = EX		;* If the position changed saves new position	
-	ENDIF
-	ENDSUB
-
 
 
 ;=================
@@ -320,7 +349,7 @@ SUB 21	; FOCUSIN
 	V8 = 1
 	WHILE V8 > 0
 		V11 = MSTX	; Read status
-		V8 = V11 & 3;	Motor moving bits
+		V8 = V11 & 7;	Motor moving bits
 		IF V42 = 1	; Check stop command
 			STOPX
 			DELAY = 500	; Desacceleration time = 300
@@ -361,48 +390,36 @@ SUB 29	; FOCUS GOTO
 	IF V1 <= 0
 		; Out of range
 		V46 = 172				; Set Parameter low value error code
-		SR0 = 0					; End Sub (turn off Program 0)
+		SR0 = 0					; End Sub (turn off Program 0)			#TODO: Não é necessário
 	ENDIF
 	IF V1 > V71
 		; Out of range
 		V46 = 173				; Set Parameter high value error code
-		SR0 = 0					; End Sub (turn off Program 0)
+		SR0 = 0					; End Sub (turn off Program 0)			#TODO: Não é necessário
 	ENDIF
 	IF V44 != V50
 		V46 = 176				; Set INIT not executed error code
-		SR0 = 0					; End Sub (turn off Program 0)
+		SR0 = 0					; End Sub (turn off Program 0)			#TODO: Não é necessário
 	ENDIF
 	IF V1 = V2
 		; Current = Target position
 		V46 = 0					; Set end SUB code
-		SR0 = 0					; End Sub (turn off Program 0)
+		SR0 = 0					; End Sub (turn off Program 0)			#TODO: Não é necessário
 	ENDIF
 	ABS								; Select absolute mode
 	EO = 1						; Enable motor driver
-	V9 = 0						; Clear isMoving flag
+;*	V9 = 0						; Clear isMoving flag
 	IF V1 < V2				; V1 = target pos., V2 = initial position
 		; Target position less than current position
-		IF V1 <= V74
-			; Target position near HOME position. Re-init and then go
-			JOGX-					; Move until LIM- activation
-			WAITX
-			; HOME with Z index 
-			ECLEARX				; Clear any motor error
-			V5 = 1
-			; Execute HOME to encoder index until LIM- is actuated
-			WHILE V5 > 0
-				ZOMEX+
-				WAITX
-				V11 = MSTX
-				V5 = V11 & 16
-			ENDWHILE
-			V9 = 0				; Clear isMoving flag
-		ELSE
-			; Target position needs overtravel
+		IF V1 <= V74		; Target position near HOME position. Re-init and then go
+			GOSUB 30		; Init FOCUSER
+			V8 = 0				; Clear isMoving flag
+		ELSE	
+			; Target position needs overtravel		#TODO: CHECAR TODA ESSA LÓGICA
 			V3 = V1 - V74	; Adds overtravel to target position
 			V10 = 10 * V3	; Convert encoder unit to step unit
 			XV10					; Start movement
-			V9 = 1				; Set isMoving flag
+			V8 = 1				; Set isMoving flag
 			; Wait for a displacement greater than overtravel 
 			; in order to enable stop command
 			V6 = 0
@@ -412,7 +429,7 @@ SUB 29	; FOCUS GOTO
 			ENDWHILE
 		ENDIF
 	ENDIF
-	IF V9 = 1
+	IF V8 = 1
 		; Motor is moving. Wait end of movement or stop command
 		V8 = 1
 		WHILE V8 > 0
@@ -467,7 +484,6 @@ SUB 30	; FOCUS INIT
 	V46 = 1			 			; Set start SUB code
 	V44 = 0						; Reset INIT flag
 	V13 = 0						;* Indicates if STOP was issued during homing
-	
 
 	; Moves towards reference position, cheking stop command (V42)
 	EO = 1						; Enable motor driver
@@ -477,41 +493,46 @@ SUB 30	; FOCUS INIT
 	V42 = 0						; Clear stop flag
 ;	XV10							; Start moving
 	JOGX-
-	V2 = 0						; Enable while loop
-	WHILE V2 = 0
+	V8 = 1				;* Motor is moving
+	;V2 = 0						; Enable while loop
+	WHILE V8 < 16		;* If moving and lim- not pressed
 		; Check LIM- sensor state
 		V11 = MSTX			; Read motor status
-		V2 = V11 & 16		; LIM- bit. If set exits from while loop
+		;V2 = V11 & 16		; LIM- bit. If set exits from while loop
+		;V8 = V11 & 7		; Updates moving status
+		V8 = V11 & 23		; Reads movement bits and LIM- bit
 		; Check stop flag
 		IF V42 > 0
 			STOPX					; Stop motor
-			V2 = 1				; Exit from while loop
+			V8 = 100				; Exit from while loop
 			V13 = 1				;* Stop issued
 		ENDIF
 	ENDWHILE
 	ECLEARX						; Clear any motor error
 	; Read LIM- sensor 
 	V11 = MSTX				; Read motor status
-	V3 = V11 & 16			; LIM- bit. If set exits from while loop
+	;V8 = V11 & 16			; LIM- bit. If set exits from while loop
 	IF V42 = 0				;* Only tries next movement if stop was not issued
-		IF V3 > 0
+		;IF V8 > 0
 			; HOME with Z index 
-			ZOMEX+
-			WHILE V3 > 0
+			ZOMEX+			;* Starts movement to find Z
+			V8 = 1			;* Motor is moving
+			WHILE V8 > 0
 ;*				ZOMEX+
 ;*				WAITX
 				V11 = MSTX
-				V3 = V11 & 7
+				;V8 = V11 & 7
+				V8 = V11 & 23 			;* Checks if moving and if lim- switch pressed
 				IF V42 > 0
 					STOPX					; Stop motor
-					V3 = 0				; Exit from while loop
+					V8 = 0				; Exit from while loop
 					V13 = 1				;* Stop issued
 				ENDIF
 			ENDWHILE 
 			IF V42 = 0					; If stop was issued the homing is not valid
 				V44 = V50					; Set INIT executed flag
 			ENDIF
-		ENDIF
+		;ENDIF
 	ENDIF
 	EO = 0						; Disable motor driver
 	V42 = 0						; Clear stop flag
@@ -525,7 +546,11 @@ SUB 31	; ERROR HANDLING
 ;=======================
 	; Bit 12 of POL register (Jump to line 0 on error) must be cleared
 	ECLEARX			 			; Clear error flag
+	SR1=1
 ENDSUB
 ;
-END
+;END
 ;
+
+
+
