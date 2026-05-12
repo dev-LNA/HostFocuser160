@@ -61,6 +61,11 @@ class ServerJsonKeys(StrEnum):
     DEVICE_FIRMWARE_VERSION = "device_Firmware_Version"     # Motor firmware version
     TIMEOUT = "timeout"                                     # Timeout
 
+class ServerParamsIdx(Enum):
+    SERVER_IP=0
+    PUB_PORT=1
+    REP_PORT=2
+
 #endregion
 
 #region MOTOR
@@ -153,15 +158,15 @@ class MotorProgramStatus(IntFlag):
 class MotorAlarmInfo(IntFlag):
     NO_ERROR = 0
     STALL = auto()
-    INVALID_1 = auto()
+    INVALID_1 = auto() 
     INVALID_2 = auto()
     OVER_TEMP = auto()
     INTERNAL_VOLTAGE = auto()
     UNDER_VOLTAGE = auto()
     OVER_VOLTAGE = auto()
-    OVER_CURRENT = auto()
+    OVER_CURRENT = auto() 
     INTERNAL_ERROR_1 = auto()
-    INTERNAL_ERROR_2 = auto()
+    INTERNAL_ERROR_2 = auto() 
     COMMUNICATION_ERROR = auto()
     INTERNAL_ERROR_3 = auto()
     CANT_MOVE = auto()

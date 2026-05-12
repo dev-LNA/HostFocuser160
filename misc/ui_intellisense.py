@@ -16,7 +16,8 @@ from PyQt6.QtWidgets import (
     QFrame,
     QSlider,
     QStackedWidget,
-    QRadioButton)
+    QRadioButton,
+    QSpinBox)
 
 
 
@@ -248,6 +249,18 @@ class UiWidgets(QWidget):
 
             self.txtMaxStep = window.findChild(QLineEdit, 'txtMaxStep')
             self.txtMaxStep: QLineEdit = self.txtMaxStep
+
+            self.spinBacklash = window.findChild(QSpinBox, 'spinBacklash')
+            self.spinBacklash: QSpinBox = self.spinBacklash
+
+            self.txtSocketIP = window.findChild(QLineEdit, 'txtSocketIP')
+            self.txtSocketIP: QLineEdit = self.txtSocketIP
+
+            self.txtPubPort = window.findChild(QLineEdit, 'txtPubPort')
+            self.txtPubPort: QLineEdit = self.txtPubPort
+
+            self.txtRepPort = window.findChild(QLineEdit, 'txtRepPort')
+            self.txtRepPort: QLineEdit = self.txtRepPort
 
 
         # Frame send command

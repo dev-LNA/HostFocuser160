@@ -1,7 +1,7 @@
 from ast import Attribute
 
 from PyQt6 import uic
-from PyQt6.QtWidgets import QMainWindow, QLineEdit, QProgressBar, QDialog, QMessageBox
+from PyQt6.QtWidgets import QMainWindow, QLineEdit, QProgressBar, QDialog, QMessageBox, QSpinBox
 from PyQt6.QtCore import QThread, pyqtSignal, QObject
 from PyQt6.QtGui import QFontMetrics, QKeyEvent
 # from src.core.exceptions import NotImplementedException
@@ -15,12 +15,13 @@ from misc.verification import VerificationDialog
 # from src.interface.focuser_driver import FocuserDriver
 from src.core.config import Config, get_toml  
 
-from src.utils.constants import constants, MotorModels
+from src.utils.constants import constants, MotorModels, MotorParamsIdx, ServerParamsIdx
 from src.interface.motor_driver import Driver
-from src.utils.motor import Motor, MotorParamsIdx
+from src.utils.motor import Motor
 
 from logging import Logger
 from datetime import datetime
+from typing import NamedTuple
 
 import sys
 from os import path
@@ -37,15 +38,33 @@ def resource_path(relative_path):
     base_path = getattr(sys, '_MEIPASS', path.dirname(path.abspath(__file__)))
     return path.join(base_path, relative_path)
 
-path_to_ui = resource_path('../assets/ui/settings.ui')              # Path to settings window UI
+# path_to_ui = resource_path('../assets/ui/settings.ui')              # Path to settings window UI
+path_to_ui = resource_path('../assets/ui/engineering.ui')              # Path to settings window UI
 config_dir = "src/config/"
 config_file = config_dir + "config.toml" #"src/config/config.toml"
 config_file_backup = config_dir + "config_backup.toml" #"src/config/config_backup.toml"                #TODO: Possibilitar definir o nome do arquivo? Talvez nomear de acordo com a data que foi criado
 config_file_default = config_dir + "config_default.toml" #"src/config/config_default.toml"
 
 
+class SettingsAttributes(NamedTuple):
+    NAME: MotorParamsIdx | ServerParamsIdx
+    OBJ: QLineEdit | QSpinBox
 
-class SettingsSignals(QObject):
+class ConfigurableSettings(NamedTuple):
+    SERVER_IP : SettingsAttributes
+    PUB_PORT: SettingsAttributes
+    REP_PORT: SettingsAttributes
+    MOTOR_IP: SettingsAttributes
+    BACKLASH: SettingsAttributes
+    MAX_POS: SettingsAttributes
+    PARK_POS: SettingsAttributes
+    MAX_SPEED: SettingsAttributes
+    NORMAL_SPEED: SettingsAttributes
+    LOW_SPEED: SettingsAttributes
+    MAX_STEP: SettingsAttributes
+
+
+class SettingsWindowSignals(QObject):
     window_closed = pyqtSignal(bool)
     engineering_mode = pyqtSignal(bool)
     command_response = pyqtSignal(str)
@@ -54,7 +73,7 @@ class SettingsSignals(QObject):
 
 class SettingsWindow(QMainWindow):
 
-    signals = SettingsSignals()
+    signals = SettingsWindowSignals()
 
     _engineering_mode = False                                       # Engineering mode state
     _logged_user = ""                                               # Current logged user
@@ -125,6 +144,24 @@ class SettingsWindow(QMainWindow):
             MotorParamsIdx.MAX_STEP : self.ui_elements.txtMaxStep
         }
 
+        self._config_settings = ConfigurableSettings(
+        # Server parameters
+            SERVER_IP = SettingsAttributes(ServerParamsIdx.SERVER_IP, self.ui_elements.txtSocketIP),
+            PUB_PORT = SettingsAttributes(ServerParamsIdx.PUB_PORT, self.ui_elements.txtPubPort),
+            REP_PORT = SettingsAttributes(ServerParamsIdx.REP_PORT, self.ui_elements.txtRepPort),
+        # Motor parameters
+            MOTOR_IP = SettingsAttributes(MotorParamsIdx.MOTOR_IP, self.ui_elements.txtMotorIP),
+            BACKLASH = SettingsAttributes(MotorParamsIdx.BACKLASH, self.ui_elements.txtBackComp),
+            MAX_POS = SettingsAttributes(MotorParamsIdx.MAX_POS, self.ui_elements.txtMaxPos),
+            PARK_POS = SettingsAttributes(MotorParamsIdx.PARK_POS, self.ui_elements.txtPark),
+            MAX_SPEED = SettingsAttributes(MotorParamsIdx.MAX_SPEED, self.ui_elements.txtMaxSpeed),
+            NORMAL_SPEED = SettingsAttributes(MotorParamsIdx.NORMAL_SPEED, self.ui_elements.txtNormalSpeed),
+            LOW_SPEED = SettingsAttributes(MotorParamsIdx.LOW_SPEED, self.ui_elements.txtLowSpeed),
+            MAX_STEP = SettingsAttributes(MotorParamsIdx.MAX_STEP, self.ui_elements.txtMaxStep),
+        )
+
+
+
         self._progress_bar = LoadBar()                                                  # Creates load bar
 
         self.statusBar().addPermanentWidget(self._progress_bar)                         # Add load bar to status bar, it is not visible by default and is made visible when needed
@@ -187,6 +224,9 @@ class SettingsWindow(QMainWindow):
             for idx in MotorParamsIdx:
                 self._motor_settings[idx] = self._config_txt_boxes[idx].text()
                 self._config_txt_boxes[idx].textChanged.connect(self._validate_parameters)  # When a parameter changes the value is validated
+
+            for param in ConfigurableSettings:
+                print(f"parameter: {param}")
 
     def _parse_motor_data(self, data: Motor):
         """Parses the motor data and updates the GUI with the information
