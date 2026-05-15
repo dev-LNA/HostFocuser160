@@ -11,10 +11,10 @@ pub_interval = 1
 absolute = true
 device_name = "2ndMirror"
 deviceID = "3285e9af-8d1d-4f9d-b368-d129d8e9a24b"
-device_ip = "192.168.60.120"
+device_ip = "0.0.0.0"  # "192.168.60.120"
 
 
-device_port = 5001
+device_port = 5006
 encoder2microns = 42.2047244
 max_increment = 0
 tempcompavailable = false
@@ -41,8 +41,6 @@ port_pub = 7003
 port_rep = 7004
 sub_mask = "255.255.255.0"
 gateway_ip = "192.168.0.1"
-pub_port = 7003
-rep_port = 7004
 
 [Logging]
 log_level = "INFO"

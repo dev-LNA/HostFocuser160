@@ -1,11 +1,11 @@
 from typing import NamedTuple
-from enum import Enum, IntEnum
+from enum import Enum, IntEnum, StrEnum, auto
 
 class DB_size(IntEnum):
     COIL_FIRST_ADDRESS=1,
-    COIL_LAST_ADDRESS=620,
+    COIL_LAST_ADDRESS=668,
     DI_FIRST_ADDRESS=761,
-    DI_LAST_ADDRESS=1394
+    DI_LAST_ADDRESS=1442
 
 class RegType(Enum):
     COIL=0,
@@ -56,10 +56,13 @@ class CoilsRegs(NamedTuple):
     RX_CMK_B: RegsInfo
     RX_CMK_C: RegsInfo
     RX_CMK_D: RegsInfo
-    RX_WAIT: RegsInfo
-    RX_BUSY: RegsInfo
+    RX_WRITTING: RegsInfo
+    RX_READING: RegsInfo
     RX_SHDW_WAIT: RegsInfo
     RX_SHDW_BUSY: RegsInfo
+    RX_ALC: RegsInfo
+    RX_V90: RegsInfo
+    RX_V92: RegsInfo
 
 coils_regs = CoilsRegs(
     RX_ALM=RegsInfo(TAG="RX_ALM", ADDRESS=DB_size.COIL_FIRST_ADDRESS, SIZE=1, TYPE=RegType.COIL),
@@ -98,10 +101,13 @@ coils_regs = CoilsRegs(
     RX_CMK_B=RegsInfo("RX_CMK_B", 593, 8, RegType.COIL),
     RX_CMK_C=RegsInfo("RX_CMK_C", 601, 8, RegType.COIL),
     RX_CMK_D=RegsInfo("RX_CMK_D", 609, 8, RegType.COIL),
-    RX_WAIT=RegsInfo("RX_WAIT", 617, 1, RegType.COIL),
-    RX_BUSY=RegsInfo("RX_BUSY", 618, 1, RegType.COIL),
+    RX_WRITTING=RegsInfo("RX_WRITTING", 617, 1, RegType.COIL),      # RX_WAIT
+    RX_READING=RegsInfo("RX_READING", 618, 1, RegType.COIL),       # RX_BUSY
     RX_SHDW_WAIT=RegsInfo("RX_SHDW_WAIT", 619, 1, RegType.COIL),
-    RX_SHDW_BUSY=RegsInfo("RX_SHDW_BUSY", DB_size.COIL_LAST_ADDRESS, 1, RegType.COIL)
+    RX_SHDW_BUSY=RegsInfo("RX_SHDW_BUSY", 620, 1, RegType.COIL),
+    RX_ALC=RegsInfo("RX_ALC", 621, 32, RegType.COIL),
+    RX_V90=RegsInfo("RX_V90", 653, 8, RegType.COIL),
+    RX_V92=RegsInfo("RX_V92", 661, 8, RegType.COIL)
 )
 
 class DigInputsRegs(NamedTuple):
@@ -129,7 +135,7 @@ class DigInputsRegs(NamedTuple):
     TX_IP_B: RegsInfo
     TX_IP_C: RegsInfo
     TX_IP_D: RegsInfo
-    TX_ALC: RegsInfo
+    TX_PR: RegsInfo 
     TX_AX: RegsInfo
     TX_GS1: RegsInfo
     TX_GS5: RegsInfo
@@ -155,10 +161,13 @@ class DigInputsRegs(NamedTuple):
     OK: RegsInfo
     NOK: RegsInfo
     HANDSHAKE: RegsInfo
-    TX_WAIT: RegsInfo
-    TX_BUSY: RegsInfo
+    TX_WRITTING: RegsInfo
+    TX_READING: RegsInfo
     TX_SHDW_WAIT: RegsInfo
     TX_SHDW_BUSY: RegsInfo
+    TX_ALC: RegsInfo
+    TX_V90: RegsInfo
+    TX_V92: RegsInfo
 
 
 
@@ -187,7 +196,7 @@ dig_inputs_regs = DigInputsRegs(
     TX_IP_B=RegsInfo("TX_IP_B", 1217, 8, RegType.DISCRETE_INPUT),
     TX_IP_C=RegsInfo("TX_IP_C", 1225, 8, RegType.DISCRETE_INPUT),
     TX_IP_D=RegsInfo("TX_IP_D", 1233, 8, RegType.DISCRETE_INPUT),
-    TX_ALC=RegsInfo("TX_ALC", 1241, 1, RegType.DISCRETE_INPUT),
+    TX_PR=RegsInfo("TX_PR", 1241, 1, RegType.DISCRETE_INPUT),
     TX_AX=RegsInfo("TX_AX", 1242, 1, RegType.DISCRETE_INPUT),
     TX_GS1=RegsInfo("TX_GS1", 1243, 1, RegType.DISCRETE_INPUT),
     TX_GS5=RegsInfo("TX_GS5", 1244, 1, RegType.DISCRETE_INPUT),
@@ -213,40 +222,75 @@ dig_inputs_regs = DigInputsRegs(
     OK=RegsInfo("OK", 1388, 1, RegType.DISCRETE_INPUT),
     NOK=RegsInfo("NOK", 1389, 1, RegType.DISCRETE_INPUT),
     HANDSHAKE=RegsInfo("HANDSHAKE", 1390, 1, RegType.DISCRETE_INPUT),
-    TX_WAIT=RegsInfo("TX_WAIT", 1391, 1, RegType.DISCRETE_INPUT),
-    TX_BUSY=RegsInfo("TX_BUSY", 1392, 1, RegType.DISCRETE_INPUT),
+    TX_WRITTING=RegsInfo("TX_WRITTING", 1391, 1, RegType.DISCRETE_INPUT),       #TX_WAIT
+    TX_READING=RegsInfo("TX_READING", 1392, 1, RegType.DISCRETE_INPUT),       #TX_BUSY
     TX_SHDW_WAIT=RegsInfo("TX_SHDW_WAIT", 1393, 1, RegType.DISCRETE_INPUT),
-    TX_SHDW_BUSY=RegsInfo("TX_SHDW_BUSY", DB_size.DI_LAST_ADDRESS, 1, RegType.DISCRETE_INPUT)
+    TX_SHDW_BUSY=RegsInfo("TX_SHDW_BUSY", 1394, 1, RegType.DISCRETE_INPUT),
+    TX_ALC=RegsInfo("TX_ALC", 1395, 32, RegType.DISCRETE_INPUT),
+    TX_V90=RegsInfo("TX_V90", 1427, 8, RegType.DISCRETE_INPUT),
+    TX_V92=RegsInfo("TX_V92", 1435, 8, RegType.DISCRETE_INPUT)
 )
 
-class CLP_own(NamedTuple):
-    RX_ALM: str
-    RX_EO: str
-    RX_V15: str
-    RX_V44: str
-    RX_V46: str
-    RX_EX: str
-    RX_MST: str
-    RX_SASTAT: str
-    RX_V50: str
-    RX_OK: str
-    RX_NOK: str
-    HANDSHAKE: str
-    RX_WAIT: str
+class mirrorMapping(NamedTuple):
+    ORIGIN_COIL: str
+    RESPONSE_DI: RegsInfo
 
 
-CLP_managed_var_mirror = CLP_own(
-    RX_ALM= "TX_ALM",
-    RX_EO= "TX_EO",
-    RX_V15= "TX_V15", 
-    RX_V44= "TX_V44",
-    RX_V46= "TX_V46",
-    RX_EX= "TX_EX",
-    RX_MST= "TX_MST",
-    RX_SASTAT= "TX_SASTAT",
-    RX_V50= "TX_V50",
-    RX_OK= "TX_OK",
-    RX_NOK= "TX_NOK",
-    HANDSHAKE= "HANDSHAKE",
-    RX_WAIT= "TX_WAIT",
+class CLP_Vars(NamedTuple):
+    """Registers that are owned by the CLP and the 
+    server must mirror so that the CLP can confirm
+    the receive"""
+
+    RX_ALM: mirrorMapping
+    RX_EO: mirrorMapping
+    RX_V15: mirrorMapping
+    RX_V44: mirrorMapping
+    RX_V46: mirrorMapping
+    RX_EX: mirrorMapping
+    RX_MST: mirrorMapping
+    RX_SASTAT: mirrorMapping
+    RX_V50: mirrorMapping
+    RX_OK: mirrorMapping
+    RX_NOK: mirrorMapping
+    HANDSHAKE: mirrorMapping
+    RX_ALC: mirrorMapping
+    RX_V90: mirrorMapping
+    RX_V92: mirrorMapping
+
+CLP_Owned = CLP_Vars(
+    RX_ALM = mirrorMapping("RX_ALM", dig_inputs_regs.TX_ALM),
+    RX_EO = mirrorMapping("RX_EO", dig_inputs_regs.TX_EO),
+    RX_V15 = mirrorMapping("RX_V15", dig_inputs_regs.TX_V15),
+    RX_V44 = mirrorMapping("RX_V44", dig_inputs_regs.TX_V44),
+    RX_V46 = mirrorMapping("RX_V46", dig_inputs_regs.TX_V46),
+    RX_EX = mirrorMapping("RX_EX", dig_inputs_regs.TX_EX),
+    RX_MST = mirrorMapping("RX_MST", dig_inputs_regs.TX_MST),
+    RX_SASTAT = mirrorMapping("RX_SASTAT", dig_inputs_regs.TX_SASTAT),
+    RX_V50 = mirrorMapping("RX_V50", dig_inputs_regs.TX_V50),
+    RX_OK = mirrorMapping("RX_OK", dig_inputs_regs.OK),
+    RX_NOK = mirrorMapping("RX_NOK", dig_inputs_regs.NOK),
+    HANDSHAKE = mirrorMapping("HANDSHAKE", dig_inputs_regs.HANDSHAKE),
+    RX_ALC = mirrorMapping("RX_ALC", dig_inputs_regs.TX_ALC),
+    RX_V90 = mirrorMapping("RX_V90", dig_inputs_regs.TX_V90),
+    RX_V92 = mirrorMapping("RX_V92", dig_inputs_regs.TX_V92),
 )
+
+#ALC, MST e SASTAT
+class TwosComplementReg(StrEnum):
+    """Coils that must be interpreted as values
+    in twos complement"""
+    RX_EX = auto()
+    RX_V20 = auto()
+    RX_V50 = auto()
+    RX_V71 = auto()
+    RX_V74 = auto()
+    RX_V75 = auto()
+    RX_V76 = auto()
+    RX_V77 = auto()
+    RX_V78 = auto()
+    RX_V79 = auto()
+    RX_V80 = auto()
+    RX_V81 = auto()
+    RX_V82 = auto()
+    RX_V83 = auto()
+
