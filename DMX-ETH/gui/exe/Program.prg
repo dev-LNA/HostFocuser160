@@ -503,9 +503,9 @@ ENDSUB
 SUB 31	; ERROR HANDLING
 ;=======================
 	; Bit 12 of POL register (Jump to line 0 on error) must be cleared
-	SR1 = 0						;* Stops program 1
+	;SR1 = 0						;* Stops program 1
 	ECLEARX			 			;* Clear error flag
-	SR1 = 1						;* Restarts program 1
+	;SR1 = 1						;* Restarts program 1
 ENDSUB
 ;
 END
