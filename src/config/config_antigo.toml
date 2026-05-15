@@ -12,7 +12,7 @@ absolute = true
 device_name = "2ndMirror"
 deviceID = "3285e9af-8d1d-4f9d-b368-d129d8e9a24b"
 ip_160 = "192.168.0.250"
-
+ip_iag = "192.168.60.120"
 router_ip = "192.168.0.1"
 device_port = 5001
 encoder2microns = 42.2047244
@@ -26,22 +26,24 @@ device_ip = "192.168.0.250"
 backlash = 4
 max_pos = 50
 park_pos = 20
-normal_speed = 3500
+normal_speed = 10000
 low_speed = 1000
-max_step = 50700
-max_speed = 3500
-
-[IAG]
-motor_ip = "192.168.60.120"
-encoder2microns = 10      # Dividir para converter de encoder para microns
-encoder2step = 0.05       # Multiplicar para converter de encoder para step
-step2microns = 0.5        # Multiplicar para converter de step para microns 
-microns2rps = 0.0025      # Multiplicar para converter microns/s para rps
+max_step = 9
+max_speed = 10000
+acceleration = 9
+deceleration = 8
+idle_current = 14
+run_current = 19
+acc_current = 41
 
 [Network]
-ip_address = "*"
+server_ip = "*"
 port_pub = 7003
 port_rep = 7004
+sub_mask = "255.255.255.0"
+gateway_ip = "192.168.0.1"
+pub_port = 7003
+rep_port = 7004
 
 [Logging]
 log_level = "INFO"

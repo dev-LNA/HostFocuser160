@@ -29,7 +29,7 @@ class Config:
     startup: str = get_toml('General', 'startup')
     name: str = get_toml('General', 'name')
     server_version: str = get_toml('General', 'version')
-    pub_interval: int = get_toml('General', 'pub_interval')
+
     # ---------------
     # Network Section
     # ---------------
@@ -39,12 +39,13 @@ class Config:
     port_rep: int = get_toml('Network', 'port_rep')
     sub_mask: int = get_toml('Network', 'sub_mask')
     gateway_ip: int = get_toml('Network', 'gateway_ip')
+    pub_interval: int = get_toml('General', 'pub_interval')
     # --------------
     # Device Section
     # --------------
     device_name: str = get_toml('Device', 'device_name')
-    device_ip: str = get_toml('Device', 'ip_160')
-    router_ip: str = get_toml('Device', 'router_ip')
+    device_ip: str = get_toml('Device', 'device_ip')
+    # router_ip: str = get_toml('Device', 'router_ip')
     device_port: int = get_toml('Device', 'device_port')
     absolute: bool = get_toml('Device', 'absolute')
     max_step: int = get_toml('Device', 'max_step')

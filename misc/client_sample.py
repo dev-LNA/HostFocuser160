@@ -422,7 +422,7 @@ def _get_private_ip():
     with socket.socket(socket.AF_INET, socket.SOCK_DGRAM) as st:
         st.settimeout(0.0)
         try:
-            st.connect((Config.router_ip, 80))          # Opens a connections just to verify the socket
+            st.connect((Config.gateway_ip, 80))          # Opens a connections just to verify the socket
             ip = st.getsockname()[0]
         except socket.error:
             ip = '127.0.0.1'                            #TODO: Mostrar uma mensagem de erro?

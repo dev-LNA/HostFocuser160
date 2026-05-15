@@ -8,14 +8,7 @@ import os
 from threading import Thread
 from src.core.log import init_logging
 import time
-
-try:
-    from src.core.config import Config, get_toml
-    CONFIG_FILE = True
-    ERR_VALUE = None
-except Exception as e:
-    ERR_VALUE = str(e)
-    CONFIG_FILE = False
+import shutil
 
 from src.core.server import Server
 from misc.client_sample import ClientSimulator
@@ -28,6 +21,15 @@ from misc.log_box import LogBox
 from misc.settings import SettingsWindow
 from misc.server_settings import ServerSettingsWindow
 
+
+try:
+    from src.core.config import Config, get_toml
+    CONFIG_FILE = True
+    ERR_VALUE = None
+except Exception as e:
+    ERR_VALUE = str(e)
+    CONFIG_FILE = False
+
 def resource_path(relative_path):
     """ Get absolute path to resource, works for dev and for PyInstaller """
     base_path = getattr(sys, '_MEIPASS', os.path.dirname(os.path.abspath(__file__)))
@@ -36,9 +38,6 @@ def resource_path(relative_path):
 main_ui_path = resource_path('assets/ui/main.ui')
 load_window_path = resource_path('assets/ui/load.ui')
 icon_tray = resource_path('assets/icon.png')
-icon_con_ok = resource_path('assets/ui/icons/status.png')
-icon_con_nok = resource_path('assets/ui/icons/status-busy.png')
-icon_con_wait = resource_path('assets/ui/icons/status-away.png')
 
 class FocuserOPD (QMainWindow):
 
@@ -61,17 +60,6 @@ class FocuserOPD (QMainWindow):
         self.log_box.closed.connect(self._closed_log_box)               # Signal to inform the main window that the log box was closed by pressing the X button            
         self.load_window = None                 # Initialize load window as None    
 
-        if not CONFIG_FILE:                     # If configuration file was not found a message is displayed and the program will close after check
-            close = QMessageBox()                                                       # Creates message window
-            close.setText(f"Arquivo de configuração com problemas!\n{ERR_VALUE}")       # Config window message
-            logger.error(f'Configuration file not defined. {ERR_VALUE}')                
-            close.setStandardButtons(QMessageBox.StandardButton.Ok)                     # Config window button
-            close = close.exec()                                                        # Opens window and waits button press
-
-            if close == QMessageBox.StandardButton.Ok:                                  # After press ok button
-                sys.exit()                                                                  # Ends program
-
-        self.config_file = r"src/config/config.toml"                    # Path to configuration file
         self.log_file = r"logs/focuser.log"                             # Path to log file              # TODO: inicializar o arquivo com o nome padronizado, de acordo com a data (dia inicia ao meio dia)
 
         self.server = Server(logger)
@@ -213,17 +201,40 @@ class FocuserOPD (QMainWindow):
     def _config_server(self):
         """Sets configurations according to the selected focuser.
         The focuser is selected in the focuser selection page when the server is initialized and cannot be changed after the initial selection."""
+        
+        
+        if self.ui_elements.rb160.isChecked():
+            config_file_path = "src/config/config_PE160.toml"
+        elif self.ui_elements.rbIAG.isChecked():
+            config_file_path = "src/config/config_IAG.toml"
+
+        # Loads the configuration file from the path according to the selected focuser
+        self._load_config_file(config_file_path)
+
+        
+        if not CONFIG_FILE:                     # If configuration file was not found a message is displayed and the program will close after check
+            close = QMessageBox()                                                       # Creates message window
+            close.setText(f"Arquivo de configuração com problemas!\n{ERR_VALUE}")       # Config window message
+            logger.error(f'Configuration file not defined. {ERR_VALUE}')                
+            close.setStandardButtons(QMessageBox.StandardButton.Ok)                     # Config window button
+            close = close.exec()                                                        # Opens window and waits button press
+
+            if close == QMessageBox.StandardButton.Ok:                                  # After press ok button
+                sys.exit()                                                                  # Ends program
+        
+        
+        
         if self.ui_elements.rb160.isChecked():                              # Checks radio button value
             print("INICIAR FOCALIZADOR DO 160")                                 # If the PE 160 was chosen
-            Config.focuser = "160"                                              # Changes Config according to selection
-            Config.device_ip = get_toml('Device', 'ip_160')                     # Sets the IP address according to selection
+            # Config.focuser = "160"                                              # Changes Config according to selection
+            # Config.device_ip = get_toml('Device', 'ip_160')                     # Sets the IP address according to selection
             self.ui_elements.lblTitle.setText("Focuser 160")                    # Sets main window label according to selection
             self.server.init_device(MotorModels.ARCUS_DMX_ETH)                   # Initializes the motor driver according to the focuser
             self._init_focuser()                                                # Changes to the server page                                  
         elif self.ui_elements.rbIAG.isChecked():                            # Checks radio button value
             print("INICIAR FOCALIZADOR DO IAG")                                 # If the IAG was chosen
-            Config.focuser = "IAG"                                              # Changes Config according to selection
-            Config.device_ip = get_toml('Device', 'ip_iag')                     # Sets the IP address according to selection
+            # Config.focuser = "IAG"                                              # Changes Config according to selection
+            # Config.device_ip = get_toml('Device', 'ip_iag')                     # Sets the IP address according to selection
             self.ui_elements.lblTitle.setText("Focuser IAG")                    # Sets main window label according to selection
             self.server.init_device(MotorModels.AMP_MOTOR)                       # Initializes the motor driver according to the focuser
             self._init_focuser()                                                # Changes to the server page      
@@ -234,6 +245,26 @@ class FocuserOPD (QMainWindow):
                 "A focuser must be selected."                                   # Informs the user that a focuser must be selected
             )
 
+    def _load_config_file(self, config_file_path: str):
+        try:
+            # from pathlib import Path
+            # config_path = Path("src/config/config.toml")
+            # config_path.unlink(missing_ok=True)
+
+            shutil.copy(config_file_path, "src/config/config.toml")            #TODO: 'copy' do not retain the metadata, if metadata is needed change to '.copy2'
+            logger.info(f"Loaded configuration file: {config_file_path}")
+
+        except FileNotFoundError:
+            print("The source file was not found.")
+            logger.error(f"Could not load configuration file. The source file was not found.")
+        except PermissionError:
+            print("Permission denied to access files or destination.")
+            logger.error(f"Could not load configuration file. Permission denied to access files or destination.")
+        except shutil.SameFileError:
+            print("Source and destination are the same file.")
+            logger.error(f"Could not load configuration file. Source and destination are the same file.")
+
+   
     def _init_focuser(self):
         """Initializes the focuser
         Sets the visibility for the menuBar an toolBar, changes the 

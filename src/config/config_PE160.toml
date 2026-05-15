@@ -1,7 +1,7 @@
-title = "FocuserIAG"
+title = "FocuserPE160"
 
 [General]
-name = "FocuserIAG"
+name = "Focuser160"
 version = "1.0.0"
 description = "Interface for Perkin-Elmer Focuser"
 startup = false
@@ -11,7 +11,8 @@ pub_interval = 1
 absolute = true
 device_name = "2ndMirror"
 deviceID = "3285e9af-8d1d-4f9d-b368-d129d8e9a24b"
-device_ip = "192.168.60.120"
+device_ip = "192.168.0.250"
+
 
 
 device_port = 5001
