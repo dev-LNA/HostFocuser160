@@ -235,30 +235,10 @@ class UiWidgets(QWidget):
             self.lblFocuser = window.findChild(QLabel, 'lblFocuser')
             self.lblFocuser: QLabel = self.lblFocuser
 
-            # Text boxes
+        # Text boxes
+        
             self.txtMotorIP = window.findChild(QLineEdit, 'txtMotorIP')
             self.txtMotorIP: QLineEdit = self.txtMotorIP
-
-            self.txtBackComp = window.findChild(QLineEdit, 'txtBackComp')
-            self.txtBackComp: QLineEdit = self.txtBackComp
-
-            self.txtMaxPos = window.findChild(QLineEdit, 'txtMaxPos')
-            self.txtMaxPos: QLineEdit = self.txtMaxPos
-
-            self.txtPark = window.findChild(QLineEdit, 'txtPark')
-            self.txtPark: QLineEdit = self.txtPark
-
-            self.txtMaxSpeed = window.findChild(QLineEdit, 'txtMaxSpeed')
-            self.txtMaxSpeed: QLineEdit = self.txtMaxSpeed
-
-            self.txtNormalSpeed = window.findChild(QLineEdit, 'txtNormalSpeed')
-            self.txtNormalSpeed: QLineEdit = self.txtNormalSpeed
-
-            self.txtLowSpeed = window.findChild(QLineEdit, 'txtLowSpeed')
-            self.txtLowSpeed: QLineEdit = self.txtLowSpeed
-
-            self.txtMaxStep = window.findChild(QLineEdit, 'txtMaxStep')
-            self.txtMaxStep: QLineEdit = self.txtMaxStep
 
             self.txtSocketIP = window.findChild(QLineEdit, 'txtSocketIP')
             self.txtSocketIP: QLineEdit = self.txtSocketIP

@@ -49,6 +49,7 @@ config_file_default = config_dir + "config_default.toml" #"src/config/config_def
 @dataclass
 class SettingsAttributes():
     NAME: MotorParamsIdx | ServerParamsIdx
+    TAG: str
     OBJ: QLineEdit | QSpinBox
     VALUE: str | int
     TYPE: object
@@ -151,45 +152,27 @@ class SettingsWindow(QMainWindow):
 
         self.signals.command_response.connect(self.ui_elements.lblResponse_Val.setText)
 
-        # Dictionary holding the txtBoxes objects of the configurations
-        self._config_txt_boxes = {                      
-            MotorParamsIdx.MOTOR_IP : self.ui_elements.txtMotorIP,
-            MotorParamsIdx.BACKLASH : self.ui_elements.txtBackComp,
-            MotorParamsIdx.MAX_POS : self.ui_elements.txtMaxPos,
-            MotorParamsIdx.PARK_POS : self.ui_elements.txtPark,
-            MotorParamsIdx.MAX_SPEED : self.ui_elements.txtMaxSpeed,
-            MotorParamsIdx.NORMAL_SPEED : self.ui_elements.txtNormalSpeed,
-            MotorParamsIdx.LOW_SPEED : self.ui_elements.txtLowSpeed,
-            MotorParamsIdx.MAX_STEP : self.ui_elements.txtMaxStep,
-            MotorParamsIdx.ACCELERATION : self.ui_elements.txtMaxStep,
-            MotorParamsIdx.DECELERATION : self.ui_elements.txtMaxStep,
-            MotorParamsIdx.IDLE_CURRENT : self.ui_elements.txtMaxStep,
-            MotorParamsIdx.RUN_CURRENT : self.ui_elements.txtMaxStep,
-            MotorParamsIdx.ACC_CURRENT : self.ui_elements.txtMaxStep
-        }
-
-
         self._config_settings = ConfigurableSettings(
                 # Server parameters
-                    SERVER_IP = SettingsAttributes(ServerParamsIdx.SERVER_IP, self.ui_elements.txtSocketIP, '0', str),
-                    PORT_PUB = SettingsAttributes(ServerParamsIdx.PUB_PORT, self.ui_elements.spinPortPub, 0, int),
-                    PORT_REP = SettingsAttributes(ServerParamsIdx.REP_PORT, self.ui_elements.spinPortRep, 0, int),
-                    SUB_MASK = SettingsAttributes(ServerParamsIdx.SUB_MASK, self.ui_elements.txtSubMask, '0', str),
-                    GATEWAY_IP = SettingsAttributes(ServerParamsIdx.GATEWAY_IP, self.ui_elements.txtGatewayIP, '0', str),
+                    SERVER_IP = SettingsAttributes(ServerParamsIdx.SERVER_IP, 'Server IP Address', self.ui_elements.txtSocketIP, '0', str),
+                    PORT_PUB = SettingsAttributes(ServerParamsIdx.PUB_PORT, 'ZMQ PUB Port', self.ui_elements.spinPortPub, 0, int),
+                    PORT_REP = SettingsAttributes(ServerParamsIdx.REP_PORT, 'ZMQ REP Port', self.ui_elements.spinPortRep, 0, int),
+                    SUB_MASK = SettingsAttributes(ServerParamsIdx.SUB_MASK, 'Subnet Mask', self.ui_elements.txtSubMask, '0', str),
+                    GATEWAY_IP = SettingsAttributes(ServerParamsIdx.GATEWAY_IP, 'Gateway IP Address', self.ui_elements.txtGatewayIP, '0', str),
                 # Motor parameters
-                    MOTOR_IP = SettingsAttributes(MotorParamsIdx.MOTOR_IP, self.ui_elements.txtMotorIP, '0', str),
-                    BACKLASH = SettingsAttributes(MotorParamsIdx.BACKLASH, self.ui_elements.spinBacklash, 0, int),
-                    MAX_POS = SettingsAttributes(MotorParamsIdx.MAX_POS, self.ui_elements.spinMaxPos, 0, int),
-                    PARK_POS = SettingsAttributes(MotorParamsIdx.PARK_POS, self.ui_elements.spinParkPos, 0, int),
-                    MAX_SPEED = SettingsAttributes(MotorParamsIdx.MAX_SPEED, self.ui_elements.spinMaxSpeed, 0, int),
-                    NORMAL_SPEED = SettingsAttributes(MotorParamsIdx.NORMAL_SPEED, self.ui_elements.spinNormalSpeed, 0, int),
-                    LOW_SPEED = SettingsAttributes(MotorParamsIdx.LOW_SPEED, self.ui_elements.spinLowSpeed, 0, int),
-                    MAX_STEP = SettingsAttributes(MotorParamsIdx.MAX_STEP, self.ui_elements.spinMaxStep, 0, int),
-                    ACCELERATION = SettingsAttributes(MotorParamsIdx.ACCELERATION, self.ui_elements.spinAcceleration, 0, int),
-                    DECELERATION = SettingsAttributes(MotorParamsIdx.DECELERATION, self.ui_elements.spinDeceleration, 0, int),
-                    IDLE_CURRENT = SettingsAttributes(MotorParamsIdx.IDLE_CURRENT, self.ui_elements.spinIdleCurrent, 0, int),
-                    RUN_CURRENT = SettingsAttributes(MotorParamsIdx.RUN_CURRENT, self.ui_elements.spinRunCurrent, 0, int),
-                    ACC_CURRENT = SettingsAttributes(MotorParamsIdx.ACC_CURRENT, self.ui_elements.spinAccCurrent, 0, int),
+                    MOTOR_IP = SettingsAttributes(MotorParamsIdx.MOTOR_IP, 'Motor IP Address' , self.ui_elements.txtMotorIP, '0', str),
+                    BACKLASH = SettingsAttributes(MotorParamsIdx.BACKLASH, 'Backlash', self.ui_elements.spinBacklash, 0, int),
+                    MAX_POS = SettingsAttributes(MotorParamsIdx.MAX_POS, 'Maximum Mirror Position', self.ui_elements.spinMaxPos, 0, int),
+                    PARK_POS = SettingsAttributes(MotorParamsIdx.PARK_POS, 'Park Mirror Position', self.ui_elements.spinParkPos, 0, int),
+                    MAX_SPEED = SettingsAttributes(MotorParamsIdx.MAX_SPEED, 'Maximum Motor Speed', self.ui_elements.spinMaxSpeed, 0, int),
+                    NORMAL_SPEED = SettingsAttributes(MotorParamsIdx.NORMAL_SPEED, 'Normal Motor Speed', self.ui_elements.spinNormalSpeed, 0, int),
+                    LOW_SPEED = SettingsAttributes(MotorParamsIdx.LOW_SPEED, 'Low Motor Speed', self.ui_elements.spinLowSpeed, 0, int),
+                    MAX_STEP = SettingsAttributes(MotorParamsIdx.MAX_STEP, 'Max Step (Deprecated)', self.ui_elements.spinMaxStep, 0, int),
+                    ACCELERATION = SettingsAttributes(MotorParamsIdx.ACCELERATION, 'Acceleration Rate', self.ui_elements.spinAcceleration, 0, int),
+                    DECELERATION = SettingsAttributes(MotorParamsIdx.DECELERATION, 'Deceleration Rate', self.ui_elements.spinDeceleration, 0, int),
+                    IDLE_CURRENT = SettingsAttributes(MotorParamsIdx.IDLE_CURRENT, 'Motor Idle Current', self.ui_elements.spinIdleCurrent, 0, int),
+                    RUN_CURRENT = SettingsAttributes(MotorParamsIdx.RUN_CURRENT, 'Motor Running Current', self.ui_elements.spinRunCurrent, 0, int),
+                    ACC_CURRENT = SettingsAttributes(MotorParamsIdx.ACC_CURRENT, 'Motor Acceleration Current', self.ui_elements.spinAccCurrent, 0, int),
                 )
 
 
@@ -257,9 +240,6 @@ class SettingsWindow(QMainWindow):
         self.ui_elements.lblFocuser.setText(data.ID)
         self.ui_elements.lblFirmVer_value.setText(data._firmware_version)
 
-        # for idx in MotorParamsIdx:
-        #     self._config_txt_boxes[idx].setText(data.parameters[idx])
-
         for param in self._config_settings:
             if param.NAME in MotorParamsIdx:
                 if isinstance(param.OBJ, QLineEdit):
@@ -279,9 +259,6 @@ class SettingsWindow(QMainWindow):
         This method is called automatically when the _updater thread
         finishes its execution"""
         if value is False:                                                                  # The motor reading finishes when the _running signal goes to False
-            for idx in MotorParamsIdx:
-                self._motor_settings[idx] = self._config_txt_boxes[idx].text()
-                self._config_txt_boxes[idx].textChanged.connect(self._validate_parameters)  # When a parameter changes the value is validated
 
             for param in self._config_settings:
                 if isinstance(param.OBJ, QLineEdit):
@@ -396,7 +373,7 @@ class SettingsWindow(QMainWindow):
             self.logger.error(f"Could not create configuration backup file. Source and destination are the same file.")
 
     def _update_config_file(self, keys: str):
-
+        #TODO: Atualizar esse método para não apagar comentários no arquivo de configuração
         with open(config_file, 'r') as f:
             config = toml.load(f)
             for k in keys:
@@ -440,21 +417,23 @@ class SettingsWindow(QMainWindow):
 
         self._default_widget = LoadConfigForm(msg)
         if self._default_widget.exec() == QDialog.DialogCode.Accepted:
-            # If accepted must take the selected values and load them in the boxes
-            for conf_key in self._config_txt_boxes.keys():              # Check each 
-                if conf_key.name in self._default_widget.selected_items:     # If a configuration was selected in the Default Window
-                    # default_config = self._get_config(conf_key, config_file_default)
-                    # self._config_txt_boxes[conf_key].setText(default_config)
-                    if conf_key.name == "MOTOR_IP":
+            for param in self._config_settings:
+                if param.NAME.name in self._default_widget.selected_items:
+                    if param.NAME.name == "MOTOR_IP":
                         if Config.focuser == "160":
                             config = get_toml('Device', 'ip_160', cfg_file)
                         elif Config.focuser == "IAG":
                             config = get_toml('Device', 'ip_iag', cfg_file)
                     else:
-                        config = str(get_toml('Device', conf_key.name.lower(), cfg_file))
+                        config = str(get_toml('Device', param.NAME.name.lower(), cfg_file))
 
-                    self._config_txt_boxes[conf_key].setText(config)   
+                    if isinstance(param.OBJ, QLineEdit):
+                        param.OBJ.setText(config)
+                    else:
+                        param.OBJ.setValue(int(config)) 
                     self._validate_parameters()    
+
+
 
         else:
             print("DO NOT RETURN TO DEFAULT VALUES")
@@ -513,26 +492,37 @@ class SettingsWindow(QMainWindow):
             # current motor configurations
             if verify.exec() == QDialog.DialogCode.Accepted: 
                 try:
-
+                    # The server configurations are saved in the config file
+                    # The motor configurations are also saved in the config file but
+                    # must also be sent to the motor
                     self.logger.info("Starting motor configuration")
-                    self._create_backup_config()                                # Creates a backup of the current configuration file
-                    self._update_config_file(keys)
-                #     for idx in keys:  # Uses the driver properties to send the new values to the motor
 
-                #         self.motor.set_param(idx, self._changed_settings[idx])
-                #         # setattr(self.motor.driver, self.motor.driver.property_handlers[_], self._changed_settings[_])
-                #         self.logger.info(f"Motor parameter changed: [{idx}] Previous value -> {self._motor_settings[idx]} | New value -> {self._changed_settings[idx]}") 
+                    # for idx in keys:  # Uses the driver properties to send the new values to the motor
+                    #     self.motor.set_param(idx, self._changed_settings[idx])
+                    #     # setattr(self.motor.driver, self.motor.driver.property_handlers[_], self._changed_settings[_])
+                    #     self.logger.info(f"Motor parameter changed: [{idx}] Previous value -> {self._motor_settings[idx]} | New value -> {self._changed_settings[idx]}") 
 
-                #     self.signals.changed_settings.emit(self._changed_settings)      # Emits the changes to the main UI
-                #     self.motor.driver._store_to_flash()                             # Store the new settings to flash.
+                    for key in keys:
+                        if key in MotorParamsIdx:
+                            self.motor.set_param(key, self._changed_settings[key])
+                            self.logger.info(f"Motor parameter changed: [{self._config_settings[key.value].TAG}] Previous value -> {self._config_settings[key.value].VALUE} | New value -> {self._changed_settings[key]}")
+
+                        elif key in ServerParamsIdx:
+                            self.logger.info(f"Server parameter changed: [{self._config_settings[key.value].TAG}] Previous value -> {self._config_settings[key.value].VALUE} | New value -> {self._changed_settings[key]}")
+
+
+                    self.signals.changed_settings.emit(self._changed_settings)      # Emits the changes to the main UI
+                    self.motor.driver._store_to_flash()                             # Store the new settings to flash.
                     
-                    # If everything went ok and the motor parameter was updated than the current motor parameters 
-                    # must be updated in "_motor_settings"
-                    for idx in keys:
-                        # self._motor_settings[idx] = self._changed_settings[idx]
-                        # self._config_txt_boxes[idx].setStyleSheet(""" """)
+                    # If everything went ok and the motor parameter was updated then the 
+                    # configuration file and the current motor parameters 
+                    # must be updated   
+                    # #TODO: Atualizar o arquivo de configuração conforme cada parâmetro é atualizado 
+                    self._create_backup_config()                                # Creates a backup of the current configuration file
+                    self._update_config_file(keys)                              # Updates Config file and saves new server configurations
 
-                        self._config_settings[idx.value].VALUE = self._changed_settings[idx]                                               
+                    for key in keys:
+                        self._config_settings[key.value].VALUE = self._changed_settings[key]                                               
                 
 
                     self._changed_settings.clear()                                  # Resets changes dictionary   
@@ -554,14 +544,6 @@ class SettingsWindow(QMainWindow):
         current settings.
 
         """
-        # for idx in MotorParamsIdx:
-        #     # Signal must be disconnected because validation cannot be called when the
-        #     # values are reset
-        #     self._config_txt_boxes[idx].textChanged.disconnect()  
-        #     self._config_txt_boxes[idx].setText(settings[idx])
-        #     self._config_txt_boxes[idx].textChanged.connect(self._validate_parameters)  # Signal is connected again
-        # self._validate_parameters()
-
         for param in self._config_settings:
             # Signal must be disconnected because validation cannot be called when the
             # values are reset
@@ -632,6 +614,10 @@ class SettingsWindow(QMainWindow):
 
         # The Idle current is limited by the running current
         self._config_settings.IDLE_CURRENT.OBJ.setMaximum(self._config_settings.RUN_CURRENT.OBJ.value())
+
+        # The Normal and Low speeds are limited by the High speed
+        self._config_settings.NORMAL_SPEED.OBJ.setMaximum(self._config_settings.MAX_SPEED.OBJ.value())
+        self._config_settings.LOW_SPEED.OBJ.setMaximum(self._config_settings.MAX_SPEED.OBJ.value())
 
     def _update_gui_element(self, widget: QtWidgets):
         """Updates the GUI element style after an event occured.

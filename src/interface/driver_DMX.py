@@ -292,27 +292,45 @@ class DriverDMX(Driver):
             
     def param_max_step(self, value = None) -> str:
         #TODO: Implementar
-        return "0"
+        if value:
+            return "OK"
+        else:
+            return "0"
             
     def param_acceleration(self, value = None) -> str:
         #TODO: Implementar
-        return "0"
+        if value:
+            return "OK"
+        else:
+            return "0"
                 
     def param_deceleration(self, value = None) -> str:
         #TODO: Implementar
-        return "0"
+        if value:
+            return "OK"
+        else:
+            return "0"
             
     def param_idle_current(self, value = None) -> str:
         #TODO: Implementar
-        return "0"
+        if value:
+            return "OK"
+        else:
+            return "0"
             
     def param_run_current(self, value = None) -> str:
         #TODO: Implementar
-        return "0"
+        if value:
+            return "OK"
+        else:
+            return "0"
             
     def param_acc_current(self, value = None) -> str:
         #TODO: Implementar
-        return "0"
+        if value:
+            return "OK"
+        else:
+            return "0"
             
     def read_firmware_version(self) -> str:
         V1 = self._write("V90")    # Version number

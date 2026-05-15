@@ -23,20 +23,27 @@ speed_security = 215000
 speedFactor = 428
 step_size = 0
 device_ip = "192.168.0.250"
-backlash = 4
-max_pos = 40
-park_pos = 20
-normal_speed = 3500
-low_speed = 1000
-max_step = 50700
-max_speed = 3500
-pub_port = 7103
-rep_port = 6904
+backlash = 13
+max_pos = 49
+park_pos = 33
+normal_speed = 3400
+low_speed = 1700
+max_step = 9
+max_speed = 4400
+acceleration = 9
+deceleration = 8
+idle_current = 14
+run_current = 19
+acc_current = 41
 
 [Network]
-ip_address = "*"
+server_ip = "*"
 port_pub = 7003
 port_rep = 7004
+sub_mask = "255.255.255.0"
+gateway_ip = "192.168.0.1"
+pub_port = 7003
+rep_port = 7004
 
 [Logging]
 log_level = "INFO"
