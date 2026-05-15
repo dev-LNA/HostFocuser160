@@ -74,29 +74,41 @@ class FocuserDriver(QObject):
         #                                 h_regs_size=0, h_regs_default_value=0,              #|  Also used as initial values for the server.
         #                                 i_regs_size=0, i_regs_default_value=0)              #|
 
-        self.num_teste:int = 0
+        self.num_teste_8bit:int = 40
+        self.num_teste_32bit:int = 955784420
+        self.test_bool: bool = False
 
     def acionar(self):
         print (self._connected)
-        self.mb_server.data_bank.set_discrete_inputs(dig_inputs_regs.TX_READING.ADDRESS, [True])
-        print("lendo variáveis, CLP não pode escrever")
-        time.sleep(1)
+        # self.mb_server.data_bank.set_discrete_inputs(dig_inputs_regs.TX_READING.ADDRESS, [True])
+        # print("lendo variáveis, CLP não pode escrever")
+        # time.sleep(1)
+        self.test_bool = not self.test_bool
+        self._write(self.test_bool, dig_inputs_regs.OK)
 
+        # print(self.mb_server._conv_reg_to_value(coils_regs.RX_V71, self.mb_server.data_bank))
+        # print(self.mb_server._conv_reg_to_value(coils_regs.RX_V74, self.mb_server.data_bank))
+        # print(self.mb_server._conv_reg_to_value(coils_regs.RX_V75, self.mb_server.data_bank))
+        # print(self.mb_server._conv_reg_to_value(coils_regs.RX_V76, self.mb_server.data_bank))
 
-        print("---CLP OWNED---")
-        for reg in CLP_Owned:
-            print(f'Origin: {reg.ORIGIN_COIL} -> Response: {reg.RESPONSE_DI}')
-        print("---------------")
+        # print("---CLP OWNED---")
+        # for reg in CLP_Owned:
+        #     print(f'Origin: {reg.ORIGIN_COIL} -> Response: {reg.RESPONSE_DI}')
+        # print("---------------")
         
 
-        print("---TWOS COMPLEMENT---")
-        for reg in TwosComplementReg:
-            print(reg.upper())
-        print("---------------")
+        # print("---TWOS COMPLEMENT---")
+        # for reg in TwosComplementReg:
+        #     print(reg.upper())
+        # print("---------------")
 
-        self.mb_server.data_bank.set_discrete_inputs(dig_inputs_regs.TX_READING.ADDRESS, [False])
-        print("Fim da leitura de variáveis, CLP pode escrever")
-
+        # self.mb_server.data_bank.set_discrete_inputs(dig_inputs_regs.TX_READING.ADDRESS, [False])
+        # print("Fim da leitura de variáveis, CLP pode escrever")
+        # self.test_bool = not self.test_bool
+        # self._write( self.test_bool, dig_inputs_regs.TX_GS20 )
+        # self._write( self.test_bool, dig_inputs_regs.TX_GS21 )
+        # self._write( self.num_teste_32bit, dig_inputs_regs.TX_V71)
+        # self._write( self.num_teste_32bit + 5, dig_inputs_regs.TX_V74)
 
         # self._write(192, dig_inputs_regs.TX_IP_A)
         # self._write(168, dig_inputs_regs.TX_IP_B)
@@ -110,7 +122,7 @@ class FocuserDriver(QObject):
         # self._write(255, dig_inputs_regs.TX_CMK_B)
         # self._write(255, dig_inputs_regs.TX_CMK_C)
         # self._write(0, dig_inputs_regs.TX_CMK_D)
-        # self._write(254863, dig_inputs_regs.TX_V20)
+        # self._write(self.num_teste, dig_inputs_regs.TX_V20)
         # self._write(-1548, dig_inputs_regs.TX_V78)
         # self._write(True, dig_inputs_regs.TX_MOF)
         # self._write(True, dig_inputs_regs.TX_MON)
@@ -119,9 +131,9 @@ class FocuserDriver(QObject):
         # time.sleep(2)
         # self._write(False, dig_inputs_regs.HANDSHAKE)
 
-        # self.num_teste += 1
-        # if self.num_teste >255:
-        #     self.num_teste = 0
+        self.num_teste_8bit += 1
+        if self.num_teste_8bit >255:
+            self.num_teste_8bit = 0
             
         # for reg in coils_regs:
         #     # print("-------------------------------")
@@ -175,7 +187,7 @@ class FocuserDriver(QObject):
         while retries < max_retries and not _con:
             try:
                 dataBank_config = MB_DataBank(coils_size=DB_size.COIL_LAST_ADDRESS+1, coils_default_value=False,        #|      
-                                d_inputs_size=DB_size.DI_LAST_ADDRESS+1, d_inputs_default_value=True,               #|  Config value for the modbus data bank.
+                                d_inputs_size=DB_size.DI_LAST_ADDRESS+1, d_inputs_default_value=False,               #|  Config value for the modbus data bank.
                                 h_regs_size=0, h_regs_default_value=0,                          #|  
                                 i_regs_size=0, i_regs_default_value=0)                          #|
                 self.mb_server = ModbusServer(host='0.0.0.0', port=5005 ,no_block=True, data_bank=dataBank_config)
@@ -519,68 +531,35 @@ class FocuserDriver(QObject):
         if ( type(value) is bool ) and ( reg.SIZE != 1):
             raise ValueError(f"Cannot write a boolean to {reg.TYPE.name}:{reg.ADDRESS}. This Register has {reg.SIZE} bits")
 
-        # if reg.TYPE is RegType.COIL:
-        #     if (type(value) is bool) or (reg.SIZE==1 and ( (value==0) or (value==1) ) ):                # If the value is a bool or the register has only one bit than no conversion is needed
-        #         self.mb_server.data_bank.set_coils(reg.ADDRESS, [value])                 
-        #     else:                                                                                       #| If the register has multiple bits than the value must be converted
-        #         num_bits = self._conv_num_bits(value, reg.SIZE)                                         #| The conversion already considers negative values as two's complement
-        #         self.mb_server.data_bank.set_coils(reg.ADDRESS, num_bits)
+        tries = 0
+        max_tries =5
+        # Tries 'max_tries' times to send the data
+        while tries < max_tries:
+            time.sleep(0.1)
+            # The application can only write new data if the CLP is not reading
+            if not self.mb_server.data_bank.get_coils(coils_regs.RX_READING.ADDRESS, coils_regs.RX_READING.SIZE)[0]:
+                if reg.TYPE is RegType.DISCRETE_INPUT:
 
-        # elif reg.TYPE is RegType.DISCRETE_INPUT:
-        #     if (type(value) is bool) or (reg.SIZE==1 and ( (value==0) or (value==1) ) ):                # If the value is a bool or the register has only one bit than no conversion is needed
-        #         self.mb_server.data_bank.set_discrete_inputs(reg.ADDRESS, [value])
-        #     else:                                                                                       #| If the register has multiple bits than the value must be converted
-        #         num_bits = self._conv_num_bits(value, reg.SIZE)                                         #| The conversion already considers negative values as two's complement
-        #         if reg.SIZE == 8:                                                                       
-        #             self.mb_server.data_bank.set_discrete_inputs(reg.ADDRESS, num_bits)          # If the register is only 8 bits the value is saved directly to the register
-        #         else:                                                                                   
-        #             self.mb_server.data_bank.set_discrete_inputs(reg.ADDRESS, num_bits[16:])     #|  If the register is 32 bits the higher bits must be saved to the first 16 bits of the address   
-        #             self.mb_server.data_bank.set_discrete_inputs(reg.ADDRESS+16, num_bits[:16])  #| and the lower bits must be saved to next 16 bits
+                    self.mb_server.data_bank.set_discrete_inputs(dig_inputs_regs.TX_WRITTING.ADDRESS, [True])
+                    time.sleep(0.05)
+                    if (type(value) is bool) or (reg.SIZE==1 and ( (value==0) or (value==1) ) ):                # If the value is a bool or the register has only one bit than no conversion is needed
+                        self.mb_server.data_bank.set_discrete_inputs(reg.ADDRESS, [value])
+                    else:                                                                                       #| If the register has multiple bits than the value must be converted
+                        num_bits = self.mb_server._conv_num_bits(value, reg.SIZE)                                         #| The conversion already considers negative values as two's complement
+                        if reg.SIZE == 8:                                                                       
+                            self.mb_server.data_bank.set_discrete_inputs(reg.ADDRESS, num_bits)          # If the register is only 8 bits the value is saved directly to the register
+                        else:                                                                                   
+                            self.mb_server.data_bank.set_discrete_inputs(reg.ADDRESS, num_bits[16:])     #|  If the register is 32 bits the higher bits must be saved to the first 16 bits of the address   
+                            self.mb_server.data_bank.set_discrete_inputs(reg.ADDRESS+16, num_bits[:16])  #| and the lower bits must be saved to next 16 bits
 
-
-        
-
-        if reg.TYPE is RegType.DISCRETE_INPUT:
-
-            self.mb_server.data_bank.set_discrete_inputs(dig_inputs_regs.TX_WRITTING.ADDRESS, [True])
-            time.sleep(0.05)
-            if (type(value) is bool) or (reg.SIZE==1 and ( (value==0) or (value==1) ) ):                # If the value is a bool or the register has only one bit than no conversion is needed
-                self.mb_server.data_bank.set_discrete_inputs(reg.ADDRESS, [value])
-            else:                                                                                       #| If the register has multiple bits than the value must be converted
-                num_bits = self.mb_server._conv_num_bits(value, reg.SIZE)                                         #| The conversion already considers negative values as two's complement
-                if reg.SIZE == 8:                                                                       
-                    self.mb_server.data_bank.set_discrete_inputs(reg.ADDRESS, num_bits)          # If the register is only 8 bits the value is saved directly to the register
-                else:                                                                                   
-                    self.mb_server.data_bank.set_discrete_inputs(reg.ADDRESS, num_bits[16:])     #|  If the register is 32 bits the higher bits must be saved to the first 16 bits of the address   
-                    self.mb_server.data_bank.set_discrete_inputs(reg.ADDRESS+16, num_bits[:16])  #| and the lower bits must be saved to next 16 bits
-
-            self.mb_server.data_bank.set_discrete_inputs(dig_inputs_regs.TX_WRITTING.ADDRESS, [False])  # Informs CLP that there is a valid data ready for readi
-            self.mb_server.wait_confirmation(reg)
-
-
-    # def _write(self, cmd, max_retries = 10):
-    #     """Send commands to device socket.
-    #     Args:  
-    #         cmd (str): Command.
-    #         max_retries (int): Number of retries if first one fails
-    #     Returns: 
-    #         Device response or Error message
-    #     """
-        
-        #TODO: Para o motor AMP a função de escrita precisa operar de forma diferente do motor DMX-ETH
-        #       O CLP ligado ao motor AMP consegue apenas responder imediatamente com o valor salvo em um buffer interno, sendo assim
-        #   é necessário que o servidor envie o comando e depois faça uma outra requisição para obter a resposta. 
-        #       O fluxo do método _write para o motor AMP fica:
-          
-        #   1 - Servidor envia o comando
-        #   2 - CLP responde com um valor padrão ("@")
-        #   3 - O servidor aguarda um pequeno tempo (ms) enquanto o CLP processa o comando solicitado
-        #   4 - Quando o CLP finalizar o processamento do comando a resposta é colocada no buffer de resposta do CLP
-        #   5 - O servidor envia para o CLP um 'echo' do valor recebido no passo 2. Isso é um comando 'dummy' para que o CLP possa responder com o resultado do comando armazenado no buffer.
-        #   6 - O CLP precisa resetar o buffer para o valor padrão para aceitar um novo comando.
-        ...
-
-
+                    self.mb_server.data_bank.set_discrete_inputs(dig_inputs_regs.TX_WRITTING.ADDRESS, [False])  # Informs CLP that there is a valid data ready for readi
+                    self.mb_server.wait_confirmation(reg)
+                break
+            else:
+                tries += 1
+        if tries == max_tries:
+            print(f'Failed to send {value} to register {reg.TAG} after {tries} tries')
+            # raise RuntimeError(f'Failed to send {value} to register {reg.TAG} after {tries} tries')
 
 
 

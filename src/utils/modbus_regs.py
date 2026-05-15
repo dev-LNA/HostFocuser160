@@ -135,7 +135,7 @@ class DigInputsRegs(NamedTuple):
     TX_IP_B: RegsInfo
     TX_IP_C: RegsInfo
     TX_IP_D: RegsInfo
-    TX_DUMMY: RegsInfo    # Not used
+    TX_PR: RegsInfo 
     TX_AX: RegsInfo
     TX_GS1: RegsInfo
     TX_GS5: RegsInfo
@@ -196,7 +196,7 @@ dig_inputs_regs = DigInputsRegs(
     TX_IP_B=RegsInfo("TX_IP_B", 1217, 8, RegType.DISCRETE_INPUT),
     TX_IP_C=RegsInfo("TX_IP_C", 1225, 8, RegType.DISCRETE_INPUT),
     TX_IP_D=RegsInfo("TX_IP_D", 1233, 8, RegType.DISCRETE_INPUT),
-    TX_DUMMY=RegsInfo("TX_DUMMY", 1241, 1, RegType.DISCRETE_INPUT),     # Not used
+    TX_PR=RegsInfo("TX_PR", 1241, 1, RegType.DISCRETE_INPUT),
     TX_AX=RegsInfo("TX_AX", 1242, 1, RegType.DISCRETE_INPUT),
     TX_GS1=RegsInfo("TX_GS1", 1243, 1, RegType.DISCRETE_INPUT),
     TX_GS5=RegsInfo("TX_GS5", 1244, 1, RegType.DISCRETE_INPUT),
