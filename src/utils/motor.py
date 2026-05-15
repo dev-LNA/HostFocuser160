@@ -20,6 +20,7 @@ class MotorSignals(QObject):
     # moving = pyqtSignal(bool)
     # status = pyqtSignal(int)
     firmware_status = pyqtSignal(str)
+    firmware_version = pyqtSignal(str)
 
     moving = PropertySignals()
     lim_min = PropertySignals()
@@ -42,7 +43,7 @@ class Motor():
         self.model = model
         self.driver: Driver
         self.ID: str = ID
-        self.firmware_version: str = ''
+        self._firmware_version: str = ''
 
         self.parameters = {
             MotorParamsIdx.MOTOR_IP : MotorParameter(MotorParamsIdx.MOTOR_IP, "MOTOR_IP", 0),
@@ -52,7 +53,12 @@ class Motor():
             MotorParamsIdx.MAX_SPEED : MotorParameter(MotorParamsIdx.MAX_SPEED, "MAX_SPEED", 0),
             MotorParamsIdx.NORMAL_SPEED : MotorParameter(MotorParamsIdx.NORMAL_SPEED, "NORMAL_SPEED", 0),
             MotorParamsIdx.LOW_SPEED : MotorParameter(MotorParamsIdx.LOW_SPEED, "LOW_SPEED", 0),
-            MotorParamsIdx.MAX_STEP : MotorParameter(MotorParamsIdx.MAX_STEP, "MAX_STEP", 0)
+            MotorParamsIdx.MAX_STEP : MotorParameter(MotorParamsIdx.MAX_STEP, "MAX_STEP", 0),
+            MotorParamsIdx.ACCELERATION : MotorParameter(MotorParamsIdx.ACCELERATION, "ACCELERATION", 0),
+            MotorParamsIdx.DECELERATION : MotorParameter(MotorParamsIdx.DECELERATION, "DECELERATION", 0),
+            MotorParamsIdx.IDLE_CURRENT : MotorParameter(MotorParamsIdx.IDLE_CURRENT, "IDLE_CURRENT", 0),
+            MotorParamsIdx.RUN_CURRENT : MotorParameter(MotorParamsIdx.RUN_CURRENT, "RUN_CURRENT", 0),
+            MotorParamsIdx.ACC_CURRENT : MotorParameter(MotorParamsIdx.ACC_CURRENT, "ACC_CURRENT", 0),
         }
 
         self._connected: bool = False
@@ -271,7 +277,17 @@ class Motor():
             raise e
             # return f'[Device] Could not retrieve firmware status information: Error -> {str(e)}'
 
-
+    @property
+    def firmware_version(self) -> str:
+        try:
+            val = self.driver.read_firmware_version()
+            if val != self._firmware_version:
+                self._firmware_version = val
+                self.signals.firmware_version.emit(self._firmware_version)
+            return self._firmware_version
+        except Exception as e:
+            self.disconnect()
+            raise e
 
 #endregion
 
@@ -344,7 +360,7 @@ class Motor():
                 if resp == "OK":
                     self.connected = True
                     # self.ID = '2'                                                 #TODO: Cada motor deve ter um ID específico?
-                    self.firmware_version = self.driver.read_firmware_version()
+                    self.firmware_version
 
                     print('Motor Connected')
                     # self.logger.info('Motor Connected')

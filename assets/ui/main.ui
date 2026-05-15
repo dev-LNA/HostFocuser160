@@ -4352,6 +4352,9 @@ QSlider::handle:horizontal {
    <property name="text">
     <string>Engineering</string>
    </property>
+   <property name="shortcut">
+    <string>Ctrl+E</string>
+   </property>
   </action>
  </widget>
  <resources/>

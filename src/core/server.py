@@ -466,13 +466,13 @@ class Server(QObject):
 
                     self._reset_client_info()
 
-                    if( self.motor.driver.sendCommand("V39") == '1' ):
+                    if( self.motor.driver.sendCommand("V39") == '1' ):  # V39 used to test motor firmware
                         self.signals.teste.emit(True, "statusLed", "OK")
                     else:
                         self.signals.teste.emit(True, "statusLed", "NOK")
 
-                    print(f"V25 = {self.motor.driver.sendCommand("V25")}")
-                    print(f"V24 = {self.motor.driver.sendCommand("V24")}")
+                    # print(f"V25 = {self.motor.driver.sendCommand("V25")}")
+                    # print(f"V24 = {self.motor.driver.sendCommand("V24")}")
 
 
 
@@ -570,7 +570,7 @@ class Server(QObject):
         
         # self.zmq_comm.reply('ACK')                  # Replies 'ACK' to inform the client that everything went ok
         self.logger.info(f'Command issued: {cmd}')
-            
+                  
     def _reset_client_info(self):
         """Verifies if the motor ended the execution of the
         last command and resets the command information"""

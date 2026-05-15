@@ -1,6 +1,6 @@
 from ast import Attribute
 
-from PyQt6 import uic
+from PyQt6 import uic, QtWidgets
 from PyQt6.QtWidgets import QMainWindow, QLineEdit, QProgressBar, QDialog, QMessageBox, QSpinBox
 from PyQt6.QtCore import QThread, pyqtSignal, QObject
 from PyQt6.QtGui import QFontMetrics, QKeyEvent
@@ -22,6 +22,7 @@ from src.utils.motor import Motor
 from logging import Logger
 from datetime import datetime
 from typing import NamedTuple
+from dataclasses import dataclass
 
 import sys
 from os import path
@@ -45,15 +46,20 @@ config_file = config_dir + "config.toml" #"src/config/config.toml"
 config_file_backup = config_dir + "config_backup.toml" #"src/config/config_backup.toml"                #TODO: Possibilitar definir o nome do arquivo? Talvez nomear de acordo com a data que foi criado
 config_file_default = config_dir + "config_default.toml" #"src/config/config_default.toml"
 
-
-class SettingsAttributes(NamedTuple):
+@dataclass
+class SettingsAttributes():
     NAME: MotorParamsIdx | ServerParamsIdx
     OBJ: QLineEdit | QSpinBox
+    VALUE: str | int
+    TYPE: object
+
 
 class ConfigurableSettings(NamedTuple):
     SERVER_IP : SettingsAttributes
-    PUB_PORT: SettingsAttributes
-    REP_PORT: SettingsAttributes
+    PORT_PUB: SettingsAttributes
+    PORT_REP: SettingsAttributes
+    SUB_MASK: SettingsAttributes 
+    GATEWAY_IP: SettingsAttributes
     MOTOR_IP: SettingsAttributes
     BACKLASH: SettingsAttributes
     MAX_POS: SettingsAttributes
@@ -62,6 +68,11 @@ class ConfigurableSettings(NamedTuple):
     NORMAL_SPEED: SettingsAttributes
     LOW_SPEED: SettingsAttributes
     MAX_STEP: SettingsAttributes
+    ACCELERATION: SettingsAttributes
+    DECELERATION: SettingsAttributes
+    IDLE_CURRENT: SettingsAttributes
+    RUN_CURRENT: SettingsAttributes
+    ACC_CURRENT: SettingsAttributes
 
 
 class SettingsWindowSignals(QObject):
@@ -80,7 +91,7 @@ class SettingsWindow(QMainWindow):
 
     _motor_settings = dict()                                        # Motor current settings
     _settings_changed = False                                       # Informs if a setting was changed
-    _changed_settings = dict()                                      # Dict of settings that were changed, keeping the old values for reference
+    _changed_settings = dict[MotorParamsIdx | ServerParamsIdx, str | int]()                                      # Dict of settings that were changed, keeping the old values for reference
 
     def __init__(self, motor: Motor, logger: Logger):
         super().__init__()
@@ -100,6 +111,14 @@ class SettingsWindow(QMainWindow):
         for _ in lineEdits:                                                             # Connects the engineering mode signal to each QLineEdit setEnabled
             self.signals.engineering_mode.connect(_.setEnabled)                         #  this way when engineering mode is activated the line edits automatically become enabled   
 
+        self.ui_elements.gbMotorParameters.setEnabled(False)
+        self.signals.engineering_mode.connect(self.ui_elements.gbMotorParameters.setEnabled)
+
+        self.ui_elements.gbNetwork.setEnabled(False)
+        self.signals.engineering_mode.connect(self.ui_elements.gbNetwork.setEnabled)
+
+        self.ui_elements.gbZMQ.setEnabled(False)
+        self.signals.engineering_mode.connect(self.ui_elements.gbZMQ.setEnabled)
 
         self.signals.engineering_mode.connect(self.ui_elements.btnSave.setEnabled)      # Save button is only enabled in engineering mode
 
@@ -141,25 +160,37 @@ class SettingsWindow(QMainWindow):
             MotorParamsIdx.MAX_SPEED : self.ui_elements.txtMaxSpeed,
             MotorParamsIdx.NORMAL_SPEED : self.ui_elements.txtNormalSpeed,
             MotorParamsIdx.LOW_SPEED : self.ui_elements.txtLowSpeed,
-            MotorParamsIdx.MAX_STEP : self.ui_elements.txtMaxStep
+            MotorParamsIdx.MAX_STEP : self.ui_elements.txtMaxStep,
+            MotorParamsIdx.ACCELERATION : self.ui_elements.txtMaxStep,
+            MotorParamsIdx.DECELERATION : self.ui_elements.txtMaxStep,
+            MotorParamsIdx.IDLE_CURRENT : self.ui_elements.txtMaxStep,
+            MotorParamsIdx.RUN_CURRENT : self.ui_elements.txtMaxStep,
+            MotorParamsIdx.ACC_CURRENT : self.ui_elements.txtMaxStep
         }
 
-        self._config_settings = ConfigurableSettings(
-        # Server parameters
-            SERVER_IP = SettingsAttributes(ServerParamsIdx.SERVER_IP, self.ui_elements.txtSocketIP),
-            PUB_PORT = SettingsAttributes(ServerParamsIdx.PUB_PORT, self.ui_elements.txtPubPort),
-            REP_PORT = SettingsAttributes(ServerParamsIdx.REP_PORT, self.ui_elements.txtRepPort),
-        # Motor parameters
-            MOTOR_IP = SettingsAttributes(MotorParamsIdx.MOTOR_IP, self.ui_elements.txtMotorIP),
-            BACKLASH = SettingsAttributes(MotorParamsIdx.BACKLASH, self.ui_elements.txtBackComp),
-            MAX_POS = SettingsAttributes(MotorParamsIdx.MAX_POS, self.ui_elements.txtMaxPos),
-            PARK_POS = SettingsAttributes(MotorParamsIdx.PARK_POS, self.ui_elements.txtPark),
-            MAX_SPEED = SettingsAttributes(MotorParamsIdx.MAX_SPEED, self.ui_elements.txtMaxSpeed),
-            NORMAL_SPEED = SettingsAttributes(MotorParamsIdx.NORMAL_SPEED, self.ui_elements.txtNormalSpeed),
-            LOW_SPEED = SettingsAttributes(MotorParamsIdx.LOW_SPEED, self.ui_elements.txtLowSpeed),
-            MAX_STEP = SettingsAttributes(MotorParamsIdx.MAX_STEP, self.ui_elements.txtMaxStep),
-        )
 
+        self._config_settings = ConfigurableSettings(
+                # Server parameters
+                    SERVER_IP = SettingsAttributes(ServerParamsIdx.SERVER_IP, self.ui_elements.txtSocketIP, '0', str),
+                    PORT_PUB = SettingsAttributes(ServerParamsIdx.PUB_PORT, self.ui_elements.spinPortPub, 0, int),
+                    PORT_REP = SettingsAttributes(ServerParamsIdx.REP_PORT, self.ui_elements.spinPortRep, 0, int),
+                    SUB_MASK = SettingsAttributes(ServerParamsIdx.SUB_MASK, self.ui_elements.txtSubMask, '0', str),
+                    GATEWAY_IP = SettingsAttributes(ServerParamsIdx.GATEWAY_IP, self.ui_elements.txtGatewayIP, '0', str),
+                # Motor parameters
+                    MOTOR_IP = SettingsAttributes(MotorParamsIdx.MOTOR_IP, self.ui_elements.txtMotorIP, '0', str),
+                    BACKLASH = SettingsAttributes(MotorParamsIdx.BACKLASH, self.ui_elements.spinBacklash, 0, int),
+                    MAX_POS = SettingsAttributes(MotorParamsIdx.MAX_POS, self.ui_elements.spinMaxPos, 0, int),
+                    PARK_POS = SettingsAttributes(MotorParamsIdx.PARK_POS, self.ui_elements.spinParkPos, 0, int),
+                    MAX_SPEED = SettingsAttributes(MotorParamsIdx.MAX_SPEED, self.ui_elements.spinMaxSpeed, 0, int),
+                    NORMAL_SPEED = SettingsAttributes(MotorParamsIdx.NORMAL_SPEED, self.ui_elements.spinNormalSpeed, 0, int),
+                    LOW_SPEED = SettingsAttributes(MotorParamsIdx.LOW_SPEED, self.ui_elements.spinLowSpeed, 0, int),
+                    MAX_STEP = SettingsAttributes(MotorParamsIdx.MAX_STEP, self.ui_elements.spinMaxStep, 0, int),
+                    ACCELERATION = SettingsAttributes(MotorParamsIdx.ACCELERATION, self.ui_elements.spinAcceleration, 0, int),
+                    DECELERATION = SettingsAttributes(MotorParamsIdx.DECELERATION, self.ui_elements.spinDeceleration, 0, int),
+                    IDLE_CURRENT = SettingsAttributes(MotorParamsIdx.IDLE_CURRENT, self.ui_elements.spinIdleCurrent, 0, int),
+                    RUN_CURRENT = SettingsAttributes(MotorParamsIdx.RUN_CURRENT, self.ui_elements.spinRunCurrent, 0, int),
+                    ACC_CURRENT = SettingsAttributes(MotorParamsIdx.ACC_CURRENT, self.ui_elements.spinAccCurrent, 0, int),
+                )
 
 
         self._progress_bar = LoadBar()                                                  # Creates load bar
@@ -216,6 +247,33 @@ class SettingsWindow(QMainWindow):
         The thread will run one time only"""
         self._updater.start()               # Starts the thread
 
+
+    def _parse_motor_data(self, data: Motor):
+        """Parses the motor data and updates the GUI with the information
+        retrieved from the motor
+        This method is called automatically when the _updater thread
+        finishes its execution"""
+
+        self.ui_elements.lblFocuser.setText(data.ID)
+        self.ui_elements.lblFirmVer_value.setText(data._firmware_version)
+
+        # for idx in MotorParamsIdx:
+        #     self._config_txt_boxes[idx].setText(data.parameters[idx])
+
+        for param in self._config_settings:
+            if param.NAME in MotorParamsIdx:
+                if isinstance(param.OBJ, QLineEdit):
+                    param.OBJ.setText(data.parameters[param.NAME])
+                else:
+                    param.OBJ.setValue(int(data.parameters[param.NAME]))
+
+
+        self._config_settings.SERVER_IP.OBJ.setText(Config.ip_address)
+        self._config_settings.PORT_PUB.OBJ.setValue(Config.port_pub)
+        self._config_settings.PORT_REP.OBJ.setValue(Config.port_rep)
+        self._config_settings.SUB_MASK.OBJ.setText(Config.sub_mask)
+        self._config_settings.GATEWAY_IP.OBJ.setText(Config.gateway_ip)
+
     def _initialize_motor_settings(self, value):
         """Updates the dictionary with the values retrieved from the motor
         This method is called automatically when the _updater thread
@@ -225,22 +283,48 @@ class SettingsWindow(QMainWindow):
                 self._motor_settings[idx] = self._config_txt_boxes[idx].text()
                 self._config_txt_boxes[idx].textChanged.connect(self._validate_parameters)  # When a parameter changes the value is validated
 
-            for param in ConfigurableSettings:
-                print(f"parameter: {param}")
+            for param in self._config_settings:
+                if isinstance(param.OBJ, QLineEdit):
+                    param.VALUE = param.OBJ.text()
+                    param.OBJ.textChanged.connect(self._validate_parameters)
+                elif isinstance(param.OBJ, QSpinBox):
+                    param.VALUE = param.OBJ.value()
+                    param.OBJ.valueChanged.connect(self._validate_parameters)
 
-    def _parse_motor_data(self, data: Motor):
-        """Parses the motor data and updates the GUI with the information
-        retrieved from the motor
-        This method is called automatically when the _updater thread
-        finishes its execution"""
+            for param in self._config_settings:
+                print(f"{param.NAME} -> {param.VALUE}")
+                    
+    def _set_settings(self, param:SettingsAttributes):
 
-        self.ui_elements.lblFocuser.setText(data.ID)
-        self.ui_elements.lblFirmVer_value.setText(data.firmware_version)
+        if isinstance(param.OBJ, QLineEdit):
+            value = param.OBJ.text()
+        elif isinstance(param.OBJ, QSpinBox):
+            value = param.OBJ.value()
 
-        for idx in MotorParamsIdx:
-            self._config_txt_boxes[idx].setText(data.parameters[idx])
+        # If the value being set is equal to the current value the parameter
+        # is removed from the "_changed_settings" dict
+        if value == param.VALUE:
+            if param.NAME in self._changed_settings:
+                del self._changed_settings[param.NAME]
 
-    def _set_motor_settings(self, key:MotorParamsIdx, value:str):
+        # To be considered that the value was changed the value must be different from the current value OR
+        # if that parameter is already in "_changed_settings" than this new value must be different from the one in 
+        # '_changed_settings'
+        if (param.VALUE != value) or \
+            ( (param.NAME in self._changed_settings) and self._changed_settings[param.NAME] != value):
+            
+            self._changed_settings[param.NAME] = value             # Indicates that this value has changed and saves the new value
+            print(f"{param.NAME} value changed to {value}")
+
+            print(self._changed_settings[param.NAME])
+
+        else:
+            # self._settings_changed = False
+            print(f"{param.NAME} value NOT changed")
+        
+        
+
+    def _set_motor_settings(self, key:MotorParamsIdx | ServerParamsIdx, value:str):
             """Sets a new value for a specific parameter setting.
             In this method the '_changed_settings' dictionary is altered
             according to the new setting. This dictionary can later be
@@ -316,16 +400,28 @@ class SettingsWindow(QMainWindow):
         with open(config_file, 'r') as f:
             config = toml.load(f)
             for k in keys:
-                if k == MotorParamsIdx.MOTOR_IP:
+                if isinstance(k, ServerParamsIdx):
+                    if isinstance(self._changed_settings[k], int):
+                        config['Network'][k.name.lower()] = int(self._changed_settings[k])
+                    else:
+                        config['Network'][k.name.lower()] = self._changed_settings[k]
+
+
+                elif k == MotorParamsIdx.MOTOR_IP:
                     if Config.focuser == '160':
                         config['Device']['ip_160'] = self._changed_settings[MotorParamsIdx.MOTOR_IP]
                         Config.device_ip = config['Device']['ip_160'] # get_toml('Device', 'ip_160')
                     elif Config.focuser == 'IAG':
                         config['Device']['ip_iag'] = self._changed_settings[MotorParamsIdx.MOTOR_IP]
-                        Config.device_ip = config['Device']['ip_iag'] # get_toml('Device', 'ip_iag')
+                        Config.device_ip = config['Device']['ip_iag'] # get_toml('Device', 'ip_iag'
+
                 else:
                     # config['Device'][k.lower()] = int(self._changed_settings[k])
-                    config['Device'][self.motor.parameters[k].NAME.lower()] = int(self._changed_settings[k])
+                    # config['Device'][self.motor.parameters[k].NAME.lower()] = int(self._changed_settings[k])
+                    if isinstance(self._changed_settings[k], int):
+                        config['Device'][k.name.lower()] = int(self._changed_settings[k])
+                    else:
+                        config['Device'][k.name.lower()] = self._changed_settings[k]
 
         with open(config_file, 'w') as f:
             toml.dump(config, f)
@@ -372,9 +468,17 @@ class SettingsWindow(QMainWindow):
 
         try:
             ValError = False
-            for key, value in self._changed_settings.items():
-                if value == "":
-                    raise ValueError(f"Cannot save empty value to motor parameters")
+            # for key, value in self._changed_settings.items():
+            #     if value == "":
+            #         raise ValueError(f"Cannot save empty value to motor parameters")
+            # The QLineEdits may be empty at this point, but the QSpinBoxes have a protection against being empty
+            for param in self._config_settings:
+                
+                if isinstance(param.OBJ, QLineEdit) and param.NAME in self._changed_settings:
+                    text = self._changed_settings[param.NAME].replace(".", "")                  # Remove dots from IP masked values
+                    if not text:
+                        raise ValueError(f"Cannot save empty value to parameters")
+
         except Exception as e:
             dialog = QMessageBox(self)
             dialog.setText(str(e))
@@ -383,13 +487,16 @@ class SettingsWindow(QMainWindow):
             dialog.exec()
             ValError = True
 
-        # If the "_changed_settings" dictionary has any elements than a setting was changed and the command store must be executed
+        # If the "_changed_settings" dictionary has any elements then a setting was changed and the command store must be executed
         if self._changed_settings and not ValError:                       
             verify = VerificationDialog()
             text = ""
             keys, values = zip(*self._changed_settings.items())
+            
             for i in range(0, len(keys)):
-                text += f"<font color=red> {self.motor.parameters[keys[i]].NAME}</font>: {self._motor_settings[keys[i]]} -> {values[i]} <br>"
+                key_str = keys[i].name.replace("'", "")
+                # text += f"<font color=red> {self.motor.parameters[keys[i]].NAME}</font>: {self._motor_settings[keys[i]]} -> {values[i]} <br>"
+                text += f"<font color=red> {key_str}</font>: {self._config_settings[keys[i].value].VALUE} -> {values[i]} <br>"
             
             text += f"<br>"
             text += f"<font color=red> * The motor must be restarted for the changes to take effect </font>"
@@ -410,23 +517,26 @@ class SettingsWindow(QMainWindow):
                     self.logger.info("Starting motor configuration")
                     self._create_backup_config()                                # Creates a backup of the current configuration file
                     self._update_config_file(keys)
-                    for idx in keys:  # Uses the driver properties to send the new values to the motor
+                #     for idx in keys:  # Uses the driver properties to send the new values to the motor
 
-                        self.motor.set_param(idx, self._changed_settings[idx])
-                        # setattr(self.motor.driver, self.motor.driver.property_handlers[_], self._changed_settings[_])
-                        self.logger.info(f"Motor parameter changed: [{idx}] Previous value -> {self._motor_settings[idx]} | New value -> {self._changed_settings[idx]}") 
+                #         self.motor.set_param(idx, self._changed_settings[idx])
+                #         # setattr(self.motor.driver, self.motor.driver.property_handlers[_], self._changed_settings[_])
+                #         self.logger.info(f"Motor parameter changed: [{idx}] Previous value -> {self._motor_settings[idx]} | New value -> {self._changed_settings[idx]}") 
 
-                    self.signals.changed_settings.emit(self._changed_settings)      # Emits the changes to the main UI
-                    self.motor.driver._store_to_flash()                             # Store the new settings to flash.
+                #     self.signals.changed_settings.emit(self._changed_settings)      # Emits the changes to the main UI
+                #     self.motor.driver._store_to_flash()                             # Store the new settings to flash.
                     
                     # If everything went ok and the motor parameter was updated than the current motor parameters 
                     # must be updated in "_motor_settings"
                     for idx in keys:
-                        self._motor_settings[idx] = self._changed_settings[idx]
-                        self._config_txt_boxes[idx].setStyleSheet(""" """
-                )
+                        # self._motor_settings[idx] = self._changed_settings[idx]
+                        # self._config_txt_boxes[idx].setStyleSheet(""" """)
+
+                        self._config_settings[idx.value].VALUE = self._changed_settings[idx]                                               
+                
 
                     self._changed_settings.clear()                                  # Resets changes dictionary   
+                    self._validate_parameters()
                     self.logger.info("Ended motor configuration")
                 except Exception as e:
                     self.logger.info(f"Error saving new configuration to motor. {e}")
@@ -435,21 +545,37 @@ class SettingsWindow(QMainWindow):
                 # If the user do not accept the new configurations than the current configurations are
                 # written back in the text boxes
                 self._changed_settings.clear()
-                self._reset_text_boxes(self._motor_settings)
+                self._reset_text_boxes(self._config_settings)
 
-    def _reset_text_boxes(self, settings: dict):
-        """Resets the parameters text boxes according to the
-        'settings' dictionary
 
-        :param settings: Settings dictionary [MotorParametersIdx, str]
-        :type settings: dict
+
+    def _reset_text_boxes(self, settings: ConfigurableSettings):
+        """Resets the parameters boxes according to the
+        current settings.
+
         """
-        for idx in MotorParamsIdx:
+        # for idx in MotorParamsIdx:
+        #     # Signal must be disconnected because validation cannot be called when the
+        #     # values are reset
+        #     self._config_txt_boxes[idx].textChanged.disconnect()  
+        #     self._config_txt_boxes[idx].setText(settings[idx])
+        #     self._config_txt_boxes[idx].textChanged.connect(self._validate_parameters)  # Signal is connected again
+        # self._validate_parameters()
+
+        for param in self._config_settings:
             # Signal must be disconnected because validation cannot be called when the
             # values are reset
-            self._config_txt_boxes[idx].textChanged.disconnect()  
-            self._config_txt_boxes[idx].setText(settings[idx])
-            self._config_txt_boxes[idx].textChanged.connect(self._validate_parameters)  # Signal is connected again
+            if param.TYPE is str:
+                param.OBJ.textChanged.disconnect()
+                param.OBJ.setText(param.VALUE)
+                param.OBJ.textChanged.connect(self._validate_parameters)
+
+            elif param.TYPE is int:
+                param.OBJ.valueChanged.disconnect()
+                param.OBJ.setValue(param.VALUE)
+                param.OBJ.valueChanged.connect(self._validate_parameters)
+
+
         self._validate_parameters()
 
 
@@ -468,25 +594,60 @@ class SettingsWindow(QMainWindow):
     def _validate_parameters(self):
         """Verifies if a new configuration for the parameters is avaiable"""
         #TODO: Adicionar validação por parâmetro? Considerando limites entre os parâmetros Ex. 'Backlash' não pode ser maior que 'pos_max'
-        for idx in MotorParamsIdx:
-            self._set_motor_settings(idx, self._config_txt_boxes[idx].text())
-            if self._config_txt_boxes[idx].text() == "":
-                self._config_txt_boxes[idx].setStyleSheet("""
-                    QLineEdit {border: 1px solid rgb(255,0,0);
-                                background-color: rgba(255,0,0, 20); 
-                    border-radius:3}
-                """
-                )
-            elif self._config_txt_boxes[idx].text() != self._motor_settings[idx]:
-                self._config_txt_boxes[idx].setStyleSheet("""
-                    QLineEdit {border: 1px solid rgb(255,0,0);
-                    border-radius:3}
-                """
-                )
-            
-            else:
-                self._config_txt_boxes[idx].setStyleSheet(""" """
-                )
+
+        # Checks values and verifies if changed
+        for param in self._config_settings:
+            self._set_settings(param)
+
+            # if isinstance(param.OBJ, QLineEdit):
+            if param.TYPE is str:
+                text = param.OBJ.text().replace(".", "")    # Remove dots from masked IPs
+                if text == "":
+                    param.OBJ.setStyleSheet("""
+                        QLineEdit {border: 1px solid rgb(255,0,0);
+                                    background-color: rgba(255,0,0, 20); 
+                        border-radius:3}
+                    """
+                    )
+                else:
+                    param.OBJ.setStyleSheet("""none""")
+
+
+                if param.OBJ.text() != param.VALUE:
+                    param.OBJ.setProperty("change", True)
+                else:
+                    param.OBJ.setProperty("change", False)
+
+            # elif isinstance(param.OBJ, QSpinBox):
+            elif param.TYPE is int:
+                if param.OBJ.value() != param.VALUE:
+                    param.OBJ.setProperty("change", True)
+                else:
+                    param.OBJ.setProperty("change", False)
+
+            self._update_gui_element(param.OBJ)
+
+        # The Park position is limited by the maximum position
+        self._config_settings.PARK_POS.OBJ.setMaximum(self._config_settings.MAX_POS.OBJ.value())
+
+        # The Idle current is limited by the running current
+        self._config_settings.IDLE_CURRENT.OBJ.setMaximum(self._config_settings.RUN_CURRENT.OBJ.value())
+
+    def _update_gui_element(self, widget: QtWidgets):
+        """Updates the GUI element style after an event occured.
+        According to QT framework this functions must be executed to update visual elements when a property is changed.
+        Re-polish the style to apply CSS changes linked to this property
+        
+        Parameters
+        ----------
+        widget : QtWidgets
+            Widget to be updated
+        """
+        widget.style().unpolish(widget)
+        widget.style().polish(widget)
+        widget.update()
+
+
 
     def closeEvent(self, event):
         """Event called when the settings window is closed
@@ -562,7 +723,8 @@ class RetrieveSettings(QThread):
 
     def run(self):
         p = 0
-        step_size = 12
+        step_size = int(100/(1+len(MotorParamsIdx)))
+        print(f"step size = {step_size}")
         self.signal_progress.emit(p)
         self.signal_running.emit(True)
 
@@ -574,7 +736,7 @@ class RetrieveSettings(QThread):
         else:
             self.motor_data.ID = "*Invalid motor ID*"
 
-        self.motor_data.firmware_version = self.motor.firmware_version
+        self.motor_data._firmware_version = self.motor.firmware_version
             
         # Retrieves all motor parameters
         for param in MotorParamsIdx:

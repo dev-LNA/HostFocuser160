@@ -198,6 +198,16 @@ class UiWidgets(QWidget):
         elif window_name == "settings":
             # === Definitions for settings window components === #
             
+
+            self.gbMotorParameters = window.findChild(QGroupBox, 'gbMotorParameters')
+            self.gbMotorParameters: QGroupBox = self.gbMotorParameters
+
+            self.gbZMQ = window.findChild(QGroupBox, 'gbZMQ')
+            self.gbZMQ: QGroupBox = self.gbZMQ
+
+            self.gbNetwork = window.findChild(QGroupBox, 'gbNetwork')
+            self.gbNetwork: QGroupBox = self.gbNetwork
+
             # Buttons
             self.btnEngineering = window.findChild(QPushButton, 'btnEngineering')
             self.btnEngineering: QPushButton = self.btnEngineering
@@ -250,17 +260,64 @@ class UiWidgets(QWidget):
             self.txtMaxStep = window.findChild(QLineEdit, 'txtMaxStep')
             self.txtMaxStep: QLineEdit = self.txtMaxStep
 
-            self.spinBacklash = window.findChild(QSpinBox, 'spinBacklash')
-            self.spinBacklash: QSpinBox = self.spinBacklash
-
             self.txtSocketIP = window.findChild(QLineEdit, 'txtSocketIP')
             self.txtSocketIP: QLineEdit = self.txtSocketIP
 
-            self.txtPubPort = window.findChild(QLineEdit, 'txtPubPort')
-            self.txtPubPort: QLineEdit = self.txtPubPort
+            self.spinPortPub = window.findChild(QSpinBox, 'spinPortPub')
+            self.spinPortPub: QSpinBox = self.spinPortPub
 
-            self.txtRepPort = window.findChild(QLineEdit, 'txtRepPort')
-            self.txtRepPort: QLineEdit = self.txtRepPort
+            self.spinPortRep = window.findChild(QSpinBox, 'spinPortRep')
+            self.spinPortRep: QSpinBox = self.spinPortRep
+
+            self.txtSubMask = window.findChild(QLineEdit, 'txtSubMask')
+            self.txtSubMask: QLineEdit = self.txtSubMask
+
+            self.txtGatewayIP = window.findChild(QLineEdit, 'txtGatewayIP')
+            self.txtGatewayIP: QLineEdit = self.txtGatewayIP
+
+        #Spin Boxes
+
+            self.spinPortPub = window.findChild(QSpinBox, 'spinPortPub')
+            self.spinPortPub: QSpinBox = self.spinPortPub
+
+            self.spinPortRep = window.findChild(QSpinBox, 'spinPortRep')
+            self.spinPortRep: QSpinBox = self.spinPortRep
+
+            self.spinBacklash = window.findChild(QSpinBox, 'spinBacklash')
+            self.spinBacklash: QSpinBox = self.spinBacklash
+
+            self.spinMaxPos = window.findChild(QSpinBox, 'spinMaxPos')
+            self.spinMaxPos: QSpinBox = self.spinMaxPos
+
+            self.spinParkPos = window.findChild(QSpinBox, 'spinParkPos')
+            self.spinParkPos: QSpinBox = self.spinParkPos
+
+            self.spinMaxSpeed = window.findChild(QSpinBox, 'spinMaxSpeed')
+            self.spinMaxSpeed: QSpinBox = self.spinMaxSpeed
+
+            self.spinNormalSpeed = window.findChild(QSpinBox, 'spinNormalSpeed')
+            self.spinNormalSpeed: QSpinBox = self.spinNormalSpeed
+
+            self.spinLowSpeed = window.findChild(QSpinBox, 'spinLowSpeed')
+            self.spinLowSpeed: QSpinBox = self.spinLowSpeed
+
+            self.spinMaxStep = window.findChild(QSpinBox, 'spinMaxStep')
+            self.spinMaxStep: QSpinBox = self.spinMaxStep
+
+            self.spinAcceleration = window.findChild(QSpinBox, 'spinAcceleration')
+            self.spinAcceleration: QSpinBox = self.spinAcceleration
+
+            self.spinDeceleration = window.findChild(QSpinBox, 'spinDeceleration')
+            self.spinDeceleration: QSpinBox = self.spinDeceleration
+
+            self.spinIdleCurrent = window.findChild(QSpinBox, 'spinIdleCurrent')
+            self.spinIdleCurrent: QSpinBox = self.spinIdleCurrent
+
+            self.spinRunCurrent = window.findChild(QSpinBox, 'spinRunCurrent')
+            self.spinRunCurrent: QSpinBox = self.spinRunCurrent
+
+            self.spinAccCurrent = window.findChild(QSpinBox, 'spinAccCurrent')
+            self.spinAccCurrent: QSpinBox = self.spinAccCurrent
 
 
         # Frame send command

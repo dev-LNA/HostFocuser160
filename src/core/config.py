@@ -33,9 +33,12 @@ class Config:
     # ---------------
     # Network Section
     # ---------------
-    ip_address: str = get_toml('Network', 'ip_address')
+    # ip_address: str = get_toml('Network', 'ip_address')
+    ip_address: str = get_toml('Network', 'server_ip')
     port_pub: int = get_toml('Network', 'port_pub')
     port_rep: int = get_toml('Network', 'port_rep')
+    sub_mask: int = get_toml('Network', 'sub_mask')
+    gateway_ip: int = get_toml('Network', 'gateway_ip')
     # --------------
     # Device Section
     # --------------

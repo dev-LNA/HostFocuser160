@@ -65,6 +65,8 @@ class ServerParamsIdx(Enum):
     SERVER_IP=0
     PUB_PORT=1
     REP_PORT=2
+    SUB_MASK=3
+    GATEWAY_IP=4
 
 #endregion
 
@@ -74,14 +76,19 @@ class MotorModels(StrEnum):
     AMP_MOTOR = 'AMP'
 
 class MotorParamsIdx(Enum):     
-    MOTOR_IP=0
-    BACKLASH=1
-    MAX_POS=2
-    PARK_POS=3
-    MAX_SPEED=4
-    NORMAL_SPEED=5
-    LOW_SPEED=6
-    MAX_STEP=7
+    MOTOR_IP=5
+    BACKLASH=auto()
+    MAX_POS=auto()
+    PARK_POS=auto()
+    MAX_SPEED=auto()
+    NORMAL_SPEED=auto()
+    LOW_SPEED=auto()
+    MAX_STEP=auto()
+    ACCELERATION=auto()
+    DECELERATION=auto()
+    IDLE_CURRENT=auto()
+    RUN_CURRENT=auto()
+    ACC_CURRENT=auto()
 
 @dataclass
 class MotorParameter():

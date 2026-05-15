@@ -21,7 +21,12 @@ class Driver(ABC):
             MotorParamsIdx.MAX_SPEED : self.param_max_speed,
             MotorParamsIdx.NORMAL_SPEED : self.param_normal_speed,
             MotorParamsIdx.LOW_SPEED : self.param_low_speed,
-            MotorParamsIdx.MAX_STEP : self.param_max_step  
+            MotorParamsIdx.MAX_STEP : self.param_max_step,
+            MotorParamsIdx.ACCELERATION : self.param_acceleration,
+            MotorParamsIdx.DECELERATION : self.param_deceleration,
+            MotorParamsIdx.IDLE_CURRENT : self.param_idle_current,
+            MotorParamsIdx.RUN_CURRENT : self.param_run_current,
+            MotorParamsIdx.ACC_CURRENT : self.param_acc_current
         }
 
         self.command_methods = {
@@ -122,6 +127,31 @@ class Driver(ABC):
 
     @abstractmethod
     def param_max_step(self, value: int | str | bool = None) -> str:
+        """Precisa ser implementada pelo driver"""
+    ...
+
+    @abstractmethod
+    def param_acceleration(self, value: int | str | bool = None) -> str:
+        """Precisa ser implementada pelo driver"""
+    ...
+
+    @abstractmethod
+    def param_deceleration(self, value: int | str | bool = None) -> str:
+        """Precisa ser implementada pelo driver"""
+    ...
+
+    @abstractmethod
+    def param_idle_current(self, value: int | str | bool = None) -> str:
+        """Precisa ser implementada pelo driver"""
+    ...
+
+    @abstractmethod
+    def param_run_current(self, value: int | str | bool = None) -> str:
+        """Precisa ser implementada pelo driver"""
+    ...
+
+    @abstractmethod
+    def param_acc_current(self, value: int | str | bool = None) -> str:
         """Precisa ser implementada pelo driver"""
     ...
 
