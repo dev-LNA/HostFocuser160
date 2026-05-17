@@ -51,12 +51,22 @@ class Config:
     max_step: int = get_toml('Device', 'max_step')
     temp_comp: bool = get_toml('Device', 'temp_comp')
     stepsize: int = get_toml('Device', 'step_size')
-    max_speed: int = get_toml('Device', 'max_speed')
     enc_2_microns: float = get_toml('Device', 'encoder2microns')
     speed_factor: int = get_toml('Device', 'speedFactor')
     maxincrement: int = get_toml('Device', 'max_increment')
     speed_security: int = get_toml('Device', 'speed_security')
     tempcompavailable: bool = get_toml('Device', 'tempcompavailable')
+    backlash: int = get_toml('Device', 'backlash')
+    max_pos: int = get_toml('Device', 'max_pos')
+    park_pos: int = get_toml('Device', 'park_pos')
+    max_speed: int = get_toml('Device', 'max_speed')
+    normal_speed: int = get_toml('Device', 'normal_speed')
+    low_speed: int = get_toml('Device', 'low_speed')
+    acceleration: int = get_toml('Device', 'acceleration')
+    deceleration: int = get_toml('Device', 'deceleration')
+    idle_current: int = get_toml('Device', 'idle_current')
+    run_current: int = get_toml('Device', 'run_current')
+    acc_current: int = get_toml('Device', 'acc_current')
     # ---------------
     # Logging Section
     # ---------------

@@ -96,32 +96,6 @@ class ModbusServer(QWidget, mbServer):
         """A loop that fills the server data bank according to the commands sent/received"""
         while not self.stop_server:
             time.sleep(.05) # 0.1
-            # if self.data_bank.get_coils(0,1)[0]:        #DEBUG: usado para pausar o servidor pela comunicação
-            #     self.signal_stop.emit(True)
-            #     print("Sent stop server signal")
-            #     break
-
-            # coils_shadow = self.db_shadow.get_coils(DB_size.COIL_FIRST_ADDRESS, DB_size.COIL_LAST_ADDRES)         # Coils internas do programa
-            # coils_real = self.data_bank.get_coils(DB_size.COIL_FIRST_ADDRESS, DB_size.COIL_LAST_ADDRES)           # Coils recebidas do CLP
-            # if coils_shadow != coils_real:                          # Verifica se ocorreu alguma mudança nas coil
-            #     print("Mudança nas coils detectada")
-            #     reg_cont = DB_size.COIL_FIRST_ADDRESS                   # Endereço da primeira coil
-            #     for (cs, cr) in zip(coils_shadow, coils_real):      # Obtém a coil na mesma posição no shadow e no real
-            #         if cs != cr:                                    # Se essa coil tiver mudado atua da forma que for necessária
-            # #             print("-------------------")
-            # #             print(f"Reg: {reg_cont}")
-            # #             print(f"Coil shadow --> {cs}")
-            # #             print(f"Coil real --> {cr}")
-            # #             print("-------------------")
-
-            #             self.db_shadow.set_coils(reg_cont, 1)           # Updates shadow coil
-
-
-            #DEBUG: Necessário fazer temporização para checagem de handshake
-            # if self.data_bank.get_coils(coils_regs.HANDSHAKE.ADDRESS,coils_regs.HANDSHAKE.SIZE)[0]:
-            #     self.handshake = True
-            #     self.timeout.check_timeout()
-            #     self.timeout.reset()               
              
             # Checks if a HANDSHAKE was received
             if not self._compare_regs(coils_regs.HANDSHAKE):   # If false means that the register value was changed
@@ -136,44 +110,21 @@ class ModbusServer(QWidget, mbServer):
                     self.timeout.reset()
 
                     if self.timeout.status:
-                        print("TIMEOUT")
+                        print("TIMEOUT")        #TODO: Implementar lógica de timeout 
                     else:
                         print("NO TIMEOUT")
 
-                    # self.db_shadow.set_coils(coils_regs.HANDSHAKE.ADDRESS, self.data_bank.get_coils(coils_regs.HANDSHAKE.ADDRESS, coils_regs.HANDSHAKE.SIZE)) 
+                # Saves the new handshake value in the shadow register and mirror it to the CLP
                 self.db_shadow.set_coils(coils_regs.HANDSHAKE.ADDRESS, new) 
-                self.data_bank.set_discrete_inputs(dig_inputs_regs.HANDSHAKE.ADDRESS, new)  # Mirror handshake value
+                self.data_bank.set_discrete_inputs(dig_inputs_regs.HANDSHAKE.ADDRESS, new)
 
                 print(F"HANDSHAKE ATUAL: {self.data_bank.get_discrete_inputs(dig_inputs_regs.HANDSHAKE.ADDRESS, 1)}")
 
 
 
-            # To be operational the handshake must be valid  and 'RX_WAIT' must be False
-            # if self.handshake and not self.data_bank.get_coils(coils_regs.RX_WAIT.ADDRESS, 1)[0]:
+            # To be operational the handshake must be valid
             if self.handshake:
                 
-                # self.data_bank.set_coils(coils_regs.RX_WAIT.ADDRESS, [True])        # Puts coil RX_WAIT back to True to avoid entering again this statement
-
-                # for reg in coils_regs:
-                #     if reg.SIZE > 1:
-                #         self._conv_reg_to_value(reg)
-
-                #Timed handshake for testing
-                # if time.time() - self.handshake_timer > 1:
-                #     self.handshake_timer = time.time()
-                #     if self.data_bank.get_discrete_inputs(dig_inputs_regs.HANDSHAKE.ADDRESS, 1)[0] == True:
-                #         self.data_bank.set_discrete_inputs(dig_inputs_regs.HANDSHAKE.ADDRESS, [False])
-                #     else:
-                #         self.data_bank.set_discrete_inputs(dig_inputs_regs.HANDSHAKE.ADDRESS, [True])
-
-
-                # 'RX_WRITTING == 0' indicates that the CLP is not writting, so the coils information is valid.
-                # This guarantees that the server will not read while the CLP is writting a new value.
-
-
-                # time.sleep(0.3)  # temporização para dar tempo do CLP ler infomrações
-
-
                 # As variáveis que vem do CLP devem ser sempre lidas e rebatidas para o CLP, porém, elas somente
                 # serão salvas no data bank principal quando o CLP enviar o sinal de que parou de escrever
                 # O data bank "db_shadow" é o que possui as informações que são utilizadas pelo python
@@ -186,8 +137,10 @@ class ModbusServer(QWidget, mbServer):
                 # Se o CLP não estiver escrevendo verifica quais coil tiveram seus valores alterados
                 # e salva no registrador shadow
                 if not self.data_bank.get_coils(coils_regs.RX_WRITTING.ADDRESS, 1)[0]:  
+
+                    # ------------ PYTHON READING REGISTERS -------------
                     # Informa o CLP que o python está lendo dos registradores
-                    # self.data_bank.set_discrete_inputs(dig_inputs_regs.TX_READING.ADDRESS, [True])
+                    self.data_bank.set_discrete_inputs(dig_inputs_regs.TX_READING.ADDRESS, [True])
 
                     # Compares every coil register from 'DB coil' and 'DB coil shadow'
                     # If 'DB coil' is different from 'DB coil shadow' some information was received
@@ -204,23 +157,13 @@ class ModbusServer(QWidget, mbServer):
                             self.db_shadow.set_coils(reg.ADDRESS, self.data_bank.get_coils(reg.ADDRESS, reg.SIZE))  
                     
                     # Informa o CLP que o python finalizou a leitura dos registradores
-                    # self.data_bank.set_discrete_inputs(dig_inputs_regs.TX_READING.ADDRESS, [False])
+                    self.data_bank.set_discrete_inputs(dig_inputs_regs.TX_READING.ADDRESS, [False])
+                    # ------------ PYTHON FINISHED READING REGISTERS -------------
 
 
-
-
-
-
-            # print(f"coils -> {self.server.data_bank.get_coils(0,10)}")
-                                                                     # bit order  8     7      6     5       4    3      2     1 
-            # self.server.data_bank.set_discrete_inputs(dig_inputs_regs.TX_CGT_A, [True, True, False, False, True, False, True, True])
-            # print(f"Primeiro byte do IP: {self.server.data_bank.get_discrete_inputs(dig_inputs_regs.TX_CGT_A,1)[0]}")
 
         print("Stopping server")
 
-        # self.server.start()
-
-        # print(self.server.data_bank.get_coils(0,10))
 
     def _operate(self, reg: RegsInfo):
 
@@ -229,13 +172,15 @@ class ModbusServer(QWidget, mbServer):
             #AÇÕES COM AS INFORMAÇÕES
 
 
-
+        # If the register is owned by the CLP, the python must mirror the value to the CLP response register
+        # so that the CLP can verify that the information was received by the python
         for clp_owned_reg in CLP_Owned:
             if reg.TAG == clp_owned_reg.ORIGIN_COIL:
                 resp_reg = clp_owned_reg.RESPONSE_DI
                 num = self._conv_reg_to_value(reg, self.data_bank)
                 num_bits = self._conv_num_bits(num, reg.SIZE)
 
+                # ------------ PYTHON WRITTING REGISTER -------------
                 self.data_bank.set_discrete_inputs(dig_inputs_regs.TX_WRITTING.ADDRESS, [True])
 
                 #  If the register is 32 bits the higher bits must be saved to the first 16 bits of the address
@@ -247,11 +192,7 @@ class ModbusServer(QWidget, mbServer):
                     self.data_bank.set_discrete_inputs(resp_reg.ADDRESS, num_bits)
 
                 self.data_bank.set_discrete_inputs(dig_inputs_regs.TX_WRITTING.ADDRESS, [False])
-
-                binary_string = "".join([str(int(b)) for b in self.data_bank.get_coils(reg.ADDRESS, reg.SIZE)])
-                # print(f"Coil recebida {reg.TAG} = {binary_string}")
-                binary_string = "".join([str(int(b)) for b in self.data_bank.get_discrete_inputs(resp_reg.ADDRESS, resp_reg.SIZE)])
-                # print(f"DI {resp_reg.TAG} = {binary_string}")
+                # ------------ PYTHON FINISHED WRITTING REGISTER -------------
 
        
     def wait_confirmation(self, reg: RegsInfo) -> bool:

@@ -416,7 +416,13 @@ class Motor():
         :return: Ping was successful [OK / NOK]
         :rtype: str
         """
-        resp = self.driver.ping_motor()
+        try:
+            resp = self.driver.ping_motor()
+
+        except Exception as e:
+            print('Failed to ping the motor')
+            raise e
+
         if resp == "OK":
             print('Ping to motor successful')
             return True

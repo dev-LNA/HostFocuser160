@@ -337,47 +337,47 @@ class Server(QObject):
         If its reachable connects to the motor and updates status information"""
         _try = 0
         self.last_ping_time = datetime.now()                                                    # Saves the time when the method was called
+        try:
+            if not self.router_reachable:                                                           # If the router is not reachable
+                self.router_reachable = ReachStatus.CONNECTING                                           # Emits signals for GUI update (Router attempting connection)
+                self.motor_reachable = ReachStatus.WAITING                                               # Emits signals for GUI update (Motor waiting)
+                self.communicating_to_motor = False                                                     # Not communicating to the motor
+                            
+                for _try in range(5):                                                                   # Tries 5 times to ping the router
+                    time.sleep(0.1)             # delay between tries                         
+                    self.signals.status_message.emit(f"Trying Connect to Router: Try number {_try+1}")                      # Emits signals for GUI update
+                    reachable = ping(Config.gateway_ip, count=1, timeout=0.6, privileged=False).is_alive         # Tries to ping the router IP
+                    if reachable:                                                                               # If the ping is succesful
+                        self.router_reachable = ReachStatus.CONNECTED
+                        self.signals.status_message.emit(f"Connection succesfull after {_try+1} tries")                         # Emits signals for GUI update
+                        break                                                                                   # Exits for loop
+            else:                                                                                   # If router already reachable
+                self.router_reachable = ReachStatus.CONNECTED                                           # Emits signals for GUI update (Router connected)
 
-        if not self.router_reachable:                                                           # If the router is not reachable
-            self.router_reachable = ReachStatus.CONNECTING                                           # Emits signals for GUI update (Router attempting connection)
-            self.motor_reachable = ReachStatus.WAITING                                               # Emits signals for GUI update (Motor waiting)
-            self.communicating_to_motor = False                                                     # Not communicating to the motor
-                        
-            for _try in range(5):                                                                   # Tries 5 times to ping the router
-                time.sleep(0.1)             # delay between tries                         
-                self.signals.status_message.emit(f"Trying Connect to Router: Try number {_try+1}")                      # Emits signals for GUI update
-                reachable = ping(Config.gateway_ip, count=1, timeout=0.6, privileged=False).is_alive         # Tries to ping the router IP
-                if reachable:                                                                               # If the ping is succesful
-                    self.router_reachable = ReachStatus.CONNECTED
-                    self.signals.status_message.emit(f"Connection succesfull after {_try+1} tries")                         # Emits signals for GUI update
-                    break                                                                                   # Exits for loop
-        else:                                                                                   # If router already reachable
-            self.router_reachable = ReachStatus.CONNECTED                                           # Emits signals for GUI update (Router connected)
-
-        if self.router_reachable and not self.motor_reachable:                                  # If the router is reachable and the motor is not reachable
-            time.sleep(0.3)
-            self.motor_reachable = ReachStatus.CONNECTING                                            # Emits signals for GUI update (Motor attempting connection)
-            self.communicating_to_motor = False                                                     # Not communicating to the motor
-            
-            for _try in range(5):                                                                   # Tries 5 times to ping the router
-                time.sleep(0.1)             # delay between tries
-                self.signals.status_message.emit(f"Trying Connect to Motor: Try number {_try+1}")               # Emits signals for GUI update
-                reachable = self.motor.ping()                                              # Tries to ping the motor IP
-                if reachable:                                                               # If the ping is successful
-                    self.motor_reachable = ReachStatus.CONNECTED
-                    self.signals.status_message.emit(f"Connection succesfull after {_try+1} tries")                 # Emits signals for GUI update
-                    break                                                                                   # Exits for loop
-            
-        if self.motor_reachable:                                                                # If the motor is reachable
-            self.router_reachable = ReachStatus.CONNECTED                                            # Emits signals for GUI update
-            self.motor_reachable = ReachStatus.CONNECTED                                           # Emits signals for GUI update
-            time.sleep(0.2)                
-            try:
+            if self.router_reachable and not self.motor_reachable:                                  # If the router is reachable and the motor is not reachable
+                time.sleep(0.3)
+                self.motor_reachable = ReachStatus.CONNECTING                                            # Emits signals for GUI update (Motor attempting connection)
+                self.communicating_to_motor = False                                                     # Not communicating to the motor
+                
+                for _try in range(5):                                                                   # Tries 5 times to ping the router
+                    time.sleep(0.1)             # delay between tries
+                    self.signals.status_message.emit(f"Trying Connect to Motor: Try number {_try+1}")               # Emits signals for GUI update
+                    reachable = self.motor.ping()                                              # Tries to ping the motor IP
+                    if reachable:                                                               # If the ping is successful
+                        self.motor_reachable = ReachStatus.CONNECTED
+                        self.signals.status_message.emit(f"Connection succesfull after {_try+1} tries")                 # Emits signals for GUI update
+                        break                                                                                   # Exits for loop
+                
+            if self.motor_reachable:                                                                # If the motor is reachable
+                self.router_reachable = ReachStatus.CONNECTED                                            # Emits signals for GUI update
+                self.motor_reachable = ReachStatus.CONNECTED                                           # Emits signals for GUI update
+                time.sleep(0.2)                
+                # try:
                 self.motor.connect()                                                        # Creates the socket and connects the server to the motor
                 self.motor.update_status()
                 self._get_motor_params()
                 self._update_status()
-                                              
+                                                
                 self.status[SJson.DEVICE_IP] = self.motor.get_param(MotorParamsIdx.MOTOR_IP)
                 self.status[SJson.DEVICE_ID] = self.motor.ID
                 self.status[SJson.DEVICE_FIRMWARE_VERSION] = self.motor.firmware_version
@@ -394,8 +394,8 @@ class Server(QObject):
                     self.signals.backlash.emit(-(int(self.motor.get_param(MotorParamsIdx.BACKLASH))))            # A small gap at the end to account the distance to the lim+ uswitch 
                 
                 self.logger.info(f'Motor Reached and connected.')
-            except Exception as e:
-                self.logger.error(f'{str(e)}')     
+        except Exception as e:
+            self.logger.error(f'{str(e)}')     
 
         self._reaching_device_thread = None
 
