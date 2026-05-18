@@ -40,7 +40,7 @@ server_ip = "*"
 port_pub = 7003
 port_rep = 7004
 sub_mask = "255.255.255.0"
-gateway_ip = "192.168.1.1"
+gateway_ip = "192.168.0.1"
 
 [Logging]
 log_level = "INFO"

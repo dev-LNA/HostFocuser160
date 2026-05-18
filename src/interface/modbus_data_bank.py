@@ -1,5 +1,6 @@
 from pyModbusTCP.server import DataBank
 from src.utils.modbus_regs import coils_regs, dig_inputs_regs
+import time
 
 class MB_DataBank(DataBank):
     def __init__(self, coils_size=65536, coils_default_value=False, d_inputs_size=65536, d_inputs_default_value=False, h_regs_size=65536, h_regs_default_value=0, i_regs_size=65536, i_regs_default_value=0, virtual_mode=False):
@@ -7,7 +8,24 @@ class MB_DataBank(DataBank):
 
         self.handshake = False
 
+        self.t1 = 0
+        self.t2 = 0
+
     def on_coils_change(self, address, from_value, to_value, srv_info):
+
+
+        if address == coils_regs.RX_READING.ADDRESS:
+
+            if to_value == True:
+                self.t1 = time.time()
+                print(f"Tempo Reading em FALSE: {time.time() - self.t2:0.3f}")
+                self.t2 = 0
+            elif to_value == False:
+                self.t2 = time.time()
+                print(f"Tempo Reading em TRUE: {time.time() - self.t1:0.3f}")
+                self.t1 = 0
+
+
         # print("-------------------")
         # print(f"Coil recebida:\n Endereço: {address}\n Valor antigo: {from_value}\n Valor atual: {to_value}")
         # print("-------------------")

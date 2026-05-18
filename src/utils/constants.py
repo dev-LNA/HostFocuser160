@@ -2,6 +2,7 @@ from collections import namedtuple
 from enum import StrEnum, Enum, IntFlag, auto
 from typing import NamedTuple, TypedDict
 from dataclasses import dataclass
+from threading import Timer
 
 #region GUI
 
@@ -26,6 +27,11 @@ constants = Constants(
     AMP_MOTOR="100",
     INVALID_RESPONSE=-9999999,     # If a problem occurs in the reading an invalid value is published
     ) 
+
+@dataclass
+class CommandTimeout():
+    command: str
+    timer: Timer
 
 #endregion
 
@@ -83,7 +89,7 @@ class MotorParamsIdx(Enum):
     MAX_SPEED=auto()
     NORMAL_SPEED=auto()
     LOW_SPEED=auto()
-    MAX_STEP=auto()
+    MAX_STEP=auto()     # deprecated - use max_pos
     ACCELERATION=auto()
     DECELERATION=auto()
     IDLE_CURRENT=auto()
