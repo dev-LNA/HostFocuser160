@@ -114,8 +114,15 @@ class IAGModbusServer(mbServer):
                 # O data bank "data_bank" e o que possui as informações sendo recebidas pelo CLP
                 for reg in coils_regs:
                     if not self._compare_regs(reg):     # If false means that the register value was changed
+                        a = self._conv_reg_to_value(reg, self.data_bank)
+                        b = self._conv_reg_to_value(reg, self.db_shadow)
+
+                        print(f"Comparing register {reg.TAG} -> DB value: {a} | Shadow value: {b}")
                         self._mirror(reg)               # Mirrors the CLP owned coils
 
+                        a = self._conv_reg_to_value(reg, self.data_bank)
+                        b = self._conv_reg_to_value(reg, self.db_shadow)
+                        print(f"After mirror register {reg.TAG} -> DB value: {a} | Shadow value: {b}")
 
 
 
@@ -200,6 +207,7 @@ class IAGModbusServer(mbServer):
 
                 if resp == "OK":
                     # Must update the shadow coil with the current value
+                    print(f"Mirroring {reg.TAG} value {num} to {resp_reg.TAG}")
                     self.db_shadow.set_coils(reg.ADDRESS, self.data_bank.get_coils(reg.ADDRESS, reg.SIZE))
 
 
@@ -251,9 +259,6 @@ class IAGModbusServer(mbServer):
         if reg.SIZE == 1:
             return self.data_bank.get_coils(reg.ADDRESS, reg.SIZE) == self.db_shadow.get_coils(reg.ADDRESS, reg.SIZE)   
         
-        a = self._conv_reg_to_value(reg, self.data_bank)
-        b = self._conv_reg_to_value(reg, self.db_shadow)
-
         return self._conv_reg_to_value(reg, self.data_bank) == self._conv_reg_to_value(reg, self.db_shadow)
         
 
@@ -352,54 +357,54 @@ class IAGModbusServer(mbServer):
 
 
     # def _write(self, value: int | bool, reg: RegsInfo) -> str:
-        """ Writes a value to a discrete input 
-        The writting process to a digital input must always follow the same process:
-        - First it must be checked if the CLP is reading data, the Driver will try 5 times to 
-           wait for the CLP to finish its reading.
-        - Once the CLP ends its previous reading the Driver will set its WRITTING register to 
-           inform the CLP that the Driver is writting some data to the modbus discrete inputs
-        - When the Driver ends the writting the WRITTING register must be cleared"""
+        # """ Writes a value to a discrete input 
+        # The writting process to a digital input must always follow the same process:
+        # - First it must be checked if the CLP is reading data, the Driver will try 5 times to 
+        #    wait for the CLP to finish its reading.
+        # - Once the CLP ends its previous reading the Driver will set its WRITTING register to 
+        #    inform the CLP that the Driver is writting some data to the modbus discrete inputs
+        # - When the Driver ends the writting the WRITTING register must be cleared"""
         
-        # When the register size is 1 the value must be 0, 1 or boolean
-        if (reg.SIZE==1 and not ( ( (value==0) or (value==1) or type(value) is bool ) )):
-            raise ValueError(f"Cannot write {value} to {reg.TYPE.name}:{reg.ADDRESS}. This Register supports only {reg.SIZE} bit(s).")
+        # # When the register size is 1 the value must be 0, 1 or boolean
+        # if (reg.SIZE==1 and not ( ( (value==0) or (value==1) or type(value) is bool ) )):
+        #     raise ValueError(f"Cannot write {value} to {reg.TYPE.name}:{reg.ADDRESS}. This Register supports only {reg.SIZE} bit(s).")
         
-        # When a boolean was sent to a register that has more bits
-        if ( type(value) is bool ) and ( reg.SIZE != 1):
-            raise ValueError(f"Cannot write a boolean to {reg.TYPE.name}:{reg.ADDRESS}. This Register has {reg.SIZE} bits")
+        # # When a boolean was sent to a register that has more bits
+        # if ( type(value) is bool ) and ( reg.SIZE != 1):
+        #     raise ValueError(f"Cannot write a boolean to {reg.TYPE.name}:{reg.ADDRESS}. This Register has {reg.SIZE} bits")
 
-        tries = 0
-        max_tries = 20
-        # Tries 'max_tries' times to send the data
-        while tries < max_tries:
-            time.sleep(0.1)
-            # The application can only write new data if the CLP is not reading
-            if not self.data_bank.get_coils(coils_regs.RX_READING.ADDRESS, coils_regs.RX_READING.SIZE)[0]:
-                if reg.TYPE is RegType.DISCRETE_INPUT:
+        # tries = 0
+        # max_tries = 20
+        # # Tries 'max_tries' times to send the data
+        # while tries < max_tries:
+        #     time.sleep(0.1)
+        #     # The application can only write new data if the CLP is not reading
+        #     if not self.data_bank.get_coils(coils_regs.RX_READING.ADDRESS, coils_regs.RX_READING.SIZE)[0]:
+        #         if reg.TYPE is RegType.DISCRETE_INPUT:
 
-                    self.data_bank.set_discrete_inputs(dig_inputs_regs.TX_WRITTING.ADDRESS, [True])
-                    time.sleep(0.05)
-                    if (type(value) is bool) or (reg.SIZE==1 and ( (value==0) or (value==1) ) ):                # If the value is a bool or the register has only one bit than no conversion is needed
-                        self.data_bank.set_discrete_inputs(reg.ADDRESS, [value])
-                    else:                                                                                       #| If the register has multiple bits than the value must be converted
-                        num_bits = self._conv_num_bits(value, reg.SIZE)                                         #| The conversion already considers negative values as two's complement
-                        if reg.SIZE == 8:                                                                       
-                            self.data_bank.set_discrete_inputs(reg.ADDRESS, num_bits)          # If the register is only 8 bits the value is saved directly to the register
-                        else:                                                                                   
-                            self.data_bank.set_discrete_inputs(reg.ADDRESS, num_bits[16:])     #|  If the register is 32 bits the higher bits must be saved to the first 16 bits of the address   
-                            self.data_bank.set_discrete_inputs(reg.ADDRESS+16, num_bits[:16])  #| and the lower bits must be saved to next 16 bits
+        #             self.data_bank.set_discrete_inputs(dig_inputs_regs.TX_WRITTING.ADDRESS, [True])
+        #             time.sleep(0.05)
+        #             if (type(value) is bool) or (reg.SIZE==1 and ( (value==0) or (value==1) ) ):                # If the value is a bool or the register has only one bit than no conversion is needed
+        #                 self.data_bank.set_discrete_inputs(reg.ADDRESS, [value])
+        #             else:                                                                                       #| If the register has multiple bits than the value must be converted
+        #                 num_bits = self._conv_num_bits(value, reg.SIZE)                                         #| The conversion already considers negative values as two's complement
+        #                 if reg.SIZE == 8:                                                                       
+        #                     self.data_bank.set_discrete_inputs(reg.ADDRESS, num_bits)          # If the register is only 8 bits the value is saved directly to the register
+        #                 else:                                                                                   
+        #                     self.data_bank.set_discrete_inputs(reg.ADDRESS, num_bits[16:])     #|  If the register is 32 bits the higher bits must be saved to the first 16 bits of the address   
+        #                     self.data_bank.set_discrete_inputs(reg.ADDRESS+16, num_bits[:16])  #| and the lower bits must be saved to next 16 bits
 
-                    self.data_bank.set_discrete_inputs(dig_inputs_regs.TX_WRITTING.ADDRESS, [False])  # Informs CLP that there is a valid data ready for readi
-                    # self.wait_confirmation(reg)
-                break
-            else:
-                tries += 1
-        if tries == max_tries:
-            print(f'Failed to send {value} to register {reg.TAG} after {tries} tries')
-            # raise RuntimeError(f'Failed to send {value} to register {reg.TAG} after {tries} tries')
-            return "NOK"
-        else:
-            return "OK"
+        #             self.data_bank.set_discrete_inputs(dig_inputs_regs.TX_WRITTING.ADDRESS, [False])  # Informs CLP that there is a valid data ready for readi
+        #             # self.wait_confirmation(reg)
+        #         break
+        #     else:
+        #         tries += 1
+        # if tries == max_tries:
+        #     print(f'Failed to send {value} to register {reg.TAG} after {tries} tries')
+        #     # raise RuntimeError(f'Failed to send {value} to register {reg.TAG} after {tries} tries')
+        #     return "NOK"
+        # else:
+        #     return "OK"
 
 
     def _write(self, value: int | bool, reg: RegsInfo) -> str:
@@ -422,39 +427,39 @@ class IAGModbusServer(mbServer):
         tries = 0
         max_tries = 20
         # Tries 'max_tries' times to send the data
-        while tries < max_tries:
-            time.sleep(0.1)
-            # The application can only write new data if the CLP is not reading
-            # if not self.data_bank.get_coils(coils_regs.RX_READING.ADDRESS, coils_regs.RX_READING.SIZE)[0]:
+        # while tries < max_tries:
+        time.sleep(0.1)
+        # The application can only write new data if the CLP is not reading
+        # if not self.data_bank.get_coils(coils_regs.RX_READING.ADDRESS, coils_regs.RX_READING.SIZE)[0]:
 
-            t = time.time()
-            write_timeout = False
-            while self.data_bank.get_coils(coils_regs.RX_READING.ADDRESS, coils_regs.RX_READING.SIZE)[0]:
-                if time.time() - t > 3:
-                    write_timeout = True
-                    break
-                    
-            print(f"Trying to write value {value} to {reg.TAG} -> {time.time() - t} seconds [{write_timeout}]")
-            if not write_timeout:
-                if reg.TYPE is RegType.DISCRETE_INPUT:
+        t = time.time()
+        write_timeout = False
+        while self.data_bank.get_coils(coils_regs.RX_READING.ADDRESS, coils_regs.RX_READING.SIZE)[0]:
+            if time.time() - t > 3:
+                write_timeout = True
+                break
+        
+        print(f"Trying to write value {value} to {reg.TAG} -> {time.time() - t} seconds [{write_timeout}]")
+        if not write_timeout:
+            if reg.TYPE is RegType.DISCRETE_INPUT:
 
-                    self.data_bank.set_discrete_inputs(dig_inputs_regs.TX_WRITTING.ADDRESS, [True])
-                    time.sleep(0.05)
-                    if (type(value) is bool) or (reg.SIZE==1 and ( (value==0) or (value==1) ) ):                # If the value is a bool or the register has only one bit than no conversion is needed
-                        self.data_bank.set_discrete_inputs(reg.ADDRESS, [value])
-                    else:                                                                                       #| If the register has multiple bits than the value must be converted
-                        num_bits = self._conv_num_bits(value, reg.SIZE)                                         #| The conversion already considers negative values as two's complement
-                        if reg.SIZE == 8:                                                                       
-                            self.data_bank.set_discrete_inputs(reg.ADDRESS, num_bits)          # If the register is only 8 bits the value is saved directly to the register
-                        else:                                                                                   
-                            self.data_bank.set_discrete_inputs(reg.ADDRESS, num_bits[16:])     #|  If the register is 32 bits the higher bits must be saved to the first 16 bits of the address   
-                            self.data_bank.set_discrete_inputs(reg.ADDRESS+16, num_bits[:16])  #| and the lower bits must be saved to next 16 bits
+                self.data_bank.set_discrete_inputs(dig_inputs_regs.TX_WRITTING.ADDRESS, [True])
+                time.sleep(0.05)
+                if (type(value) is bool) or (reg.SIZE==1 and ( (value==0) or (value==1) ) ):                # If the value is a bool or the register has only one bit than no conversion is needed
+                    self.data_bank.set_discrete_inputs(reg.ADDRESS, [value])
+                else:                                                                                       #| If the register has multiple bits than the value must be converted
+                    num_bits = self._conv_num_bits(value, reg.SIZE)                                         #| The conversion already considers negative values as two's complement
+                    if reg.SIZE == 8:                                                                       
+                        self.data_bank.set_discrete_inputs(reg.ADDRESS, num_bits)          # If the register is only 8 bits the value is saved directly to the register
+                    else:                                                                                   
+                        self.data_bank.set_discrete_inputs(reg.ADDRESS, num_bits[16:])     #|  If the register is 32 bits the higher bits must be saved to the first 16 bits of the address   
+                        self.data_bank.set_discrete_inputs(reg.ADDRESS+16, num_bits[:16])  #| and the lower bits must be saved to next 16 bits
 
-                    self.data_bank.set_discrete_inputs(dig_inputs_regs.TX_WRITTING.ADDRESS, [False])  # Informs CLP that there is a valid data ready for readi
-                    # self.wait_confirmation(reg)
-                    return "OK"
-            else:
-                print(f'Failed to send {value} to register {reg.TAG} after {tries} tries')
-                # raise RuntimeError(f'Failed to send {value} to register {reg.TAG} after {tries} tries')
-                return "NOK"
+                self.data_bank.set_discrete_inputs(dig_inputs_regs.TX_WRITTING.ADDRESS, [False])  # Informs CLP that there is a valid data ready for readi
+                # self.wait_confirmation(reg)
+                return "OK"
+        else:
+            print(f'Failed to send {value} to register {reg.TAG} after {tries} tries')
+            # raise RuntimeError(f'Failed to send {value} to register {reg.TAG} after {tries} tries')
+            return "NOK"
 
