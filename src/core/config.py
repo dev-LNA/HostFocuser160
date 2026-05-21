@@ -39,7 +39,8 @@ class Config:
     port_rep: int = get_toml('Network', 'port_rep')
     sub_mask: int = get_toml('Network', 'sub_mask')
     gateway_ip: int = get_toml('Network', 'gateway_ip')
-    pub_interval: int = get_toml('General', 'pub_interval')
+    pub_interval: int = get_toml('Network', 'pub_interval')
+    write_timeout: int = get_toml('Network', 'write_timeout')
     # --------------
     # Device Section
     # --------------
@@ -67,6 +68,7 @@ class Config:
     idle_current: int = get_toml('Device', 'idle_current')
     run_current: int = get_toml('Device', 'run_current')
     acc_current: int = get_toml('Device', 'acc_current')
+    cmd_timeout: int = get_toml('Device', 'cmd_timeout')
     # ---------------
     # Logging Section
     # ---------------

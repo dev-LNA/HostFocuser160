@@ -287,7 +287,7 @@ class ClientSimulator(QtWidgets.QMainWindow):
             print(f"Error establishing connection")
         
     
-    def _send_command(self, command: str, timeout: int=1500) -> str:
+    def _send_command(self, command: str, timeout: int=10000) -> str: #1500
         try:
             self.transaction_ID += 1                                        #   Updates transaction ID
             self._sender.send_request(self, command, timeout)               #   Sets message

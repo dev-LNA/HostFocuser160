@@ -185,72 +185,133 @@ class DriverAMP(Driver):
 
     
     def param_IP(self, value: int | str | bool = None) -> str:
-        """Precisa ser implementada pelo driver"""
-        return Config.device_ip
+        """When no value is provided, returns the current IP value from the configuration.
+        When a value is provided, writes the new IP value to the CLP"""
+        if value is None:
+            return Config.device_ip
+        
+        ip_a = value.split(".")[0]
+        ip_b = value.split(".")[1]
+        ip_c = value.split(".")[2]
+        ip_d = value.split(".")[3]
+
+        ip_param_regs = (dig_inputs_regs.TX_IP_A, dig_inputs_regs.TX_IP_B, dig_inputs_regs.TX_IP_C, dig_inputs_regs.TX_IP_D)
+        ip_values = (ip_a, ip_b, ip_c, ip_d)
+        return self.mb_server.write_param(ip_param_regs, ip_values)
+
+        # return self.mb_server.write_param(dig_inputs_regs.TX_V70, value)
 
     
     def param_backlash(self, value: int | str | bool = None) -> str:
-        """Precisa ser implementada pelo driver"""
+        """When no value is provided, returns the current backlash value from the configuration.
+        When a value is provided, writes the new backlash value to the CLP"""
+        if value is None:
+            return str(Config.backlash)
+            # value = Config.backlash
 
-        self.mb_server._write(True, dig_inputs_regs.TX_PR)
+        return self.mb_server.write_param(dig_inputs_regs.TX_V74, value)
 
 
-        return str(Config.backlash)
+        
 
     
     def param_max_pos(self, value: int | str | bool = None) -> str:
-        """Precisa ser implementada pelo driver"""
-        return str(Config.max_pos)
+        """When no value is provided, returns the current maximum position value from the configuration.
+        When a value is provided, writes the new maximum position value to the CLP"""
+        if value is None:
+            return str(Config.max_pos)
+
+        return self.mb_server.write_param(dig_inputs_regs.TX_V71, value)
+            
 
     
     def param_park_pos(self, value: int | str | bool = None) -> str:
-        """Precisa ser implementada pelo driver"""
-        return str(Config.park_pos)
+        """When no value is provided, returns the current parking position value from the configuration.
+        When a value is provided, writes the new parking position value to the CLP"""
+        if value is None:
+            return str(Config.park_pos)
+
+        return self.mb_server.write_param(dig_inputs_regs.TX_V83, value)
 
     
     def param_max_speed(self, value: int | str | bool = None) -> str:
-        """Precisa ser implementada pelo driver"""
-        return str(Config.max_speed)
+        """When no value is provided, returns the current maximum speed value from the configuration.
+        When a value is provided, writes the new maximum speed value to the CLP"""
+        if value is None:
+            return str(Config.max_speed)
+
+        return self.mb_server.write_param(dig_inputs_regs.TX_V75, value)
 
     
     def param_normal_speed(self, value: int | str | bool = None) -> str:
-        """Precisa ser implementada pelo driver"""
-        return str(Config.normal_speed)
+        """When no value is provided, returns the current normal speed value from the configuration.
+        When a value is provided, writes the new normal speed value to the CLP"""
+        if value is None:
+            return str(Config.normal_speed)
+
+        return self.mb_server.write_param(dig_inputs_regs.TX_V77, value)
 
     
     def param_low_speed(self, value: int | str | bool = None) -> str:
-        """Precisa ser implementada pelo driver"""
-        return str(Config.low_speed)
+        """When no value is provided, returns the current low speed value from the configuration.
+        When a value is provided, writes the new low speed value to the CLP"""
+        if value is None:
+            return str(Config.low_speed)
+
+        return self.mb_server.write_param(dig_inputs_regs.TX_V76, value)
 
     
     def param_max_step(self, value: int | str | bool = None) -> str:
-        """Precisa ser implementada pelo driver"""
-        return str(Config.max_step)
+        """deprecated - use param_max_pos instead"""
+        if value is None:
+            return str(Config.max_step)
+
+        return self.mb_server.write_param(dig_inputs_regs.TX_V79, value)
 
     
     def param_acceleration(self, value: int | str | bool = None) -> str:
-        """Precisa ser implementada pelo driver"""
-        return str(Config.acceleration)
+        """When no value is provided, returns the current acceleration value from the configuration.
+        When a value is provided, writes the new acceleration value to the CLP"""
+        if value is None:
+            return str(Config.acceleration)
+
+        return self.mb_server.write_param(dig_inputs_regs.TX_V80, value)
 
     
     def param_deceleration(self, value: int | str | bool = None) -> str:
-        """Precisa ser implementada pelo driver"""
-        return str(Config.deceleration)
+        """When no value is provided, returns the current deceleration value from the configuration.
+        When a value is provided, writes the new deceleration value to the CLP"""
+        if value is None:
+            return str(Config.deceleration)
+
+        return self.mb_server.write_param(dig_inputs_regs.TX_V79, value)
 
     
     def param_idle_current(self, value: int | str | bool = None) -> str:
-        """Precisa ser implementada pelo driver"""
-        return str(Config.idle_current)
+        """When no value is provided, returns the current idle current value from the configuration.
+        When a value is provided, writes the new idle current value to the CLP"""
+        if value is None:
+            return str(Config.idle_current)
+
+        return self.mb_server.write_param(dig_inputs_regs.TX_V78, value)
 
     
     def param_run_current(self, value: int | str | bool = None) -> str:
-        """Precisa ser implementada pelo driver"""
-        return str(Config.run_current)
+        """When no value is provided, returns the current run current value from the configuration.
+        When a value is provided, writes the new run current value to the CLP"""
+        if value is None:
+            return str(Config.run_current)
+
+        return self.mb_server.write_param(dig_inputs_regs.TX_V81, value)
 
     
     def param_acc_current(self, value: int | str | bool = None) -> str:
-        """Precisa ser implementada pelo driver"""
-        return str(Config.acc_current)
+        """When no value is provided, returns the current acceleration current value from the configuration.
+        When a value is provided, writes the new acceleration current value to the CLP"""
+        if value is None:
+            return str(Config.acc_current)
+
+        return self.mb_server.write_param(dig_inputs_regs.TX_V82, value)
 
     
     def read_firmware_version(self) -> str:
@@ -278,43 +339,28 @@ class DriverAMP(Driver):
     
     def move_to(self, pos: str) -> str:
         """Precisa ser implementada pelo driver"""
-        ...
+        return self.mb_server.send_command(dig_inputs_regs.TX_GS29)
 
     def focus_in(self, speed: str) -> str:
         """Precisa ser implementada pelo driver""" 
-        # A new command can only be sent if the last comand was already verified by the CLP
-        if not self.mb_server.command_timeout.command:
-            self.mb_server.command_timeout.command = f'{dig_inputs_regs.TX_GS21.TAG}'
-            self.mb_server._write(True, dig_inputs_regs.TX_GS21)
-            self.mb_server.command_timeout.timer = Timer(3.0, self.mb_server._handle_command_timeout)
-            self.mb_server.command_timeout.timer.start()
+        return self.mb_server.send_command(dig_inputs_regs.TX_GS21)
     
     def focus_out(self, speed: str) -> str:
         """Precisa ser implementada pelo driver""" 
-        # A new command can only be sent if the last comand was already verified by the CLP
-        if not self.mb_server.command_timeout.command:        
-            self.mb_server.command_timeout.command = f'{dig_inputs_regs.TX_GS20.TAG}'
-            self.mb_server._write(True, dig_inputs_regs.TX_GS20)
-            self.mb_server.command_timeout.timer = Timer(3.0, self.mb_server._handle_command_timeout)
-            self.mb_server.command_timeout.timer.start()
-        ...     
+        return self.mb_server.send_command(dig_inputs_regs.TX_GS20)
     
     def halt(self) -> str:
         """Precisa ser implementada pelo driver""" 
-        # The HALT command can be sent anytime
-        self.mb_server.command_timeout.command = f'{dig_inputs_regs.TX_V42.TAG}'
-        self.mb_server._write(True, dig_inputs_regs.TX_V42)
-        self.mb_server.command_timeout.timer = Timer(3.0, self.mb_server._handle_command_timeout)
-        self.mb_server.command_timeout.timer.start() 
+        return self.mb_server.send_command(dig_inputs_regs.TX_V42)
 
 
     def home(self) -> str:
         """Precisa ser implementada pelo driver"""
-        ...     
+        return self.mb_server.send_command(dig_inputs_regs.TX_GS30)
     
     def park(self) -> str:
         """Precisa ser implementada pelo driver""" 
-        ...
+        return self.mb_server.send_command(dig_inputs_regs.TX_GS5)
         
 
     # def _write(self, value: int | bool, reg: RegsInfo):

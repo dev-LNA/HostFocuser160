@@ -3,17 +3,14 @@ title = "FocuserIAG"
 [General]
 name = "FocuserIAG"
 version = "1.0.0"
-description = "Interface for Perkin-Elmer Focuser"
+description = "Interface for IAG Focuser"
 startup = false
-pub_interval = 1
 
 [Device]
 absolute = true
 device_name = "2ndMirror"
 deviceID = "3285e9af-8d1d-4f9d-b368-d129d8e9a24b"
-device_ip = "0.0.0.0"  # "192.168.60.120"
-
-
+device_ip = "0.0.0.0"
 device_port = 5005
 encoder2microns = 42.2047244
 max_increment = 0
@@ -22,7 +19,7 @@ temp_comp = false
 speed_security = 215000
 speedFactor = 428
 step_size = 0
-backlash = 4
+backlash = 86
 max_pos = 50
 park_pos = 20
 normal_speed = 10000
@@ -34,6 +31,7 @@ deceleration = 8
 idle_current = 14
 run_current = 19
 acc_current = 41
+cmd_timeout = 7
 
 [Network]
 server_ip = "*"
@@ -41,6 +39,8 @@ port_pub = 7003
 port_rep = 7004
 sub_mask = "255.255.255.0"
 gateway_ip = "192.168.0.1"
+pub_interval = 1
+write_timeout = 3
 
 [Logging]
 log_level = "INFO"

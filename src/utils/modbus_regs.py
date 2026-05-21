@@ -232,8 +232,8 @@ dig_inputs_regs = DigInputsRegs(
 )
 
 class mirrorMapping(NamedTuple):
-    ORIGIN_COIL: str
-    RESPONSE_DI: RegsInfo
+    ORIGIN: str
+    RESPONSE: RegsInfo
 
 
 class CLP_Vars(NamedTuple):
@@ -250,8 +250,8 @@ class CLP_Vars(NamedTuple):
     RX_MST: mirrorMapping
     RX_SASTAT: mirrorMapping
     RX_V50: mirrorMapping
-    RX_OK: mirrorMapping
-    RX_NOK: mirrorMapping
+    OK: mirrorMapping
+    NOK: mirrorMapping
     HANDSHAKE: mirrorMapping
     RX_ALC: mirrorMapping
     RX_V90: mirrorMapping
@@ -267,12 +267,69 @@ CLP_Owned = CLP_Vars(
     RX_MST = mirrorMapping("RX_MST", dig_inputs_regs.TX_MST),
     RX_SASTAT = mirrorMapping("RX_SASTAT", dig_inputs_regs.TX_SASTAT),
     RX_V50 = mirrorMapping("RX_V50", dig_inputs_regs.TX_V50),
-    RX_OK = mirrorMapping("RX_OK", dig_inputs_regs.OK),
-    RX_NOK = mirrorMapping("RX_NOK", dig_inputs_regs.NOK),
+    OK = mirrorMapping("OK", dig_inputs_regs.OK),
+    NOK = mirrorMapping("NOK", dig_inputs_regs.NOK),
     HANDSHAKE = mirrorMapping("HANDSHAKE", dig_inputs_regs.HANDSHAKE),
     RX_ALC = mirrorMapping("RX_ALC", dig_inputs_regs.TX_ALC),
     RX_V90 = mirrorMapping("RX_V90", dig_inputs_regs.TX_V90),
     RX_V92 = mirrorMapping("RX_V92", dig_inputs_regs.TX_V92),
+)
+
+class Param_Vars(NamedTuple):
+    """Registers that represent CLP Parameters
+    The CLP will mirror this values and the server must
+    verify if the value was correctly received by the CLP"""
+
+    TX_CGT_A: mirrorMapping
+    TX_CGT_B: mirrorMapping
+    TX_CGT_C: mirrorMapping
+    TX_CGT_D: mirrorMapping
+    TX_CMK_A: mirrorMapping
+    TX_CMK_B: mirrorMapping
+    TX_CMK_C: mirrorMapping
+    TX_CMK_D: mirrorMapping
+    TX_V20: mirrorMapping
+    TX_V71: mirrorMapping
+    TX_V74: mirrorMapping
+    TX_V75: mirrorMapping
+    TX_V76: mirrorMapping
+    TX_V77: mirrorMapping
+    TX_V78: mirrorMapping
+    TX_V79: mirrorMapping
+    TX_V80: mirrorMapping
+    TX_V81: mirrorMapping
+    TX_V82: mirrorMapping
+    TX_V83: mirrorMapping
+    TX_IP_A: mirrorMapping
+    TX_IP_B: mirrorMapping
+    TX_IP_C: mirrorMapping
+    TX_IP_D: mirrorMapping
+
+param_vars = Param_Vars(
+    TX_CGT_A = mirrorMapping("TX_CGT_A", coils_regs.RX_CGT_A),
+    TX_CGT_B = mirrorMapping("TX_CGT_B", coils_regs.RX_CGT_B),
+    TX_CGT_C = mirrorMapping("TX_CGT_C", coils_regs.RX_CGT_C),
+    TX_CGT_D = mirrorMapping("TX_CGT_D", coils_regs.RX_CGT_D),
+    TX_CMK_A = mirrorMapping("TX_CMK_A", coils_regs.RX_CMK_A),
+    TX_CMK_B = mirrorMapping("TX_CMK_B", coils_regs.RX_CMK_B),
+    TX_CMK_C = mirrorMapping("TX_CMK_C", coils_regs.RX_CMK_C),
+    TX_CMK_D = mirrorMapping("TX_CMK_D", coils_regs.RX_CMK_D),
+    TX_V20 = mirrorMapping("TX_V20", coils_regs.RX_V20),
+    TX_V71 = mirrorMapping("TX_V71", coils_regs.RX_V71),
+    TX_V74 = mirrorMapping("TX_V74", coils_regs.RX_V74),
+    TX_V75 = mirrorMapping("TX_V75", coils_regs.RX_V75),
+    TX_V76 = mirrorMapping("TX_V76", coils_regs.RX_V76),
+    TX_V77 = mirrorMapping("TX_V77", coils_regs.RX_V77),
+    TX_V78 = mirrorMapping("TX_V78", coils_regs.RX_V78),
+    TX_V79 = mirrorMapping("TX_V79", coils_regs.RX_V79),
+    TX_V80 = mirrorMapping("TX_V80", coils_regs.RX_V80),
+    TX_V81 = mirrorMapping("TX_V81", coils_regs.RX_V81),
+    TX_V82 = mirrorMapping("TX_V82", coils_regs.RX_V82),
+    TX_V83 = mirrorMapping("TX_V83", coils_regs.RX_V83),
+    TX_IP_A = mirrorMapping("TX_IP_A", coils_regs.RX_IP_A),
+    TX_IP_B = mirrorMapping("TX_IP_B", coils_regs.RX_IP_B),
+    TX_IP_C = mirrorMapping("TX_IP_C", coils_regs.RX_IP_C),
+    TX_IP_D = mirrorMapping("TX_IP_D", coils_regs.RX_IP_D)
 )
 
 #ALC, MST e SASTAT

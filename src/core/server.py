@@ -169,6 +169,8 @@ class Server(QObject):
                 SJson.TIMEOUT.value: False,               # Timeout
             }
 
+            self.test_var = 11
+
 #region  ========== PROPERTIES ========== # 
 
     @property
@@ -265,8 +267,14 @@ class Server(QObject):
 #region ========== METHODS ========== # 
     def teste(self):
         # self.motor._alarm = not self.motor._alarm
-        self.motor.driver.sendCommand("POL=0")
+        # self.motor.driver.sendCommand("POL=0")
         # self.motor.driver.sendCommand("SR1=1")
+
+        # self.motor.set_param(MotorParamsIdx.BACKLASH, self.test_var)
+        # self.test_var += 2
+
+        self.motor.set_param(MotorParamsIdx.MOTOR_IP, "192.168.1.100")
+
         
 
     def _start_server(self):

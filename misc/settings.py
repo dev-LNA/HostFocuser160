@@ -45,6 +45,8 @@ config_dir = "src/config/"
 config_file = config_dir + "config.toml" #"src/config/config.toml"
 config_file_backup = config_dir + "config_backup.toml" #"src/config/config_backup.toml"                #TODO: Possibilitar definir o nome do arquivo? Talvez nomear de acordo com a data que foi criado
 config_file_default = config_dir + "config_default.toml" #"src/config/config_default.toml"
+config_file_160 = config_dir + "config_PE160.toml" 
+config_file_iag = config_dir + "config_IAG.toml" 
 
 @dataclass
 class SettingsAttributes():
@@ -194,10 +196,10 @@ class SettingsWindow(QMainWindow):
 
         self._changed_settings.clear()          # Resets changes dictionary   
 
-        if Config.focuser == "160":
-            self._update_settings()                                                         # Runs the _updater to retrieve the current motor parameters
-        else:
-            raise RuntimeError("The IAG settings are not implemented yet")                  #TODO: Implementar configurações do IAG
+        # if Config.focuser == "160":
+        self._update_settings()                                                         # Runs the _updater to retrieve the current motor parameters
+        # else:
+            # raise RuntimeError("The IAG settings are not implemented yet")                  #TODO: Implementar configurações do IAG
 
 
 #region  ========== PROPERTIES ========== # 
@@ -372,9 +374,9 @@ class SettingsWindow(QMainWindow):
             print("Source and destination are the same file.")
             self.logger.error(f"Could not create configuration backup file. Source and destination are the same file.")
 
-    def _update_config_file(self, keys: str):
+    def _update_config_file(self, cfg_file: str, keys: str):
         #TODO: Atualizar esse método para não apagar comentários no arquivo de configuração
-        with open(config_file, 'r') as f:
+        with open(cfg_file, 'r') as f:
             config = toml.load(f)
             for k in keys:
                 if isinstance(k, ServerParamsIdx):
@@ -400,7 +402,7 @@ class SettingsWindow(QMainWindow):
                     else:
                         config['Device'][k.name.lower()] = self._changed_settings[k]
 
-        with open(config_file, 'w') as f:
+        with open(cfg_file, 'w') as f:
             toml.dump(config, f)
 
     def _load_config_values(self):
@@ -519,7 +521,12 @@ class SettingsWindow(QMainWindow):
                     # must be updated   
                     # #TODO: Atualizar o arquivo de configuração conforme cada parâmetro é atualizado 
                     self._create_backup_config()                                # Creates a backup of the current configuration file
-                    self._update_config_file(keys)                              # Updates Config file and saves new server configurations
+                    self._update_config_file(config_file ,keys)                              # Updates Config file and saves new server configurations
+
+                    if Config.name == "Focuser160":
+                        self._update_config_file(config_file_160 ,keys)                              # Updates Config file and saves new motor configurations
+                    elif Config.name == "FocuserIAG":
+                        self._update_config_file(config_file_iag ,keys)                              # Updates Config file and saves new motor configurations
 
                     for key in keys:
                         self._config_settings[key.value].VALUE = self._changed_settings[key]                                               

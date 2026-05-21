@@ -206,7 +206,7 @@ class Driver(ABC):
 
     def _store_to_flash(self) -> str:
         """Pode ser implementada pelo driver caso necessário"""
-        raise NotImplementedError(f'Motor "{self._model}" driver do not implement "{self._store_to_flash.__name__}" method.')
+        print("Motor driver does not implement flash storage. Ignoring command.")
 
     def is_convertible_to_int(self, value):
         try:

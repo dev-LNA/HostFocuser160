@@ -14,16 +14,16 @@ class MB_DataBank(DataBank):
     def on_coils_change(self, address, from_value, to_value, srv_info):
 
 
-        if address == coils_regs.RX_READING.ADDRESS:
+        # if address == coils_regs.RX_READING.ADDRESS:
 
-            if to_value == True:
-                self.t1 = time.time()
-                print(f"Tempo Reading em FALSE: {time.time() - self.t2:0.3f}")
-                self.t2 = 0
-            elif to_value == False:
-                self.t2 = time.time()
-                print(f"Tempo Reading em TRUE: {time.time() - self.t1:0.3f}")
-                self.t1 = 0
+        #     if to_value == True:
+        #         self.t1 = time.time()
+        #         print(f"Tempo Reading em FALSE: {time.time() - self.t2:0.3f}")
+        #         self.t2 = 0
+        #     elif to_value == False:
+        #         self.t2 = time.time()
+        #         print(f"Tempo Reading em TRUE: {time.time() - self.t1:0.3f}")
+        #         self.t1 = 0
 
 
         # print("-------------------")
