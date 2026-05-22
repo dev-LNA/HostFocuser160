@@ -23,6 +23,9 @@ def init_logging():
     log_path = r"logs/focuser.log"
 
     try:
+        #TODO: Adicionar lógica para que um novo arquivo de logger seja
+        #   criado todos os dias. Um novo arquivo de logger deve ser 
+        #   criado ao meio dia.
         with open(log_path, 'x') as file:
             file.write("-------------------\n")
             file.write("     LOG FILE      \n")

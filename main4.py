@@ -136,7 +136,7 @@ class FocuserOPD (QMainWindow):
         self.server.signals.server_status.status.connect(self.ui_elements.btnStop.setEnabled)
         self.server.signals.server_status.info.connect(self.ui_elements.ledServer.setProperty)
 
-        self.server.signals.status_message.connect(self.statusBar().showMessage)
+        self.server.signals.status_message.connect(lambda msg: self.statusBar().showMessage(msg, 3000))
         self.server.signals.connection_speed.connect(self.ui_elements.lblComSpeed.setText)
         
         # self.server.signals.position_str.connect(self.ui_elements.lblPosition_val.setText)

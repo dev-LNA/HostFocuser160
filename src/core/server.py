@@ -438,7 +438,10 @@ class Server(QObject):
         self.stop_loop = False
         self._client_id = 0
         self._start_server()
-        self._reach_device()
+
+        while not self.motor_reachable and self._stop_loop == False:
+            self._reach_device()
+        
         self.status[SJson.CONNECTED] = self.motor.connected
         while self._stop_loop == False:
             t0 = time.time()                                        # Keeps the time when the loop began
@@ -487,6 +490,8 @@ class Server(QObject):
                 else:
                     #  The device reaching is realized in a new thread to enhance the status 
                     # update time
+                    #TODO: Acho que faz mais sentido rodar o envio de status para o ZMQ
+                    # em uma thread temporizada
                     if self._reaching_device_thread is None:
                         self.router_reachable = False
                         self.motor_reachable = False
