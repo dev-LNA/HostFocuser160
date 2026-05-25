@@ -131,10 +131,19 @@ class IAGModbusServer(mbServer):
                 return            
 
             else:
-                # If the writting process is not happening the reading mode can be set
-                self._reading = True
-                self.data_bank.set_discrete_inputs(dig_inputs_regs.TX_READING.ADDRESS, [True])   # Informs the CLP that the Driver is reading some data from the modbus coils
-                self.RW_lock.acquire()
+                # If the CLP writting process is not happening the reading mode can be set
+                # waits up to 2 seconds the CLP writting
+                t = time.time()
+                t_over = False
+                while self.CLP_writting:
+                    if time.time() - t > 2:
+                        t_over = True
+
+                if t_over == False:
+                    # Sets server reading mode
+                    self._reading = True
+                    self.data_bank.set_discrete_inputs(dig_inputs_regs.TX_READING.ADDRESS, [True])   # Informs the CLP that the Driver is reading some data from the modbus coils
+                    self.RW_lock.acquire()
 
             
     @property
@@ -166,7 +175,16 @@ class IAGModbusServer(mbServer):
                 return            
 
             else:
-                # If the writting process is not happening the reading mode can be set
+                # If the CLP reading process is not happening the weritting mode can be set
+                # waits up to 2 seconds the CLP reading
+                # t = time.time()
+                # t_over = False
+                # while self.CLP_reading:
+                #     if time.time() - t > 2:
+                #         t_over = True
+                # if t_over == False:
+                    # sets server writting mode
+
                 self._writting = True
                 self.data_bank.set_discrete_inputs(dig_inputs_regs.TX_WRITTING.ADDRESS, [True])   # Informs the CLP that the Driver is writting some data to the modbus discrete inputs
                 self.RW_lock.acquire()
@@ -370,13 +388,6 @@ class IAGModbusServer(mbServer):
 
         if reg.TYPE is RegType.COIL:
 
-            # if reg.TAG == coils_regs.RX_V50.TAG:
-            #     bits = db.get_coils(reg.ADDRESS, reg.SIZE)    
-            #     b_normal = "".join([str(int(b)) for b in bits])   
-            #     b_reversed = "".join(reversed([str(int(b)) for b in bits]))
-            #     print(f"Bits normal order: {b_normal} \n Bits reversed order: {b_reversed}")
-
-
 
 
             bits = db.get_coils(reg.ADDRESS, reg.SIZE)
@@ -517,26 +528,54 @@ class IAGModbusServer(mbServer):
         for tries in range(2):
             resp = self.send_command(dig_inputs_regs.TX_PR)   # Sends a parameter request command to the CLP to inform that the Driver will write a parameter to the CLP
             if resp == "OK":
-                print(f"Parameter request operation confirmed by CLP")
-                # Must confirm that the CLP mirrored the parameters values correctly
 
-                self._start_reading_data()  # Informs CLP that the Driver is reading some data from the modbus coils
+                try:
 
-                p_dict = param_vars._asdict()
-                for p in params:
-                    if p[0].TAG in p_dict:
+                    print(f"Parameter request operation confirmed by CLP")
+                    # Must confirm that the CLP mirrored the parameters values correctly
 
-                        print(f"Waiting for CLP to mirror the value of parameter {p[0].TAG} to the response register {p_dict[p[0].TAG].RESPONSE.TAG}...")
+                    if self._start_reading_data():  # Informs CLP that the Driver is reading some data from the modbus coils
 
-                        while self.data_bank.get_coils(p_dict[p[0].TAG].RESPONSE.ADDRESS, p_dict[p[0].TAG].RESPONSE.SIZE)[0] != self.data_bank.get_discrete_inputs(p[0].ADDRESS, p[0].SIZE)[0]:
-                            time.sleep(0.05)
-                        
-                        print(f"Parameter {reg.TAG} updated with value {value} by CLP")
+                        p_dict = param_vars._asdict()
+                        for p in params:
+                            if p[0].TAG in p_dict:
+
+                                print(f"Waiting for CLP to mirror the value of parameter {p[0].TAG} to the response register {p_dict[p[0].TAG].RESPONSE.TAG}...")
+
+                                t = time.time()
+                                t_over = False
+                                mirrored = False
+                                while mirrored == False and t_over == False:
+                                    print(f"COIL mirrored: {self._conv_reg_to_value(p_dict[p[0].TAG].RESPONSE, self.data_bank)}")
+                                    print(f"DI SENT: {self._conv_reg_to_value(p[0], self.data_bank)}")    
+
+                                    mirrored = self.data_bank.get_coils(p_dict[p[0].TAG].RESPONSE.ADDRESS, p_dict[p[0].TAG].RESPONSE.SIZE) == self.data_bank.get_discrete_inputs(p[0].ADDRESS, p[0].SIZE)
+                                    if mirrored:
+                                        print(f"[+] Parameter {reg.TAG} updated with value {value} by CLP")
+                                    else:
+                                        self._stop_reading_data()
+
+                                        self.send_command(dig_inputs_regs.TX_PR)
+
+                                        self._start_reading_data()
+
+                                        time.sleep(0.1)
+                                        if time.time() - t > 3:
+                                            t_over = True
+                                        
+                                            print(f"[-] Coul not update parameter {reg.TAG}, timeout checking mirror value")
+                                            print(f"Sent value {self.data_bank.get_discrete_inputs(p[0].ADDRESS, p[0].SIZE)[0]} ======> Mirror Coil Value  {self.data_bank.get_coils(p_dict[p[0].TAG].RESPONSE.ADDRESS, p_dict[p[0].TAG].RESPONSE.SIZE)[0]}")
+                                            raise TimeoutError(f"[§]Timeout while updating paramater {reg.TAG}")
+       
+
+                    self._stop_reading_data() # Informs CLP that the Driver finished reading data from the modbus coils
+                    return "OK"
+                
+                except Exception as e:
+                    print(e)
+                    self._stop_reading_data() # Informs CLP that the Driver finished reading data from the modbus coils
+                    return "NOK"
                     
-
-                self._stop_reading_data() # Informs CLP that the Driver finished reading data from the modbus coils
-
-                return "OK"
 
             elif resp == "NOK":
                 print(f"CLP responded with NOK for parameter {reg.TAG} request operation. Retrying...")
@@ -555,20 +594,21 @@ class IAGModbusServer(mbServer):
             - Once the CLP ends its previous reading the Driver will set its WRITTING register to 
             inform the CLP that the Driver is writting some data to the modbus discrete inputs
             - When the Driver ends the writting the WRITTING register must be cleared"""
-            # The application can only write new data if the CLP is not reading
-            # A configurable timeout is implemented to avoid infinite loops
-            t = time.time()
-            write_timeout = False
-            # while self.data_bank.get_coils(coils_regs.RX_READING.ADDRESS, coils_regs.RX_READING.SIZE)[0]:
-            print("Waiting for CLP to finish reading before writting...")
-            while self.CLP_reading:
-                if time.time() - t > Config.write_timeout:
-                    write_timeout = True
-                    break
+            try:
+                # The application can only write new data if the CLP is not reading
+                # A configurable timeout is implemented to avoid infinite loops
+                t = time.time()
+                write_timeout = False
+                # while self.data_bank.get_coils(coils_regs.RX_READING.ADDRESS, coils_regs.RX_READING.SIZE)[0]:
+                print("Waiting for CLP to finish reading before writting...")
+                while self.CLP_reading:
+                    if time.time() - t > Config.write_timeout:
+                        # write_timeout = True
+                        raise TimeoutError(f"Timeout trying to write parameter(s) to CLP. CLP was reading for more than {Config.write_timeout} seconds")
 
-            # If the CLP is not reading, the writting process can start
-            if not write_timeout:            
-                # self.data_bank.set_discrete_inputs(dig_inputs_regs.TX_WRITTING.ADDRESS, [True]) # Informs CLP that the Driver is writting some data to the modbus discrete inputs
+                # If the CLP is not reading, the writting process can start
+                # if not write_timeout:            
+                    # self.data_bank.set_discrete_inputs(dig_inputs_regs.TX_WRITTING.ADDRESS, [True]) # Informs CLP that the Driver is writting some data to the modbus discrete inputs
                 self._start_writting_data()  # Informs CLP that the Driver is writting some data to the modbus discrete inputs
 
                 # Repeats the writting process for every register in the 'reg_list'
@@ -581,9 +621,9 @@ class IAGModbusServer(mbServer):
                     if ( type(value) is bool ) and ( reg.SIZE != 1):
                         raise ValueError(f"Cannot write a boolean to {reg.TYPE.name}:{reg.ADDRESS}. This Register has {reg.SIZE} bits")
 
-                    time.sleep(0.1)
+                    # time.sleep(0.1)
                                     
-                    print(f"Trying to write value {value} to {reg.TAG} -> {time.time() - t} seconds [{write_timeout}]")
+                    # print(f"Trying to write value {value} to {reg.TAG} -> {time.time() - t} seconds [{write_timeout}]")
                     if reg.TYPE is RegType.DISCRETE_INPUT:
 
                         time.sleep(0.05)
@@ -595,9 +635,6 @@ class IAGModbusServer(mbServer):
                                 self.data_bank.set_discrete_inputs(reg.ADDRESS, num_bits)          # If the register is only 8 bits the value is saved directly to the register
                             else:               
 
-                                if reg.TAG == coils_regs.RX_V50.TAG:
-                                    print(f"Sending value {value} to register {reg.TAG} as bits {num_bits}")   
-
 
                                 # self.data_bank.set_discrete_inputs(reg.ADDRESS, num_bits) 
 
@@ -608,16 +645,18 @@ class IAGModbusServer(mbServer):
                                 # self.data_bank.set_discrete_inputs(reg.ADDRESS+16, num_bits[16:])  #| and the lower bits must be saved to next 16 bits
 
                 
+
                 
                 # self.data_bank.set_discrete_inputs(dig_inputs_regs.TX_WRITTING.ADDRESS, [False])  # Informs CLP that the Driver finished writting and there is a valid data ready for reading
                 self._stop_writting_data()  # Informs CLP that the Driver finished writting
 
                 # self.wait_confirmation(reg)
                 return "OK"
-                        
-            else:
-                print(f'Failed to write registers due to timeout. CLP is reading for more than {Config.write_timeout} seconds.')
+            except Exception as e:
+            # else:
+                # print(f'Failed to write registers due to timeout. CLP is reading for more than {Config.write_timeout} seconds.')
                 # raise RuntimeError(f'Failed to send {value} to register {reg.TAG} after {tries} tries')
+                self._stop_writting_data()  # Just to be sure that it stops writting
                 return "NOK"
             
 
