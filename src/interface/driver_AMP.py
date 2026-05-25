@@ -330,7 +330,46 @@ class DriverAMP(Driver):
     
     def read_firmware_status(self) -> str:
         """Precisa ser implementada pelo driver"""
-        ...
+        val  = self.mb_server.db_shadow.get_coils(coils_regs.RX_SASTAT.ADDRESS, coils_regs.RX_SASTAT.SIZE)
+        val_bits = "".join([str(int(b)) for b in val])
+        val_bits_bin = int(val_bits, 2)
+
+
+        if val_bits_bin & MotorProgramStatus.READY:
+            ...
+        if val_bits_bin & MotorProgramStatus.RUN_HOMING:
+            print('Motor running Home')
+        if val_bits_bin & MotorProgramStatus.ON_FAULT:
+            print('Motor on fault')
+        if val_bits_bin & MotorProgramStatus.CHECK_RANGES:
+            print('checking ranges')
+        if val_bits_bin & MotorProgramStatus.RUN_PARK:
+            print('Motor running Park')
+        if val_bits_bin & MotorProgramStatus.RUN_FOCUS_OUT:
+            print('Motor running FOCUS OUT')
+        if val_bits_bin & MotorProgramStatus.RUN_FOCUS_IN:
+            print('Motor running FOCUS IN')
+        if val_bits_bin & MotorProgramStatus.RUN_GOTO:
+            print('Motor running GO TO')
+        if val_bits_bin & MotorProgramStatus.MANUAL_MOVE:
+            print('Motor running MANUAL MOVE')
+        if val_bits_bin & MotorProgramStatus.ERROR_NEED_HOME:
+            print('ERROR - Need to do HOMING first')
+        if val_bits_bin & MotorProgramStatus.ERROR_NEED_HOME:
+            print('ERROR - Focus In error - too close to LIM-')
+        if val_bits_bin & MotorProgramStatus.ERROR_OUT_OF_RANGE:
+            print('ERROR - Velocity or position out of range')
+        if val_bits_bin & MotorProgramStatus.ERROR_RS485:
+            print('ERROR -  RS485 error or Motor OFF')
+        if val_bits_bin & MotorProgramStatus.ERROR_PADDLE:
+            print('ERROR - Paddle Short circuit')
+        if val_bits_bin & MotorProgramStatus.ERROR_LIM_SWITCH:
+            print('ERROR - LIM switch error')
+        if val_bits_bin & MotorProgramStatus.VALID_STATUS:
+            print('Motor ON & ID OK')
+        else:
+            print('Motor OFF or ID error')
+
             
     
     def sendCommand(self, command: str) -> str:

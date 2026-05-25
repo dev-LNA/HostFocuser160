@@ -295,12 +295,14 @@ class IAGModbusServer(mbServer):
                 self.timeout.reset()
 
                 if self.timeout.status:
-                    print("TIMEOUT")        #TODO: Implementar lógica de timeout 
+                    # print("TIMEOUT")        #TODO: Implementar lógica de timeout 
+                    ...
                 else:
-                    print("NO TIMEOUT")
+                    # print("NO TIMEOUT")
+                    ...
 
                 
-            print(f"Handshake value changed to {new}")
+            # print(f"Handshake value changed to {new}")
 
             # Saves the new handshake value in the shadow register and mirror it to the CLP
             self.db_shadow.set_coils(coils_regs.HANDSHAKE.ADDRESS, [new]) 
@@ -487,18 +489,18 @@ class IAGModbusServer(mbServer):
 
 
     def _handle_command_timeout(self, register: RegsInfo):
-        print(f"TIMEOUT: {register.TAG} command was not confirmed by the CLP in less than {Config.cmd_timeout} seconds.")
+        print(f"\033[31mTIMEOUT\033[0m: {register.TAG} command was not confirmed by the CLP in less than {Config.cmd_timeout} seconds.")
         self.data_bank.set_discrete_inputs(register.ADDRESS, [False])   # Clears the command discrete input to allow sending new commands to the CLP
         #TODO: Implementar lógica de timeout, realizar a leitura dos status do CLP e verificar qual foi o erro que ocorreu
 
 
     def _handle_command_NOK(self, register: RegsInfo):
-        print(f"CLP returned NOK for command: {register.TAG}")
+        print(f"CLP returned\033[31m NOK\033[0m for command: {register.TAG}")
         self.data_bank.set_discrete_inputs(register.ADDRESS, [False])   # Clears the command discrete input to allow sending new commands to the CLP
         # self.data_bank.set_discrete_inputs(dig_inputs_regs.NOK.ADDRESS, [True])   # Sets the NOK discrete input to indicate unsuccessful command execution
 
     def _handle_command_OK(self, register: RegsInfo):
-        print(f"CLP returned OK for command: {register.TAG}")
+        print(f"CLP returned\033[32m OK\033[0m for command: {register.TAG}")
         self.data_bank.set_discrete_inputs(register.ADDRESS, [False])   # Clears the command discrete input to allow sending new commands to the CLP
         # self.data_bank.set_discrete_inputs(dig_inputs_regs.OK.ADDRESS, [True])   # Sets the OK discrete input to indicate successful command execution
 

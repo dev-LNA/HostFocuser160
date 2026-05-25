@@ -355,6 +355,7 @@ class Server(QObject):
                     time.sleep(0.1)             # delay between tries                         
                     self.signals.status_message.emit(f"Trying Connect to Router: Try number {_try+1}")                      # Emits signals for GUI update
                     reachable = ping(Config.gateway_ip, count=1, timeout=0.6, privileged=False).is_alive         # Tries to ping the router IP
+                    print(f'trying to ping gateway at {Config.gateway_ip}')
                     if reachable:                                                                               # If the ping is succesful
                         self.router_reachable = ReachStatus.CONNECTED
                         self.signals.status_message.emit(f"Connection succesfull after {_try+1} tries")                         # Emits signals for GUI update
@@ -370,6 +371,7 @@ class Server(QObject):
                 for _try in range(5):                                                                   # Tries 5 times to ping the router
                     time.sleep(0.1)             # delay between tries
                     self.signals.status_message.emit(f"Trying Connect to Motor: Try number {_try+1}")               # Emits signals for GUI update
+                    print(f'Trying to ping motor at {Config.device_ip}:{Config.device_port}')
                     reachable = self.motor.ping()                                              # Tries to ping the motor IP
                     if reachable:                                                               # If the ping is successful
                         self.motor_reachable = ReachStatus.CONNECTED
@@ -579,7 +581,7 @@ class Server(QObject):
             motor_response = self.motor.send_command(cmd)
             self.communicating_to_motor = False
             if motor_response == "NOK":
-                raise RuntimeError(f'Motor returned "NOK" trying to run command "{cmd["COMMAND"].upper()}"')
+                raise RuntimeError(f'Motor returned \033[31m"NOK"\033[0m trying to run command "{cmd["COMMAND"].upper()}"')
         
         # self.zmq_comm.reply('ACK')                  # Replies 'ACK' to inform the client that everything went ok
         self.logger.info(f'Command issued: {cmd}')
