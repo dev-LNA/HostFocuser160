@@ -17,7 +17,8 @@ from PyQt6.QtWidgets import (
     QSlider,
     QStackedWidget,
     QRadioButton,
-    QSpinBox)
+    QSpinBox,
+    QDoubleSpinBox)
 
 
 
@@ -292,20 +293,20 @@ class UiWidgets(QWidget):
             self.spinMaxStep = window.findChild(QSpinBox, 'spinMaxStep')
             self.spinMaxStep: QSpinBox = self.spinMaxStep
 
-            self.spinAcceleration = window.findChild(QSpinBox, 'spinAcceleration')
-            self.spinAcceleration: QSpinBox = self.spinAcceleration
+            self.spinAcceleration = window.findChild(QDoubleSpinBox, 'spinAcceleration')
+            self.spinAcceleration: QDoubleSpinBox = self.spinAcceleration
 
-            self.spinDeceleration = window.findChild(QSpinBox, 'spinDeceleration')
-            self.spinDeceleration: QSpinBox = self.spinDeceleration
+            self.spinDeceleration = window.findChild(QDoubleSpinBox, 'spinDeceleration')
+            self.spinDeceleration: QDoubleSpinBox = self.spinDeceleration
 
-            self.spinIdleCurrent = window.findChild(QSpinBox, 'spinIdleCurrent')
-            self.spinIdleCurrent: QSpinBox = self.spinIdleCurrent
+            self.spinIdleCurrent = window.findChild(QDoubleSpinBox, 'spinIdleCurrent')
+            self.spinIdleCurrent: QDoubleSpinBox = self.spinIdleCurrent
 
-            self.spinRunCurrent = window.findChild(QSpinBox, 'spinRunCurrent')
-            self.spinRunCurrent: QSpinBox = self.spinRunCurrent
+            self.spinRunCurrent = window.findChild(QDoubleSpinBox, 'spinRunCurrent')
+            self.spinRunCurrent: QDoubleSpinBox = self.spinRunCurrent
 
-            self.spinAccCurrent = window.findChild(QSpinBox, 'spinAccCurrent')
-            self.spinAccCurrent: QSpinBox = self.spinAccCurrent
+            self.spinAccCurrent = window.findChild(QDoubleSpinBox, 'spinAccCurrent')
+            self.spinAccCurrent: QDoubleSpinBox = self.spinAccCurrent
 
 
         # Frame send command

@@ -531,7 +531,8 @@ class SettingsWindow(QMainWindow):
                     for key in keys:
                         self._config_settings[key.value].VALUE = self._changed_settings[key]                                               
                 
-                    update_config()
+                    
+                    update_config()                                                 # Updates the Config object with the new values from config.toml
                     self._changed_settings.clear()                                  # Resets changes dictionary   
                     self._validate_parameters()
                     self.logger.info("Ended motor configuration")

@@ -52,7 +52,6 @@ class Config:
     max_step: int = get_toml('Device', 'max_step')
     temp_comp: bool = get_toml('Device', 'temp_comp')
     stepsize: int = get_toml('Device', 'step_size')
-    enc_2_microns: float = get_toml('Device', 'encoder2microns')
     speed_factor: int = get_toml('Device', 'speedFactor')
     maxincrement: int = get_toml('Device', 'max_increment')
     speed_security: int = get_toml('Device', 'speed_security')
@@ -69,6 +68,9 @@ class Config:
     run_current: int = get_toml('Device', 'run_current')
     acc_current: int = get_toml('Device', 'acc_current')
     cmd_timeout: int = get_toml('Device', 'cmd_timeout')
+    enc_2_microns: float = get_toml('Device', 'encoder2microns')
+    steps_2_encoder: int = get_toml('Device', 'steps2encoder')
+    microns_2_rps: float = get_toml('Device', 'microns2rps')
     # ---------------
     # Logging Section
     # ---------------
@@ -110,7 +112,6 @@ def update_config():
     Config.max_step = get_toml('Device', 'max_step')
     Config.temp_comp = get_toml('Device', 'temp_comp')
     Config.stepsize = get_toml('Device', 'step_size')
-    Config.enc_2_microns = get_toml('Device', 'encoder2microns')
     Config.speed_factor = get_toml('Device', 'speedFactor')
     Config.maxincrement = get_toml('Device', 'max_increment')
     Config.speed_security = get_toml('Device', 'speed_security')
@@ -127,6 +128,9 @@ def update_config():
     Config.run_current = get_toml('Device', 'run_current')
     Config.acc_current = get_toml('Device', 'acc_current')
     Config.cmd_timeout = get_toml('Device', 'cmd_timeout')
+    Config.enc_2_microns = get_toml('Device', 'encoder2microns')
+    Config.steps_2_encoder = get_toml('Device', 'steps2encoder')
+    Config.microns_2_rps = get_toml('Device', 'microns2rps')
     # ---------------
     # Logging Section
     # ---------------

@@ -158,7 +158,8 @@ class DriverAMP(Driver):
         """
         if encoder_pos is None:
             encoder_pos = self.read_encoder()
-        pos = int(round(encoder_pos / Config.enc_2_microns))
+        # pos = int(round(encoder_pos / Config.enc_2_microns))
+        pos = int(round(encoder_pos * Config.enc_2_microns))
         return pos
     
     def set_position(self, position: int) -> str:
@@ -173,7 +174,8 @@ class DriverAMP(Driver):
         if position < 0 or position > Config.max_pos:
             raise ValueError(f"Position value {position} is out of range (0 - {Config.max_pos} microns)")
 
-        pos_conv = int(round((Config.enc_2_microns * position)))
+        # pos_conv = int(round((Config.enc_2_microns * position)))
+        pos_conv = int(round((Config.enc_2_microns / position)))
 
 
 
@@ -231,10 +233,16 @@ class DriverAMP(Driver):
     
     def param_backlash(self, value: int | str | bool = None) -> str:
         """When no value is provided, returns the current backlash value from the configuration.
-        When a value is provided, writes the new backlash value to the CLP"""
+        When a value is provided, writes the new backlash value to the CLP
+        Receives value in steps
+        User defines this value in microns, so must convert to encoder and then to steps
+        microns -> encoder -> steps"""
         if value is None:
             return str(Config.backlash)
             # value = Config.backlash
+
+        value = value / Config.enc_2_microns
+        value = int(value / Config.steps_2_encoder)
 
         return self.mb_server.write_param(dig_inputs_regs.TX_V74, value)
 
@@ -244,9 +252,15 @@ class DriverAMP(Driver):
     
     def param_max_pos(self, value: int | str | bool = None) -> str:
         """When no value is provided, returns the current maximum position value from the configuration.
-        When a value is provided, writes the new maximum position value to the CLP"""
+        When a value is provided, writes the new maximum position value to the CLP
+        Receives value in steps
+        User defines this value in microns, so must convert to encoder and then to steps
+        microns -> encoder -> steps"""
         if value is None:
             return str(Config.max_pos)
+        
+        value = value / Config.enc_2_microns
+        value = int(value / Config.steps_2_encoder)
 
         return self.mb_server.write_param(dig_inputs_regs.TX_V71, value)
             
@@ -254,36 +268,57 @@ class DriverAMP(Driver):
     
     def param_park_pos(self, value: int | str | bool = None) -> str:
         """When no value is provided, returns the current parking position value from the configuration.
-        When a value is provided, writes the new parking position value to the CLP"""
+        When a value is provided, writes the new parking position value to the CLP
+        Receives value in steps
+        User defines this value in microns, so must convert to encoder and then to steps
+        microns -> encoder -> steps"""
         if value is None:
             return str(Config.park_pos)
+        
+        value = value / Config.enc_2_microns
+        value = int(value / Config.steps_2_encoder)
 
         return self.mb_server.write_param(dig_inputs_regs.TX_V83, value)
 
     
     def param_max_speed(self, value: int | str | bool = None) -> str:
         """When no value is provided, returns the current maximum speed value from the configuration.
-        When a value is provided, writes the new maximum speed value to the CLP"""
+        When a value is provided, writes the new maximum speed value to the CLP
+        CLP receives value rps/s * 240 
+        User defines this value in microns/s
+        microns/s -> rps/s -> * 240"""
         if value is None:
             return str(Config.max_speed)
+
+        value = int(value * Config.microns_2_rps * 240)
 
         return self.mb_server.write_param(dig_inputs_regs.TX_V75, value)
 
     
     def param_normal_speed(self, value: int | str | bool = None) -> str:
         """When no value is provided, returns the current normal speed value from the configuration.
-        When a value is provided, writes the new normal speed value to the CLP"""
+        When a value is provided, writes the new normal speed value to the CLP
+        CLP receives value rps/s * 240 
+        User defines this value in microns/s
+        microns/s -> rps/s -> * 240"""
         if value is None:
             return str(Config.normal_speed)
+
+        value = int(value * Config.microns_2_rps * 240)
 
         return self.mb_server.write_param(dig_inputs_regs.TX_V77, value)
 
     
     def param_low_speed(self, value: int | str | bool = None) -> str:
         """When no value is provided, returns the current low speed value from the configuration.
-        When a value is provided, writes the new low speed value to the CLP"""
+        When a value is provided, writes the new low speed value to the CLP
+        CLP receives value rps/s * 240 
+        User defines this value in microns/s
+        microns/s -> rps/s -> * 240"""
         if value is None:
             return str(Config.low_speed)
+
+        value = int(value * Config.microns_2_rps * 240)
 
         return self.mb_server.write_param(dig_inputs_regs.TX_V76, value)
 
