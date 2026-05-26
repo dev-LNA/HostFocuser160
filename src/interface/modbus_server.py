@@ -573,9 +573,9 @@ class IAGModbusServer(mbServer):
         self._stop_writting_data()
 
         for tries in range(2):
-            self._start_writting_data()
+            # self._start_writting_data()
             resp = self.send_command(dig_inputs_regs.TX_PR)   # Sends a parameter request command to the CLP to inform that the Driver will write a parameter to the CLP
-            self._stop_writting_data()
+            # self._stop_writting_data()
             if resp == "OK":
 
                 try:
@@ -676,7 +676,7 @@ class IAGModbusServer(mbServer):
                     # print(f"Trying to write value {value} to {reg.TAG} -> {time.time() - t} seconds [{write_timeout}]")
                     if reg.TYPE is RegType.DISCRETE_INPUT:
 
-                        time.sleep(0.05)
+                        # time.sleep(0.2)
                         if (type(value) is bool) or (reg.SIZE==1 and ( (value==0) or (value==1) ) ):                # If the value is a bool or the register has only one bit than no conversion is needed
                             self.data_bank.set_discrete_inputs(reg.ADDRESS, [value])
                         else:                                                                                       #| If the register has multiple bits than the value must be converted

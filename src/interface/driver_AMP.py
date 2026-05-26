@@ -103,7 +103,7 @@ class DriverAMP(Driver):
                 self.mb_run_thread.start()
 
                 while self.mb_server.handshake is False and retries < max_retries:
-                    time.sleep(1)             # Delay between retries #TODO: colocar isso no arquivo de configuração config_IAG.toml
+                    time.sleep(0.2)             # Delay between retries #TODO: colocar isso no arquivo de configuração config_IAG.toml
                     retries += 1
 
                 # dummy_mb_server.data_bank.set_discrete_inputs(dig_inputs_regs.HANDSHAKE.ADDRESS, [True])  #| TX_WAIT e TX_BUSY precisam ser
@@ -136,7 +136,7 @@ class DriverAMP(Driver):
         else:
             try:
                 while self.mb_server.handshake is False and retries < max_retries:
-                    time.sleep(1)             # Delay between retries #TODO: colocar isso no arquivo de configuração config_IAG.toml
+                    time.sleep(0.2)             # Delay between retries #TODO: colocar isso no arquivo de configuração config_IAG.toml
                     retries += 1
                 if retries >= max_retries:
                     print("Max retries reached. Modbus server handshake failed.")
@@ -378,7 +378,7 @@ class DriverAMP(Driver):
             self.driver_comm.run_park.emit(False, "statusLed", "OFF")
 
 
-        if not (sastat & MotorProgramStatus.READY):
+        if sastat & MotorProgramStatus.READY:
             return "Idle"
         else:
             return "Running"
