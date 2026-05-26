@@ -236,18 +236,30 @@ class IAGModbusServer(mbServer):
                 # information was received by the python
                 # if not self.data_bank.get_coils(coils_regs.RX_WRITTING.ADDRESS, 1)[0]: 
                 # if not self.CLP_writting:
-                if self._start_reading_data():          # Informa o CLP que o python está lendo dos registradores
-                    for reg in coils_regs:
-                        if not self._compare_regs(reg):     # If false means that the register value was changed
-                            self._check_clp_owned_coils(reg)               # Checks if any clp owned coil was changed 
+                self._mirror_clp_owned_coils()
 
-                    # self.data_bank.set_discrete_inputs(dig_inputs_regs.TX_READING.ADDRESS, [False])
-                    self._stop_reading_data()          # Informa o CLP que o python finalizou a leitura dos registradores
+                if not self.CLP_writting:
+                    if self._start_reading_data():
+                        for reg in coils_regs:
+                            if not self._compare_regs(reg):
+                                current_reg_val = self._conv_reg_to_value(reg, self.data_bank)
+                                self.db_shadow.set_coils(reg.ADDRESS, self._conv_num_bits(current_reg_val, reg.SIZE))
+                    self._stop_reading_data()
+                            
+                        
 
-                    # If there is any coil that had its value changed
-                    if self._changed_coils:   
-                        self._write(self._changed_coils)   # Writes the changed coils to the CLP
-                        self._changed_coils.clear()         # Clears the set of changed coils
+                # if self._start_reading_data():          # Informa o CLP que o python está lendo dos registradores
+                #     for reg in coils_regs:
+                #         if not self._compare_regs(reg):     # If false means that the register value was changed
+                #             self._check_clp_owned_coils(reg)               # Checks if any clp owned coil was changed 
+
+                #     # self.data_bank.set_discrete_inputs(dig_inputs_regs.TX_READING.ADDRESS, [False])
+                #     self._stop_reading_data()          # Informa o CLP que o python finalizou a leitura dos registradores
+
+                #     # If there is any coil that had its value changed
+                #     if self._changed_coils:   
+                #         self._write(self._changed_coils)   # Writes the changed coils to the CLP
+                #         self._changed_coils.clear()         # Clears the set of changed coils
 
 
 
@@ -314,6 +326,20 @@ class IAGModbusServer(mbServer):
             # Saves the new handshake value in the shadow register and mirror it to the CLP
             self.db_shadow.set_coils(coils_regs.HANDSHAKE.ADDRESS, [new]) 
             self.data_bank.set_discrete_inputs(dig_inputs_regs.HANDSHAKE.ADDRESS, [new])
+
+    def _mirror_clp_owned_coils(self):
+        for reg in CLP_Owned:
+            current_reg_value = self.data_bank.get_coils(reg.ORIGIN.ADDRESS, reg.ORIGIN.SIZE)
+            # self.data_bank.set_discrete_inputs(reg.RESPONSE.ADDRESS, current_reg_value)
+            match reg.ORIGIN.SIZE:
+                case 32:
+                    # current_reg_value.reverse()
+                    self.data_bank.set_discrete_inputs(reg.RESPONSE.ADDRESS, current_reg_value[16:])     #|  If the register is 32 bits the higher bits must be saved to the first 16 bits of the address   
+                    self.data_bank.set_discrete_inputs(reg.RESPONSE.ADDRESS+16, current_reg_value[:16]) 
+                case _:            
+                    self.data_bank.set_discrete_inputs(reg.RESPONSE.ADDRESS, current_reg_value)
+
+
 
     def _check_clp_owned_coils(self, reg: RegsInfo):
 
@@ -471,8 +497,9 @@ class IAGModbusServer(mbServer):
             register (RegsInfo): Register that represents the command to be sent, it must be a discrete input register that represents a command (ex: 'TX_GS21')"""
 
         print(f"[*] Sending command {register.TAG.upper()} to CLP")
-       
+        self._start_writting_data()
         resp = self._write({(register, True)})   # Writes the command to the CLP
+        self._stop_writting_data()
         if resp == "OK":
             # If the command was successfully sent to the CLP, the Driver will wait for the CLP response
             print(f"Command {register.TAG.upper()} sent, waiting confirmation...")
@@ -560,7 +587,8 @@ class IAGModbusServer(mbServer):
 
                         p_dict = param_vars._asdict()
                         for p in params:
-                            if p[0].TAG in p_dict:
+                            # if p[0].TAG in p_dict:
+                            if p[0] in p_dict:
 
                                 print(f"Waiting for CLP to mirror the value of parameter {p[0].TAG} to the response register {p_dict[p[0].TAG].RESPONSE.TAG}...")
 
@@ -687,16 +715,16 @@ class IAGModbusServer(mbServer):
         If the writting process is locked the reading status cannot be set to True to avoid reading data that is being writted to the CLP,
           in this case the function returns False and the reading status is not changed."""
         self.reading = True
-        if self._reading:
-            print(f"Started reading data from CLP [{datetime.now().strftime('%H:%M:%S')}]")
+        # if self._reading:
+        #     print(f"Started reading data from CLP [{datetime.now().strftime('%H:%M:%S')}]")
         return self._reading
     
     def _stop_reading_data(self) -> bool:
         """Sets the reading status of the ModbusServer to False and returns if the status was changed or not. 
         The reading status can be set to False even if the writting process is locked because setting the reading status to False does not cause any risk of reading data that is being writted by the CLP."""
         self.reading = False
-        if self._reading == False:
-            print(f"Stopped reading data from CLP [{datetime.now().strftime('%H:%M:%S')}]")
+        # if self._reading == False:
+        #     print(f"Stopped reading data from CLP [{datetime.now().strftime('%H:%M:%S')}]")
         return self._reading
     
     def _start_writting_data(self) -> bool:
@@ -704,15 +732,15 @@ class IAGModbusServer(mbServer):
         If the reading process is locked the writting status cannot be set to True to avoid writting data that is being read by the CLP,
           in this case the function returns False and the writting status is not changed."""
         self.writting = True
-        if self._writting:
-            print(f"Started writting data to CLP [{datetime.now().strftime('%H:%M:%S')}]")
+        # if self._writting:
+        #     print(f"Started writting data to CLP [{datetime.now().strftime('%H:%M:%S')}]")
         return self._writting
     
     def _stop_writting_data(self) -> bool:
         """Sets the writting status of the ModbusServer to False and returns if the status was changed or not. 
         The writting status can be set to False even if the reading process is locked because setting the writting status to False does not cause any risk of writting data that is being read by the CLP."""
         self.writting = False
-        if self._writting == False:
-            print(f"Stopped writting data to CLP [{datetime.now().strftime('%H:%M:%S')}]")
+        # if self._writting == False:
+        #     print(f"Stopped writting data to CLP [{datetime.now().strftime('%H:%M:%S')}]")
         return self._writting
 
