@@ -195,7 +195,6 @@ class FocuserOPD (QMainWindow):
 
 ######### OUTROS TESTES ##########
         self.ui_elements.btnTestes.clicked.connect(self._testes)
-        self.server.signals.teste.info.connect(self.ui_elements.ledTeste.setProperty)
 
 
     def _config_server(self):
@@ -230,6 +229,8 @@ class FocuserOPD (QMainWindow):
             # Config.device_ip = get_toml('Device', 'ip_160')                     # Sets the IP address according to selection
             self.ui_elements.lblTitle.setText("Focuser 160")                    # Sets main window label according to selection
             self.server.init_device(MotorModels.ARCUS_DMX_ETH)                   # Initializes the motor driver according to the focuser
+            self.ui_elements.frameIAG.setFixedSize(QSize(0,0))
+            self.ui_elements.gbFocuserStatus.setFixedSize(QSize(293,240))
             self._init_focuser()                                                # Changes to the server page                                  
         elif self.ui_elements.rbIAG.isChecked():                            # Checks radio button value
             print("INICIAR FOCALIZADOR DO IAG")                                 # If the IAG was chosen
@@ -237,6 +238,8 @@ class FocuserOPD (QMainWindow):
             # Config.device_ip = get_toml('Device', 'ip_iag')                     # Sets the IP address according to selection
             self.ui_elements.lblTitle.setText("Focuser IAG")                    # Sets main window label according to selection
             self.server.init_device(MotorModels.AMP_MOTOR)                       # Initializes the motor driver according to the focuser
+            self.ui_elements.frameIAG.setFixedSize(QSize(273,62))
+            self.ui_elements.gbFocuserStatus.setFixedSize(QSize(293,301))
             self._init_focuser()                                                # Changes to the server page      
         else:                                                               # If the 'start server' button is pressed with no focuser selected shows a message
             QMessageBox.information(                                            
@@ -281,6 +284,10 @@ class FocuserOPD (QMainWindow):
         self.server.motor.signals.firmware_status.connect(self.ui_elements.lblStatus_val.setText)
         self.server.motor.signals.parking.info.connect(self.ui_elements.ledPark.setProperty)
         self.server.motor.signals.alarm.info.connect(self.ui_elements.ledAlarm.setProperty)
+
+        self.server.motor.driver.driver_comm.run_focus_in.info.connect(self.ui_elements.ledFocusIn.setProperty)
+        self.server.motor.driver.driver_comm.run_focus_out.info.connect(self.ui_elements.ledFocusOut.setProperty)
+        self.server.motor.driver.driver_comm.run_park.info.connect(self.ui_elements.ledPark.setProperty)
 
         self.menuBar().setVisible(True)                                     # Sets menu bar visibility
         self.ui_elements.toolBar.setVisible(True)                           # Sets tool bar visibility

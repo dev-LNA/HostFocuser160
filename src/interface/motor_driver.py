@@ -3,9 +3,14 @@ from typing import NamedTuple
 
 from PyQt6.QtCore import pyqtSignal, QObject
 from src.utils.constants import MotorParamsIdx, ServerCommands
+from src.utils.signals import PropertySignals
 
 class DriverCommunicator(QObject):
     status = pyqtSignal(bool)
+
+    run_focus_in = PropertySignals()
+    run_focus_out = PropertySignals()
+    run_park = PropertySignals()
 
 class Driver(ABC):
     def __init__(self, model: str):

@@ -145,7 +145,7 @@ class MotorStatusFlags(IntFlag):
     INVALID = auto()
 
 class MotorProgramStatus(IntFlag):
-    NO_INIT = 0
+    NO_INIT = 1
     READY = auto()
     RUN_HOMING = auto()
     ON_FAULT = auto()

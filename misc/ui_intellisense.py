@@ -104,8 +104,11 @@ class UiWidgets(QWidget):
             self.ledAlarm = window.findChild(QLabel, 'ledAlarm')
             self.ledAlarm: QLabel = self.ledAlarm
 
-            self.ledTeste = window.findChild(QLabel, 'ledTeste')
-            self.ledTeste: QLabel = self.ledTeste
+            self.ledFocusIn = window.findChild(QLabel, 'ledFocusIn')
+            self.ledFocusIn: QLabel = self.ledFocusIn
+
+            self.ledFocusOut = window.findChild(QLabel, 'ledFocusOut')
+            self.ledFocusOut: QLabel = self.ledFocusOut
 
             self.conBarServerRouter = window.findChild(QProgressBar, 'conBarServerRouter')
             self.conBarServerRouter: QProgressBar = self.conBarServerRouter
@@ -194,6 +197,11 @@ class UiWidgets(QWidget):
 
             self.posSlider = window.findChild(QSlider, 'posSlider')
             self.posSlider: QSlider = self.posSlider
+
+            self.frameIAG = window.findChild(QFrame, 'frameIAG')
+            self.frameIAG: QFrame = self.frameIAG
+
+
 
         elif window_name == "settings":
             # === Definitions for settings window components === #

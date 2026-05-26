@@ -360,6 +360,23 @@ class DriverAMP(Driver):
 
         sastat = self.mb_server._conv_reg_to_value(coils_regs.RX_SASTAT, self.mb_server.db_shadow)
         # print(f"SASTAT = {sastat}")
+        
+
+        if sastat & MotorProgramStatus.RUN_FOCUS_OUT:
+            self.driver_comm.run_focus_out.emit(True, "statusLed", "WAIT")
+        else:
+            self.driver_comm.run_focus_out.emit(False, "statusLed", "OFF")
+
+        if sastat & MotorProgramStatus.RUN_FOCUS_IN:
+            self.driver_comm.run_focus_in.emit(True, "statusLed", "WAIT")
+        else:
+            self.driver_comm.run_focus_in.emit(False, "statusLed", "OFF")
+
+        if sastat & MotorProgramStatus.RUN_PARK:
+            self.driver_comm.run_park.emit(True, "statusLed", "WAIT")
+        else:
+            self.driver_comm.run_park.emit(False, "statusLed", "OFF")
+
 
         if not (sastat & MotorProgramStatus.READY):
             return "Idle"
