@@ -1,3 +1,5 @@
+from abc import abstractmethod
+
 from src.interface.motor_driver import Driver
 from src.utils.constants import MotorProgramStatus
 
@@ -42,11 +44,11 @@ class DriverAMP(Driver):
         while retries < max_retries and not _con:
             try:
                 # host => Server IP Address
-                self.mb_server = IAGModbusServer(host=Config.device_ip, port=Config.device_port,no_block=True, data_bank=dataBank_config)
-                self.mb_server.start()
-                # self.mb_server.signals.signal_stop.connect(self.disconnect_motor)
-                self.mb_run_thread = Thread(target=self.mb_server.run)
-                self.mb_run_thread.start()
+                # self.mb_server = IAGModbusServer(host=Config.device_ip, port=Config.device_port,no_block=True, data_bank=dataBank_config)
+                # self.mb_server.start()
+                # # self.mb_server.signals.signal_stop.connect(self.disconnect_motor)
+                # self.mb_run_thread = Thread(target=self.mb_server.run)
+                # self.mb_run_thread.start()
                 self.mb_server.running = True
                 _con = True
                 self.mb_server.data_bank.set_discrete_inputs(dig_inputs_regs.TX_WRITTING.ADDRESS, [False])  #| TX_WAIT e TX_BUSY precisam ser 
@@ -61,6 +63,10 @@ class DriverAMP(Driver):
         try:
             if self.mb_server:
                 print("Closing modbus server...")
+                self.mb_server._start_writting_data()
+                self.mb_server.data_bank.set_discrete_inputs(dig_inputs_regs.TX_SVON.ADDRESS, [False])   # Informs the CLP that the Driver is not active anymore
+                self.mb_server._stop_writting_data()
+                time.sleep(0.2)  # Delay to ensure the CLP reads the change in the SVON register before the server is closed
                 self.mb_server.stop_server = True
                 self.mb_run_thread.join()
                 self.mb_server.stop()
@@ -74,12 +80,15 @@ class DriverAMP(Driver):
     def ping_motor(self) -> str:
         """Creates a dummy connection to the motor, just to verify if the modbus server
           is correctly connected and the handshake was successfully made."""
+        
+        retries = 0
+        max_retries = 5         #TODO: colocar isso no arquivo de configuração config_IAG.toml
+        
         if self.mb_server is None:                  #   If the server was not instantiated
             # self.running = True                     #   Instantiates and starts the server (needed to read handshake)
 
 
-            retries = 0
-            max_retries = 5         #TODO: colocar isso no arquivo de configuração config_IAG.toml
+
             _con = False
             # while retries < max_retries and not _con:
             try:
@@ -87,13 +96,13 @@ class DriverAMP(Driver):
                                 d_inputs_size=DB_size.DI_LAST_ADDRESS+1, d_inputs_default_value=False,               #|  Config value for the modbus data bank.
                                 h_regs_size=0, h_regs_default_value=0,                          #|  
                                 i_regs_size=0, i_regs_default_value=0)                          #|
-                dummy_mb_server = IAGModbusServer(host=Config.device_ip, port=Config.device_port ,no_block=True, data_bank=dataBank_config)
-                dummy_mb_server.start()
+                self.mb_server = IAGModbusServer(host=Config.device_ip, port=Config.device_port ,no_block=True, data_bank=dataBank_config)
+                self.mb_server.start()
 
-                dummy_mb_server_run_thread = Thread(target=dummy_mb_server.run)
-                dummy_mb_server_run_thread.start()
+                self.mb_run_thread = Thread(target=self.mb_server.run)
+                self.mb_run_thread.start()
 
-                while dummy_mb_server.handshake is False and retries < max_retries:
+                while self.mb_server.handshake is False and retries < max_retries:
                     time.sleep(1)             # Delay between retries #TODO: colocar isso no arquivo de configuração config_IAG.toml
                     retries += 1
 
@@ -102,12 +111,12 @@ class DriverAMP(Driver):
                 # time.sleep(2)          # Delay to ensure the handshake is read by the client
 
                 # Closes the dummy server connection, since it was only used to verify the handshake, and is not needed anymore.
-                print("Closing modbus server...")
-                dummy_mb_server.stop_server = True
-                dummy_mb_server_run_thread.join()
-                dummy_mb_server.stop()
-                dummy_mb_server = None
-                time.sleep(1)
+                # print("Closing modbus server...")
+                # dummy_mb_server.stop_server = True
+                # dummy_mb_server_run_thread.join()
+                # dummy_mb_server.stop()
+                # dummy_mb_server = None
+                # time.sleep(1)
 
                 # If the max retries was reached and the handshake was not made, closes the dummy server and 
                 # raises an exception to inform that the handshake was not successful, and the motor is not reachable.
@@ -119,6 +128,21 @@ class DriverAMP(Driver):
 
                 # If the handshake was successful, continues without raising an exception
                 #  and informs that the motor is reachable.
+                return "OK"
+            except Exception as e:
+                print(str(e))
+                raise (e)
+            
+        else:
+            try:
+                while self.mb_server.handshake is False and retries < max_retries:
+                    time.sleep(1)             # Delay between retries #TODO: colocar isso no arquivo de configuração config_IAG.toml
+                    retries += 1
+                if retries >= max_retries:
+                    print("Max retries reached. Modbus server handshake failed.")
+                    # self.logger.error("Max retries reached. Modbus server handshake failed.")
+
+                    raise RuntimeError("Error pinging modbus server: Max retries reached. Modbus server handshake failed.")
                 return "OK"
             except Exception as e:
                 print(str(e))
@@ -161,9 +185,12 @@ class DriverAMP(Driver):
         response = self.mb_server._conv_reg_to_value(coils_regs.RX_EX, self.mb_server.db_shadow)
         return response
     
+
     def read_homing(self) -> bool:
         """Precisa ser implementada pelo driver"""
-        return False
+        return self.mb_server.db_shadow.get_coils(coils_regs.RX_V15.ADDRESS, coils_regs.RX_V15.SIZE)[0]
+
+       # return False
 
     
     def read_parking(self) -> bool:
@@ -330,45 +357,77 @@ class DriverAMP(Driver):
     
     def read_firmware_status(self) -> str:
         """Precisa ser implementada pelo driver"""
-        val  = self.mb_server.db_shadow.get_coils(coils_regs.RX_SASTAT.ADDRESS, coils_regs.RX_SASTAT.SIZE)
-        val_bits = "".join([str(int(b)) for b in val])
-        val_bits_bin = int(val_bits, 2)
 
+        sastat = self.mb_server._conv_reg_to_value(coils_regs.RX_SASTAT, self.mb_server.db_shadow)
+        # print(f"SASTAT = {sastat}")
 
-        if val_bits_bin & MotorProgramStatus.READY:
-            ...
-        if val_bits_bin & MotorProgramStatus.RUN_HOMING:
-            print('Motor running Home')
-        if val_bits_bin & MotorProgramStatus.ON_FAULT:
-            print('Motor on fault')
-        if val_bits_bin & MotorProgramStatus.CHECK_RANGES:
-            print('checking ranges')
-        if val_bits_bin & MotorProgramStatus.RUN_PARK:
-            print('Motor running Park')
-        if val_bits_bin & MotorProgramStatus.RUN_FOCUS_OUT:
-            print('Motor running FOCUS OUT')
-        if val_bits_bin & MotorProgramStatus.RUN_FOCUS_IN:
-            print('Motor running FOCUS IN')
-        if val_bits_bin & MotorProgramStatus.RUN_GOTO:
-            print('Motor running GO TO')
-        if val_bits_bin & MotorProgramStatus.MANUAL_MOVE:
-            print('Motor running MANUAL MOVE')
-        if val_bits_bin & MotorProgramStatus.ERROR_NEED_HOME:
-            print('ERROR - Need to do HOMING first')
-        if val_bits_bin & MotorProgramStatus.ERROR_NEED_HOME:
-            print('ERROR - Focus In error - too close to LIM-')
-        if val_bits_bin & MotorProgramStatus.ERROR_OUT_OF_RANGE:
-            print('ERROR - Velocity or position out of range')
-        if val_bits_bin & MotorProgramStatus.ERROR_RS485:
-            print('ERROR -  RS485 error or Motor OFF')
-        if val_bits_bin & MotorProgramStatus.ERROR_PADDLE:
-            print('ERROR - Paddle Short circuit')
-        if val_bits_bin & MotorProgramStatus.ERROR_LIM_SWITCH:
-            print('ERROR - LIM switch error')
-        if val_bits_bin & MotorProgramStatus.VALID_STATUS:
-            print('Motor ON & ID OK')
+        if not (sastat & MotorProgramStatus.READY):
+            return "Idle"
         else:
-            print('Motor OFF or ID error')
+            return "Running"
+
+        # sastat  = self.mb_server.db_shadow.get_coils(coils_regs.RX_SASTAT.ADDRESS, coils_regs.RX_SASTAT.SIZE)
+        # sastat_bits = "".join(reversed([str(int(b)) for b in sastat]))
+        # sastat_bits_bin = int(sastat_bits, 2)
+
+        # mst  = self.mb_server.db_shadow.get_coils(coils_regs.RX_MST.ADDRESS, coils_regs.RX_MST.SIZE)
+        # mst_bits = "".join(reversed([str(int(b)) for b in mst]))
+        # mst_bits_bin = int(mst_bits, 2)
+
+
+
+     #   print(f"SASTAT = {sastat}")
+        # print(f"MST = {mst_bits}")
+
+        # if  not (sastat_bits_bin & MotorProgramStatus.READY) and not (mst_bits_bin & 16384):
+        #     return "Idle"
+        # else:
+        #     return "Running"
+        # if not (mst_bits_bin & 16384):
+        #     return "Idle"
+        # else:
+        #     return "Running"
+
+        # if not (sastat_bits_bin & MotorProgramStatus.READY):
+        #     return "Idle"
+        # else:
+        #     return "Running"
+
+
+        # if val_bits_bin & MotorProgramStatus.READY:
+        #     ...
+        # if val_bits_bin & MotorProgramStatus.RUN_HOMING:
+        #     print('Motor running Home')
+        # if val_bits_bin & MotorProgramStatus.ON_FAULT:
+        #     print('Motor on fault')
+        # if val_bits_bin & MotorProgramStatus.CHECK_RANGES:
+        #     print('checking ranges')
+        # if val_bits_bin & MotorProgramStatus.RUN_PARK:
+        #     print('Motor running Park')
+        # if val_bits_bin & MotorProgramStatus.RUN_FOCUS_OUT:
+        #     print('Motor running FOCUS OUT')
+        # if val_bits_bin & MotorProgramStatus.RUN_FOCUS_IN:
+        #     print('Motor running FOCUS IN')
+        # if val_bits_bin & MotorProgramStatus.RUN_GOTO:
+        #     print('Motor running GO TO')
+        # if val_bits_bin & MotorProgramStatus.MANUAL_MOVE:
+        #     print('Motor running MANUAL MOVE')
+        # if val_bits_bin & MotorProgramStatus.ERROR_NEED_HOME:
+        #     print('ERROR - Need to do HOMING first')
+        # if val_bits_bin & MotorProgramStatus.ERROR_NEED_HOME:
+        #     print('ERROR - Focus In error - too close to LIM-')
+        # if val_bits_bin & MotorProgramStatus.ERROR_OUT_OF_RANGE:
+        #     print('ERROR - Velocity or position out of range')
+        # if val_bits_bin & MotorProgramStatus.ERROR_RS485:
+        #     print('ERROR -  RS485 error or Motor OFF')
+        # if val_bits_bin & MotorProgramStatus.ERROR_PADDLE:
+        #     print('ERROR - Paddle Short circuit')
+        # if val_bits_bin & MotorProgramStatus.ERROR_LIM_SWITCH:
+        #     print('ERROR - LIM switch error')
+        # if val_bits_bin & MotorProgramStatus.VALID_STATUS:
+        #     print('Motor ON & ID OK')
+        # else:
+        #     print('Motor OFF or ID error')
 
             
     

@@ -5,7 +5,7 @@ class DB_size(IntEnum):
     COIL_FIRST_ADDRESS=1,
     COIL_LAST_ADDRESS=668,
     DI_FIRST_ADDRESS=761,
-    DI_LAST_ADDRESS=1442
+    DI_LAST_ADDRESS=1443
 
 class RegType(Enum):
     COIL=0,
@@ -168,6 +168,7 @@ class DigInputsRegs(NamedTuple):
     TX_ALC: RegsInfo
     TX_V90: RegsInfo
     TX_V92: RegsInfo
+    TX_SVON: RegsInfo
 
 
 
@@ -228,11 +229,13 @@ dig_inputs_regs = DigInputsRegs(
     TX_SHDW_BUSY=RegsInfo("TX_SHDW_BUSY", 1394, 1, RegType.DISCRETE_INPUT),
     TX_ALC=RegsInfo("TX_ALC", 1395, 32, RegType.DISCRETE_INPUT),
     TX_V90=RegsInfo("TX_V90", 1427, 8, RegType.DISCRETE_INPUT),
-    TX_V92=RegsInfo("TX_V92", 1435, 8, RegType.DISCRETE_INPUT)
+    TX_V92=RegsInfo("TX_V92", 1435, 8, RegType.DISCRETE_INPUT),
+    TX_SVON=RegsInfo("TX_SVON", 1443, 1, RegType.DISCRETE_INPUT)
 )
 
 class mirrorMapping(NamedTuple):
-    ORIGIN: str
+    # ORIGIN: str
+    ORIGIN: RegsInfo
     RESPONSE: RegsInfo
 
 

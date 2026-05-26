@@ -380,7 +380,9 @@ class Motor():
         :rtype: str
         """
         if self.connected:
-            resp = self.driver.disconnect_motor()
+            resp = "NOK"
+            while resp != "OK":
+                resp = self.driver.disconnect_motor()
             if resp == "OK":
                 # self._connected = False
                 # self.signals.connected.emit(self._connected)
@@ -390,9 +392,9 @@ class Motor():
                 self._reset_state()
 
                 return "OK"
-            else:
-                print('Failed to disconnect the motor')
-                return "NOK"
+            # else:
+            #     print('Failed to disconnect the motor')
+            #     return "NOK"
         return "OK"
 
     def _reset_state(self):
