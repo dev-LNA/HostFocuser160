@@ -23,7 +23,7 @@ from misc.server_settings import ServerSettingsWindow
 
 
 try:
-    from src.core.config import Config, get_toml
+    from src.core.config import Config, update_config
     CONFIG_FILE = True
     ERR_VALUE = None
 except Exception as e:
@@ -256,6 +256,7 @@ class FocuserOPD (QMainWindow):
 
             shutil.copy(config_file_path, "src/config/config.toml")            #TODO: 'copy' do not retain the metadata, if metadata is needed change to '.copy2'
             logger.info(f"Loaded configuration file: {config_file_path}")
+            update_config()
 
         except FileNotFoundError:
             print("The source file was not found.")

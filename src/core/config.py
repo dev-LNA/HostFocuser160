@@ -76,3 +76,61 @@ class Config:
     log_to_stdout: bool = get_toml('Logging', 'log_to_stdout')
     log_max_size_mb: int = get_toml('Logging', 'log_max_size_mb')
     log_num_keep: int = get_toml('Logging', 'log_num_keep')
+
+
+def update_config():
+    """Updates the device configuration according to ``config.toml``"""
+    Config.focuser = ""
+    # ---------------
+    # General Section
+    # ---------------
+    Config.startup = get_toml('General', 'startup')
+    Config.name = get_toml('General', 'name')
+    Config.server_version = get_toml('General', 'version')
+
+    # ---------------
+    # Network Section
+    # ---------------
+    # ip_address = get_toml('Network', 'ip_address')
+    Config.ip_address = get_toml('Network', 'server_ip')
+    Config.port_pub = get_toml('Network', 'port_pub')
+    Config.port_rep = get_toml('Network', 'port_rep')
+    Config.sub_mask = get_toml('Network', 'sub_mask')
+    Config.gateway_ip = get_toml('Network', 'gateway_ip')
+    Config.pub_interval = get_toml('Network', 'pub_interval')
+    Config.write_timeout = get_toml('Network', 'write_timeout')
+    # --------------
+    # Device Section
+    # --------------
+    Config.device_name = get_toml('Device', 'device_name')
+    Config.device_ip = get_toml('Device', 'device_ip')
+    # router_ip = get_toml('Device', 'router_ip')
+    Config.device_port = get_toml('Device', 'device_port')
+    Config.absolute = get_toml('Device', 'absolute')
+    Config.max_step = get_toml('Device', 'max_step')
+    Config.temp_comp = get_toml('Device', 'temp_comp')
+    Config.stepsize = get_toml('Device', 'step_size')
+    Config.enc_2_microns = get_toml('Device', 'encoder2microns')
+    Config.speed_factor = get_toml('Device', 'speedFactor')
+    Config.maxincrement = get_toml('Device', 'max_increment')
+    Config.speed_security = get_toml('Device', 'speed_security')
+    Config.tempcompavailable = get_toml('Device', 'tempcompavailable')
+    Config.backlash = get_toml('Device', 'backlash')
+    Config.max_pos = get_toml('Device', 'max_pos')
+    Config.park_pos = get_toml('Device', 'park_pos')
+    Config.max_speed = get_toml('Device', 'max_speed')
+    Config.normal_speed = get_toml('Device', 'normal_speed')
+    Config.low_speed = get_toml('Device', 'low_speed')
+    Config.acceleration = get_toml('Device', 'acceleration')
+    Config.deceleration = get_toml('Device', 'deceleration')
+    Config.idle_current = get_toml('Device', 'idle_current')
+    Config.run_current = get_toml('Device', 'run_current')
+    Config.acc_current = get_toml('Device', 'acc_current')
+    Config.cmd_timeout = get_toml('Device', 'cmd_timeout')
+    # ---------------
+    # Logging Section
+    # ---------------
+    Config.log_level = get_toml('Logging', 'log_level')
+    Config.log_to_stdout = get_toml('Logging', 'log_to_stdout')
+    Config.log_max_size_mb = get_toml('Logging', 'log_max_size_mb')
+    Config.log_num_keep = get_toml('Logging', 'log_num_keep')

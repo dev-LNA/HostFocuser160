@@ -13,7 +13,7 @@ from misc.verification import VerificationDialog
 
 # from src.interface.dmx_eth import FocuserDriver
 # from src.interface.focuser_driver import FocuserDriver
-from src.core.config import Config, get_toml  
+from src.core.config import Config, get_toml, update_config
 
 from src.utils.constants import constants, MotorModels, MotorParamsIdx, ServerParamsIdx
 from src.interface.motor_driver import Driver
@@ -531,7 +531,7 @@ class SettingsWindow(QMainWindow):
                     for key in keys:
                         self._config_settings[key.value].VALUE = self._changed_settings[key]                                               
                 
-
+                    update_config()
                     self._changed_settings.clear()                                  # Resets changes dictionary   
                     self._validate_parameters()
                     self.logger.info("Ended motor configuration")
