@@ -234,7 +234,7 @@ class DriverAMP(Driver):
     def param_backlash(self, value: int | str | bool = None) -> str:
         """When no value is provided, returns the current backlash value from the configuration.
         When a value is provided, writes the new backlash value to the CLP
-        Receives value in steps
+        Receives value in steps -> range 0 ~ 150 steps => 0 ~ 300 microns
         User defines this value in microns, so must convert to encoder and then to steps
         microns -> encoder -> steps"""
         if value is None:
@@ -333,46 +333,68 @@ class DriverAMP(Driver):
     
     def param_acceleration(self, value: int | str | bool = None) -> str:
         """When no value is provided, returns the current acceleration value from the configuration.
-        When a value is provided, writes the new acceleration value to the CLP"""
+        When a value is provided, writes the new acceleration value to the CLP
+        CLP receives value in rps/s * 6
+        User defines this value in microns/s²
+        microns/s² -> rps/s -> *6
+        1rps/s = 400 microns/s²"""
         if value is None:
             return str(Config.acceleration)
 
+        value = int( value * Config.microns_2_rps * 6 )
         return self.mb_server.write_param(dig_inputs_regs.TX_V80, value)
 
     
     def param_deceleration(self, value: int | str | bool = None) -> str:
         """When no value is provided, returns the current deceleration value from the configuration.
-        When a value is provided, writes the new deceleration value to the CLP"""
+        When a value is provided, writes the new deceleration value to the CLP
+        CLP receives value in rps/s * 6
+        User defines this value in microns/s²
+        microns/s² -> rps/s -> *6
+        1rps/s = 400 microns/s²"""
         if value is None:
             return str(Config.deceleration)
 
+        value = int( value * Config.microns_2_rps * 6 )
         return self.mb_server.write_param(dig_inputs_regs.TX_V79, value)
 
     
     def param_idle_current(self, value: int | str | bool = None) -> str:
         """When no value is provided, returns the current idle current value from the configuration.
-        When a value is provided, writes the new idle current value to the CLP"""
+        When a value is provided, writes the new idle current value to the CLP
+        CLP receives value Amps * 100 
+        User defines this value in mA
+        mA -> A * 100 = (mA / 1000) * 100 = mA * 0.1 """
         if value is None:
             return str(Config.idle_current)
 
+        value  = int(value * 0.1)
         return self.mb_server.write_param(dig_inputs_regs.TX_V78, value)
 
     
     def param_run_current(self, value: int | str | bool = None) -> str:
         """When no value is provided, returns the current run current value from the configuration.
-        When a value is provided, writes the new run current value to the CLP"""
+        When a value is provided, writes the new run current value to the CLP
+        CLP receives value Amps * 100 
+        User defines this value in mA
+        mA -> A * 100 = (mA / 1000) * 100 = mA * 0.1 """
         if value is None:
             return str(Config.run_current)
 
+        value = int(value * 0.1)
         return self.mb_server.write_param(dig_inputs_regs.TX_V81, value)
 
     
     def param_acc_current(self, value: int | str | bool = None) -> str:
         """When no value is provided, returns the current acceleration current value from the configuration.
-        When a value is provided, writes the new acceleration current value to the CLP"""
+        When a value is provided, writes the new acceleration current value to the CLP
+        CLP receives value Amps * 100 
+        User defines this value in mA
+        mA -> A * 100 = (mA / 1000) * 100 = mA * 0.1 """
         if value is None:
             return str(Config.acc_current)
 
+        value = int(value * 0.1)
         return self.mb_server.write_param(dig_inputs_regs.TX_V82, value)
 
     

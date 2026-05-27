@@ -314,7 +314,8 @@ class IAGModbusServer(mbServer):
                 self.timeout.reset()
 
                 if self.timeout.status:
-                    # print("TIMEOUT")        #TODO: Implementar lógica de timeout 
+                    print("TIMEOUT")        #TODO: Implementar lógica de timeout 
+                    
                     ...
                 else:
                     # print("NO TIMEOUT")

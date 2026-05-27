@@ -1,7 +1,7 @@
 from ast import Attribute
 
 from PyQt6 import uic, QtWidgets
-from PyQt6.QtWidgets import QMainWindow, QLineEdit, QProgressBar, QDialog, QMessageBox, QSpinBox
+from PyQt6.QtWidgets import QMainWindow, QLineEdit, QProgressBar, QDialog, QMessageBox, QSpinBox, QDoubleSpinBox
 from PyQt6.QtCore import QThread, pyqtSignal, QObject
 from PyQt6.QtGui import QFontMetrics, QKeyEvent
 # from src.core.exceptions import NotImplementedException
@@ -170,11 +170,11 @@ class SettingsWindow(QMainWindow):
                     NORMAL_SPEED = SettingsAttributes(MotorParamsIdx.NORMAL_SPEED, 'Normal Motor Speed', self.ui_elements.spinNormalSpeed, 0, int),
                     LOW_SPEED = SettingsAttributes(MotorParamsIdx.LOW_SPEED, 'Low Motor Speed', self.ui_elements.spinLowSpeed, 0, int),
                     MAX_STEP = SettingsAttributes(MotorParamsIdx.MAX_STEP, 'Max Step (Deprecated)', self.ui_elements.spinMaxStep, 0, int),
-                    ACCELERATION = SettingsAttributes(MotorParamsIdx.ACCELERATION, 'Acceleration Rate', self.ui_elements.spinAcceleration, 0, int),
-                    DECELERATION = SettingsAttributes(MotorParamsIdx.DECELERATION, 'Deceleration Rate', self.ui_elements.spinDeceleration, 0, int),
-                    IDLE_CURRENT = SettingsAttributes(MotorParamsIdx.IDLE_CURRENT, 'Motor Idle Current', self.ui_elements.spinIdleCurrent, 0, int),
-                    RUN_CURRENT = SettingsAttributes(MotorParamsIdx.RUN_CURRENT, 'Motor Running Current', self.ui_elements.spinRunCurrent, 0, int),
-                    ACC_CURRENT = SettingsAttributes(MotorParamsIdx.ACC_CURRENT, 'Motor Acceleration Current', self.ui_elements.spinAccCurrent, 0, int),
+                    ACCELERATION = SettingsAttributes(MotorParamsIdx.ACCELERATION, 'Acceleration Rate', self.ui_elements.spinAcceleration, 0, float),
+                    DECELERATION = SettingsAttributes(MotorParamsIdx.DECELERATION, 'Deceleration Rate', self.ui_elements.spinDeceleration, 0, float),
+                    IDLE_CURRENT = SettingsAttributes(MotorParamsIdx.IDLE_CURRENT, 'Motor Idle Current', self.ui_elements.spinIdleCurrent, 0, float),
+                    RUN_CURRENT = SettingsAttributes(MotorParamsIdx.RUN_CURRENT, 'Motor Running Current', self.ui_elements.spinRunCurrent, 0, float),
+                    ACC_CURRENT = SettingsAttributes(MotorParamsIdx.ACC_CURRENT, 'Motor Acceleration Current', self.ui_elements.spinAccCurrent, 0, float),
                 )
 
 
@@ -247,7 +247,7 @@ class SettingsWindow(QMainWindow):
                 if isinstance(param.OBJ, QLineEdit):
                     param.OBJ.setText(data.parameters[param.NAME])
                 else:
-                    param.OBJ.setValue(int(data.parameters[param.NAME]))
+                    param.OBJ.setValue(int(float(data.parameters[param.NAME]))) # Must first convert to float to avoid problems with the float parameters
 
 
         self._config_settings.SERVER_IP.OBJ.setText(Config.ip_address)
@@ -266,7 +266,7 @@ class SettingsWindow(QMainWindow):
                 if isinstance(param.OBJ, QLineEdit):
                     param.VALUE = param.OBJ.text()
                     param.OBJ.textChanged.connect(self._validate_parameters)
-                elif isinstance(param.OBJ, QSpinBox):
+                elif isinstance(param.OBJ, QSpinBox) or isinstance(param.OBJ, QDoubleSpinBox):
                     param.VALUE = param.OBJ.value()
                     param.OBJ.valueChanged.connect(self._validate_parameters)
 
@@ -277,7 +277,7 @@ class SettingsWindow(QMainWindow):
 
         if isinstance(param.OBJ, QLineEdit):
             value = param.OBJ.text()
-        elif isinstance(param.OBJ, QSpinBox):
+        elif isinstance(param.OBJ, QSpinBox) or isinstance(param.OBJ, QDoubleSpinBox):
             value = param.OBJ.value()
 
         # If the value being set is equal to the current value the parameter
@@ -361,6 +361,12 @@ class SettingsWindow(QMainWindow):
         :type backup_file_path: str, optional
         """
         try:
+            if Config.name == "Focuser160":
+                backup_file_path = config_dir + "config_backup_160.toml"
+            elif Config.name == "FocuserIAG":
+                backup_file_path = config_dir + "config_backup_IAG.toml"
+            
+
             shutil.copy(config_file, backup_file_path)            #TODO: 'copy' do not retain the metadata, if metadata is needed change to '.copy2'
             self.logger.info(f"Created backup configuration file: {backup_file_path}")
 
@@ -385,14 +391,14 @@ class SettingsWindow(QMainWindow):
                     else:
                         config['Network'][k.name.lower()] = self._changed_settings[k]
 
-
                 elif k == MotorParamsIdx.MOTOR_IP:
-                    if Config.focuser == '160':
-                        config['Device']['ip_160'] = self._changed_settings[MotorParamsIdx.MOTOR_IP]
-                        Config.device_ip = config['Device']['ip_160'] # get_toml('Device', 'ip_160')
-                    elif Config.focuser == 'IAG':
-                        config['Device']['ip_iag'] = self._changed_settings[MotorParamsIdx.MOTOR_IP]
-                        Config.device_ip = config['Device']['ip_iag'] # get_toml('Device', 'ip_iag'
+                    # if Config.name == "Focuser160":
+                    #     config['Device']['ip_160'] = self._changed_settings[MotorParamsIdx.MOTOR_IP]
+                    #     Config.device_ip = config['Device']['ip_160'] # get_toml('Device', 'ip_160')
+                    # elif Config.name == "FocuserIAG":
+                    #     config['Device']['ip_iag'] = self._changed_settings[MotorParamsIdx.MOTOR_IP]
+                    #     Config.device_ip = config['Device']['ip_iag'] # get_toml('Device', 'ip_iag'
+                    Config.device_ip = config['Device']['device_ip']
 
                 else:
                     # config['Device'][k.lower()] = int(self._changed_settings[k])
@@ -409,11 +415,17 @@ class SettingsWindow(QMainWindow):
         """Opens the dialog window to confirm loading of default or
         backup configurations"""
         if self.sender() is self.ui_elements.btnDefault:
-            cfg_file = config_file_default
+            if Config.name == "Focuser160":
+                cfg_file = config_dir + "config_default_160.toml"
+            elif Config.name == "FocuserIAG":
+                cfg_file = config_dir + "config_default_IAG.toml"
             msg = "DEFAULT"
             self.logger.info("Loading default motor configuration")
         elif self.sender() is self.ui_elements.btnBackup:
-            cfg_file = config_file_backup
+            if Config.name == "Focuser160":
+                cfg_file = config_dir + "config_backup_160.toml"
+            elif Config.name == "FocuserIAG":
+                cfg_file = config_dir + "config_backup_IAG.toml"
             msg = "BACKUP"
             self.logger.info("Loading backup motor configuration")
 
@@ -422,17 +434,18 @@ class SettingsWindow(QMainWindow):
             for param in self._config_settings:
                 if param.NAME.name in self._default_widget.selected_items:
                     if param.NAME.name == "MOTOR_IP":
-                        if Config.focuser == "160":
-                            config = get_toml('Device', 'ip_160', cfg_file)
-                        elif Config.focuser == "IAG":
-                            config = get_toml('Device', 'ip_iag', cfg_file)
+                        config = get_toml('Device', 'device_ip', cfg_file)
+                        # if Config.name == "Focuser160":
+                        #     config = get_toml('Device', 'ip_160', cfg_file)
+                        # elif Config.name == "FocuserIAG":
+                        #     config = get_toml('Device', 'ip_iag', cfg_file)
                     else:
                         config = str(get_toml('Device', param.NAME.name.lower(), cfg_file))
 
                     if isinstance(param.OBJ, QLineEdit):
                         param.OBJ.setText(config)
                     else:
-                        param.OBJ.setValue(int(config)) 
+                        param.OBJ.setValue(int(float(config))) 
                     self._validate_parameters()    
 
 
@@ -560,7 +573,7 @@ class SettingsWindow(QMainWindow):
                 param.OBJ.setText(param.VALUE)
                 param.OBJ.textChanged.connect(self._validate_parameters)
 
-            elif param.TYPE is int:
+            elif param.TYPE is int or param.TYPE is float:
                 param.OBJ.valueChanged.disconnect()
                 param.OBJ.setValue(param.VALUE)
                 param.OBJ.valueChanged.connect(self._validate_parameters)
@@ -609,7 +622,7 @@ class SettingsWindow(QMainWindow):
                     param.OBJ.setProperty("change", False)
 
             # elif isinstance(param.OBJ, QSpinBox):
-            elif param.TYPE is int:
+            elif param.TYPE is int or param.TYPE is float:
                 if param.OBJ.value() != param.VALUE:
                     param.OBJ.setProperty("change", True)
                 else:
@@ -617,15 +630,32 @@ class SettingsWindow(QMainWindow):
 
             self._update_gui_element(param.OBJ)
 
+    # --- Adjust GUI limits
+
+        # Backlash limits 0~150 steps
+        self._config_settings.BACKLASH.OBJ.setMaximum(int(150 * Config.steps_2_encoder * Config.enc_2_microns))
+        
+        # Max pos limits 6000~12600 steps
+        self._config_settings.MAX_POS.OBJ.setMinimum(int(6000 * Config.steps_2_encoder * Config.enc_2_microns))
+        self._config_settings.MAX_POS.OBJ.setMaximum(int(12600 * Config.steps_2_encoder * Config.enc_2_microns))
+
         # The Park position is limited by the maximum position
         self._config_settings.PARK_POS.OBJ.setMaximum(self._config_settings.MAX_POS.OBJ.value())
 
         # The Idle current is limited by the running current
         self._config_settings.IDLE_CURRENT.OBJ.setMaximum(self._config_settings.RUN_CURRENT.OBJ.value())
 
-        # The Normal and Low speeds are limited by the High speed
-        self._config_settings.NORMAL_SPEED.OBJ.setMaximum(self._config_settings.MAX_SPEED.OBJ.value())
-        self._config_settings.LOW_SPEED.OBJ.setMaximum(self._config_settings.MAX_SPEED.OBJ.value())
+        # The Normal and Low speeds are limited by the High speed, but only if the max speed limit is 
+        # lower than the default limits
+        if self._config_settings.MAX_SPEED.OBJ.value() < 500:
+            self._config_settings.NORMAL_SPEED.OBJ.setMaximum(self._config_settings.MAX_SPEED.OBJ.value())
+        else:
+            self._config_settings.NORMAL_SPEED.OBJ.setMaximum(500)
+
+        if self._config_settings.MAX_SPEED.OBJ.value() < 167:
+            self._config_settings.LOW_SPEED.OBJ.setMaximum(self._config_settings.MAX_SPEED.OBJ.value())
+        else:
+            self._config_settings.LOW_SPEED.OBJ.setMaximum(167)
 
     def _update_gui_element(self, widget: QtWidgets):
         """Updates the GUI element style after an event occured.

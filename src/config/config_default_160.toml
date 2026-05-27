@@ -1,0 +1,42 @@
+title = "Focuser160MQ"
+
+[General]
+name = "Focuser160"
+version = "1.0.0"
+description = "Interface for Perkin-Elmer Focuser"
+startup = false
+
+[Device]
+absolute = true
+device_name = "2ndMirror"
+deviceID = "3285e9af-8d1d-4f9d-b368-d129d8e9a24b"
+ip_160 = "192.168.0.250"
+ip_iag = "192.168.60.120"
+router_ip = "192.168.0.1"
+device_port = 5001
+encoder2microns = 42.2047244
+max_increment = 0
+tempcompavailable = false
+temp_comp = false
+speed_security = 215000
+speedFactor = 428
+step_size = 0
+device_ip = "192.168.0.250"
+backlash = 4
+max_pos = 50
+park_pos = 20
+normal_speed = 3500
+low_speed = 1000
+max_step = 50700
+max_speed = 3500
+
+[Network]
+ip_address = "*"
+port_pub = 7001
+port_rep = 7002
+
+[Logging]
+log_level = "INFO"
+log_to_stdout = false
+log_max_size_mb = 10
+log_num_keep = 10

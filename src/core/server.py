@@ -386,6 +386,7 @@ class Server(QObject):
                 self.motor.connect()                                                        # Creates the socket and connects the server to the motor
                 self.motor.update_status()
                 self._get_motor_params()
+                self._update_params_clp()
                 self._update_status()
                                                 
                 self.status[SJson.DEVICE_IP] = self.motor.get_param(MotorParamsIdx.MOTOR_IP)
@@ -430,6 +431,20 @@ class Server(QObject):
         self.status[SJson.DEVICE_IP] = self.motor.parameters[MotorParamsIdx.MOTOR_IP].VALUE
         self.status[SJson.MAX_SPEED] = self.motor.parameters[MotorParamsIdx.MAX_SPEED].VALUE
         self.status[SJson.MAX_STEP] = self.motor.parameters[MotorParamsIdx.MAX_STEP].VALUE
+
+    def _update_params_clp(self):
+        """Sends to the CLP the updated values of the configurations"""
+        for param_idx in MotorParamsIdx:
+            if param_idx != MotorParamsIdx.MOTOR_IP:
+                self.motor.set_param(param_idx, int(float(self.motor.parameters[param_idx].VALUE)))
+
+        for param_idx in MotorParamsIdx:
+            print(f"{self.motor.parameters[param_idx].NAME} - {self.motor.parameters[param_idx].VALUE}")
+
+        self.motor.set_param(MotorParamsIdx.BACKLASH, Config.backlash)
+        self.logger.info("Motor parameters initialized")
+        
+        
 
 
     def run(self):  #TODO: Considerar forma de parar o 

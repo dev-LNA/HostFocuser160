@@ -651,7 +651,7 @@ padding:0 0 1 0
             <string/>
            </property>
            <property name="maximum">
-            <number>99999</number>
+            <number>300</number>
            </property>
            <property name="stepType">
             <enum>QAbstractSpinBox::StepType::AdaptiveDecimalStepType</enum>
@@ -905,8 +905,11 @@ padding:0 0 1 0
            <property name="suffix">
             <string> µ/s</string>
            </property>
+           <property name="minimum">
+            <number>2</number>
+           </property>
            <property name="maximum">
-            <number>99999</number>
+            <number>750</number>
            </property>
            <property name="stepType">
             <enum>QAbstractSpinBox::StepType::AdaptiveDecimalStepType</enum>
@@ -986,8 +989,11 @@ padding:0 0 1 0
            <property name="suffix">
             <string> µ/s</string>
            </property>
+           <property name="minimum">
+            <number>2</number>
+           </property>
            <property name="maximum">
-            <number>99999</number>
+            <number>500</number>
            </property>
            <property name="stepType">
             <enum>QAbstractSpinBox::StepType::AdaptiveDecimalStepType</enum>
@@ -1129,6 +1135,15 @@ padding:0 0 1 0
            <property name="decimals">
             <number>1</number>
            </property>
+           <property name="minimum">
+            <double>66.700000000000003</double>
+           </property>
+           <property name="maximum">
+            <double>2000.000000000000000</double>
+           </property>
+           <property name="change" stdset="0">
+            <bool>false</bool>
+           </property>
           </widget>
          </item>
          <item row="2" column="5">
@@ -1171,6 +1186,15 @@ padding:0 0 1 0
            </property>
            <property name="decimals">
             <number>1</number>
+           </property>
+           <property name="minimum">
+            <double>66.700000000000003</double>
+           </property>
+           <property name="maximum">
+            <double>2666.699999999999818</double>
+           </property>
+           <property name="change" stdset="0">
+            <bool>false</bool>
            </property>
           </widget>
          </item>
@@ -1215,6 +1239,9 @@ padding:0 0 1 0
            <property name="decimals">
             <number>1</number>
            </property>
+           <property name="change" stdset="0">
+            <bool>false</bool>
+           </property>
           </widget>
          </item>
          <item row="4" column="5">
@@ -1257,6 +1284,15 @@ padding:0 0 1 0
            </property>
            <property name="decimals">
             <number>1</number>
+           </property>
+           <property name="minimum">
+            <double>1000.000000000000000</double>
+           </property>
+           <property name="maximum">
+            <double>2000.000000000000000</double>
+           </property>
+           <property name="change" stdset="0">
+            <bool>false</bool>
            </property>
           </widget>
          </item>
@@ -1301,6 +1337,21 @@ padding:0 0 1 0
            <property name="decimals">
             <number>1</number>
            </property>
+           <property name="minimum">
+            <double>1200.000000000000000</double>
+           </property>
+           <property name="maximum">
+            <double>2000.000000000000000</double>
+           </property>
+           <property name="singleStep">
+            <double>0.100000000000000</double>
+           </property>
+           <property name="stepType">
+            <enum>QAbstractSpinBox::StepType::DefaultStepType</enum>
+           </property>
+           <property name="change" stdset="0">
+            <bool>false</bool>
+           </property>
           </widget>
          </item>
          <item row="6" column="2">
@@ -1340,6 +1391,15 @@ padding:0 0 1 0
            </property>
            <property name="suffix">
             <string> µ/s</string>
+           </property>
+           <property name="minimum">
+            <number>2</number>
+           </property>
+           <property name="maximum">
+            <number>167</number>
+           </property>
+           <property name="change" stdset="0">
+            <bool>false</bool>
            </property>
           </widget>
          </item>
