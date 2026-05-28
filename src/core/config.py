@@ -10,20 +10,76 @@ import toml
 import sys
 import os
 
-def resource_path(relative_path):
-    """ Retorna o caminho absoluto para o recurso, compatível com PyInstaller """
-    if hasattr(sys, '_MEIPASS'):
-        # No executável, sys._MEIPASS é a raiz da pasta temporária
-        base_path = sys._MEIPASS
+#def resource_path(relative_path):
+#    """ Retorna o caminho absoluto para o recurso, compatível com PyInstaller """
+#    if hasattr(sys, '_MEIPASS'):
+#        # No executável, sys._MEIPASS é a raiz da pasta temporária
+#        base_path = sys._MEIPASS
+#    else:
+#        # No desenvolvimento, a base é a pasta raiz do projeto (onde está o main4.py)
+#        # Como este arquivo está em src/core, pegamos o avô dele
+#        base_path = os.path.abspath(os.path.join(os.path.dirname(__file__), "../../"))
+
+#    return os.path.normpath(os.path.join(base_path, relative_path))
+
+# def resource_path(relative_path):
+#     """
+#     Busca arquivos de configuração prioritariamente fora do executável
+#     (na pasta onde o usuário instalou o programa).
+#     """
+#     # 1. Caminho onde o executável (.exe) está de fato localizado
+#     exe_dir = os.path.dirname(sys.executable)
+    
+#     # 2. Caminho para rodar como script (desenvolvimento)
+#     project_root = os.path.abspath(os.path.join(os.path.dirname(__file__), "../../"))
+    
+#     # Define o local externo (na pasta do programa)
+#     external_path = os.path.join(exe_dir, relative_path)
+    
+#     # Define o local de desenvolvimento
+#     dev_path = os.path.join(project_root, relative_path)
+
+#     # Lógica de decisão:
+#     if os.path.exists(external_path):
+#         return external_path
+#     elif os.path.exists(dev_path):
+#         return dev_path
+#     else:
+#         # Fallback para o que estiver embutido (se houver)
+#         base_path = getattr(sys, '_MEIPASS', project_root)
+#         return os.path.join(base_path, relative_path)
+    
+# def resource_path(relative_path):
+#     # Busca ao lado do .exe (pasta dist/src/config)
+#     base_path = os.path.dirname(sys.executable)
+
+#     return os.path.normpath(os.path.join(base_path, relative_path))
+
+def resource_path(relative_path, external=False):
+    """
+    Função universal para localização de arquivos.
+    - No VS Code: Segue a estrutura de pastas do projeto.
+    - No EXE (Interno): Busca arquivos embutidos (psw.cfg, assets).
+    - No EXE (Externo): Busca arquivos na pasta do usuário (config.toml).
+    """
+    # 1. Checa se o programa está rodando como um executável do PyInstaller
+    frozen = getattr(sys, 'frozen', False)
+    
+    if frozen:  # Se 'False' significa que está rodando do Visual Studio (modo desenvolvimento)
+        if external:
+            # Caminho ao lado do arquivo .exe
+            base_path = os.path.dirname(sys.executable)
+        else:
+            # Caminho dentro da pasta temporária do .exe
+            base_path = sys._MEIPASS
     else:
-        # No desenvolvimento, a base é a pasta raiz do projeto (onde está o main4.py)
-        # Como este arquivo está em src/core, pegamos o avô dele
+        # 2. Modo Desenvolvimento (Visual Studio / VS Code)
+        # Como este arquivo está em src/core, subimos dois níveis para chegar na raiz
         base_path = os.path.abspath(os.path.join(os.path.dirname(__file__), "../../"))
 
     return os.path.normpath(os.path.join(base_path, relative_path))
 
-
-config_file =  resource_path('src/config/config.toml') #"src/config/config.toml"
+config_file =  resource_path('src/config/config.toml', external=True) #"src/config/config.toml"
 
 # _dict = {}
 # _dict = toml.load(config_file)
