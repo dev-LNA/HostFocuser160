@@ -81,12 +81,10 @@ def resource_path(relative_path, external=False):
             base_path = sys._MEIPASS
     else:
         # 2. Modo Desenvolvimento (Visual Studio / VS Code)
-        # Como este arquivo está em src/core, subimos dois níveis para chegar na raiz
         base_path = os.path.abspath(os.path.join(os.path.dirname(__file__), "../"))
 
     return os.path.normpath(os.path.join(base_path, relative_path))
 
-# path_to_ui = resource_path('../assets/ui/settings.ui')              # Path to settings window UI
 path_to_ui = resource_path('assets/ui/engineering.ui')              # Path to settings window UI
 config_dir = resource_path('src/config', external=True)  #"src/config/"
 config_file = config_dir + "/config.toml" #"src/config/config.toml"
@@ -94,6 +92,28 @@ config_file_backup = config_dir + "/config_backup.toml" #"src/config/config_back
 config_file_default = config_dir + "/config_default.toml" #"src/config/config_default.toml"
 config_file_160 = config_dir + "/config_PE160.toml" 
 config_file_iag = config_dir + "/config_IAG.toml" 
+
+# Se 'False' significa que está rodando do Visual Studio (modo desenvolvimento)
+# Nesse caso a pasta com as configurações está dentro de 'src'
+if getattr(sys, 'frozen', False):
+    # Rodando do executável
+    path_to_ui = resource_path('assets/ui/engineering.ui')              # Path to settings window UI
+    config_dir = resource_path('config', external=True)  #"src/config/"
+    config_file = config_dir + "/config.toml" #"src/config/config.toml"
+    config_file_backup = config_dir + "/config_backup.toml" #"src/config/config_backup.toml"                #TODO: Possibilitar definir o nome do arquivo? Talvez nomear de acordo com a data que foi criado
+    config_file_default = config_dir + "/config_default.toml" #"src/config/config_default.toml"
+    config_file_160 = config_dir + "/config_PE160.toml" 
+    config_file_iag = config_dir + "/config_IAG.toml" 
+else:
+    # Rodando em modo desenvolvimento (Visual Studio)
+    path_to_ui = resource_path('assets/ui/engineering.ui')              # Path to settings window UI
+    config_dir = resource_path('src/config')  #"src/config/"
+    config_file = config_dir + "/config.toml" #"src/config/config.toml"
+    config_file_backup = config_dir + "/config_backup.toml" #"src/config/config_backup.toml"                #TODO: Possibilitar definir o nome do arquivo? Talvez nomear de acordo com a data que foi criado
+    config_file_default = config_dir + "/config_default.toml" #"src/config/config_default.toml"
+    config_file_160 = config_dir + "/config_PE160.toml" 
+    config_file_iag = config_dir + "/config_IAG.toml" 
+
 
 @dataclass
 class SettingsAttributes():

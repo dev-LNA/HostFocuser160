@@ -1,7 +1,7 @@
 block_cipher = None
 
 a = Analysis(
-    ['main4.py'],
+    ['main.py'],
     pathex=[],
     binaries=[],
     datas=[
@@ -30,7 +30,7 @@ exe = EXE(
     a.zipfiles,
     a.datas,
     [],
-    name='main4',
+    name='HostFocuser',
     debug=False,
     bootloader_ignore_signals=False,
     strip=False,
@@ -52,8 +52,8 @@ import os
 
 #Caminho de destino para as configurações (AO LADO do .exe)
 dist_exe_path = os.path.join('dist') 
-config_dest = os.path.join(dist_exe_path, 'src', 'config')
-config_src = os.path.join('src', 'config')
+config_dest = os.path.join(dist_exe_path, 'config')     # Local onde ficarão os arquivos de configuração do executável
+config_src = os.path.join('src', 'config')              # Local onde estão os arquivos de configuração
 
 print(f">>> Criando pasta de configurações externa em: {config_dest}")
 if not os.path.exists(config_dest):
@@ -63,3 +63,11 @@ for file in os.listdir(config_src):
     if file.endswith(".toml"):
         shutil.copy2(os.path.join(config_src, file), config_dest)
         print(f"  + Config externa: {file}")
+
+
+# Caminho de destino para arquivos de log
+log_dest = os.path.join(dist_exe_path, 'logs')
+
+print(f">>> Criando pasta de logs externa em: {log_dest}")
+if not os.path.exists(log_dest):
+    os.makedirs(log_dest)

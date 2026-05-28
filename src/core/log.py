@@ -15,17 +15,21 @@ try:
 except:
     CONFIG_FILE = False
 
+import os
 
 def init_logging():
     if not CONFIG_FILE:
         return
-    
+    logs_dir_path = os.path.join('logs')
     log_path = r"logs/focuser.log"
 
     try:
         #TODO: Adicionar lógica para que um novo arquivo de logger seja
         #   criado todos os dias. Um novo arquivo de logger deve ser 
         #   criado ao meio dia.
+        if not os.path.exists(logs_dir_path):
+            os.makedirs(logs_dir_path)
+            
         with open(log_path, 'x') as file:
             file.write("-------------------\n")
             file.write("     LOG FILE      \n")

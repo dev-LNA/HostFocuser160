@@ -79,7 +79,15 @@ def resource_path(relative_path, external=False):
 
     return os.path.normpath(os.path.join(base_path, relative_path))
 
-config_file =  resource_path('src/config/config.toml', external=True) #"src/config/config.toml"
+
+# Se 'False' significa que está rodando do Visual Studio (modo desenvolvimento)
+# Nesse caso a pasta com as configurações está dentro de 'src'
+if getattr(sys, 'frozen', False):
+    config_file =  resource_path('config/config.toml', external=True)
+else:
+    config_file =  resource_path('src/config/config.toml')
+    
+    
 
 # _dict = {}
 # _dict = toml.load(config_file)

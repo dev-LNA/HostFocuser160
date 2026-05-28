@@ -511,7 +511,7 @@ class IAGModbusServer(mbServer):
             #  called and the function returns "NOK"
             cmd_timer = time.time()
             while (time.time() - cmd_timer) < Config.cmd_timeout:
-                            
+                time.sleep(0.2)                 # When no time is applied the program has a peak of cpu usage when waiting 
                 if self.CLP_OK:
                     self._handle_command_OK(register)
                     return "OK"
