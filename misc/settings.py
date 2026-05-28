@@ -25,7 +25,7 @@ from typing import NamedTuple
 from dataclasses import dataclass
 
 import sys
-from os import path
+import os
 import toml
 import shutil
 
@@ -35,18 +35,25 @@ import time
 
 
 def resource_path(relative_path):
-    """ Get absolute path to resource, works for dev and for PyInstaller """
-    base_path = getattr(sys, '_MEIPASS', path.dirname(path.abspath(__file__)))
-    return path.join(base_path, relative_path)
+    """ Retorna o caminho absoluto para o recurso, compatível com PyInstaller """
+    if hasattr(sys, '_MEIPASS'):
+        # No executável, sys._MEIPASS é a raiz da pasta temporária
+        base_path = sys._MEIPASS
+    else:
+        # No desenvolvimento, a base é a pasta raiz do projeto (onde está o main4.py)
+        # Como este arquivo está em misc, pegamos o pai dele
+        base_path = os.path.abspath(os.path.join(os.path.dirname(__file__), "../"))
+
+    return os.path.normpath(os.path.join(base_path, relative_path))
 
 # path_to_ui = resource_path('../assets/ui/settings.ui')              # Path to settings window UI
-path_to_ui = resource_path('../assets/ui/engineering.ui')              # Path to settings window UI
-config_dir = "src/config/"
-config_file = config_dir + "config.toml" #"src/config/config.toml"
-config_file_backup = config_dir + "config_backup.toml" #"src/config/config_backup.toml"                #TODO: Possibilitar definir o nome do arquivo? Talvez nomear de acordo com a data que foi criado
-config_file_default = config_dir + "config_default.toml" #"src/config/config_default.toml"
-config_file_160 = config_dir + "config_PE160.toml" 
-config_file_iag = config_dir + "config_IAG.toml" 
+path_to_ui = resource_path('assets/ui/engineering.ui')              # Path to settings window UI
+config_dir = resource_path('src/config')  #"src/config/"
+config_file = config_dir + "/config.toml" #"src/config/config.toml"
+config_file_backup = config_dir + "/config_backup.toml" #"src/config/config_backup.toml"                #TODO: Possibilitar definir o nome do arquivo? Talvez nomear de acordo com a data que foi criado
+config_file_default = config_dir + "/config_default.toml" #"src/config/config_default.toml"
+config_file_160 = config_dir + "/config_PE160.toml" 
+config_file_iag = config_dir + "/config_IAG.toml" 
 
 @dataclass
 class SettingsAttributes():
@@ -362,9 +369,9 @@ class SettingsWindow(QMainWindow):
         """
         try:
             if Config.name == "Focuser160":
-                backup_file_path = config_dir + "config_backup_160.toml"
+                backup_file_path = config_dir + "/config_backup_160.toml"
             elif Config.name == "FocuserIAG":
-                backup_file_path = config_dir + "config_backup_IAG.toml"
+                backup_file_path = config_dir + "/config_backup_IAG.toml"
             
 
             shutil.copy(config_file, backup_file_path)            #TODO: 'copy' do not retain the metadata, if metadata is needed change to '.copy2'
@@ -416,16 +423,16 @@ class SettingsWindow(QMainWindow):
         backup configurations"""
         if self.sender() is self.ui_elements.btnDefault:
             if Config.name == "Focuser160":
-                cfg_file = config_dir + "config_default_160.toml"
+                cfg_file = config_dir + "/config_default_160.toml"
             elif Config.name == "FocuserIAG":
-                cfg_file = config_dir + "config_default_IAG.toml"
+                cfg_file = config_dir + "/config_default_IAG.toml"
             msg = "DEFAULT"
             self.logger.info("Loading default motor configuration")
         elif self.sender() is self.ui_elements.btnBackup:
             if Config.name == "Focuser160":
-                cfg_file = config_dir + "config_backup_160.toml"
+                cfg_file = config_dir + "/config_backup_160.toml"
             elif Config.name == "FocuserIAG":
-                cfg_file = config_dir + "config_backup_IAG.toml"
+                cfg_file = config_dir + "/config_backup_IAG.toml"
             msg = "BACKUP"
             self.logger.info("Loading backup motor configuration")
 

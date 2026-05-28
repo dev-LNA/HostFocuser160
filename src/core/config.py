@@ -7,8 +7,23 @@
 
 import os
 import toml
+import sys
+import os
 
-config_file = "src/config/config.toml"
+def resource_path(relative_path):
+    """ Retorna o caminho absoluto para o recurso, compatível com PyInstaller """
+    if hasattr(sys, '_MEIPASS'):
+        # No executável, sys._MEIPASS é a raiz da pasta temporária
+        base_path = sys._MEIPASS
+    else:
+        # No desenvolvimento, a base é a pasta raiz do projeto (onde está o main4.py)
+        # Como este arquivo está em src/core, pegamos o avô dele
+        base_path = os.path.abspath(os.path.join(os.path.dirname(__file__), "../../"))
+
+    return os.path.normpath(os.path.join(base_path, relative_path))
+
+
+config_file =  resource_path('src/config/config.toml') #"src/config/config.toml"
 
 # _dict = {}
 # _dict = toml.load(config_file)

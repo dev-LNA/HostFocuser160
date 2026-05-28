@@ -7,7 +7,7 @@ from src.core.config import get_toml
 from logging import Logger
 
 import sys
-from os import path
+import os
 import toml
 import shutil
 
@@ -15,12 +15,19 @@ from typing import NamedTuple
 from enum import StrEnum
 
 def resource_path(relative_path):
-    """ Get absolute path to resource, works for dev and for PyInstaller """
-    base_path = getattr(sys, '_MEIPASS', path.dirname(path.abspath(__file__)))
-    return path.join(base_path, relative_path)
+    """ Retorna o caminho absoluto para o recurso, compatível com PyInstaller """
+    if hasattr(sys, '_MEIPASS'):
+        # No executável, sys._MEIPASS é a raiz da pasta temporária
+        base_path = sys._MEIPASS
+    else:
+        # No desenvolvimento, a base é a pasta raiz do projeto (onde está o main4.py)
+        # Como este arquivo está em misc, pegamos o pai dele
+        base_path = os.path.abspath(os.path.join(os.path.dirname(__file__), "../"))
 
-path_to_ui = resource_path('../assets/ui/server_settings.ui')              # Path to settings window UI
-config_dir = "src/config/"
+    return os.path.normpath(os.path.join(base_path, relative_path))
+
+path_to_ui = resource_path('assets/ui/server_settings.ui')              # Path to settings window UI
+config_dir = resource_path('src/config')#"src/config/"
 config_file = config_dir + "config.toml" #"src/config/config.toml"
 config_file_backup = config_dir + "config_backup.toml" #"src/config/config_backup.toml"                #TODO: Possibilitar definir o nome do arquivo? Talvez nomear de acordo com a data que foi criado
 config_file_default = config_dir + "config_default.toml" #"src/config/config_default.toml"

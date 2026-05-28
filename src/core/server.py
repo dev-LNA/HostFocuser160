@@ -17,7 +17,7 @@ from enum import Enum, StrEnum
 from datetime import datetime
 # from pythonping import ping
 from icmplib import ping
-from os import path
+import os
 import sys
 from threading import Thread
 
@@ -39,13 +39,20 @@ import socket
 TESTE_TCSPD = False             #TEST: Colocar em True para realizar teste com o tcspd
 
 def resource_path(relative_path):
-    """ Get absolute path to resource, works for dev and for PyInstaller """
-    base_path = getattr(sys, '_MEIPASS', path.dirname(path.abspath(__file__)))
-    return path.join(base_path, relative_path)
+    """ Retorna o caminho absoluto para o recurso, compatível com PyInstaller """
+    if hasattr(sys, '_MEIPASS'):
+        # No executável, sys._MEIPASS é a raiz da pasta temporária
+        base_path = sys._MEIPASS
+    else:
+        # No desenvolvimento, a base é a pasta raiz do projeto (onde está o main4.py)
+        # Como este arquivo está em src/core, pegamos o avô dele
+        base_path = os.path.abspath(os.path.join(os.path.dirname(__file__), "../../"))
 
-icon_con_ok = resource_path('../../assets/ui/icons/status.png')
-icon_con_nok = resource_path('../../assets/ui/icons/status-busy.png')
-icon_con_wait = resource_path('../../assets/ui/icons/status-away.png')
+    return os.path.normpath(os.path.join(base_path, relative_path))
+
+icon_con_ok = resource_path('assets/ui/icons/status.png')
+icon_con_nok = resource_path('assets/ui/icons/status-busy.png')
+icon_con_wait = resource_path('assets/ui/icons/status-away.png')
 
 class ServerSignals(QObject):
     server_status = PropertySignals()
