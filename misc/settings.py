@@ -85,13 +85,13 @@ def resource_path(relative_path, external=False):
 
     return os.path.normpath(os.path.join(base_path, relative_path))
 
-path_to_ui = resource_path('assets/ui/engineering.ui')              # Path to settings window UI
-config_dir = resource_path('src/config', external=True)  #"src/config/"
-config_file = config_dir + "/config.toml" #"src/config/config.toml"
-config_file_backup = config_dir + "/config_backup.toml" #"src/config/config_backup.toml"                #TODO: Possibilitar definir o nome do arquivo? Talvez nomear de acordo com a data que foi criado
-config_file_default = config_dir + "/config_default.toml" #"src/config/config_default.toml"
-config_file_160 = config_dir + "/config_PE160.toml" 
-config_file_iag = config_dir + "/config_IAG.toml" 
+# path_to_ui = resource_path('assets/ui/engineering.ui')              # Path to settings window UI
+# config_dir = resource_path('src/config', external=True)  #"src/config/"
+# config_file = config_dir + "/config.toml" #"src/config/config.toml"
+# config_file_backup = config_dir + "/config_backup.toml" #"src/config/config_backup.toml"                #TODO: Possibilitar definir o nome do arquivo? Talvez nomear de acordo com a data que foi criado
+# config_file_default = config_dir + "/config_default.toml" #"src/config/config_default.toml"
+# config_file_160 = config_dir + "/config_PE160.toml" 
+# config_file_iag = config_dir + "/config_IAG.toml" 
 
 # Se 'False' significa que está rodando do Visual Studio (modo desenvolvimento)
 # Nesse caso a pasta com as configurações está dentro de 'src'
@@ -99,11 +99,17 @@ if getattr(sys, 'frozen', False):
     # Rodando do executável
     path_to_ui = resource_path('assets/ui/engineering.ui')              # Path to settings window UI
     config_dir = resource_path('config', external=True)  #"src/config/"
-    config_file = config_dir + "/config.toml" #"src/config/config.toml"
-    config_file_backup = config_dir + "/config_backup.toml" #"src/config/config_backup.toml"                #TODO: Possibilitar definir o nome do arquivo? Talvez nomear de acordo com a data que foi criado
-    config_file_default = config_dir + "/config_default.toml" #"src/config/config_default.toml"
-    config_file_160 = config_dir + "/config_PE160.toml" 
+    config_file_backup = resource_path('src/config/config_backup.toml', external=False)               #TODO: Possibilitar definir o nome do arquivo? Talvez nomear de acordo com a data que foi criado
+    config_file_default = resource_path('src/config/config_default.toml', external=False)
+    config_file = resource_path('src/config/config.toml', external=False)
+    config_file_160 =  config_dir + "/config_PE160.toml" 
     config_file_iag = config_dir + "/config_IAG.toml" 
+
+    # config_file = config_dir + "/config.toml" #"src/config/config.toml"
+    # config_file_backup = config_dir + "/config_backup.toml" #"src/config/config_backup.toml"                #TODO: Possibilitar definir o nome do arquivo? Talvez nomear de acordo com a data que foi criado
+    # config_file_default = config_dir + "/config_default.toml" #"src/config/config_default.toml"
+    # config_file_160 = config_dir + "/config_PE160.toml" 
+    # config_file_iag = config_dir + "/config_IAG.toml" 
 else:
     # Rodando em modo desenvolvimento (Visual Studio)
     path_to_ui = resource_path('assets/ui/engineering.ui')              # Path to settings window UI
@@ -428,10 +434,13 @@ class SettingsWindow(QMainWindow):
         :type backup_file_path: str, optional
         """
         try:
+            # The backup config files are emebedded in the executable
             if Config.name == "Focuser160":
-                backup_file_path = config_dir + "/config_backup_160.toml"
+                # backup_file_path = config_dir + "/config_backup_160.toml"
+                cfg_file = resource_path('src/config/config_backup_160.toml', external=False)
             elif Config.name == "FocuserIAG":
-                backup_file_path = config_dir + "/config_backup_IAG.toml"
+                # backup_file_path = config_dir + "/config_backup_IAG.toml"
+                cfg_file = resource_path('src/config/config_backup_IAG.toml', external=False)
             
 
             shutil.copy(config_file, backup_file_path)            #TODO: 'copy' do not retain the metadata, if metadata is needed change to '.copy2'
@@ -482,17 +491,23 @@ class SettingsWindow(QMainWindow):
         """Opens the dialog window to confirm loading of default or
         backup configurations"""
         if self.sender() is self.ui_elements.btnDefault:
+            # The default config files will be embedded in the executable
             if Config.name == "Focuser160":
-                cfg_file = config_dir + "/config_default_160.toml"
+                # cfg_file = config_dir + "/config_default_160.toml"
+                cfg_file = resource_path('src/config/config_default_160.toml', external=False)
             elif Config.name == "FocuserIAG":
-                cfg_file = config_dir + "/config_default_IAG.toml"
+                # cfg_file = config_dir + "/config_default_IAG.toml"
+                cfg_file = resource_path('src/config/config_default_IAG.toml', external=False)
             msg = "DEFAULT"
             self.logger.info("Loading default motor configuration")
         elif self.sender() is self.ui_elements.btnBackup:
+            # The backup config files are emebedded in the executable
             if Config.name == "Focuser160":
-                cfg_file = config_dir + "/config_backup_160.toml"
+                # cfg_file = config_dir + "/config_backup_160.toml"
+                cfg_file = resource_path('src/config/config_backup_160.toml', external=False)
             elif Config.name == "FocuserIAG":
-                cfg_file = config_dir + "/config_backup_IAG.toml"
+                # cfg_file = config_dir + "/config_backup_IAG.toml"
+                cfg_file = resource_path('src/config/config_backup_IAG.toml', external=False)
             msg = "BACKUP"
             self.logger.info("Loading backup motor configuration")
 

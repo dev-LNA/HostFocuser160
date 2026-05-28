@@ -10,6 +10,11 @@ a = Analysis(
         ('assets/ui/*', 'assets/ui'),
         ('assets/ui/icons/*', 'assets/ui/icons'),
         ('misc/psw.cfg', 'misc'),     # Senha embutida (protegida dentro do EXE)
+        ('src/config/config.toml', 'src/config'),
+        ('src/config/config_default_160.toml', 'src/config'),
+        ('src/config/config_default_IAG.toml', 'src/config'),
+        ('src/config/config_backup_160.toml', 'src/config'),
+        ('src/config/config_backup_IAG.toml', 'src/config'),
     ],
     hiddenimports=[],
     hookspath=[],
@@ -59,10 +64,13 @@ print(f">>> Criando pasta de configurações externa em: {config_dest}")
 if not os.path.exists(config_dest):
     os.makedirs(config_dest)
 
-for file in os.listdir(config_src):
-    if file.endswith(".toml"):
-        shutil.copy2(os.path.join(config_src, file), config_dest)
-        print(f"  + Config externa: {file}")
+shutil.copy2(os.path.join(config_src, "config_IAG.toml"), config_dest)
+shutil.copy2(os.path.join(config_src, "config_PE160.toml"), config_dest)
+
+#for file in os.listdir(config_src):
+#    if file.endswith(".toml"):
+#        shutil.copy2(os.path.join(config_src, file), config_dest)
+#        print(f"  + Config externa: {file}")
 
 
 # Caminho de destino para arquivos de log
