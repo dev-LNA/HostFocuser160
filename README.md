@@ -66,7 +66,7 @@ pip install -r requirements.txt
 
 [Windows]
 python -m venv .venv prompt "HostFocuser"
-.venv/bin/activate
+.\.venv\Scripts\Activate.ps1
 pip install -r requirements.txt
 ```
 
