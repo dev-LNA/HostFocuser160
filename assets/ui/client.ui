@@ -6,8 +6,8 @@
    <rect>
     <x>0</x>
     <y>0</y>
-    <width>333</width>
-    <height>683</height>
+    <width>335</width>
+    <height>766</height>
    </rect>
   </property>
   <property name="windowTitle">
@@ -1018,8 +1018,8 @@ border-radius: 2px;
          <rect>
           <x>10</x>
           <y>440</y>
-          <width>291</width>
-          <height>201</height>
+          <width>301</width>
+          <height>291</height>
          </rect>
         </property>
        </widget>
@@ -1029,7 +1029,7 @@ border-radius: 2px;
           <x>8</x>
           <y>320</y>
           <width>291</width>
-          <height>97</height>
+          <height>101</height>
          </rect>
         </property>
         <layout class="QFormLayout" name="formLayout_2">

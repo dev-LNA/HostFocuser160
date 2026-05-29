@@ -94,7 +94,6 @@ class Server(QObject):
         self.zmq_comm: zmqComm = None
 
         # Control variables
-        self.motor:Motor = None
 
         self._stop_loop = False                          #|
         self.previous_is_mov = False                    #|
@@ -105,6 +104,7 @@ class Server(QObject):
         self.last_ping_time = datetime.now()            #|
         self.last_pub_time:datetime = datetime.now()                  #|
         self._flag_change = False                       #|
+        self._driver_timeout = False
 
         # Variables for status request
         self._client_id = 0 # '0' 
@@ -265,6 +265,18 @@ class Server(QObject):
         self._communicating_to_motor = value
         self.signals.communicating_to_motor.emit(value)
 
+    @property
+    def driver_timeout(self) -> bool:
+        return self._driver_timeout
+    @driver_timeout.setter
+    def driver_timeout(self, value: bool):
+        self._driver_timeout = value
+        self.status[SJson.TIMEOUT] = value
+        if value:
+            self.logger.warning("CLP communication timeout")
+            self.motor_reachable = ReachStatus.WAITING
+            
+
 
 #endregion
 
@@ -344,14 +356,11 @@ class Server(QObject):
         """
         if self.motor == None:
             self.motor = Motor(motor_model) 
+            self.motor.driver.driver_comm.timeout.connect(lambda value: setattr(self, 'driver_timeout', value))
         else:
             raise ValueError("Invalid motor model")
 
-    def _reach_device(self):
-        """Verifies if the router and the motor are reachable. 
-        If its reachable connects to the motor and updates status information"""
-        _try = 0
-        self.last_ping_time = datetime.now()                                                    # Saves the time when the method was called
+    def _reach_gateway(self):
         try:
             if not self.router_reachable:                                                           # If the router is not reachable
                 self.router_reachable = ReachStatus.CONNECTING                                           # Emits signals for GUI update (Router attempting connection)
@@ -369,7 +378,11 @@ class Server(QObject):
                         break                                                                                   # Exits for loop
             else:                                                                                   # If router already reachable
                 self.router_reachable = ReachStatus.CONNECTED                                           # Emits signals for GUI update (Router connected)
+        except Exception as e:
+            self.logger.error(f'{str(e)}') 
 
+    def _reach_motor(self):
+        try:
             if self.router_reachable and not self.motor_reachable:                                  # If the router is reachable and the motor is not reachable
                 time.sleep(0.3)
                 self.motor_reachable = ReachStatus.CONNECTING                                            # Emits signals for GUI update (Motor attempting connection)
@@ -383,8 +396,18 @@ class Server(QObject):
                     if reachable:                                                               # If the ping is successful
                         self.motor_reachable = ReachStatus.CONNECTED
                         self.signals.status_message.emit(f"Connection succesfull after {_try+1} tries")                 # Emits signals for GUI update
-                        break                                                                                   # Exits for loop
-                
+                        self.driver_timeout = False
+                        break                   # Exits for loop
+        except Exception as e:
+            self.logger.error(f'{str(e)}') 
+
+    def _link_device(self):
+        """Verifies if the router and the motor are reachable. 
+        If its reachable connects to the motor and updates status information"""
+        _try = 0
+        self.last_ping_time = datetime.now()                                                    # Saves the time when the method was called
+        try:
+                            
             if self.motor_reachable:                                                                # If the motor is reachable
                 self.router_reachable = ReachStatus.CONNECTED                                            # Emits signals for GUI update
                 self.motor_reachable = ReachStatus.CONNECTED                                           # Emits signals for GUI update
@@ -465,7 +488,9 @@ class Server(QObject):
         self._start_server()
 
         while not self.motor_reachable and self._stop_loop == False:
-            self._reach_device()
+            self._reach_gateway()    
+            self._reach_motor() 
+            self._link_device()
         
         self.status[SJson.CONNECTED] = self.motor.connected
         while self._stop_loop == False:
@@ -478,7 +503,7 @@ class Server(QObject):
                     self.last_pub_time = self.zmq_comm.pub(self.status)
 
                 # Motor must be connected, poller defined and the 'reach_device' thread must have finished
-                if self.motor.connected and self.zmq_comm.poller and self._reaching_device_thread is None:
+                if self.motor.connected and self.zmq_comm.poller:
                     
                     
                     socks = dict(self.zmq_comm.poller.poll(5))  # poll(50)                                                                           # Polls the information from the ZMQ to receive commands from the client
@@ -519,14 +544,33 @@ class Server(QObject):
                     # update time
                     #TODO: Acho que faz mais sentido rodar o envio de status para o ZMQ
                     # em uma thread temporizada
-                    if self._reaching_device_thread is None:
-                        self.router_reachable = False
-                        self.motor_reachable = False
-                        self._reaching_device_thread = Thread(target = self._reach_device)
-                        self._reaching_device_thread.start()
+                    # if self._reaching_device_thread is None:
+                    #     self.router_reachable = False
+                    #     self.motor_reachable = False
+                    #     self._reaching_device_thread = Thread(target = self._reach_device)
+                    #     self._reaching_device_thread.start()
+                    # else:
+                    #     self._reaching_device_thread.join()
+                    #     self._reaching_device_thread = None
+
+                    for _try in range(5):                                                                   # Tries 5 times to ping the router
+                        time.sleep(0.1)             # delay between tries                         
+                        self.signals.status_message.emit(f"Trying Connect to Router: Try number {_try+1}")                      # Emits signals for GUI update
+                        reachable = ping(Config.gateway_ip, count=1, timeout=0.6, privileged=False).is_alive         # Tries to ping the router IP
+                        print(f'trying to ping gateway at {Config.gateway_ip}')
+                        if reachable:                                                                               # If the ping is succesful
+                            self.router_reachable = ReachStatus.CONNECTED
+                            self.signals.status_message.emit(f"Connection succesfull after {_try+1} tries")                         # Emits signals for GUI update
+                            break 
+                        else:
+                            self.router_reachable = ReachStatus.WAITING                                                                                        # Exits for loop
+
+                    if self.router_reachable:
+                        self._reach_motor()
+                        self._link_device()
                     else:
-                        self._reaching_device_thread.join()
-                        self._reaching_device_thread = None
+                        self._link_device()
+                        
                 
                 self.signals.connection_speed.emit(f"{round(time.time()-t0, 3)}")
 
