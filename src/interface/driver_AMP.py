@@ -3,9 +3,9 @@ from abc import abstractmethod
 from src.interface.motor_driver import Driver
 from src.utils.constants import MotorProgramStatus
 
-from PyQt6.QtCore import QObject, pyqtSignal
+from PyQt6.QtCore import QObject, pyqtSignal, pyqtSlot
 
-from src.interface.modbus_server import IAGModbusServer, TimeoutCheck
+from src.interface.modbus_server import IAGModbusServer #, TimeoutCheck
 # from pyModbusTCP.server import DataBank
 from src.interface.modbus_data_bank import MB_DataBank
 
@@ -14,32 +14,34 @@ from threading import Lock, Thread, Timer
 
 from src.core.config import Config
 from src.core.exceptions import DriverException
-from src.utils.constants import constants, MotorStatusFlags
-from src.utils.modbus_regs import RegsInfo, RegType, coils_regs, dig_inputs_regs, DB_size, CLP_Owned, TwosComplementReg
+from src.utils.constants import constants, MotorStatusFlags, MotorParamsIdx
+from src.utils.modbus_regs import RegsInfo, RegType, coils_regs, dig_inputs_regs, DB_size, CLP_Owned, TwosComplementReg, param_vars
+
+from typing import TYPE_CHECKING
+
+if TYPE_CHECKING:
+    from src.utils.motor import Motor
+
 
 import time
 
 
 
 class DriverAMP(Driver):
-    def __init__(self, model):
-        super().__init__(model)
+    def __init__(self, motor: Motor):
+        super().__init__(motor)
 
         self.mb_server: IAGModbusServer = None
-
-
-    
-    
 
     def connect_motor(self, max_retries: int = 5, delay: float = 0.1) -> str:
         """Precisa ser implementada pelo driver"""
         retries = 0
         _con = False
 
-        dataBank_config = MB_DataBank(coils_size=DB_size.COIL_LAST_ADDRESS+1, coils_default_value=False,        #|      
-                d_inputs_size=DB_size.DI_LAST_ADDRESS+1, d_inputs_default_value=False,               #|  Config value for the modbus data bank.
-                h_regs_size=0, h_regs_default_value=0,                          #|  
-                i_regs_size=0, i_regs_default_value=0)                          #|
+        # dataBank_config = MB_DataBank(coils_size=DB_size.COIL_LAST_ADDRESS+1, coils_default_value=False,        #|      
+        #         d_inputs_size=DB_size.DI_LAST_ADDRESS+1, d_inputs_default_value=False,               #|  Config value for the modbus data bank.
+        #         h_regs_size=0, h_regs_default_value=0,                          #|  
+        #         i_regs_size=0, i_regs_default_value=0)                          #|
                 
         while retries < max_retries and not _con:
             try:
@@ -49,10 +51,16 @@ class DriverAMP(Driver):
                 # # self.mb_server.signals.signal_stop.connect(self.disconnect_motor)
                 # self.mb_run_thread = Thread(target=self.mb_server.run)
                 # self.mb_run_thread.start()
+
                 self.mb_server.running = True
                 _con = True
-                self.mb_server.data_bank.set_discrete_inputs(dig_inputs_regs.TX_WRITTING.ADDRESS, [False])  #| TX_WAIT e TX_BUSY precisam ser 
-                self.mb_server.data_bank.set_discrete_inputs(dig_inputs_regs.TX_READING.ADDRESS, [False])  #| inicializados em 0
+                self.mb_server.data_bank.set_discrete_inputs(dig_inputs_regs.TX_WRITTING.ADDRESS, [False])  #| TX_WAIT e TX_BUSY must be
+                self.mb_server.data_bank.set_discrete_inputs(dig_inputs_regs.TX_READING.ADDRESS, [False])   #| initialized as False
+
+                # self.mb_server.timeout.signal_timeout.connect(self.driver_comm.received_timeout)    # Connects timeout signal to the motor driver
+                
+
+
                 print("Modbus server started")
                 return "OK"
             except Exception as e:
@@ -96,7 +104,9 @@ class DriverAMP(Driver):
                                 d_inputs_size=DB_size.DI_LAST_ADDRESS+1, d_inputs_default_value=False,               #|  Config value for the modbus data bank.
                                 h_regs_size=0, h_regs_default_value=0,                          #|  
                                 i_regs_size=0, i_regs_default_value=0)                          #|
-                self.mb_server = IAGModbusServer(host=Config.device_ip, port=Config.device_port ,no_block=True, data_bank=dataBank_config)
+                self.mb_server = IAGModbusServer(host=Config.device_ip, port=Config.device_port ,no_block=True, data_bank=dataBank_config,
+                                                 timeout_callback_function=self._reset_communication)
+
                 self.mb_server.start()
 
                 self.mb_run_thread = Thread(target=self.mb_server.run)
@@ -105,7 +115,8 @@ class DriverAMP(Driver):
                 while self.mb_server.handshake is False and retries < max_retries:
                     time.sleep(0.2)             # Delay between retries #TODO: colocar isso no arquivo de configuração config_IAG.toml
                     retries += 1
-
+                
+                # self.mb_server.mb_comm.signal_timeout.connect(self._teste_signal)
                 # dummy_mb_server.data_bank.set_discrete_inputs(dig_inputs_regs.HANDSHAKE.ADDRESS, [True])  #| TX_WAIT e TX_BUSY precisam ser
 
                 # time.sleep(2)          # Delay to ensure the handshake is read by the client
@@ -138,10 +149,10 @@ class DriverAMP(Driver):
                 while self.mb_server.handshake is False and retries < max_retries:
                     time.sleep(0.2)             # Delay between retries #TODO: colocar isso no arquivo de configuração config_IAG.toml
                     retries += 1
+                    print(f"***** HANDSHAKE VALUE == {self.mb_server.data_bank.get_coils(coils_regs.HANDSHAKE.ADDRESS, 1)}")
                 if retries >= max_retries:
                     print("Max retries reached. Modbus server handshake failed.")
                     # self.logger.error("Max retries reached. Modbus server handshake failed.")
-
                     raise RuntimeError("Error pinging modbus server: Max retries reached. Modbus server handshake failed.")
                 return "OK"
             except Exception as e:
@@ -534,44 +545,31 @@ class DriverAMP(Driver):
         """Precisa ser implementada pelo driver""" 
         return self.mb_server.send_command(dig_inputs_regs.TX_GS5)
         
+    def _reset_communication(self):
+        """Resets and tries to re-establish the modbus connection with the CLP.
+        Reset process:
+            - Signals server that the connection to the motor was lost;
+            - Resets modbus server"""
+        # super()._reset_communication()
 
-    # def _write(self, value: int | bool, reg: RegsInfo):
+        self.driver_comm.timeout.emit(True)
+
+        self.motor.connected = False
+
+        self.mb_server.timeout.reset()
+        self.mb_server.handshake = False
+
         
-    #     # When the register size is 1 the value must be 0, 1 or boolean
-    #     if (reg.SIZE==1 and not ( ( (value==0) or (value==1) or type(value) is bool ) )):
-    #         raise ValueError(f"Cannot write {value} to {reg.TYPE.name}:{reg.ADDRESS}. This Register supports only {reg.SIZE} bit(s).")
-        
-    #     # When a boolean was sent to a register that has more bits
-    #     if ( type(value) is bool ) and ( reg.SIZE != 1):
-    #         raise ValueError(f"Cannot write a boolean to {reg.TYPE.name}:{reg.ADDRESS}. This Register has {reg.SIZE} bits")
+    def _update_all_parameters(self):
+        params = tuple()
+        values = tuple()
 
-    #     tries = 0
-    #     max_tries =5
-    #     # Tries 'max_tries' times to send the data
-    #     while tries < max_tries:
-    #         time.sleep(0.1)
-    #         # The application can only write new data if the CLP is not reading
-    #         if not self.mb_server.data_bank.get_coils(coils_regs.RX_READING.ADDRESS, coils_regs.RX_READING.SIZE)[0]:
-    #             if reg.TYPE is RegType.DISCRETE_INPUT:
 
-    #                 self.mb_server.data_bank.set_discrete_inputs(dig_inputs_regs.TX_WRITTING.ADDRESS, [True])
-    #                 time.sleep(0.05)
-    #                 if (type(value) is bool) or (reg.SIZE==1 and ( (value==0) or (value==1) ) ):                # If the value is a bool or the register has only one bit than no conversion is needed
-    #                     self.mb_server.data_bank.set_discrete_inputs(reg.ADDRESS, [value])
-    #                 else:                                                                                       #| If the register has multiple bits than the value must be converted
-    #                     num_bits = self.mb_server._conv_num_bits(value, reg.SIZE)                                         #| The conversion already considers negative values as two's complement
-    #                     if reg.SIZE == 8:                                                                       
-    #                         self.mb_server.data_bank.set_discrete_inputs(reg.ADDRESS, num_bits)          # If the register is only 8 bits the value is saved directly to the register
-    #                     else:                                                                                   
-    #                         self.mb_server.data_bank.set_discrete_inputs(reg.ADDRESS, num_bits[16:])     #|  If the register is 32 bits the higher bits must be saved to the first 16 bits of the address   
-    #                         self.mb_server.data_bank.set_discrete_inputs(reg.ADDRESS+16, num_bits[:16])  #| and the lower bits must be saved to next 16 bits
+        for param_idx in MotorParamsIdx:
+                if param_idx != MotorParamsIdx.MOTOR_IP and param_idx != MotorParamsIdx.MAX_STEP:
+                    params += (self.motor.parameters[param_idx].REGISTER,)
+                    values += (int(float(self.motor.parameters[param_idx].VALUE)),)
+                    
+        self.mb_server.write_param(params, values)
 
-    #                 self.mb_server.data_bank.set_discrete_inputs(dig_inputs_regs.TX_WRITTING.ADDRESS, [False])  # Informs CLP that there is a valid data ready for readi
-    #                 self.mb_server.wait_confirmation(reg)
-    #             break
-    #         else:
-    #             tries += 1
-    #     if tries == max_tries:
-    #         print(f'Failed to send {value} to register {reg.TAG} after {tries} tries')
-    #         # raise RuntimeError(f'Failed to send {value} to register {reg.TAG} after {tries} tries')
-
+                    

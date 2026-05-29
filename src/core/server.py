@@ -393,7 +393,7 @@ class Server(QObject):
                 self.motor.connect()                                                        # Creates the socket and connects the server to the motor
                 self.motor.update_status()
                 self._get_motor_params()
-                self._update_params_clp()
+                self.motor._update_motor_params()
                 self._update_status()
                                                 
                 self.status[SJson.DEVICE_IP] = self.motor.get_param(MotorParamsIdx.MOTOR_IP)
@@ -413,9 +413,10 @@ class Server(QObject):
                 
                 self.logger.info(f'Motor Reached and connected.')
         except Exception as e:
-            self.logger.error(f'{str(e)}')     
-
-        self._reaching_device_thread = None
+            self.logger.error(f'{str(e)}')  
+  
+        # if self._reaching_device_thread:
+        #     self._reaching_device_thread = None
 
     def _update_status(self):
         """Updates motor status and saves to JSON"""
@@ -439,17 +440,17 @@ class Server(QObject):
         self.status[SJson.MAX_SPEED] = self.motor.parameters[MotorParamsIdx.MAX_SPEED].VALUE
         self.status[SJson.MAX_STEP] = self.motor.parameters[MotorParamsIdx.MAX_STEP].VALUE
 
-    def _update_params_clp(self):
-        """Sends to the CLP the updated values of the configurations"""
-        for param_idx in MotorParamsIdx:
-            if param_idx != MotorParamsIdx.MOTOR_IP:
-                self.motor.set_param(param_idx, int(float(self.motor.parameters[param_idx].VALUE)))
+    # def _update_motor_params(self):
+    #     """Sends to the CLP the updated values of the configurations"""
+    #     for param_idx in MotorParamsIdx:
+    #         if param_idx != MotorParamsIdx.MOTOR_IP:
+    #             self.motor.set_param(param_idx, int(float(self.motor.parameters[param_idx].VALUE)))
 
-        for param_idx in MotorParamsIdx:
-            print(f"{self.motor.parameters[param_idx].NAME} - {self.motor.parameters[param_idx].VALUE}")
+    #     for param_idx in MotorParamsIdx:
+    #         print(f"{self.motor.parameters[param_idx].NAME} - {self.motor.parameters[param_idx].VALUE}")
 
-        self.motor.set_param(MotorParamsIdx.BACKLASH, Config.backlash)
-        self.logger.info("Motor parameters initialized")
+    #     # self.motor.set_param(MotorParamsIdx.BACKLASH, Config.backlash)
+    #     self.logger.info("Motor parameters initialized")
         
         
 
@@ -478,6 +479,8 @@ class Server(QObject):
 
                 # Motor must be connected, poller defined and the 'reach_device' thread must have finished
                 if self.motor.connected and self.zmq_comm.poller and self._reaching_device_thread is None:
+                    
+                    
                     socks = dict(self.zmq_comm.poller.poll(5))  # poll(50)                                                                           # Polls the information from the ZMQ to receive commands from the client
                     if socks.get(self.zmq_comm.replier) == zmq.POLLIN:                                                                       # If the socket is configured as Pollin   #TODO: Necessário?
                         
@@ -521,11 +524,18 @@ class Server(QObject):
                         self.motor_reachable = False
                         self._reaching_device_thread = Thread(target = self._reach_device)
                         self._reaching_device_thread.start()
+                    else:
+                        self._reaching_device_thread.join()
+                        self._reaching_device_thread = None
                 
                 self.signals.connection_speed.emit(f"{round(time.time()-t0, 3)}")
 
             except Exception as e:
                 self.logger.error(f"{e}")
+
+        if self._reaching_device_thread and self._reaching_device_thread.is_alive():
+            self._reaching_device_thread.join()                                 # Joins the thread to wait until it is finished
+            self._reaching_device_thread = None
 
         self.router_reachable = False
         self.motor_reachable = False

@@ -4,6 +4,11 @@ from typing import NamedTuple, TypedDict
 from dataclasses import dataclass
 from threading import Timer
 
+from typing import TYPE_CHECKING
+
+if TYPE_CHECKING:
+    from src.utils.modbus_regs import RegsInfo
+
 #region GUI
 
 class DynamicProperties(StrEnum):
@@ -32,6 +37,11 @@ constants = Constants(
 class CommandTimeout():
     command: str
     timer: Timer
+
+class TimeoutState(Enum):
+    NO_TIMEOUT = auto()
+    TIMEOUT = auto()
+    WAIT_INFO = auto()
 
 #endregion
 
@@ -100,6 +110,7 @@ class MotorParamsIdx(Enum):
 class MotorParameter():
     IDX: MotorParamsIdx
     NAME: str
+    REGISTER: RegsInfo
     VALUE: int | bool | str
 
 class ReachStatus(StrEnum):
@@ -145,7 +156,7 @@ class MotorStatusFlags(IntFlag):
     INVALID = auto()
 
 class MotorProgramStatus(IntFlag):
-    NO_INIT = 1
+    NO_INIT = auto()
     READY = auto()
     RUN_HOMING = auto()
     ON_FAULT = auto()

@@ -2,7 +2,7 @@ from pyModbusTCP.server import ModbusServer as mbServer
 from pyModbusTCP.server import DataBank
 from src.core.config import Config
 from src.utils.modbus_regs import dig_inputs_regs, coils_regs, RegsInfo, RegType, CLP_Owned, TwosComplementReg, param_vars, DB_size
-from src.utils.constants import CommandTimeout
+from src.utils.constants import CommandTimeout, TimeoutState
 from src.interface.modbus_data_bank import MB_DataBank
 
 
@@ -16,35 +16,62 @@ from datetime import datetime
 class TimeoutCheck(QObject):
     """Handshake Timeout verification"""
 
-    _timeout_signal = pyqtSignal(bool)
-    def __init__(self, timeout: int = 5):
+    signal_timeout = pyqtSignal(bool)
+    def __init__(self, driver_timeout_method, timeout: int = 5):
         super(QObject, self).__init__()
         self._timeout_limit = timeout                           # Timeout limit
         self.timer: int = 0                                     # Current timer
 
-        self.status = False                                     # Timeout status (True -> timeout occured)
+        self.status: TimeoutState = TimeoutState.NO_TIMEOUT     # Timeout status (True -> timeout occured)
+        self.old_val = False
+
+        self.callback_on_timeout = driver_timeout_method
+
+        self.reset()
 
     def reset(self):
         """Resets timeout timer"""
         self.timer = time.time()
 
-    def check_timeout(self) -> bool:
+    def check_timeout(self, new_val: bool) -> TimeoutState:
         """Checks if a timeout occured
 
         Returns:
             bool:   True -> Timeout
                     False -> No timeout
         """ 
-        # The timeout occurs when this function is not called in less than '_timeout_limit'
-        if (time.time() - self.timer) < self._timeout_limit:
-            self.status = False
-            self._timeout_signal.emit(False)
-        else:
-            self.status = True
-            self._timeout_signal.emit(True)
+        # # The timeout occurs when this function is not called in less than '_timeout_limit'
+        # if (time.time() - self.timer) < self._timeout_limit:
+        #     self.status = False
+        # else:
+        #     self.status = True
+        #     self.callback_on_timeout()  # Calls driver function to deal with the timeout
+            
+        elapsed_time = time.time() - self.timer        
+        # print(f"checking timeout: {elapsed_time}")
 
-        return self.status 
+        # return self.status 
+        if (self.old_val != new_val):
+            if (elapsed_time) < self._timeout_limit:     
+                    self.status = TimeoutState.NO_TIMEOUT  
+                    self.reset()
+            else:
+                self.status = TimeoutState.TIMEOUT                                  
+                self.callback_on_timeout()                          # Calls driver function to deal with the timeout
+        else:
+            if (elapsed_time) > self._timeout_limit:
+                self.callback_on_timeout() 
+            else:
+                self.status = TimeoutState.WAIT_INFO      # Não deu timeout mas não pode resetar o timer
         
+        self.old_val = new_val
+        return self.status 
+    
+    
+        
+# class MB_Server_Communicator(QObject):
+#     signal_timeout = pyqtSignal(bool)
+
 
 class IAGModbusServer(mbServer):
     """A Qwidget that operates as modbus server
@@ -66,9 +93,10 @@ class IAGModbusServer(mbServer):
     _reading = False
     _writting = False
     RW_lock = Lock()
+    _params_initialized: bool = False
     def __init__(self, host: str='0.0.0.0', port: int=5005, no_block: bool=False, ipv6: bool=False, device_id=None,
-                 data_bank: MB_DataBank | None = None,):
-        super(IAGModbusServer, self).__init__(host=host, port=port, no_block=no_block, ipv6=ipv6, data_bank=data_bank, device_id=device_id)
+                 data_bank: MB_DataBank | None = None, timeout_callback_function = None):
+        super().__init__(host=host, port=port, no_block=no_block, ipv6=ipv6, data_bank=data_bank, device_id=device_id)
 
             # self.dataBank = DataBank(coils_size=1127, coils_default_value=False, d_inputs_size=0, h_regs_size=0, i_regs_size=0)
         # dataBank = DataBank(coils_size=coils_size, coils_default_value=False,
@@ -90,9 +118,8 @@ class IAGModbusServer(mbServer):
         self.handshake = False
         self.running = False
 
-        self.timeout = TimeoutCheck()
-
-        self.handshake_timer = time.time()
+        self.timeout = TimeoutCheck(timeout_callback_function)
+        # self.mb_comm = MB_Server_Communicator()
 
         self.command_timeout = CommandTimeout(
             command='',
@@ -221,9 +248,10 @@ class IAGModbusServer(mbServer):
             # Checks if a HANDSHAKE was received and if a timeout occured
             self._check_handshake()
 
+            self._mirror_clp_owned_coils()
 
             # To be operational the handshake must be valid
-            if self.handshake:
+            if self.handshake: #and self._params_initialized:
                 
                 # As variáveis que vem do CLP devem ser sempre lidas e rebatidas para o CLP, porém, elas somente
                 # serão salvas no data bank principal quando o CLP enviar o sinal de que parou de escrever
@@ -236,7 +264,7 @@ class IAGModbusServer(mbServer):
                 # information was received by the python
                 # if not self.data_bank.get_coils(coils_regs.RX_WRITTING.ADDRESS, 1)[0]: 
                 # if not self.CLP_writting:
-                self._mirror_clp_owned_coils()
+                # self._mirror_clp_owned_coils()
 
                 if not self.CLP_writting:
                     if self._start_reading_data():
@@ -295,31 +323,55 @@ class IAGModbusServer(mbServer):
         
 
         print("Stopping server")
+        # self.timeout = None
         time.sleep(1)
 
 
     def _check_handshake(self):
-        if not self._compare_regs(coils_regs.HANDSHAKE):   # If false means that the register value was changed
-            new = self.data_bank.get_coils(coils_regs.HANDSHAKE.ADDRESS, coils_regs.HANDSHAKE.SIZE)[0]
-            # print(f"Register {coils_regs.HANDSHAKE.TAG} old value {old} -> new value {new}")
-            # print(new)
-            if new == True:                  # if changed from false to true
-                self.timeout.check_timeout()                                            # Checks if the time between handshakes has passed the timeout limit
-                self.handshake = True                                                   # DEBUG: Colocar a lógica correta -> self.handshake = not self.timeout.check_timeout()
+
+        new = self.data_bank.get_coils(coils_regs.HANDSHAKE.ADDRESS, coils_regs.HANDSHAKE.SIZE)[0]
+        # Checks if the time between handshakes has passed the timeout limit (False indicates that there is NO timeout)
+        if self.timeout.check_timeout(new) == TimeoutState.NO_TIMEOUT:    
+            self.handshake = True
+            self.data_bank.set_discrete_inputs(dig_inputs_regs.TX_SVON.ADDRESS, [True])   # Informs the CLP that the Driver is active and ready to operate
+        else:
+            # self.handshake = False
+            # self.data_bank.set_discrete_inputs(dig_inputs_regs.TX_SVON.ADDRESS, [False])   # Informs the CLP that the Driver is active and ready to operate
+
+
+
+
+        # if not self._compare_regs(coils_regs.HANDSHAKE):   # If false means that the register value was changed
+        #     new = self.data_bank.get_coils(coils_regs.HANDSHAKE.ADDRESS, coils_regs.HANDSHAKE.SIZE)[0]
+        #     # print(f"Register {coils_regs.HANDSHAKE.TAG} old value {old} -> new value {new}")
+        #     # print(new)
+         
+            
+        #     # Checks if the time between handshakes has passed the timeout limit (False indicates that there is NO timeout)
+        #     if self.timeout.check_timeout(new) == False:    
+        #         self.handshake = True
+        #         self.timeout.reset()
+        #         self.data_bank.set_discrete_inputs(dig_inputs_regs.TX_SVON.ADDRESS, [True])   # Informs the CLP that the Driver is active and ready to operate
+        #     else:
+        #         self.data_bank.set_discrete_inputs(dig_inputs_regs.TX_SVON.ADDRESS, [False])   # Informs the CLP that the Driver is active and ready to operate
+
+            # if new == True:                  # if changed from false to true
+            #     # self.timeout.check_timeout()                                            # Checks if the time between handshakes has passed the timeout limit
+            #     self.handshake = True                                                   # DEBUG: Colocar a lógica correta -> self.handshake = not self.timeout.check_timeout()
                 
-                if self.data_bank.d_inputs_size == DB_size.DI_LAST_ADDRESS+1:
-                    self.data_bank.set_discrete_inputs(dig_inputs_regs.TX_SVON.ADDRESS, [True])   # Informs the CLP that the Driver is active and ready to operate
+            #     if self.data_bank.d_inputs_size == DB_size.DI_LAST_ADDRESS+1:
+            #         self.data_bank.set_discrete_inputs(dig_inputs_regs.TX_SVON.ADDRESS, [True])   # Informs the CLP that the Driver is active and ready to operate
 
-                # print(f"Handshake took {time.time() - self.timeout.timer} seconds")
-                self.timeout.reset()
-
-                if self.timeout.status:
-                    print("TIMEOUT")        #TODO: Implementar lógica de timeout 
+            #     print(f"Handshake took {time.time() - self.timeout.timer} seconds")
+            #     self.timeout.reset()
+                
+            #     # if self.timeout.status:
+            #     #     print("TIMEOUT")        #TODO: Implementar lógica de timeout 
                     
-                    ...
-                else:
-                    # print("NO TIMEOUT")
-                    ...
+            #     #     ...
+            #     # else:
+            #     #     # print("NO TIMEOUT")
+            #     #     ...
 
                 
             # print(f"Handshake value changed to {new}")
@@ -573,10 +625,14 @@ class IAGModbusServer(mbServer):
         self._write(params)   # Writes the command to the CLP
         self._stop_writting_data()
 
+        time.sleep(0.2)     # Time for CLP to process information
+
         for tries in range(2):
             # self._start_writting_data()
-            resp = self.send_command(dig_inputs_regs.TX_PR)   # Sends a parameter request command to the CLP to inform that the Driver will write a parameter to the CLP
+            # Sends a parameter request command to the CLP to inform that the Driver will write a parameter to the CLP
+            resp = self.send_command(dig_inputs_regs.TX_PR)   
             # self._stop_writting_data()
+
             if resp == "OK":
 
                 try:
@@ -604,17 +660,17 @@ class IAGModbusServer(mbServer):
                                     if mirrored:
                                         print(f"[+] Parameter {reg.TAG} updated with value {value} by CLP")
                                     else:
-                                        self._stop_reading_data()
+                                        # self._stop_reading_data()
 
-                                        self.send_command(dig_inputs_regs.TX_PR)
+                                        # self.send_command(dig_inputs_regs.TX_PR)
 
-                                        self._start_reading_data()
+                                        # self._start_reading_data()
 
                                         time.sleep(0.1)
                                         if time.time() - t > 3:
                                             t_over = True
                                         
-                                            print(f"[-] Coul not update parameter {reg.TAG}, timeout checking mirror value")
+                                            print(f"[-] Could not update parameter {reg.TAG}, timeout checking mirror value")
                                             print(f"Sent value {self.data_bank.get_discrete_inputs(p[0].ADDRESS, p[0].SIZE)[0]} ======> Mirror Coil Value  {self.data_bank.get_coils(p_dict[p[0].TAG].RESPONSE.ADDRESS, p_dict[p[0].TAG].RESPONSE.SIZE)[0]}")
                                             raise TimeoutError(f"[§]Timeout while updating paramater {reg.TAG}")
        

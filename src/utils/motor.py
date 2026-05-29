@@ -12,6 +12,8 @@ from src.interface.driver_AMP import DriverAMP
 from src.utils.constants import MotorModels, MotorParamsIdx, ServerCommands, constants, MotorParameter, MotorStatusFlags, MotorAlarmInfo
 from src.utils.signals import PropertySignals, MultiSignal
 
+from src.utils.modbus_regs import dig_inputs_regs
+
 
 class MotorSignals(QObject):
     connected = pyqtSignal(bool)
@@ -46,19 +48,19 @@ class Motor():
         self._firmware_version: str = ''
 
         self.parameters = {
-            MotorParamsIdx.MOTOR_IP : MotorParameter(MotorParamsIdx.MOTOR_IP, "MOTOR_IP", 0),
-            MotorParamsIdx.BACKLASH : MotorParameter(MotorParamsIdx.BACKLASH, "BACKLASH", 0),
-            MotorParamsIdx.MAX_POS : MotorParameter(MotorParamsIdx.MAX_POS, "MAX_POS", 0),
-            MotorParamsIdx.PARK_POS : MotorParameter(MotorParamsIdx.PARK_POS, "PARK_POS", 0),
-            MotorParamsIdx.MAX_SPEED : MotorParameter(MotorParamsIdx.MAX_SPEED, "MAX_SPEED", 0),
-            MotorParamsIdx.NORMAL_SPEED : MotorParameter(MotorParamsIdx.NORMAL_SPEED, "NORMAL_SPEED", 0),
-            MotorParamsIdx.LOW_SPEED : MotorParameter(MotorParamsIdx.LOW_SPEED, "LOW_SPEED", 0),
-            MotorParamsIdx.MAX_STEP : MotorParameter(MotorParamsIdx.MAX_STEP, "MAX_STEP", 0),
-            MotorParamsIdx.ACCELERATION : MotorParameter(MotorParamsIdx.ACCELERATION, "ACCELERATION", 0),
-            MotorParamsIdx.DECELERATION : MotorParameter(MotorParamsIdx.DECELERATION, "DECELERATION", 0),
-            MotorParamsIdx.IDLE_CURRENT : MotorParameter(MotorParamsIdx.IDLE_CURRENT, "IDLE_CURRENT", 0),
-            MotorParamsIdx.RUN_CURRENT : MotorParameter(MotorParamsIdx.RUN_CURRENT, "RUN_CURRENT", 0),
-            MotorParamsIdx.ACC_CURRENT : MotorParameter(MotorParamsIdx.ACC_CURRENT, "ACC_CURRENT", 0),
+            MotorParamsIdx.MOTOR_IP : MotorParameter(MotorParamsIdx.MOTOR_IP, "MOTOR_IP", dig_inputs_regs.TX_IP_A, 0),
+            MotorParamsIdx.BACKLASH : MotorParameter(MotorParamsIdx.BACKLASH, "BACKLASH", dig_inputs_regs.TX_V74, 0),
+            MotorParamsIdx.MAX_POS : MotorParameter(MotorParamsIdx.MAX_POS, "MAX_POS", dig_inputs_regs.TX_V71, 0),
+            MotorParamsIdx.PARK_POS : MotorParameter(MotorParamsIdx.PARK_POS, "PARK_POS", dig_inputs_regs.TX_V83, 0),
+            MotorParamsIdx.MAX_SPEED : MotorParameter(MotorParamsIdx.MAX_SPEED, "MAX_SPEED", dig_inputs_regs.TX_V75, 0),
+            MotorParamsIdx.NORMAL_SPEED : MotorParameter(MotorParamsIdx.NORMAL_SPEED, "NORMAL_SPEED", dig_inputs_regs.TX_V77, 0),
+            MotorParamsIdx.LOW_SPEED : MotorParameter(MotorParamsIdx.LOW_SPEED, "LOW_SPEED", dig_inputs_regs.TX_V76, 0),
+            MotorParamsIdx.MAX_STEP : MotorParameter(MotorParamsIdx.MAX_STEP, "MAX_STEP", dig_inputs_regs.TX_DUMMY, 0),
+            MotorParamsIdx.ACCELERATION : MotorParameter(MotorParamsIdx.ACCELERATION, "ACCELERATION", dig_inputs_regs.TX_V80, 0),
+            MotorParamsIdx.DECELERATION : MotorParameter(MotorParamsIdx.DECELERATION, "DECELERATION", dig_inputs_regs.TX_V79, 0),
+            MotorParamsIdx.IDLE_CURRENT : MotorParameter(MotorParamsIdx.IDLE_CURRENT, "IDLE_CURRENT", dig_inputs_regs.TX_V78, 0),
+            MotorParamsIdx.RUN_CURRENT : MotorParameter(MotorParamsIdx.RUN_CURRENT, "RUN_CURRENT", dig_inputs_regs.TX_V81, 0),
+            MotorParamsIdx.ACC_CURRENT : MotorParameter(MotorParamsIdx.ACC_CURRENT, "ACC_CURRENT", dig_inputs_regs.TX_V82, 0),
         }
 
         self._connected: bool = False
@@ -76,15 +78,22 @@ class Motor():
         self._alarm_info: str = ''
 
         if model == MotorModels.ARCUS_DMX_ETH:
-            self.driver = DriverDMX(model)
+            self.driver = DriverDMX(self)
         elif model == MotorModels.AMP_MOTOR:
-            self.driver = DriverAMP(model)
+            self.driver = DriverAMP(self)
         else:
             raise RuntimeError(f'Motor driver model {model} is invalid')
         
         self.driver.driver_comm.status.connect(lambda val: setattr(self, 'connected', val))
 
 #region  ========== PROPERTIES ========== # 
+
+    @property
+    def teste_property(self):
+        print("***PROPRIEDADE DO MOTOR RETORNADA***")
+    @teste_property.setter
+    def teste_property(self, value:bool):
+        print(f"***PROPRIEDADE DO MOTOR ALTERADA PARA {value}! ***")
 
     @property
     def connected(self) -> bool:
@@ -379,7 +388,8 @@ class Motor():
         :return: Disconnection was successful [OK / NOK] #TODO: Talvez possibilitar mais informações na resposta
         :rtype: str
         """
-        if self.connected:
+        # The driver may not be connected but trying to connect the motor
+        if self.connected or self.driver is not None:
             resp = "NOK"
             while resp != "OK":
                 resp = self.driver.disconnect_motor()
@@ -432,6 +442,23 @@ class Motor():
             print('Failed to ping motor')
             return False
 
+    def _update_motor_params(self):
+        """Sends to the motor/CLP the updated values of the configurations"""
+        # TODO: Por enquanto somente é válido para o motor do IAG
+
+        self.driver._update_all_parameters()
+
+
+        # if self.model == MotorModels.AMP_MOTOR:
+        #     for param_idx in MotorParamsIdx:
+        #         if param_idx != MotorParamsIdx.MOTOR_IP:
+        #             self.set_param(param_idx, int(float(self.motor.parameters[param_idx].VALUE)))
+
+        #     for param_idx in MotorParamsIdx:
+        #         print(f"{self.parameters[param_idx].NAME} - {self.motor.parameters[param_idx].VALUE}")
+
+            # self.motor.set_param(MotorParamsIdx.BACKLASH, Config.backlash)
+            # self.logger.info("Motor parameters initialized")
 
     def set_param(self, ParamIndex: MotorParamsIdx, value: int | bool | str) -> str:
         """Sets values for motor parameters

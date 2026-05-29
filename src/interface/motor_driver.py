@@ -1,10 +1,16 @@
 from abc import ABC, abstractmethod
 from typing import NamedTuple
 
-from PyQt6.QtCore import pyqtSignal, QObject
+from PyQt6.QtCore import pyqtSignal, QObject, pyqtSlot
 from src.utils.constants import MotorParamsIdx, ServerCommands
 from src.utils.signals import PropertySignals
 
+from typing import TYPE_CHECKING
+
+if TYPE_CHECKING:
+    from src.utils.motor import Motor
+
+    
 class DriverCommunicator(QObject):
     status = pyqtSignal(bool)
 
@@ -12,9 +18,13 @@ class DriverCommunicator(QObject):
     run_focus_out = PropertySignals()
     run_park = PropertySignals()
 
+    timeout = pyqtSignal(bool)
+
 class Driver(ABC):
-    def __init__(self, model: str):
-        self._model = model
+    def __init__(self, motor: Motor):
+        self._model = motor.model
+
+        self.motor = motor
 
         self.driver_comm = DriverCommunicator()
 
@@ -182,32 +192,47 @@ class Driver(ABC):
     @abstractmethod
     def sendCommand(self, command: str) -> str:
         """Precisa ser implementada pelo driver"""
+        ...
              
     @abstractmethod
     def move_to(self, pos: str) -> str:
         """Precisa ser implementada pelo driver"""
+        ...
              
     @abstractmethod
     def focus_in(self, speed: str) -> str:
         """Precisa ser implementada pelo driver""" 
+        ...
              
     @abstractmethod
     def focus_out(self, speed: str) -> str:
         """Precisa ser implementada pelo driver""" 
+        ...
              
     @abstractmethod
     def halt(self) -> str:
         """Precisa ser implementada pelo driver""" 
+        ...
              
     @abstractmethod
     def home(self) -> str:
         """Precisa ser implementada pelo driver"""
+        ...
              
     @abstractmethod
     def park(self) -> str:
         """Precisa ser implementada pelo driver""" 
+        ...
+
+    def _update_all_parameters(self) -> str:
+        """Pode ser implementado pelo driver caso necessário"""
+        ...
 
 
+    def _reset_communication(self):
+        """Pode ser implementada pelo driver caso necessário"""
+        print("*** Resetting communication...\n\n")
+        ...
 
     def _store_to_flash(self) -> str:
         """Pode ser implementada pelo driver caso necessário"""
