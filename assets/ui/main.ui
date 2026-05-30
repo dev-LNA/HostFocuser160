@@ -1801,7 +1801,7 @@ border-right: none;
               </size>
              </property>
              <property name="text">
-              <string>Program Status: </string>
+              <string>Motor Status: </string>
              </property>
             </widget>
            </item>
@@ -1809,13 +1809,13 @@ border-right: none;
             <widget class="QLabel" name="lblStatus_val">
              <property name="minimumSize">
               <size>
-               <width>60</width>
+               <width>165</width>
                <height>0</height>
               </size>
              </property>
              <property name="maximumSize">
               <size>
-               <width>80</width>
+               <width>170</width>
                <height>20</height>
               </size>
              </property>
@@ -4702,7 +4702,7 @@ QSlider::handle:horizontal {
          <string>Focuser</string>
         </property>
        </widget>
-       <widget class="QWidget" name="">
+       <widget class="QWidget" name="layoutWidget">
         <property name="geometry">
          <rect>
           <x>1</x>

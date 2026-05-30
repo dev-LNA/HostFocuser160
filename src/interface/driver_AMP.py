@@ -213,12 +213,16 @@ class DriverAMP(Driver):
     
     def read_initialized(self) -> bool:
         """Precisa ser implementada pelo driver"""
-        return False
+        return self.mb_server.db_shadow.get_coils(coils_regs.RX_V44.ADDRESS, 1)[0]
 
     
     def read_status(self) -> int:
         """Precisa ser implementada pelo driver"""
-        return MotorStatusFlags.ENABLED  #TODO: Implementar a leitura do status do motor, e retornar os flags correspondentes
+
+        return self.mb_server._conv_reg_to_value(coils_regs.RX_MST, self.mb_server.db_shadow)
+
+
+        # return MotorStatusFlags.ENABLED  #TODO: Implementar a leitura do status do motor, e retornar os flags correspondentes
 
 
 
@@ -444,6 +448,25 @@ class DriverAMP(Driver):
             self.driver_comm.run_park.emit(True, "statusLed", "WAIT")
         else:
             self.driver_comm.run_park.emit(False, "statusLed", "OFF")
+
+
+
+        if sastat & MotorProgramStatus.ERROR_NEED_HOME:
+            return "Must run HOME"
+
+        if sastat & MotorProgramStatus.ERROR_FOCUS_OUT:
+            return "Too close to HOME"
+
+        if sastat & MotorProgramStatus.MANUAL_MOVE:
+            return "Manual Movement"
+        
+        if sastat & MotorProgramStatus.ERROR_RS485:
+            return "RS485 error"
+        
+        if sastat & MotorProgramStatus.ERROR_OUT_OF_RANGE:
+            return "Out of range"
+        
+        
 
 
         if sastat & MotorProgramStatus.READY:
