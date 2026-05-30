@@ -30,13 +30,37 @@ except Exception as e:
     ERR_VALUE = str(e)
     CONFIG_FILE = False
 
-def resource_path(relative_path):
-    """ Retorna o caminho absoluto para o recurso, compatível com PyInstaller """
-    if hasattr(sys, '_MEIPASS'):
-        # No executável, sys._MEIPASS é a raiz da pasta temporária
-        base_path = sys._MEIPASS
+# def resource_path(relative_path):
+#     """ Retorna o caminho absoluto para o recurso, compatível com PyInstaller """
+#     if hasattr(sys, '_MEIPASS'):
+#         # No executável, sys._MEIPASS é a raiz da pasta temporária
+#         base_path = sys._MEIPASS
+#     else:
+#         # No desenvolvimento 'main4.py' está na raiz
+#         base_path = os.path.abspath(os.path.join(os.path.dirname(__file__), ""))
+
+#     return os.path.normpath(os.path.join(base_path, relative_path))
+
+def resource_path(relative_path, external=False):
+    """
+    Função universal para localização de arquivos.
+    - No VS Code: Segue a estrutura de pastas do projeto.
+    - No EXE (Interno): Busca arquivos embutidos (psw.cfg, assets).
+    - No EXE (Externo): Busca arquivos na pasta do usuário (config.toml).
+    """
+    # 1. Checa se o programa está rodando como um executável do PyInstaller
+    frozen = getattr(sys, 'frozen', False)
+    
+    if frozen:  # Se 'False' significa que está rodando do Visual Studio (modo desenvolvimento)
+        if external:
+            # Caminho ao lado do arquivo .exe
+            base_path = os.path.dirname(sys.executable)
+        else:
+            # Caminho dentro da pasta temporária do .exe
+            base_path = sys._MEIPASS
     else:
-        # No desenvolvimento 'main4.py' está na raiz
+        # 2. Modo Desenvolvimento (Visual Studio / VS Code)
+        # Como este arquivo está em src/core, subimos dois níveis para chegar na raiz
         base_path = os.path.abspath(os.path.join(os.path.dirname(__file__), ""))
 
     return os.path.normpath(os.path.join(base_path, relative_path))
@@ -209,9 +233,23 @@ class FocuserOPD (QMainWindow):
         
         
         if self.ui_elements.rb160.isChecked():
-            config_file_path = "src/config/config_PE160.toml"
+            # Se 'False' significa que está rodando do Visual Studio (modo desenvolvimento)
+            # Nesse caso a pasta com as configurações está dentro de 'src'
+            if getattr(sys, 'frozen', False):
+                config_file_path = resource_path("config/config_PE160.toml", external=True) #"src/config/config_PE160.toml"
+            else:
+                config_file_path = "src/config/config_PE160.toml"
+
         elif self.ui_elements.rbIAG.isChecked():
-            config_file_path = "src/config/config_IAG.toml"
+            # Se 'False' significa que está rodando do Visual Studio (modo desenvolvimento)
+            # Nesse caso a pasta com as configurações está dentro de 'src'
+            if getattr(sys, 'frozen', False):
+                config_file_path = resource_path("config/config_IAG.toml", external=True)
+            else:
+                config_file_path ="src/config/config_IAG.toml"
+
+        print(f'Loading configuration file -> {config_file_path}')
+        logger.info(f'Loading configuration file -> {config_file_path}')
 
         # Loads the configuration file from the path according to the selected focuser
         self._load_config_file(config_file_path)
@@ -260,7 +298,8 @@ class FocuserOPD (QMainWindow):
             # config_path = Path("src/config/config.toml")
             # config_path.unlink(missing_ok=True)
 
-            shutil.copy(config_file_path, "src/config/config.toml")            #TODO: 'copy' do not retain the metadata, if metadata is needed change to '.copy2'
+            config_path = resource_path('src/config/config.toml')       
+            shutil.copy(config_file_path, config_path)            #TODO: 'copy' do not retain the metadata, if metadata is needed change to '.copy2'
             logger.info(f"Loaded configuration file: {config_file_path}")
             update_config()
 
