@@ -508,7 +508,7 @@ class Server(QObject):
                 if self.motor.connected and self.zmq_comm.poller:
                     
                     
-                    socks = dict(self.zmq_comm.poller.poll(5))  # poll(50)                                                                           # Polls the information from the ZMQ to receive commands from the client
+                    socks = dict(self.zmq_comm.poller.poll(10))  # poll(50)                                                                           # Polls the information from the ZMQ to receive commands from the client
                     if socks.get(self.zmq_comm.replier) == zmq.POLLIN:                                                                       # If the socket is configured as Pollin   #TODO: Necessário?
                         
                         received_client_msg = self.zmq_comm.replier.recv_string()
@@ -578,35 +578,6 @@ class Server(QObject):
         self.motor_reachable = False
         self.communicating_to_motor = False 
 
-    def _command_validation(self, cmd: dict):
-        """Validates the command received from the client
-
-        Rules for validation:
-            - 'Status' command is always accepted.
-            - If the motor is NOT in movement any command will be accepted
-            - If the motor is already in movement then only commands sent
-                by the same client that started the movement will be accepted.
-
-        :param msg: Message received from the client
-        :type msg: str
-        :return: Bool indicating if the command can be processed
-        :rtype: bool
-        """
-        if cmd["COMMAND"] == ServerCommands.STATUS:     # 'STATUS' is a command to the server
-            return
-
-        elif cmd["COMMAND"] in MotorValidCommands:
-            if self.motor.is_moving: 
-                if  cmd["CLIENT"] == self.status[SJson.CMD][SJson.CMD_CLIENT_NAME]:     # If the command was sent by the same client that sent the last command
-                    return 
-                else:
-                    raise RuntimeError(f'Motor already moving: Client "{self.status[SJson.CMD][SJson.CMD_CLIENT_NAME]}" '
-                                       f'started the movement and client "{cmd["CLIENT"]}" tried to '
-                                       f'start another movement')
-            else:
-                return 
-        else:
-            raise ValueError(f'Command "{cmd}" is not a valid command')
     
     def _parse_client_command(self, msg_json: json) -> dict:
         """Parses received command and updates status
@@ -630,7 +601,41 @@ class Server(QObject):
             parsed["COMMAND"] = cmd[:p]
             parsed["PARAMETER"] = int(cmd[p+1:])
 
+        print(parsed)
+
         return parsed    
+    
+    def _command_validation(self, cmd: dict):
+        """Validates the command received from the client
+
+        Rules for validation:
+            - 'Status' command is always accepted.
+            - If the motor is NOT in movement any command will be accepted
+            - If the motor is already in movement then only commands sent
+                by the same client that started the movement will be accepted.
+
+        :param msg: Message received from the client
+        :type msg: str
+        :return: Bool indicating if the command can be processed
+        :rtype: bool
+        """
+        if cmd["COMMAND"] == ServerCommands.STATUS:     # 'STATUS' is a command to the server
+            return
+
+        elif cmd["COMMAND"] in MotorValidCommands:
+            if self.motor.is_moving: 
+                print(f"CLIENTE ATUAL: {self.status[SJson.CMD][SJson.CMD_CLIENT_NAME]}")
+                if  cmd["CLIENT"] == self.status[SJson.CMD][SJson.CMD_CLIENT_NAME]:     # If the command was sent by the same client that sent the last command
+                    return 
+                else:
+                    raise RuntimeError(f'Motor already moving: Client "{self.status[SJson.CMD][SJson.CMD_CLIENT_NAME]}" '
+                                       f'started the movement and client "{cmd["CLIENT"]}" tried to '
+                                       f'start another movement')
+            else:
+                return 
+        else:
+            raise ValueError(f'Command "{cmd}" is not a valid command')
+
 
     def _handle_command(self, cmd: dict):
         """Handles the command received by the client
@@ -659,6 +664,7 @@ class Server(QObject):
         """Verifies if the motor ended the execution of the
         last command and resets the command information"""
         # print(self.status)
+        time.sleep(0.2) # Time to allow CLP to update internal variables in IAG controller
         if self.motor.firmware_status == 'Idle' and \
             self.status[SJson.CMD][SJson.CMD_CLIENT_ID] != 0:   
 

@@ -206,7 +206,7 @@ class Motor():
                 if self._parking:
                     self.signals.parking.emit(self._parking, "statusLed", "WAIT")
                 else:
-                    self.signals.parking.emit(self._parking, "statusLed", "NOK")
+                    self.signals.parking.emit(self._parking, "statusLed", "OFF")
             return self._parking
         except Exception as e:
             # self.disconnect()
@@ -230,7 +230,7 @@ class Motor():
                 if self._initialized:
                     self.signals.initialized.emit(True, "statusLed", "OK")
                 elif not self._homing:
-                    self.signals.initialized.emit(False, "statusLed", "NOK")
+                    self.signals.initialized.emit(False, "statusLed", "OFF")
             return self._initialized
         except Exception as e:
             # self.disconnect()
@@ -321,7 +321,7 @@ class Motor():
         #TODO: Adicionar os status específicos do IAG
         try:
             if not self._homing and not self._initialized:
-                self.signals.initialized.emit(False, "statusLed", "NOK")
+                self.signals.initialized.emit(False, "statusLed", "OFF")
 
             motor_status = self.driver.read_status()
             if motor_status != MotorStatusFlags.INVALID:
