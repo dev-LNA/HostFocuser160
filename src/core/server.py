@@ -601,6 +601,9 @@ class Server(QObject):
             parsed["COMMAND"] = cmd[:p]
             parsed["PARAMETER"] = int(cmd[p+1:])
 
+        if parsed["CLIENT"] is None:
+            parsed["CLIENT"] = "TCS"
+
         print(parsed)
 
         return parsed    
