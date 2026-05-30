@@ -587,9 +587,9 @@ class Server(QObject):
         :return: Dictionary containing the command and parameters
         :rtype: dict
         """
-        cmd = msg_json.get(SJson.CMD_ACTION)
+        cmd = msg_json.get(SJson.CMD_ACTION.value)
 
-        parsed = {  'CLIENT': msg_json.get(SJson.CMD_CLIENT_NAME),   #TODO: Verificar como checar qual cliente enviou a mensagem, nem todo cliente vai ter um "CLIENT NAME"
+        parsed = {  'CLIENT': msg_json.get(SJson.CMD_CLIENT_NAME.value),   #TODO: Verificar como checar qual cliente enviou a mensagem, nem todo cliente vai ter um "CLIENT NAME"
                     'COMMAND': cmd,
                     'PARAMETER': None }
 
