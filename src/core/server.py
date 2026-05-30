@@ -356,7 +356,9 @@ class Server(QObject):
         """
         if self.motor == None:
             self.motor = Motor(motor_model) 
+
             self.motor.driver.driver_comm.timeout.connect(lambda value: setattr(self, 'driver_timeout', value))
+            self.motor.signals.alarm.status.connect(lambda val: self.logger.error(f'{self.motor._alarm_info}') if val == True else ... )
         else:
             raise ValueError("Invalid motor model")
 
@@ -540,18 +542,9 @@ class Server(QObject):
 
 
                 else:
-                    #  The device reaching is realized in a new thread to enhance the status 
-                    # update time
-                    #TODO: Acho que faz mais sentido rodar o envio de status para o ZMQ
-                    # em uma thread temporizada
-                    # if self._reaching_device_thread is None:
-                    #     self.router_reachable = False
-                    #     self.motor_reachable = False
-                    #     self._reaching_device_thread = Thread(target = self._reach_device)
-                    #     self._reaching_device_thread.start()
-                    # else:
-                    #     self._reaching_device_thread.join()
-                    #     self._reaching_device_thread = None
+                    
+                    # If the connection was lost the server verifies if the gateway is reachable, if so then 
+                    # the server tries to reach the motor. 
 
                     for _try in range(5):                                                                   # Tries 5 times to ping the router
                         time.sleep(0.1)             # delay between tries                         
@@ -568,8 +561,8 @@ class Server(QObject):
                     if self.router_reachable:
                         self._reach_motor()
                         self._link_device()
-                    else:
-                        self._link_device()
+                    # else:
+                    #     self._link_device()
                         
                 
                 self.signals.connection_speed.emit(f"{round(time.time()-t0, 3)}")

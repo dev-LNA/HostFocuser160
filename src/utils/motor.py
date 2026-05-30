@@ -9,7 +9,7 @@ from dataclasses import dataclass
 from src.interface.motor_driver import Driver
 from src.interface.driver_DMX import  DriverDMX
 from src.interface.driver_AMP import DriverAMP
-from src.utils.constants import MotorModels, MotorParamsIdx, ServerCommands, constants, MotorParameter, MotorStatusFlags, MotorAlarmInfo
+from src.utils.constants import MotorModels, MotorParamsIdx, ServerCommands, constants, MotorParameter, MotorStatusFlags, MotorAlarmInfo, MotorProgramStatus
 from src.utils.signals import PropertySignals, MultiSignal
 
 from src.utils.modbus_regs import dig_inputs_regs
@@ -75,6 +75,8 @@ class Motor():
         self._firmware_status: str = 'invalid'
         self._status: int = 0
 
+        self.SASTAT: int = 0
+
         self._alarm_info: str = ''
 
         if model == MotorModels.ARCUS_DMX_ETH:
@@ -118,7 +120,7 @@ class Motor():
             if val:
                 self.signals.moving.emit(val, "statusLed", "OK")
             else:
-                self.signals.moving.emit(val, "statusLed", "NOK")
+                self.signals.moving.emit(val, "statusLed", "OFF")
 
 
     @property
@@ -148,7 +150,8 @@ class Motor():
             if resp == "OK":
                 return f'[Device] move={str(value)}'
         except Exception as e:
-            self.disconnect()
+            # self.disconnect()
+            self.driver._reset_communication()
             raise e
             # return str(e)
     
@@ -183,7 +186,8 @@ class Motor():
                     self.signals.initialized.emit(False, "statusLed", "WAIT")
             return self._homing
         except Exception as e:
-            self.disconnect()
+            # self.disconnect()
+            self.driver._reset_communication()
             raise e
             # return f'[Device] Could not retrieve homing information: Error -> {str(e)}'
 
@@ -205,7 +209,8 @@ class Motor():
                     self.signals.parking.emit(self._parking, "statusLed", "NOK")
             return self._parking
         except Exception as e:
-            self.disconnect()
+            # self.disconnect()
+            self.driver._reset_communication()
             raise e
             # return f'[Device] Could not retrieve parking information: Error -> {str(e)}'
     
@@ -228,7 +233,8 @@ class Motor():
                     self.signals.initialized.emit(False, "statusLed", "NOK")
             return self._initialized
         except Exception as e:
-            self.disconnect()
+            # self.disconnect()
+            self.driver._reset_communication()
             raise e
             # return f'[Device] Could not retrieve initialized information: Error -> {str(e)}'
     
@@ -282,7 +288,8 @@ class Motor():
                 self.signals.firmware_status.emit(self._firmware_status)
             return self._firmware_status
         except Exception as e:
-            self.disconnect()
+            # self.disconnect()
+            self.driver._reset_communication()
             raise e
             # return f'[Device] Could not retrieve firmware status information: Error -> {str(e)}'
 
@@ -295,7 +302,8 @@ class Motor():
                 self.signals.firmware_version.emit(self._firmware_version)
             return self._firmware_version
         except Exception as e:
-            self.disconnect()
+            # self.disconnect()
+            self.driver._reset_communication()
             raise e
 
 #endregion
@@ -349,7 +357,8 @@ class Motor():
             else:
                 raise ValueError('Invalid Motor Status Reading')
         except Exception as e:
-            self.disconnect()
+            # self.disconnect()
+            self.driver._reset_communication()
             raise e
         
 
@@ -484,7 +493,8 @@ class Motor():
             else:
                 raise ValueError(f'Invalid command. Motor variable "{var.NAME.upper()}" is not defined.')
         except Exception as e:
-            self.disconnect()
+            # self.disconnect()
+            self.driver._reset_communication()
             raise e
         
     def get_param(self, ParamIndex: MotorParamsIdx) -> int | str | bool:
@@ -509,7 +519,8 @@ class Motor():
             else:
                 raise ValueError(f'Invalid command. Motor variable "{var.NAME.upper()}" is not defined.')
         except Exception as e:
-            self.disconnect()
+            # self.disconnect()
+            self.driver._reset_communication()
             raise e
 
     def send_command(self, cmd: dict) -> str:
@@ -522,7 +533,8 @@ class Motor():
             else:
                 raise RuntimeError(f'"{cmd["COMMAND"]}" is not a valid command')
         except Exception as e:
-            self.disconnect()
+            # self.disconnect()
+            self.driver._reset_communication()
             raise e
 
 
