@@ -52,6 +52,9 @@ class DriverAMP(Driver):
                 # self.mb_run_thread = Thread(target=self.mb_server.run)
                 # self.mb_run_thread.start()
 
+                self.mb_server.timeout.reset()
+                self.mb_server.timeout.running = True   # Starts timeout counter
+
                 self.mb_server.running = True
                 _con = True
                 self.mb_server.data_bank.set_discrete_inputs(dig_inputs_regs.TX_WRITTING.ADDRESS, [False])  #| TX_WAIT e TX_BUSY must be
@@ -592,11 +595,11 @@ class DriverAMP(Driver):
         """Precisa ser implementada pelo driver"""
         return self.mb_server.send_command(dig_inputs_regs.TX_GS29)
 
-    def focus_in(self, speed: str) -> str:
+    def focus_in(self, speed: str = None) -> str:
         """Precisa ser implementada pelo driver""" 
         return self.mb_server.send_command(dig_inputs_regs.TX_GS21)
     
-    def focus_out(self, speed: str) -> str:
+    def focus_out(self, speed: str = None) -> str:
         """Precisa ser implementada pelo driver""" 
         return self.mb_server.send_command(dig_inputs_regs.TX_GS20)
     
@@ -624,6 +627,7 @@ class DriverAMP(Driver):
 
         self.motor.connected = False
 
+        self.mb_server.timeout.running = False  # Stops timeout counter
         self.mb_server.timeout.reset()
         self.mb_server.handshake = False
 

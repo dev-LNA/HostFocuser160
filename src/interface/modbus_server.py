@@ -17,21 +17,31 @@ class TimeoutCheck(QObject):
     """Handshake Timeout verification"""
 
     signal_timeout = pyqtSignal(bool)
-    def __init__(self, driver_timeout_method, timeout: int = 5):
+    def __init__(self, driver_timeout_method, timeout: int = 8):
         super(QObject, self).__init__()
         self._timeout_limit = timeout                           # Timeout limit
         self.timer: int = 0                                     # Current timer
 
         self.status: TimeoutState = TimeoutState.NO_TIMEOUT     # Timeout status (True -> timeout occured)
         self.old_val = False
+        self._running:bool = False
+        self.elapsed_time = 0
 
         self.callback_on_timeout = driver_timeout_method
 
         self.reset()
 
+    @property
+    def running(self) -> bool:
+        return self._running
+    @running.setter
+    def running(self, value:bool):
+        self._running = value
+
     def reset(self):
         """Resets timeout timer"""
         self.timer = time.time()
+
 
     def check_timeout(self, new_val: bool) -> TimeoutState:
         """Checks if a timeout occured
@@ -46,20 +56,24 @@ class TimeoutCheck(QObject):
         # else:
         #     self.status = True
         #     self.callback_on_timeout()  # Calls driver function to deal with the timeout
-            
-        elapsed_time = time.time() - self.timer        
-        # print(f"checking timeout: {elapsed_time}")
+
+        if self.running:    
+            self.elapsed_time = time.time() - self.timer    
+        else:
+            self.elapsed_time = 0
+    
+        print(f"checking timeout: {self.elapsed_time}")
 
         # return self.status 
         if (self.old_val != new_val):
-            if (elapsed_time) < self._timeout_limit:     
+            if (self.elapsed_time) < self._timeout_limit:     
                     self.status = TimeoutState.NO_TIMEOUT  
                     self.reset()
             else:
                 self.status = TimeoutState.TIMEOUT                                  
                 self.callback_on_timeout()                          # Calls driver function to deal with the timeout
         else:
-            if (elapsed_time) > self._timeout_limit:
+            if (self.elapsed_time) > self._timeout_limit:
                 self.callback_on_timeout() 
             else:
                 self.status = TimeoutState.WAIT_INFO      # Não deu timeout mas não pode resetar o timer

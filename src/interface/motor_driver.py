@@ -200,12 +200,12 @@ class Driver(ABC):
         ...
              
     @abstractmethod
-    def focus_in(self, speed: str) -> str:
+    def focus_in(self, speed: str = None) -> str:
         """Precisa ser implementada pelo driver""" 
         ...
              
     @abstractmethod
-    def focus_out(self, speed: str) -> str:
+    def focus_out(self, speed: str = None) -> str:
         """Precisa ser implementada pelo driver""" 
         ...
              

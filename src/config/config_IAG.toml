@@ -40,7 +40,7 @@ server_ip = "*"
 port_pub = 7003
 port_rep = 7004
 sub_mask = "255.255.255.0"
-gateway_ip = "192.168.50.1"
+gateway_ip = "200.131.64.254"
 pub_interval = 1
 write_timeout = 3
 

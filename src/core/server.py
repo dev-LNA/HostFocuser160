@@ -589,7 +589,7 @@ class Server(QObject):
         """
         cmd = msg_json.get(SJson.CMD_ACTION.value)
 
-        parsed = {  'CLIENT': msg_json.get(SJson.CMD_CLIENT_NAME.value),   #TODO: Verificar como checar qual cliente enviou a mensagem, nem todo cliente vai ter um "CLIENT NAME"
+        parsed = {  'CLIENT': msg_json.get(SJson.CMD_CLIENT_ID),   #TODO: Verificar como checar qual cliente enviou a mensagem, nem todo cliente vai ter um "CLIENT NAME"
                     'COMMAND': cmd,
                     'PARAMETER': None }
 
@@ -627,8 +627,8 @@ class Server(QObject):
 
         elif cmd["COMMAND"] in MotorValidCommands:
             if self.motor.is_moving: 
-                print(f"CLIENTE ATUAL: {self.status[SJson.CMD][SJson.CMD_CLIENT_NAME]}")
-                if  cmd["CLIENT"] == self.status[SJson.CMD][SJson.CMD_CLIENT_NAME]:     # If the command was sent by the same client that sent the last command
+                print(f"CLIENTE ATUAL: {self.status[SJson.CMD][SJson.CMD_CLIENT_ID]}")
+                if  cmd["CLIENT"] == self.status[SJson.CMD][SJson.CMD_CLIENT_ID]:     # If the command was sent by the same client that sent the last command
                     return 
                 else:
                     raise RuntimeError(f'Motor already moving: Client "{self.status[SJson.CMD][SJson.CMD_CLIENT_NAME]}" '

@@ -380,11 +380,11 @@ class FocuserOPD (QMainWindow):
             Dictionary holding the last command information
         """
         self.ui_elements.lblTime.setText(data[SJson.TIMESTAMP])                                     # Updates last command time
-        self.ui_elements.lblClientName_val.setText(data[SJson.CMD][SJson.CMD_CLIENT_NAME])                   # Updates last command client name
-        self.ui_elements.lblClientID_val.setText(str(data[SJson.CMD][SJson.CMD_CLIENT_ID]))                  # Updates last command client ID
-        self.ui_elements.lblTransactionId_val.setText(str(data[SJson.CMD][SJson.CMD_CLIENT_TRANSACTION_ID]))  # Updates last command client transaction number
-        self.ui_elements.lblCommand_val.setText(data[SJson.CMD][SJson.CMD_ACTION])                          # Updates last command action
-        if(data[SJson.CMD][SJson.CMD_ACTION] == "HOME" or data[SJson.CMD][SJson.CMD_ACTION] == "PARK"):                 # If the last command was 'HOME' or 'PARK'
+        # self.ui_elements.lblClientName_val.setText(data[SJson.CMD.value][SJson.CMD_CLIENT_NAME.value])                   # Updates last command client name
+        self.ui_elements.lblClientID_val.setText(str(data[SJson.CMD.value][SJson.CMD_CLIENT_ID.value]))                  # Updates last command client ID
+        self.ui_elements.lblTransactionId_val.setText(str(data[SJson.CMD.value][SJson.CMD_CLIENT_TRANSACTION_ID.value]))  # Updates last command client transaction number
+        self.ui_elements.lblCommand_val.setText(data[SJson.CMD.value][SJson.CMD_ACTION.value])                          # Updates last command action
+        if(data[SJson.CMD.value][SJson.CMD_ACTION.value] == "HOME" or data[SJson.CMD.value][SJson.CMD_ACTION] == "PARK"):                 # If the last command was 'HOME' or 'PARK'
             self.ui_elements.lblLastHoming_val.setText(data[SJson.TIMESTAMP])                           # Updates the last homing time
 
     def _show_info(self):
