@@ -33,6 +33,10 @@ class MotorSignals(QObject):
     parking = PropertySignals()
     alarm = PropertySignals()
 
+    # progress.value must be true or false indicating if the load bar will be shown in the GUI,
+    # progress.string must be the value of the progress in percentage 
+    progress = MultiSignal()    
+
     
 
 class Motor():
@@ -134,10 +138,13 @@ class Motor():
         """
         encoder_pos = self.encoder
         pos = self.driver.conv_position(encoder_pos)
-        if pos != self._position:
-            self.last_position = self._position
-            self._position = pos
-            self.signals.position.emit(pos)
+        if self.initialized:
+            if pos != self._position:
+                self.last_position = self._position
+                self._position = pos
+                self.signals.position.emit(pos)
+        else:
+            self.signals.position.emit(pos, "???")
         return self._position
     @position.setter
     def position(self, value: int) -> str:
@@ -164,9 +171,12 @@ class Motor():
         :rtype: int
         """
         encoder_pos = self.driver.read_encoder()
-        if encoder_pos != self._encoder:
-            self._encoder = encoder_pos
-            self.signals.encoder.emit(str(self._encoder))
+        if self.initialized:
+            if encoder_pos != self._encoder:
+                self._encoder = encoder_pos
+                self.signals.encoder.emit(str(self._encoder))
+        else:
+            self.signals.encoder.emit("???")
 
         return self._encoder
     

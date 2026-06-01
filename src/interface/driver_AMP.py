@@ -33,6 +33,18 @@ class DriverAMP(Driver):
 
         self.mb_server: IAGModbusServer = None
 
+        # self._task_progress: int = 0
+
+    # @property
+    # def mb_server_task_progress(self):
+    #     return self._task_progress
+    # @mb_server_task_progress.setter
+    # def mb_server_task_progress(self, value: int):
+    #     self._task_progress = value
+    #     self.motor.signals.progress.string.emit(self._task_progress)
+
+
+
     def connect_motor(self, max_retries: int = 5, delay: float = 0.1) -> str:
         """Precisa ser implementada pelo driver"""
         retries = 0
@@ -112,6 +124,8 @@ class DriverAMP(Driver):
                 self.mb_server = IAGModbusServer(host=Config.device_ip, port=Config.device_port ,no_block=True, data_bank=dataBank_config,
                                                  timeout_callback_function=self._reset_communication)
 
+                self.mb_server.mb_comm.task_progress.connect(lambda value: self.motor.signals.progress.string.emit(value))
+
                 self.mb_server.start()
 
                 self.mb_run_thread = Thread(target=self.mb_server.run)
@@ -120,19 +134,6 @@ class DriverAMP(Driver):
                 while self.mb_server.handshake is False and retries < max_retries:
                     time.sleep(0.2)             # Delay between retries #TODO: colocar isso no arquivo de configuração config_IAG.toml
                     retries += 1
-                
-                # self.mb_server.mb_comm.signal_timeout.connect(self._teste_signal)
-                # dummy_mb_server.data_bank.set_discrete_inputs(dig_inputs_regs.HANDSHAKE.ADDRESS, [True])  #| TX_WAIT e TX_BUSY precisam ser
-
-                # time.sleep(2)          # Delay to ensure the handshake is read by the client
-
-                # Closes the dummy server connection, since it was only used to verify the handshake, and is not needed anymore.
-                # print("Closing modbus server...")
-                # dummy_mb_server.stop_server = True
-                # dummy_mb_server_run_thread.join()
-                # dummy_mb_server.stop()
-                # dummy_mb_server = None
-                # time.sleep(1)
 
                 # If the max retries was reached and the handshake was not made, closes the dummy server and 
                 # raises an exception to inform that the handshake was not successful, and the motor is not reachable.
@@ -662,15 +663,22 @@ class DriverAMP(Driver):
         params = tuple()
         values = tuple()
 
+        # self.motor.signals.progress.value.emit(True)
+        # self.motor.signals.progress.string.emit(0)
 
         for param_idx in MotorParamsIdx:
                 if param_idx != MotorParamsIdx.MOTOR_IP and param_idx != MotorParamsIdx.MAX_STEP:
                     params += (self.motor.parameters[param_idx].REGISTER,)
                     # values += (int(float(self.motor.parameters[param_idx].VALUE)),)
                     values += (int(self.param_methods[param_idx](converted=True)),)
+                    # p += 1
+                    # self.motor.signals.progress.string.emit(int((p/(len(MotorParamsIdx) - 2))*100)) # Exclude IP and MAX_STEP, which are not written in the same way as the others
 
                     print(f'{self.motor.parameters[param_idx].REGISTER} - {int(self.param_methods[param_idx](converted=True))}')
                     
         self.mb_server.write_param(params, values)
+
+        # self.motor.signals.progress.value.emit(False)
+        # self.motor.signals.progress.string.emit(0)
 
                     

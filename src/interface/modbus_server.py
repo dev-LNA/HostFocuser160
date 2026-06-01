@@ -77,8 +77,8 @@ class TimeoutCheck(QObject):
     
     
         
-# class MB_Server_Communicator(QObject):
-#     signal_timeout = pyqtSignal(bool)
+class MB_Server_Communicator(QObject):
+    task_progress = pyqtSignal(int)
 
 
 class IAGModbusServer(mbServer):
@@ -127,7 +127,7 @@ class IAGModbusServer(mbServer):
         self.running = False
 
         self.timeout = TimeoutCheck(timeout_callback_function)
-        # self.mb_comm = MB_Server_Communicator()
+        self.mb_comm = MB_Server_Communicator()
 
         self.command_timeout = CommandTimeout(
             command='',
@@ -591,7 +591,9 @@ class IAGModbusServer(mbServer):
         self._start_writting_data()
         self._write(params)   # Writes the command to the CLP
         self._stop_writting_data()
-
+    
+        self.mb_comm.task_progress.emit(0)  # Just to update the progress bar in the GUI, it does not represent the actual writting progress
+        progress = 0
         time.sleep(0.2)     # Time for CLP to process information
 
         for tries in range(2):
@@ -612,8 +614,12 @@ class IAGModbusServer(mbServer):
                         p_dict = param_vars._asdict()
                         for p in params:
                             # if p[0].TAG in p_dict:
+                            time.sleep(0.1)     # Time for CLP to mirror the value to the response register
+                            progress += 1    
+                            self.mb_comm.task_progress.emit(int((progress / len(params)) * 100))  # Just to update the progress bar in the GUI, it does not represent the actual writting progress   
+    
                             if p[0] in p_dict:
-
+                                
                                 print(f"Waiting for CLP to mirror the value of parameter {p[0].TAG} to the response register {p_dict[p[0].TAG].RESPONSE.TAG}...")
 
                                 t = time.time()
@@ -685,6 +691,11 @@ class IAGModbusServer(mbServer):
                     # self.data_bank.set_discrete_inputs(dig_inputs_regs.TX_WRITTING.ADDRESS, [True]) # Informs CLP that the Driver is writting some data to the modbus discrete inputs
                 # self._start_writting_data()  # Informs CLP that the Driver is writting some data to the modbus discrete inputs
 
+
+                self.mb_comm.task_progress.emit(0)  # Just to update the progress bar in the GUI, it does not represent the actual writting progress
+                progress = 0
+                len_reg_list = len(reg_list)
+
                 # Repeats the writting process for every register in the 'reg_list'
                 for reg, value in reg_list:
                     # When the register size is 1 the value must be 0, 1 or boolean
@@ -696,7 +707,9 @@ class IAGModbusServer(mbServer):
                         raise ValueError(f"Cannot write a boolean to {reg.TYPE.name}:{reg.ADDRESS}. This Register has {reg.SIZE} bits")
 
                     # time.sleep(0.1)
-                                    
+                    progress += 1
+                    self.mb_comm.task_progress.emit(int((progress / len_reg_list) * 100))  # Update the progress bar in the GUI
+
                     # print(f"Trying to write value {value} to {reg.TAG} -> {time.time() - t} seconds [{write_timeout}]")
                     if reg.TYPE is RegType.DISCRETE_INPUT:
 
@@ -724,12 +737,14 @@ class IAGModbusServer(mbServer):
                 # self.data_bank.set_discrete_inputs(dig_inputs_regs.TX_WRITTING.ADDRESS, [False])  # Informs CLP that the Driver finished writting and there is a valid data ready for reading
                 # self._stop_writting_data()  # Informs CLP that the Driver finished writting
 
+                self.mb_comm.task_progress.emit(0)  # Just to update the progress bar in the GUI, it does not represent the actual writting progress
                 # self.wait_confirmation(reg)
                 return "OK"
             except Exception as e:
             # else:
                 # print(f'Failed to write registers due to timeout. CLP is reading for more than {Config.write_timeout} seconds.')
                 # raise RuntimeError(f'Failed to send {value} to register {reg.TAG} after {tries} tries')
+                self.mb_comm.task_progress.emit(0)  # Just to update the progress bar in the GUI, it does not represent the actual writting progress
                 self._stop_writting_data()  # Just to be sure that it stops writting
                 return "NOK"
             

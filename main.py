@@ -20,7 +20,7 @@ from src.utils.motor import MotorModels
 from misc.log_box import LogBox
 from misc.settings import SettingsWindow
 from misc.server_settings import ServerSettingsWindow
-
+from misc.load_bar import LoadBar
 
 try:
     from src.core.config import Config, update_config
@@ -166,7 +166,7 @@ class FocuserOPD (QMainWindow):
         self.server.signals.server_status.status.connect(self.ui_elements.btnStop.setEnabled)
         self.server.signals.server_status.info.connect(self.ui_elements.ledServer.setProperty)
 
-        self.server.signals.status_message.connect(lambda msg: self.statusBar().showMessage(msg, 3000))
+        self.server.signals.status_message.connect(lambda msg: self.statusBar().showMessage(msg, 10000))
         self.server.signals.connection_speed.connect(self.ui_elements.lblComSpeed.setText)
         
         # self.server.signals.position_str.connect(self.ui_elements.lblPosition_val.setText)
@@ -214,6 +214,9 @@ class FocuserOPD (QMainWindow):
         self.window_expand_animation.finished.connect(self._expanded_ended)                                       # Connects a function to run after the animation is over
         self._expanding.connect(self.ui_elements.btnArrow.setDisabled)                              # Disables the arrow expansion button while the animation is being executed
 
+        self._progress_bar = LoadBar()                                                  # Creates load bar
+
+        self.statusBar().addPermanentWidget(self._progress_bar)                         # Add load bar to status bar, it is not visible by default and is made visible when needed
 
 
         # Install event filters in the LEDs so that when a property is changed the values are automatically updated
@@ -334,6 +337,9 @@ class FocuserOPD (QMainWindow):
         self.server.motor.driver.driver_comm.run_focus_in.info.connect(self.ui_elements.ledFocusIn.setProperty)
         self.server.motor.driver.driver_comm.run_focus_out.info.connect(self.ui_elements.ledFocusOut.setProperty)
         self.server.motor.driver.driver_comm.run_park.info.connect(self.ui_elements.ledPark.setProperty)
+
+        self.server.motor.signals.progress.value.connect(self._progress_bar.setVisible)
+        self.server.motor.signals.progress.string.connect(self._progress_bar.progress.setValue)
 
         self.menuBar().setVisible(True)                                     # Sets menu bar visibility
         self.ui_elements.toolBar.setVisible(True)                           # Sets tool bar visibility

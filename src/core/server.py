@@ -413,17 +413,22 @@ class Server(QObject):
             if self.motor_reachable:                                                                # If the motor is reachable
                 self.router_reachable = ReachStatus.CONNECTED                                            # Emits signals for GUI update
                 self.motor_reachable = ReachStatus.CONNECTED                                           # Emits signals for GUI update
-                self.motor.signals.firmware_status.emit("Connecting motor")          # Emits signal to update firmware status in the GUI
+                self.signals.status_message.emit("Connecting motor")       
                 time.sleep(0.2)                
                 # try:
                 self.motor.connect()                                                        # Creates the socket and connects the server to the motor
-                self.motor.signals.firmware_status.emit("Configuring motor")          # Emits signal to update firmware status in the GUI
+                self.signals.status_message.emit("Configuring motor...")         
+                self.motor.signals.progress.value.emit(True)
+                self.motor.signals.progress.string.emit(0)
                 self.motor.update_status()
                 self._get_motor_params()
-                self.motor.signals.firmware_status.emit("Updating parameters")          # Emits signal to update firmware status in the GUI
+                
+                self.motor.signals.progress.string.emit(0)
+                self.signals.status_message.emit("Updating parameters...")          
                 self.motor._update_motor_params()
                 self._update_status()
-                                                
+                self.motor.signals.progress.value.emit(False) 
+                self.signals.status_message.emit("")                   
                 self.status[SJson.DEVICE_IP] = self.motor.get_param(MotorParamsIdx.MOTOR_IP)
                 self.status[SJson.DEVICE_ID] = self.motor.ID
                 self.status[SJson.DEVICE_FIRMWARE_VERSION] = self.motor.firmware_version
@@ -449,7 +454,11 @@ class Server(QObject):
     def _update_status(self):
         """Updates motor status and saves to JSON"""
         self.status[SJson.CONNECTED] = self.motor.connected
-        self.status[SJson.POSITION] = self.motor.position
+        if self.motor.initialized:
+            self.status[SJson.POSITION] = self.motor.position
+        else:
+            self.motor.position # Updates the position but does not save it to the JSON since the motor is not initialized and the position value is not reliable
+            self.status[SJson.POSITION] = constants.INVALID_RESPONSE
         self.status[SJson.INITIALIZED] = self.motor.initialized
         self.status[SJson.HOMING] = self.motor.homing
         self.status[SJson.PARKING] = self.motor.parking
@@ -465,8 +474,12 @@ class Server(QObject):
     def _get_motor_params(self):
         """Updates the motor parameters in the JSON"""
         #TODO: Adicionar os outros parâmetros no JSON
+        p = 0
         for param in MotorParamsIdx:
             print(param)
+            p += 1
+            self.motor.signals.progress.string.emit(int(p/len(MotorParamsIdx)*100))
+            time.sleep(0.05)
             if param in MotorParamsIdx:
                 self.motor.get_param(param)
         self.status[SJson.DEVICE_IP] = self.motor.parameters[MotorParamsIdx.MOTOR_IP].VALUE

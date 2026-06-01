@@ -32,16 +32,17 @@ class PropertySignals(QObject):
 class MultiSignal(QObject):
     """Some variables may need to be transmitted also as a string"""
     value = pyqtSignal(object)
-    string = pyqtSignal(str)
+    string = pyqtSignal(object)
 
-    def emit(self, value: bool|int|float, string: str=None):
-        """Emits the variable value and its string
+    def emit(self, value: bool|int|float, value2orstring: bool | str | int | float=None, convert2string: bool=True):
+        """Emits the variable value and its string OR emits two different values, being the second any other string, int or float
 
         :param value: Variable value to be transmitted
         :type value: bool | int | float
         """
         self.value.emit(value)
-        if string is None:
+        if value2orstring is None and convert2string:
             self.string.emit(str(value))
-        else:            
-            self.string.emit(string)
+
+        if value2orstring is not None:
+            self.string.emit(value2orstring)
