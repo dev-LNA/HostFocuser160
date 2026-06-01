@@ -37,6 +37,8 @@ class MotorSignals(QObject):
     # progress.string must be the value of the progress in percentage 
     progress = MultiSignal()    
 
+    error_msg = pyqtSignal(str)
+
     
 
 class Motor():
@@ -134,10 +136,10 @@ class Motor():
         :getter: Reads the current motor position. If the value read is different from
                 the last position the position is updated and a signal is emited.
         :setter: Sends to the driver a command to move the motor to a new position.
-        :rtype: int
+        :rtype: float
         """
         encoder_pos = self.encoder
-        pos = self.driver.conv_position(encoder_pos)
+        pos = self.driver.conv_position(encoder_pos, type="float")
         if self.initialized:
             if pos != self._position:
                 self.last_position = self._position
@@ -158,7 +160,7 @@ class Motor():
                 return f'[Device] move={str(value)}'
         except Exception as e:
             # self.disconnect()
-            self.driver._reset_communication()
+            # self.driver._reset_communication()
             raise e
             # return str(e)
     
@@ -197,7 +199,7 @@ class Motor():
             return self._homing
         except Exception as e:
             # self.disconnect()
-            self.driver._reset_communication()
+            # self.driver._reset_communication()
             raise e
             # return f'[Device] Could not retrieve homing information: Error -> {str(e)}'
 
@@ -220,7 +222,7 @@ class Motor():
             return self._parking
         except Exception as e:
             # self.disconnect()
-            self.driver._reset_communication()
+            # self.driver._reset_communication()
             raise e
             # return f'[Device] Could not retrieve parking information: Error -> {str(e)}'
     
@@ -244,7 +246,7 @@ class Motor():
             return self._initialized
         except Exception as e:
             # self.disconnect()
-            self.driver._reset_communication()
+            # self.driver._reset_communication()
             raise e
             # return f'[Device] Could not retrieve initialized information: Error -> {str(e)}'
     
@@ -299,7 +301,7 @@ class Motor():
             return self._firmware_status
         except Exception as e:
             # self.disconnect()
-            self.driver._reset_communication()
+            # self.driver._reset_communication()
             raise e
             # return f'[Device] Could not retrieve firmware status information: Error -> {str(e)}'
 
@@ -313,7 +315,7 @@ class Motor():
             return self._firmware_version
         except Exception as e:
             # self.disconnect()
-            self.driver._reset_communication()
+            # self.driver._reset_communication()
             raise e
 
 #endregion
@@ -369,7 +371,7 @@ class Motor():
                 raise ValueError('Invalid Motor Status Reading')
         except Exception as e:
             # self.disconnect()
-            self.driver._reset_communication()
+            # self.driver._reset_communication()
             raise e
         
 
@@ -459,6 +461,8 @@ class Motor():
             print('Ping to motor successful')
             return True
         else:
+            self.signals.error_msg.emit("[Device] Failed to ping the motor")
+            self.signals.error_msg.emit(self.driver.parse_alarm_info())
             print('Failed to ping motor')
             return False
 
@@ -466,7 +470,12 @@ class Motor():
         """Sends to the motor/CLP the updated values of the configurations"""
         # TODO: Por enquanto somente é válido para o motor do IAG
 
-        self.driver._update_all_parameters()
+        try:
+            self.driver._update_all_parameters()
+        except Exception as e:
+            self.signals.error_msg.emit(str(e))
+            # self.driver._reset_communication()
+            raise e
 
 
         # if self.model == MotorModels.AMP_MOTOR:
@@ -500,12 +509,14 @@ class Motor():
                     self.parameters[var.IDX] = var
                     return resp
                 else:
+
                     raise Exception(f'[Device] Error setting parameter "{var.NAME.upper()}": {resp}')
             else:
                 raise ValueError(f'Invalid command. Motor variable "{var.NAME.upper()}" is not defined.')
         except Exception as e:
             # self.disconnect()
-            self.driver._reset_communication()
+            self.signals.error_msg.emit(str(e))
+            # self.driver._reset_communication()
             raise e
         
     def get_param(self, ParamIndex: MotorParamsIdx) -> int | str | bool:
@@ -526,26 +537,40 @@ class Motor():
                     self.parameters[var.IDX] = var
                     return resp
                 else:
+                    self.signals.error_msg.emit(self.driver.parse_alarm_info())
                     raise Exception(f'[Device] Failed to read parameter {var.NAME.upper()} from the motor')
             else:
+                self.signals.error_msg.emit(f'Invalid command. Motor variable "{var.NAME.upper()}" is not defined.')
                 raise ValueError(f'Invalid command. Motor variable "{var.NAME.upper()}" is not defined.')
         except Exception as e:
             # self.disconnect()
-            self.driver._reset_communication()
+            self.signals.error_msg.emit(str(e))
+            # self.driver._reset_communication()
             raise e
 
     def send_command(self, cmd: dict) -> str:
         try:
             if hasattr(ServerCommands, cmd["COMMAND"]):
                 if cmd['PARAMETER']:
-                    return self.driver.command_methods[cmd["COMMAND"]](cmd["PARAMETER"])
+                    if self.driver.command_methods[cmd["COMMAND"]](cmd["PARAMETER"]) == "OK":
+                        return "OK"
+                    else:
+                        self.signals.error_msg.emit(self.driver.parse_alarm_info())                        
+                        raise Exception(f'[Device] Failed to execute command "{cmd["COMMAND"]}" with parameter "{cmd["PARAMETER"]}"')
+                    # return self.driver.command_methods[cmd["COMMAND"]](cmd["PARAMETER"])
                 else:
-                    return self.driver.command_methods[cmd["COMMAND"]]()
+                    if self.driver.command_methods[cmd["COMMAND"]]() == "OK":
+                        return "OK"
+                    else:
+                        self.signals.error_msg.emit(self.driver.parse_alarm_info())                        
+                        raise Exception(f'[Device] Failed to execute command "{cmd["COMMAND"]}"')
             else:
+                self.signals.error_msg.emit(f'Invalid command "{cmd["COMMAND"]}"')
                 raise RuntimeError(f'"{cmd["COMMAND"]}" is not a valid command')
         except Exception as e:
             # self.disconnect()
-            self.driver._reset_communication()
+            self.signals.error_msg.emit(str(e))
+            # self.driver._reset_communication()
             raise e
 
 

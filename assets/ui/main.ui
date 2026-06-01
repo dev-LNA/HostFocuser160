@@ -2253,7 +2253,7 @@ border-right: none;
             <widget class="QLabel" name="lblPosition">
              <property name="maximumSize">
               <size>
-               <width>50</width>
+               <width>56</width>
                <height>20</height>
               </size>
              </property>
@@ -2269,7 +2269,7 @@ border-right: none;
              </property>
              <property name="minimumSize">
               <size>
-               <width>40</width>
+               <width>64</width>
                <height>0</height>
               </size>
              </property>

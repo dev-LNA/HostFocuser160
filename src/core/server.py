@@ -176,7 +176,7 @@ class Server(QObject):
                 SJson.TIMEOUT.value: False,               # Timeout
             }
 
-            self.test_var = 11
+            self.test_var = 14.2
 
 #region  ========== PROPERTIES ========== # 
 
@@ -292,7 +292,9 @@ class Server(QObject):
         # self.motor.set_param(MotorParamsIdx.BACKLASH, self.test_var)
         # self.test_var += 2
 
-        self.motor.set_param(MotorParamsIdx.MOTOR_IP, "192.168.1.100")
+        # self.motor.set_param(MotorParamsIdx.MOTOR_IP, "192.168.1.100")
+        self.test_var += 112.3
+        self.status[SJson.POSITION] = self.test_var
 
         
 
@@ -359,6 +361,8 @@ class Server(QObject):
 
             self.motor.driver.driver_comm.timeout.connect(lambda value: setattr(self, 'driver_timeout', value))
             self.motor.signals.alarm.status.connect(lambda val: self.logger.error(f'{self.motor._alarm_info}') if val == True else ... )
+
+            self.motor.signals.error_msg.connect(lambda msg: self.logger.error(f'{msg}'))
         else:
             raise ValueError("Invalid motor model")
 
@@ -455,7 +459,9 @@ class Server(QObject):
         """Updates motor status and saves to JSON"""
         self.status[SJson.CONNECTED] = self.motor.connected
         if self.motor.initialized:
-            self.status[SJson.POSITION] = self.motor.position
+            # self.status[SJson.POSITION] = self.motor.position
+            self.motor.position
+            self.status[SJson.POSITION] = self.motor.driver.conv_position(type="float")
         else:
             self.motor.position # Updates the position but does not save it to the JSON since the motor is not initialized and the position value is not reliable
             self.status[SJson.POSITION] = constants.INVALID_RESPONSE
@@ -643,22 +649,23 @@ class Server(QObject):
         :return: Bool indicating if the command can be processed
         :rtype: bool
         """
-        if cmd["COMMAND"] == ServerCommands.STATUS:     # 'STATUS' is a command to the server
-            return
+        return
+        # if cmd["COMMAND"] == ServerCommands.STATUS:     # 'STATUS' is a command to the server
+        #     return
 
-        elif cmd["COMMAND"] in MotorValidCommands:
-            if self.motor.is_moving: 
-                print(f"CLIENTE ATUAL: {self.status[SJson.CMD][SJson.CMD_CLIENT_ID]}")
-                if  cmd["CLIENT"] == self.status[SJson.CMD][SJson.CMD_CLIENT_ID]:     # If the command was sent by the same client that sent the last command
-                    return 
-                else:
-                    raise RuntimeError(f'Motor already moving: Client "{self.status[SJson.CMD][SJson.CMD_CLIENT_NAME]}" '
-                                       f'started the movement and client "{cmd["CLIENT"]}" tried to '
-                                       f'start another movement')
-            else:
-                return 
-        else:
-            raise ValueError(f'Command "{cmd}" is not a valid command')
+        # elif cmd["COMMAND"] in MotorValidCommands:
+        #     if self.motor.is_moving: 
+        #         print(f"CLIENTE ATUAL: {self.status[SJson.CMD][SJson.CMD_CLIENT_ID]}")
+        #         if  cmd["CLIENT"] == self.status[SJson.CMD][SJson.CMD_CLIENT_ID]:     # If the command was sent by the same client that sent the last command
+        #             return 
+        #         else:
+        #             raise RuntimeError(f'Motor already moving: Client "{self.status[SJson.CMD][SJson.CMD_CLIENT_NAME]}" '
+        #                                f'started the movement and client "{cmd["CLIENT"]}" tried to '
+        #                                f'start another movement')
+        #     else:
+        #         return 
+        # else:
+        #     raise ValueError(f'Command "{cmd}" is not a valid command')
 
 
     def _handle_command(self, cmd: dict):

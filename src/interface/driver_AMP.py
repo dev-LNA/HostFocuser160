@@ -166,7 +166,7 @@ class DriverAMP(Driver):
                 raise (e)
 
     
-    def conv_position(self, encoder_pos: int = None) -> int:
+    def conv_position(self, encoder_pos: int = None, type: str = "int") -> int | float:
         """Reads motor encoder position and converts to microns
 
         :raises ValueError: If the reading is not valid
@@ -176,7 +176,10 @@ class DriverAMP(Driver):
         if encoder_pos is None:
             encoder_pos = self.read_encoder()
         # pos = int(round(encoder_pos / Config.enc_2_microns))
-        pos = int(round(encoder_pos * Config.enc_2_microns))
+        if type == "int":
+            pos = int(round(encoder_pos * Config.enc_2_microns))
+        else:
+            pos = round(encoder_pos * Config.enc_2_microns, 1)
         return pos
     
     def set_position(self, position: int) -> str:
@@ -476,8 +479,14 @@ class DriverAMP(Driver):
         """Precisa ser implementada pelo driver"""
         motor_alarm_int = self.mb_server._conv_reg_to_value(coils_regs.RX_ALC, self.mb_server.db_shadow)
         motor_alarm = MotorAlarmInfo(motor_alarm_int)
+        self.read_firmware_status()  # Update the SASTAT value
         sastat_alarm_int = self.motor.SASTAT & motor_program_errors_mask
         sastat_alarm = MotorProgramStatus(sastat_alarm_int)
+
+        print(f"Motor alarm int: {motor_alarm_int} - Motor alarm: {motor_alarm}")
+        print(f"SASTAT alarm int: {sastat_alarm_int} - SASTAT alarm: {sastat_alarm}")
+        print(f"Motor alarm bits: {self.motor.SASTAT & motor_program_errors_mask:016b}")
+        print(f"mascara de erros: {bin(motor_program_errors_mask)}")
 
         alarm_info = "Alarm details: "
         for error in motor_alarm:
@@ -486,7 +495,7 @@ class DriverAMP(Driver):
         for error in sastat_alarm:
             alarm_info += error.name + " / "
         
-        alarm_info = self._alarm_info.removesuffix(" / ")
+        alarm_info = alarm_info.removesuffix(" / ")
 
         return alarm_info
 

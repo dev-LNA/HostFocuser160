@@ -70,7 +70,7 @@ class Driver(ABC):
         ...
     
     @abstractmethod
-    def conv_position(self, val_enc: int = None) -> int:
+    def conv_position(self, val_enc: int = None, type: str = "int") -> int | float:
         """Precisa ser implementada pelo driver"""
         ...
     

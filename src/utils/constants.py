@@ -187,14 +187,14 @@ class MotorProgramStatus(IntFlag):
     ERROR = auto()
     INVALID = auto()
 
-motor_program_errors_mask = 0x00CF1 # Mask to extract only the error bits from the program status [bits 10~16]
+motor_program_errors_mask = 0xFC00 # Mask to extract only the error bits from the program status [bits 10~15]
 
 # MotorAlarmInfo é referente ao registro ALC do modbus
 class MotorAlarmInfo(IntFlag):
     NO_ERROR = 0
     STALL = auto()
-    INVALID_1 = auto() 
-    INVALID_2 = auto()
+    HARDWARE_LIMIT_CCW = auto() 
+    HARDWARE_LIMIT_CW = auto()
     OVER_TEMP = auto()
     INTERNAL_VOLTAGE = auto()
     UNDER_VOLTAGE = auto()
