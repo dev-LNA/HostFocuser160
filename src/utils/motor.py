@@ -270,12 +270,12 @@ class Motor():
     def alarm_info(self):
         return self._alarm_info
     @alarm_info.setter
-    def alarm_info(self, msg: MotorAlarmInfo) -> str:
-        self._alarm_info = "Alarm details: "
-        for error in msg:
-            self._alarm_info += error.name + " / "
+    def alarm_info(self, msg: str) -> str:
+        # self._alarm_info = "Alarm details: "
+        # for error in msg:
+        #     self._alarm_info += error.name + " / "
         
-        self._alarm_info = self._alarm_info.removesuffix(" / ")
+        # self._alarm_info = self._alarm_info.removesuffix(" / ")
         
         return self._alarm_info
 
@@ -348,10 +348,11 @@ class Motor():
                     else:
                         self.signals.lim_max.emit(False, "statusLed", "OFF")
 
-                if(motor_status & MotorStatusFlags.ALARM):
-                    self.alarm = True
-                else:
-                    self.alarm = False
+                self.alarm = self.driver.read_alarm_status()                # Reads the alarm status
+                # if(motor_status & MotorStatusFlags.ALARM):    
+                #     self.alarm = True
+                # else:
+                #     self.alarm = False
 
                 return self._status
             else:

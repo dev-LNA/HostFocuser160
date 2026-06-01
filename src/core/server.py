@@ -413,11 +413,14 @@ class Server(QObject):
             if self.motor_reachable:                                                                # If the motor is reachable
                 self.router_reachable = ReachStatus.CONNECTED                                            # Emits signals for GUI update
                 self.motor_reachable = ReachStatus.CONNECTED                                           # Emits signals for GUI update
+                self.motor.signals.firmware_status.emit("Connecting motor")          # Emits signal to update firmware status in the GUI
                 time.sleep(0.2)                
                 # try:
                 self.motor.connect()                                                        # Creates the socket and connects the server to the motor
+                self.motor.signals.firmware_status.emit("Configuring motor")          # Emits signal to update firmware status in the GUI
                 self.motor.update_status()
                 self._get_motor_params()
+                self.motor.signals.firmware_status.emit("Updating parameters")          # Emits signal to update firmware status in the GUI
                 self.motor._update_motor_params()
                 self._update_status()
                                                 
@@ -453,6 +456,11 @@ class Server(QObject):
         self.status[SJson.IS_MOVING] = self.motor.is_moving
         self.status[SJson.ALARM] = self.motor.alarm
         self.motor.firmware_status
+
+        if self.motor.alarm:
+            self.status[SJson.ERROR] = self.motor.alarm_info
+        else:
+            self.status[SJson.ERROR] = ""
 
     def _get_motor_params(self):
         """Updates the motor parameters in the JSON"""
@@ -648,7 +656,7 @@ class Server(QObject):
         :raises RuntimeError: Returns an error if the motor responds 'NOK'
         """
  
-        self.status["error"] = ""             # Resets "error" status #TODO: Realizar um tratamento correto de erro
+        # self.status["error"] = ""             # Resets "error" status #TODO: Realizar um tratamento correto de erro
 
         # 'STATUS' is a command to the server and not to the motor
         if cmd["COMMAND"] == ServerCommands.STATUS:

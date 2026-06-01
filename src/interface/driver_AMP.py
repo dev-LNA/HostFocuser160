@@ -14,7 +14,7 @@ from threading import Lock, Thread, Timer
 
 from src.core.config import Config
 from src.core.exceptions import DriverException
-from src.utils.constants import constants, MotorStatusFlags, MotorParamsIdx, MotorAlarmInfo
+from src.utils.constants import constants, MotorStatusFlags, MotorParamsIdx, MotorAlarmInfo, motor_program_errors_mask
 from src.utils.modbus_regs import RegsInfo, RegType, coils_regs, dig_inputs_regs, DB_size, CLP_Owned, TwosComplementReg, param_vars
 
 from typing import TYPE_CHECKING
@@ -251,6 +251,7 @@ class DriverAMP(Driver):
         # return self.mb_server.write_param(dig_inputs_regs.TX_V70, value)
 
     def _convert_pos(self, pos: int | float) -> int:
+        """Converts position in microns to steps, since the CLP receives position values in steps."""
         value = pos / Config.enc_2_microns
         return int(value / Config.steps_2_encoder)
     
@@ -467,13 +468,26 @@ class DriverAMP(Driver):
     
     def read_alarm_status(self) -> bool:
         """Precisa ser implementada pelo driver"""
-        ...      
+        return self.mb_server.db_shadow.get_coils(coils_regs.RX_ALM.ADDRESS, coils_regs.RX_ALM.SIZE)[0]     
 
     
-    def parse_alarm_info(self) -> MotorAlarmInfo:
+    def parse_alarm_info(self) -> str:
         """Precisa ser implementada pelo driver"""
-        alarm_int = self.mb_server._conv_reg_to_value(coils_regs.RX_ALC, self.mb_server.db_shadow)
-        return MotorAlarmInfo(alarm_int)
+        motor_alarm_int = self.mb_server._conv_reg_to_value(coils_regs.RX_ALC, self.mb_server.db_shadow)
+        motor_alarm = MotorAlarmInfo(motor_alarm_int)
+        sastat_alarm_int = self.motor.SASTAT & motor_program_errors_mask
+        sastat_alarm = MotorProgramStatus(sastat_alarm_int)
+
+        alarm_info = "Alarm details: "
+        for error in motor_alarm:
+            alarm_info += error.name + " / "
+
+        for error in sastat_alarm:
+            alarm_info += error.name + " / "
+        
+        alarm_info = self._alarm_info.removesuffix(" / ")
+
+        return alarm_info
 
 
 
@@ -593,7 +607,19 @@ class DriverAMP(Driver):
     
     def move_to(self, pos: str) -> str:
         """Precisa ser implementada pelo driver"""
-        return self.mb_server.send_command(dig_inputs_regs.TX_GS29)
+
+        # return self.mb_server.send_command(dig_inputs_regs.TX_GS29)
+
+        if pos < 0:
+            pos = 0
+        elif pos > Config.max_pos:
+            pos = Config.max_pos
+        # Sends the position value to the CLP, and then sends the command to start the movement towards the target position
+        if self.mb_server.write_param(dig_inputs_regs.TX_V20, self._convert_pos(pos)) == "OK":
+            time.sleep(1)   # Delay to ensure the position value is written to the CLP before sending the command to start the movement
+            return self.mb_server.send_command(dig_inputs_regs.TX_GS29)
+        else:
+            return "NOK"
 
     def focus_in(self, speed: str = None) -> str:
         """Precisa ser implementada pelo driver""" 

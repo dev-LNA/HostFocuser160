@@ -181,7 +181,7 @@ class Driver(ABC):
         ...      
 
     @abstractmethod
-    def parse_alarm_info(self) -> bool:
+    def parse_alarm_info(self) -> str:
         """Precisa ser implementada pelo driver"""
 
     @abstractmethod

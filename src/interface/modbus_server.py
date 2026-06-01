@@ -45,24 +45,18 @@ class TimeoutCheck(QObject):
 
     def check_timeout(self, new_val: bool) -> TimeoutState:
         """Checks if a timeout occured
+        The timeout occurs whent this function is not called in less than '_timeout_limit' seconds
 
         Returns:
             bool:   True -> Timeout
                     False -> No timeout
         """ 
-        # # The timeout occurs when this function is not called in less than '_timeout_limit'
-        # if (time.time() - self.timer) < self._timeout_limit:
-        #     self.status = False
-        # else:
-        #     self.status = True
-        #     self.callback_on_timeout()  # Calls driver function to deal with the timeout
-
         if self.running:    
             self.elapsed_time = time.time() - self.timer    
         else:
             self.elapsed_time = 0
     
-        print(f"checking timeout: {self.elapsed_time}")
+        # print(f"checking timeout: {self.elapsed_time}")
 
         # return self.status 
         if (self.old_val != new_val):
@@ -348,51 +342,10 @@ class IAGModbusServer(mbServer):
         if self.timeout.check_timeout(new) == TimeoutState.NO_TIMEOUT:    
             self.handshake = True
             self.data_bank.set_discrete_inputs(dig_inputs_regs.TX_SVON.ADDRESS, [True])   # Informs the CLP that the Driver is active and ready to operate
-        else:
-            # self.handshake = False
-            # self.data_bank.set_discrete_inputs(dig_inputs_regs.TX_SVON.ADDRESS, [False])   # Informs the CLP that the Driver is active and ready to operate
 
-
-
-
-        # if not self._compare_regs(coils_regs.HANDSHAKE):   # If false means that the register value was changed
-        #     new = self.data_bank.get_coils(coils_regs.HANDSHAKE.ADDRESS, coils_regs.HANDSHAKE.SIZE)[0]
-        #     # print(f"Register {coils_regs.HANDSHAKE.TAG} old value {old} -> new value {new}")
-        #     # print(new)
-         
-            
-        #     # Checks if the time between handshakes has passed the timeout limit (False indicates that there is NO timeout)
-        #     if self.timeout.check_timeout(new) == False:    
-        #         self.handshake = True
-        #         self.timeout.reset()
-        #         self.data_bank.set_discrete_inputs(dig_inputs_regs.TX_SVON.ADDRESS, [True])   # Informs the CLP that the Driver is active and ready to operate
-        #     else:
-        #         self.data_bank.set_discrete_inputs(dig_inputs_regs.TX_SVON.ADDRESS, [False])   # Informs the CLP that the Driver is active and ready to operate
-
-            # if new == True:                  # if changed from false to true
-            #     # self.timeout.check_timeout()                                            # Checks if the time between handshakes has passed the timeout limit
-            #     self.handshake = True                                                   # DEBUG: Colocar a lógica correta -> self.handshake = not self.timeout.check_timeout()
-                
-            #     if self.data_bank.d_inputs_size == DB_size.DI_LAST_ADDRESS+1:
-            #         self.data_bank.set_discrete_inputs(dig_inputs_regs.TX_SVON.ADDRESS, [True])   # Informs the CLP that the Driver is active and ready to operate
-
-            #     print(f"Handshake took {time.time() - self.timeout.timer} seconds")
-            #     self.timeout.reset()
-                
-            #     # if self.timeout.status:
-            #     #     print("TIMEOUT")        #TODO: Implementar lógica de timeout 
-                    
-            #     #     ...
-            #     # else:
-            #     #     # print("NO TIMEOUT")
-            #     #     ...
-
-                
-            # print(f"Handshake value changed to {new}")
-
-            # Saves the new handshake value in the shadow register and mirror it to the CLP
-            self.db_shadow.set_coils(coils_regs.HANDSHAKE.ADDRESS, [new]) 
-            self.data_bank.set_discrete_inputs(dig_inputs_regs.HANDSHAKE.ADDRESS, [new])
+        # Saves the new handshake value in the shadow register and mirror it to the CLP
+        self.db_shadow.set_coils(coils_regs.HANDSHAKE.ADDRESS, [new]) 
+        self.data_bank.set_discrete_inputs(dig_inputs_regs.HANDSHAKE.ADDRESS, [new])
 
     def _mirror_clp_owned_coils(self):
         for reg in CLP_Owned:
