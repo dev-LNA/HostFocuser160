@@ -42,7 +42,7 @@ class MultiSignal(QObject):
         :type value: bool | int | float
         """
         self.value.emit(int(value))
-        print(f'*********emitted: {int(value)}')
+        # print(f'*********emitted: {int(value)}')
         self.value_float.emit(float(value))
         if value2orstring is None and convert2string:
             self.string.emit(str(value))

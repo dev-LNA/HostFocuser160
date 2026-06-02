@@ -140,7 +140,7 @@ class Motor():
         """
         encoder_pos = self.encoder
         pos = self.driver.conv_position_show(encoder_pos, type="float")
-        print(f"*******POS = {pos}")
+        # print(f"*******POS = {pos}")
         if self.initialized:
             if pos != self._position:
                 self.last_position = self._position
