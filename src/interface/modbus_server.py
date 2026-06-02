@@ -682,6 +682,7 @@ class IAGModbusServer(mbServer):
                 # while self.data_bank.get_coils(coils_regs.RX_READING.ADDRESS, coils_regs.RX_READING.SIZE)[0]:
                 print("Waiting for CLP to finish reading before writting...")
                 while self.CLP_reading:
+                    time.sleep(0.2)
                     if time.time() - t > Config.write_timeout:
                         # write_timeout = True
                         raise TimeoutError(f"Timeout trying to write parameter(s) to CLP. CLP was reading for more than {Config.write_timeout} seconds")
