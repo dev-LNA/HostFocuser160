@@ -4205,7 +4205,7 @@ QSlider::handle:horizontal {
     <property name="title">
      <string>&amp;Options</string>
     </property>
-    <addaction name="actionSettings"/>
+    <addaction name="actionAbout"/>
     <addaction name="separator"/>
     <addaction name="actionShow_toolbar"/>
     <addaction name="actionShow_Log"/>
@@ -4259,7 +4259,7 @@ QSlider::handle:horizontal {
     <string>Ctrl+H</string>
    </property>
   </action>
-  <action name="actionSettings">
+  <action name="actionAbout">
    <property name="text">
     <string>&amp;Settings</string>
    </property>

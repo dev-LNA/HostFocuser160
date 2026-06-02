@@ -3,6 +3,7 @@ title = "FocuserIAG"
 [General]
 name = "FocuserIAG"
 version = "1.0.0"
+date = "02/06/2026"
 description = "Interface for IAG Focuser"
 startup = false
 

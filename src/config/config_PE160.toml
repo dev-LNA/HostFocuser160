@@ -3,6 +3,7 @@ title = "FocuserPE160"
 [General]
 name = "Focuser160"
 version = "1.0.0"
+date = "02/06/2026"
 description = "Interface for Perkin-Elmer Focuser"
 startup = false
 

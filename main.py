@@ -19,7 +19,7 @@ from src.utils.motor import MotorModels
 
 from misc.log_box import LogBox
 from misc.settings import SettingsWindow
-from misc.server_settings import ServerSettingsWindow
+from misc.info import ServerInfoWindow
 from misc.load_bar import LoadBar
 
 try:
@@ -85,7 +85,7 @@ class FocuserOPD (QMainWindow):
         self.clients = list[ClientSimulator]()  # Initializes client simulators list
         self._num_clients = 0                   # Number of opened clients
         self._settings_window = None            # Initialize settings window as None
-        self._server_settings_window = None
+        self._server_info_window = None
         self.log_box:LogBox = LogBox()          # Initialize log window
         self.log_box.closed.connect(self._closed_log_box)               # Signal to inform the main window that the log box was closed by pressing the X button            
         self.load_window = None                 # Initialize load window as None    
@@ -112,7 +112,7 @@ class FocuserOPD (QMainWindow):
     #   Initializes every UI element of the main window.
     #   The initialization will set the initial values and the behavior of the elements.        
         self.ui_elements = UiWidgets(self, "main")                      # Creates "ui_elements" widget to hold intellisense references to the widgets
-        self.setFixedSize(QSize(310, 470))                              # Sets a fixed size for the main window
+        self.setFixedSize(QSize(312, 550))                              # Sets a fixed size for the main window
         self.ui_elements.pageSelect.setCurrentIndex(0)                  # Initializes the main window in the focalizer seletion page
 
         self.ui_elements.btnStartServer.clicked.connect(self._config_server)
@@ -126,7 +126,7 @@ class FocuserOPD (QMainWindow):
         self.ui_elements.actionShow_Log.triggered.connect(self._toggle_log_box)
         self.ui_elements.actionClient_Simulator.triggered.connect(self._run_simulator)
         self.ui_elements.actionHide.triggered.connect(self._minimize_to_tray)    
-        self.ui_elements.actionSettings.triggered.connect(self._open_server_settings)
+        self.ui_elements.actionAbout.triggered.connect(self._open_server_info)
         self.ui_elements.actionEngineering.triggered.connect(self._open_settings)
         self.ui_elements.actionShow_toolbar.triggered.connect(              
             lambda checked: self.ui_elements.toolBar.setVisible(checked)    # Action to toggle toolbar
@@ -210,7 +210,7 @@ class FocuserOPD (QMainWindow):
         self.window_expand_animation = QPropertyAnimation(self, b"size")                                          # Animation for the window expansion
         self.window_expand_animation.setEasingCurve(QEasingCurve.Type.InOutCubic)
         self.window_expand_animation.setDuration(1000)
-        self._starting_size = QSize(310, self.height())                                             # Holds the initial screen size
+        self._starting_size = QSize(312, self.height())                                             # Holds the initial screen size
         self.window_expand_animation.finished.connect(self._expanded_ended)                                       # Connects a function to run after the animation is over
         self._expanding.connect(self.ui_elements.btnArrow.setDisabled)                              # Disables the arrow expansion button while the animation is being executed
 
@@ -284,7 +284,7 @@ class FocuserOPD (QMainWindow):
             # Config.device_ip = get_toml('Device', 'ip_160')                     # Sets the IP address according to selection
             self.ui_elements.lblTitle.setText("Focuser 160")                    # Sets main window label according to selection
             self.server.init_device(MotorModels.ARCUS_DMX_ETH)                   # Initializes the motor driver according to the focuser
-            self.ui_elements.gbFocuserStatus.setFixedSize(QSize(293,240))
+            self.ui_elements.gbFocuserStatus.setFixedSize(QSize(295,240))
             self._init_focuser()                                                # Changes to the server page                                  
         elif self.ui_elements.rbIAG.isChecked():                            # Checks radio button value
             print("INICIAR FOCALIZADOR DO IAG")                                 # If the IAG was chosen
@@ -292,7 +292,7 @@ class FocuserOPD (QMainWindow):
             # Config.device_ip = get_toml('Device', 'ip_iag')                     # Sets the IP address according to selection
             self.ui_elements.lblTitle.setText("Focuser IAG")                    # Sets main window label according to selection
             self.server.init_device(MotorModels.AMP_MOTOR)                       # Initializes the motor driver according to the focuser
-            self.ui_elements.gbFocuserStatus.setFixedSize(QSize(293,240))
+            self.ui_elements.gbFocuserStatus.setFixedSize(QSize(295,240))
             self.ui_elements.lblMotor.setText("CLP")
             self._init_focuser()                                                # Changes to the server page      
         else:                                                               # If the 'start server' button is pressed with no focuser selected shows a message
@@ -487,17 +487,17 @@ class FocuserOPD (QMainWindow):
 
         print(self.clients)                                         # Prints the list of clients
 
-    def _open_server_settings(self):
+    def _open_server_info(self):
         
-        if self._server_settings_window is None:
-            self._server_settings_window = ServerSettingsWindow(logger=logger)
-            self._server_settings_window.signals.window_closed.connect(self._server_settings_closed)
-            self._server_settings_window.show()
+        if self._server_info_window is None:
+            self._server_info_window = ServerInfoWindow()
+            self._server_info_window.window_closed.connect(self._server_info_closed)
+            self._server_info_window.show()
 
-    def _server_settings_closed(self, msg: bool):
+    def _server_info_closed(self, msg: bool):
         if msg is True:
-            self._server_settings_window.signals.window_closed.disconnect(self._server_settings_closed)
-            self._server_settings_window = None
+            self._server_info_window.window_closed.disconnect(self._server_info_closed)
+            self._server_info_window = None
 
     def _open_settings(self):
         """Opens the settings window"""

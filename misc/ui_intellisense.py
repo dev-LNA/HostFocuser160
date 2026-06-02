@@ -77,8 +77,8 @@ class UiWidgets(QWidget):
             self.actionHide = window.findChild(QAction, 'actionHide')
             self.actionHide: QAction = self.actionHide
 
-            self.actionSettings = window.findChild(QAction, 'actionSettings')
-            self.actionSettings: QAction = self.actionSettings
+            self.actionAbout = window.findChild(QAction, 'actionAbout')
+            self.actionAbout: QAction = self.actionAbout
 
             self.actionEngineering = window.findChild(QAction, 'actionEngineering')
             self.actionEngineering: QAction = self.actionEngineering
