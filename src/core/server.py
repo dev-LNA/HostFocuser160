@@ -24,7 +24,7 @@ from threading import Thread
 from misc.client_sample import TEST_SETUP
 from src.core.config import Config
 import src.core.exceptions as AlpacaExceptions
-from src.utils.constants import constants, MotorModels, ReachStatus, MotorParamsIdx, ServerCommands, MotorValidCommands
+from src.utils.constants import POSITION_VISUALIZATION_CONVERTION, constants, MotorModels, ReachStatus, MotorParamsIdx, ServerCommands, MotorValidCommands
 from src.utils.constants import ServerMessageValidation as SVal
 from src.utils.constants import ServerJsonKeys as SJson
 from src.utils.signals import PropertySignals, MultiSignal
@@ -293,8 +293,9 @@ class Server(QObject):
         # self.test_var += 2
 
         # self.motor.set_param(MotorParamsIdx.MOTOR_IP, "192.168.1.100")
-        self.test_var += 112.3
-        self.status[SJson.POSITION] = self.test_var
+        # self.test_var += 112.3
+        # self.status[SJson.POSITION] = self.test_var
+        self.motor.signals.position.emit(self.test_var)
 
         
 
@@ -440,14 +441,20 @@ class Server(QObject):
                 # self._check_homing()                                                                # Emits homing signals      #TODO: Trocar nome do método
 
         #     #--- Emits max pos and backlash to update GUI. The value is different in the test setup due to the size and gear differences
-                if TEST_SETUP:
-                    self.signals.max_pos.emit(int(self.motor.get_param(MotorParamsIdx.MAX_POS)) + 5)             # A small gap at the end to account the distance to the lim+ uswitch 
-                    self.signals.backlash.emit(-(int(self.motor.get_param(MotorParamsIdx.BACKLASH)) + 10))       # A small gap at the end to account the distance to the lim+ uswitch 
+                if self.motor.model == MotorModels.ARCUS_DMX_ETH:
+                    if TEST_SETUP:
+                        self.signals.max_pos.emit(int(self.motor.get_param(MotorParamsIdx.MAX_POS)) + 5)             # A small gap at the end to account the distance to the lim+ uswitch 
+                        self.signals.backlash.emit(-(int(self.motor.get_param(MotorParamsIdx.BACKLASH)) + 10))       # A small gap at the end to account the distance to the lim+ uswitch 
+                    else:
+                        # TODO: Definir valores de excursão na montagem real
+                        self.signals.max_pos.emit(int(self.motor.get_param(MotorParamsIdx.MAX_POS)))                 # A small gap at the end to account the distance to the lim+ uswitch 
+                        self.signals.backlash.emit(-(int(self.motor.get_param(MotorParamsIdx.BACKLASH))))            # A small gap at the end to account the distance to the lim+ uswitch 
                 else:
-                    # TODO: Definir valores de excursão na montagem real
-                    self.signals.max_pos.emit(int(self.motor.get_param(MotorParamsIdx.MAX_POS)))                 # A small gap at the end to account the distance to the lim+ uswitch 
-                    self.signals.backlash.emit(-(int(self.motor.get_param(MotorParamsIdx.BACKLASH))))            # A small gap at the end to account the distance to the lim+ uswitch 
-                
+                    print(POSITION_VISUALIZATION_CONVERTION * int(self.motor.get_param(MotorParamsIdx.MAX_POS)))
+                    self.signals.max_pos.emit(int(self.motor.get_param(MotorParamsIdx.MAX_POS)))             # A small gap at the end to account the distance to the lim+ uswitch
+                    self.signals.backlash.emit(-(int(self.motor.get_param(MotorParamsIdx.BACKLASH))))            # A small gap at the end to account the distance to the lim+ us
+
+
                 self.logger.info(f'Motor Reached and connected.')
         except Exception as e:
             self.logger.error(f'{str(e)}')  
@@ -461,7 +468,7 @@ class Server(QObject):
         if self.motor.initialized:
             # self.status[SJson.POSITION] = self.motor.position
             self.motor.position
-            self.status[SJson.POSITION] = self.motor.driver.conv_position(type="float")
+            self.status[SJson.POSITION] = self.motor.driver.conv_position_show(type="float")
         else:
             self.motor.position # Updates the position but does not save it to the JSON since the motor is not initialized and the position value is not reliable
             self.status[SJson.POSITION] = constants.INVALID_RESPONSE

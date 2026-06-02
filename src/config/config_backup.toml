@@ -3,6 +3,7 @@ title = "FocuserIAG"
 [General]
 name = "FocuserIAG"
 version = "1.0.0"
+date = "02/06/2026"
 description = "Interface for IAG Focuser"
 startup = false
 
@@ -18,13 +19,13 @@ temp_comp = false
 speed_security = 215000
 speedFactor = 428
 step_size = 0
-backlash = 33
-max_pos = 21166
-park_pos = 8000
-normal_speed = 220
+backlash = 20
+max_pos = 2200
+park_pos = 1800
+normal_speed = 250
 low_speed = 42
 max_step = 9
-max_speed = 417
+max_speed = 470
 acceleration = 69.7
 deceleration = 1398.0
 idle_current = 80.0
@@ -40,7 +41,7 @@ server_ip = "*"
 port_pub = 7003
 port_rep = 7004
 sub_mask = "255.255.255.0"
-gateway_ip = "192.168.50.1"
+gateway_ip = "200.131.64.254"
 pub_interval = 1
 write_timeout = 3
 

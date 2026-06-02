@@ -72,7 +72,7 @@ class DriverDMX(Driver):
                 return "NOK"
         
 
-    def conv_position(self, encoder_pos: int = None) -> int:
+    def conv_position_show(self, encoder_pos: int = None) -> int:
         """Reads motor encoder position and converts to microns
 
         :raises ValueError: If the reading is not valid

@@ -139,10 +139,12 @@ class Motor():
         :rtype: float
         """
         encoder_pos = self.encoder
-        pos = self.driver.conv_position(encoder_pos, type="float")
+        pos = self.driver.conv_position_show(encoder_pos, type="float")
+        print(f"*******POS = {pos}")
         if self.initialized:
             if pos != self._position:
                 self.last_position = self._position
+                pos = round(pos,1)
                 self._position = pos
                 self.signals.position.emit(pos)
         else:
@@ -344,21 +346,43 @@ class Motor():
                 else:
                     self.is_moving = False
 
-                if(motor_status & MotorStatusFlags.LIM_MIN):
-                        self.signals.lim_min.emit(True, "statusLed", "NOK")
-                else:
-                    if self._position < 0:
-                        self.signals.lim_min.emit(False, "statusLed", "WAIT")
-                    else:
-                        self.signals.lim_min.emit(False, "statusLed", "OFF")
 
-                if(motor_status & MotorStatusFlags.LIM_MAX):
-                        self.signals.lim_max.emit(True, "statusLed", "NOK")
-                else:
-                    if self._position > int(self.parameters[MotorParamsIdx.MAX_POS].VALUE):
-                        self.signals.lim_max.emit(False, "statusLed", "WAIT")
+                if self.model == MotorModels.ARCUS_DMX_ETH:
+
+                    if(motor_status & MotorStatusFlags.LIM_MIN):
+                            self.signals.lim_min.emit(True, "statusLed", "NOK")
                     else:
-                        self.signals.lim_max.emit(False, "statusLed", "OFF")
+                        if self._position < 0:
+                            self.signals.lim_min.emit(False, "statusLed", "WAIT")
+                        else:
+                            self.signals.lim_min.emit(False, "statusLed", "OFF")
+
+                    if(motor_status & MotorStatusFlags.LIM_MAX):
+                            self.signals.lim_max.emit(True, "statusLed", "NOK")
+                    else:
+                        if self._position > int(self.parameters[MotorParamsIdx.MAX_POS].VALUE):
+                            self.signals.lim_max.emit(False, "statusLed", "WAIT")
+                        else:
+                            self.signals.lim_max.emit(False, "statusLed", "OFF")
+
+                else:
+
+                    if(motor_status & MotorStatusFlags.LIM_MAX):
+                            self.signals.lim_min.emit(True, "statusLed", "NOK")
+                    else:
+                        if self._position < 0:
+                            self.signals.lim_min.emit(False, "statusLed", "WAIT")
+                        else:
+                            self.signals.lim_min.emit(False, "statusLed", "OFF")
+
+                    if(motor_status & MotorStatusFlags.LIM_MIN):
+                            self.signals.lim_max.emit(True, "statusLed", "NOK")
+                    else:
+                        if self._position > int(self.parameters[MotorParamsIdx.MAX_POS].VALUE):
+                            self.signals.lim_max.emit(False, "statusLed", "WAIT")
+                        else:
+                            self.signals.lim_max.emit(False, "statusLed", "OFF")
+
 
                 self.alarm = self.driver.read_alarm_status()                # Reads the alarm status
                 # if(motor_status & MotorStatusFlags.ALARM):    

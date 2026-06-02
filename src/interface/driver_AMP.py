@@ -14,7 +14,7 @@ from threading import Lock, Thread, Timer
 
 from src.core.config import Config
 from src.core.exceptions import DriverException
-from src.utils.constants import constants, MotorStatusFlags, MotorParamsIdx, MotorAlarmInfo, motor_program_errors_mask
+from src.utils.constants import constants, MotorStatusFlags, MotorParamsIdx, MotorAlarmInfo, motor_program_errors_mask, POSITION_COMMAND_CONVERSION, POSITION_VISUALIZATION_CONVERTION
 from src.utils.modbus_regs import RegsInfo, RegType, coils_regs, dig_inputs_regs, DB_size, CLP_Owned, TwosComplementReg, param_vars
 
 from typing import TYPE_CHECKING
@@ -166,8 +166,9 @@ class DriverAMP(Driver):
                 raise (e)
 
     
-    def conv_position(self, encoder_pos: int = None, type: str = "int") -> int | float:
+    def conv_position_show(self, encoder_pos: int = None, type: str = "int") -> int | float:
         """Reads motor encoder position and converts to microns
+        Used for PUB and display values
 
         :raises ValueError: If the reading is not valid
         :return: _description_
@@ -177,9 +178,13 @@ class DriverAMP(Driver):
             encoder_pos = self.read_encoder()
         # pos = int(round(encoder_pos / Config.enc_2_microns))
         if type == "int":
-            pos = int(round(encoder_pos * Config.enc_2_microns))
+            # Conversão necessário devido a montagem mecânica
+            pos = 2510 - int(round(encoder_pos * Config.enc_2_microns * POSITION_VISUALIZATION_CONVERTION))
+            # pos = int(round(encoder_pos * Config.enc_2_microns))
         else:
-            pos = round(encoder_pos * Config.enc_2_microns, 1)
+            # Conversão necessário devido a montagem mecânica
+            pos = 2510 - round(encoder_pos * Config.enc_2_microns * POSITION_VISUALIZATION_CONVERTION, 1)
+            # pos = round(encoder_pos * Config.enc_2_microns, 1)
         return pos
     
     def set_position(self, position: int) -> str:
@@ -291,8 +296,11 @@ class DriverAMP(Driver):
             if converted == False:
                 return str(Config.max_pos)
             else:
-                return str(self._convert_pos(Config.max_pos))
-        
+                return str(self._convert_pos(Config.max_pos / POSITION_VISUALIZATION_CONVERTION)  )
+
+
+        # value = 25389.8 - value * POSITION_COMMAND_CONVERSION   # Conversão necessária devido a montagem mecânica
+        value = value / POSITION_VISUALIZATION_CONVERTION   # Conversao para enviar para o CLP
         value = value / Config.enc_2_microns
         value = int(value / Config.steps_2_encoder)
 
@@ -310,11 +318,14 @@ class DriverAMP(Driver):
             if converted == False:
                 return str(Config.park_pos)
             else:
-                return str(self._convert_pos(Config.park_pos))
+                return str(self._convert_pos(25389.8 - Config.park_pos * POSITION_COMMAND_CONVERSION)  )
+
+        value = 25389.8 - POSITION_COMMAND_CONVERSION * value   # Conversão necessária devido a montagem mecânica 
         
         value = value / Config.enc_2_microns
         value = int(value / Config.steps_2_encoder)
 
+        
         return self.mb_server.write_param(dig_inputs_regs.TX_V83, value)
 
     def _convert_speed(self, speed: int | float) -> int:
@@ -625,7 +636,11 @@ class DriverAMP(Driver):
         elif pos > Config.max_pos:
             pos = Config.max_pos
         # Sends the position value to the CLP, and then sends the command to start the movement towards the target position
-        if self.mb_server.write_param(dig_inputs_regs.TX_V20, self._convert_pos(pos)) == "OK":
+        command_position = 25389.8 - POSITION_COMMAND_CONVERSION * 10*int(pos)   # Conversão necessária devido a montagem mecânica  
+
+        print(f"Moving to position {pos} microns - Command position value: {command_position}")
+
+        if self.mb_server.write_param(dig_inputs_regs.TX_V20, int(self._convert_pos(command_position))) == "OK":
             time.sleep(1)   # Delay to ensure the position value is written to the CLP before sending the command to start the movement
             return self.mb_server.send_command(dig_inputs_regs.TX_GS29)
         else:

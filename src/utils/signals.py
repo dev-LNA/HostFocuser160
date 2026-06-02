@@ -41,7 +41,8 @@ class MultiSignal(QObject):
         :param value: Variable value to be transmitted
         :type value: bool | int | float
         """
-        self.value.emit(int(float(value)))
+        self.value.emit(int(value))
+        print(f'*********emitted: {int(value)}')
         self.value_float.emit(float(value))
         if value2orstring is None and convert2string:
             self.string.emit(str(value))

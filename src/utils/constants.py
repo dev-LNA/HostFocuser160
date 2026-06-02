@@ -43,6 +43,10 @@ class TimeoutState(Enum):
     TIMEOUT = auto()
     WAIT_INFO = auto()
 
+# Due to the mechanical mounting the relative positions must be converted to allow
+# operators to use previously defined positions in the software
+POSITION_VISUALIZATION_CONVERTION = 0.09885853    # Convertion from value to PUB and DISPLAY
+POSITION_COMMAND_CONVERSION = 1.011546     # Convertion from received command to value to be sent to the motor
 #endregion
 
 
