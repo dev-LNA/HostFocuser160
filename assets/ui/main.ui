@@ -7,7 +7,7 @@
     <x>0</x>
     <y>0</y>
     <width>630</width>
-    <height>576</height>
+    <height>515</height>
    </rect>
   </property>
   <property name="minimumSize">
@@ -88,7 +88,7 @@ QProgressBar[conStatusBar=&quot;connected&quot;]::chunk {
       <property name="minimumSize">
        <size>
         <width>310</width>
-        <height>470</height>
+        <height>409</height>
        </size>
       </property>
       <property name="currentIndex">
@@ -658,7 +658,7 @@ QProgressBar[conStatusBar=&quot;connected&quot;]::chunk {
           <x>310</x>
           <y>24</y>
           <width>310</width>
-          <height>431</height>
+          <height>390</height>
          </rect>
         </property>
         <property name="styleSheet">
@@ -1075,6 +1075,12 @@ border-right: none;
             </item>
             <item row="0" column="1">
              <widget class="QLabel" name="lblSocketIP">
+              <property name="minimumSize">
+               <size>
+                <width>160</width>
+                <height>0</height>
+               </size>
+              </property>
               <property name="maximumSize">
                <size>
                 <width>100</width>
@@ -1106,6 +1112,12 @@ border-right: none;
             </item>
             <item row="1" column="1">
              <widget class="QLabel" name="lblPortPUB">
+              <property name="minimumSize">
+               <size>
+                <width>75</width>
+                <height>0</height>
+               </size>
+              </property>
               <property name="maximumSize">
                <size>
                 <width>50</width>
@@ -1134,6 +1146,12 @@ border-right: none;
             </item>
             <item row="2" column="1">
              <widget class="QLabel" name="lblPortREP">
+              <property name="minimumSize">
+               <size>
+                <width>75</width>
+                <height>0</height>
+               </size>
+              </property>
               <property name="maximumSize">
                <size>
                 <width>50</width>
@@ -1162,6 +1180,12 @@ border-right: none;
             </item>
             <item row="3" column="1">
              <widget class="QLabel" name="lblComSpeed">
+              <property name="minimumSize">
+               <size>
+                <width>75</width>
+                <height>0</height>
+               </size>
+              </property>
               <property name="maximumSize">
                <size>
                 <width>50</width>
@@ -1209,10 +1233,10 @@ border-right: none;
        <widget class="QGroupBox" name="gbFocuserStatus">
         <property name="geometry">
          <rect>
-          <x>1</x>
-          <y>101</y>
+          <x>0</x>
+          <y>102</y>
           <width>293</width>
-          <height>301</height>
+          <height>241</height>
          </rect>
         </property>
         <property name="title">
@@ -1220,7 +1244,7 @@ border-right: none;
         </property>
         <layout class="QVBoxLayout" name="verticalLayout">
          <property name="spacing">
-          <number>6</number>
+          <number>16</number>
          </property>
          <property name="leftMargin">
           <number>6</number>
@@ -1229,6 +1253,9 @@ border-right: none;
           <number>6</number>
          </property>
          <property name="rightMargin">
+          <number>6</number>
+         </property>
+         <property name="bottomMargin">
           <number>6</number>
          </property>
          <item>
@@ -1242,13 +1269,13 @@ border-right: none;
               <number>0</number>
              </property>
              <property name="rightMargin">
-              <number>13</number>
+              <number>5</number>
              </property>
              <item>
               <widget class="QLabel" name="lblMoving">
                <property name="minimumSize">
                 <size>
-                 <width>38</width>
+                 <width>52</width>
                  <height>20</height>
                 </size>
                </property>
@@ -1332,13 +1359,13 @@ border-right: none;
               <widget class="QLabel" name="lblHome">
                <property name="minimumSize">
                 <size>
-                 <width>30</width>
+                 <width>57</width>
                  <height>20</height>
                 </size>
                </property>
                <property name="maximumSize">
                 <size>
-                 <width>41</width>
+                 <width>57</width>
                  <height>20</height>
                 </size>
                </property>
@@ -1497,19 +1524,19 @@ border-right: none;
               <number>3</number>
              </property>
              <property name="rightMargin">
-              <number>8</number>
+              <number>5</number>
              </property>
              <item>
               <widget class="QLabel" name="lblAlarm">
                <property name="minimumSize">
                 <size>
-                 <width>20</width>
+                 <width>52</width>
                  <height>20</height>
                 </size>
                </property>
                <property name="maximumSize">
                 <size>
-                 <width>42</width>
+                 <width>52</width>
                  <height>20</height>
                 </size>
                </property>
@@ -1584,7 +1611,7 @@ border-right: none;
               <number>3</number>
              </property>
              <property name="rightMargin">
-              <number>9</number>
+              <number>0</number>
              </property>
              <item>
               <widget class="QLabel" name="lblFocusIn">
@@ -1755,19 +1782,6 @@ border-right: none;
           </layout>
          </item>
          <item>
-          <spacer name="verticalSpacer">
-           <property name="orientation">
-            <enum>Qt::Orientation::Vertical</enum>
-           </property>
-           <property name="sizeHint" stdset="0">
-            <size>
-             <width>20</width>
-             <height>40</height>
-            </size>
-           </property>
-          </spacer>
-         </item>
-         <item>
           <widget class="Line" name="line">
            <property name="frameShadow">
             <enum>QFrame::Shadow::Sunken</enum>
@@ -1776,19 +1790,6 @@ border-right: none;
             <enum>Qt::Orientation::Horizontal</enum>
            </property>
           </widget>
-         </item>
-         <item>
-          <spacer name="verticalSpacer_3">
-           <property name="orientation">
-            <enum>Qt::Orientation::Vertical</enum>
-           </property>
-           <property name="sizeHint" stdset="0">
-            <size>
-             <width>20</width>
-             <height>40</height>
-            </size>
-           </property>
-          </spacer>
          </item>
          <item>
           <layout class="QHBoxLayout" name="horizontalLayout_7">
@@ -1852,379 +1853,6 @@ border-right: none;
           </layout>
          </item>
          <item>
-          <widget class="QFrame" name="frameIAG">
-           <property name="minimumSize">
-            <size>
-             <width>0</width>
-             <height>0</height>
-            </size>
-           </property>
-           <property name="maximumSize">
-            <size>
-             <width>16777215</width>
-             <height>90</height>
-            </size>
-           </property>
-           <property name="frameShape">
-            <enum>QFrame::Shape::NoFrame</enum>
-           </property>
-           <property name="frameShadow">
-            <enum>QFrame::Shadow::Raised</enum>
-           </property>
-           <layout class="QGridLayout" name="gridLayout_3">
-            <item row="0" column="0">
-             <layout class="QHBoxLayout" name="horizontalLayout_17">
-              <property name="spacing">
-               <number>3</number>
-              </property>
-              <property name="leftMargin">
-               <number>0</number>
-              </property>
-              <item>
-               <widget class="QLabel" name="lblMoving_2">
-                <property name="minimumSize">
-                 <size>
-                  <width>38</width>
-                  <height>20</height>
-                 </size>
-                </property>
-                <property name="maximumSize">
-                 <size>
-                  <width>50</width>
-                  <height>20</height>
-                 </size>
-                </property>
-                <property name="styleSheet">
-                 <string notr="true"/>
-                </property>
-                <property name="frameShape">
-                 <enum>QFrame::Shape::NoFrame</enum>
-                </property>
-                <property name="frameShadow">
-                 <enum>QFrame::Shadow::Sunken</enum>
-                </property>
-                <property name="text">
-                 <string>Moving:</string>
-                </property>
-                <property name="alignment">
-                 <set>Qt::AlignmentFlag::AlignLeading|Qt::AlignmentFlag::AlignLeft|Qt::AlignmentFlag::AlignTop</set>
-                </property>
-               </widget>
-              </item>
-              <item>
-               <widget class="QLabel" name="ledMoving_2">
-                <property name="sizePolicy">
-                 <sizepolicy hsizetype="Fixed" vsizetype="Fixed">
-                  <horstretch>0</horstretch>
-                  <verstretch>0</verstretch>
-                 </sizepolicy>
-                </property>
-                <property name="minimumSize">
-                 <size>
-                  <width>14</width>
-                  <height>14</height>
-                 </size>
-                </property>
-                <property name="maximumSize">
-                 <size>
-                  <width>14</width>
-                  <height>14</height>
-                 </size>
-                </property>
-                <property name="layoutDirection">
-                 <enum>Qt::LayoutDirection::RightToLeft</enum>
-                </property>
-                <property name="styleSheet">
-                 <string notr="true">border-radius:7px;</string>
-                </property>
-                <property name="frameShape">
-                 <enum>QFrame::Shape::NoFrame</enum>
-                </property>
-                <property name="frameShadow">
-                 <enum>QFrame::Shadow::Sunken</enum>
-                </property>
-                <property name="text">
-                 <string/>
-                </property>
-                <property name="alignment">
-                 <set>Qt::AlignmentFlag::AlignCenter</set>
-                </property>
-                <property name="statusLed" stdset="0">
-                 <string>NOK</string>
-                </property>
-               </widget>
-              </item>
-             </layout>
-            </item>
-            <item row="0" column="1" rowspan="2">
-             <layout class="QHBoxLayout" name="horizontalLayout_18">
-              <property name="spacing">
-               <number>3</number>
-              </property>
-              <property name="leftMargin">
-               <number>0</number>
-              </property>
-              <item>
-               <widget class="QLabel" name="lblMoving_3">
-                <property name="minimumSize">
-                 <size>
-                  <width>38</width>
-                  <height>20</height>
-                 </size>
-                </property>
-                <property name="maximumSize">
-                 <size>
-                  <width>50</width>
-                  <height>20</height>
-                 </size>
-                </property>
-                <property name="styleSheet">
-                 <string notr="true"/>
-                </property>
-                <property name="frameShape">
-                 <enum>QFrame::Shape::NoFrame</enum>
-                </property>
-                <property name="frameShadow">
-                 <enum>QFrame::Shadow::Sunken</enum>
-                </property>
-                <property name="text">
-                 <string>Moving:</string>
-                </property>
-                <property name="alignment">
-                 <set>Qt::AlignmentFlag::AlignLeading|Qt::AlignmentFlag::AlignLeft|Qt::AlignmentFlag::AlignTop</set>
-                </property>
-               </widget>
-              </item>
-              <item>
-               <widget class="QLabel" name="ledMoving_3">
-                <property name="sizePolicy">
-                 <sizepolicy hsizetype="Fixed" vsizetype="Fixed">
-                  <horstretch>0</horstretch>
-                  <verstretch>0</verstretch>
-                 </sizepolicy>
-                </property>
-                <property name="minimumSize">
-                 <size>
-                  <width>14</width>
-                  <height>14</height>
-                 </size>
-                </property>
-                <property name="maximumSize">
-                 <size>
-                  <width>14</width>
-                  <height>14</height>
-                 </size>
-                </property>
-                <property name="layoutDirection">
-                 <enum>Qt::LayoutDirection::RightToLeft</enum>
-                </property>
-                <property name="styleSheet">
-                 <string notr="true">border-radius:7px;</string>
-                </property>
-                <property name="frameShape">
-                 <enum>QFrame::Shape::NoFrame</enum>
-                </property>
-                <property name="frameShadow">
-                 <enum>QFrame::Shadow::Sunken</enum>
-                </property>
-                <property name="text">
-                 <string/>
-                </property>
-                <property name="alignment">
-                 <set>Qt::AlignmentFlag::AlignCenter</set>
-                </property>
-                <property name="statusLed" stdset="0">
-                 <string>NOK</string>
-                </property>
-               </widget>
-              </item>
-             </layout>
-            </item>
-            <item row="0" column="2" rowspan="2">
-             <layout class="QHBoxLayout" name="horizontalLayout_19">
-              <property name="spacing">
-               <number>3</number>
-              </property>
-              <property name="leftMargin">
-               <number>0</number>
-              </property>
-              <item>
-               <widget class="QLabel" name="lblMoving_4">
-                <property name="minimumSize">
-                 <size>
-                  <width>38</width>
-                  <height>20</height>
-                 </size>
-                </property>
-                <property name="maximumSize">
-                 <size>
-                  <width>50</width>
-                  <height>20</height>
-                 </size>
-                </property>
-                <property name="styleSheet">
-                 <string notr="true"/>
-                </property>
-                <property name="frameShape">
-                 <enum>QFrame::Shape::NoFrame</enum>
-                </property>
-                <property name="frameShadow">
-                 <enum>QFrame::Shadow::Sunken</enum>
-                </property>
-                <property name="text">
-                 <string>Moving:</string>
-                </property>
-                <property name="alignment">
-                 <set>Qt::AlignmentFlag::AlignLeading|Qt::AlignmentFlag::AlignLeft|Qt::AlignmentFlag::AlignTop</set>
-                </property>
-               </widget>
-              </item>
-              <item>
-               <widget class="QLabel" name="ledMoving_4">
-                <property name="sizePolicy">
-                 <sizepolicy hsizetype="Fixed" vsizetype="Fixed">
-                  <horstretch>0</horstretch>
-                  <verstretch>0</verstretch>
-                 </sizepolicy>
-                </property>
-                <property name="minimumSize">
-                 <size>
-                  <width>14</width>
-                  <height>14</height>
-                 </size>
-                </property>
-                <property name="maximumSize">
-                 <size>
-                  <width>14</width>
-                  <height>14</height>
-                 </size>
-                </property>
-                <property name="layoutDirection">
-                 <enum>Qt::LayoutDirection::RightToLeft</enum>
-                </property>
-                <property name="styleSheet">
-                 <string notr="true">border-radius:7px;</string>
-                </property>
-                <property name="frameShape">
-                 <enum>QFrame::Shape::NoFrame</enum>
-                </property>
-                <property name="frameShadow">
-                 <enum>QFrame::Shadow::Sunken</enum>
-                </property>
-                <property name="text">
-                 <string/>
-                </property>
-                <property name="alignment">
-                 <set>Qt::AlignmentFlag::AlignCenter</set>
-                </property>
-                <property name="statusLed" stdset="0">
-                 <string>NOK</string>
-                </property>
-               </widget>
-              </item>
-             </layout>
-            </item>
-            <item row="1" column="0">
-             <layout class="QHBoxLayout" name="horizontalLayout_20">
-              <property name="spacing">
-               <number>3</number>
-              </property>
-              <property name="leftMargin">
-               <number>0</number>
-              </property>
-              <item>
-               <widget class="QLabel" name="lblMoving_5">
-                <property name="minimumSize">
-                 <size>
-                  <width>38</width>
-                  <height>20</height>
-                 </size>
-                </property>
-                <property name="maximumSize">
-                 <size>
-                  <width>50</width>
-                  <height>20</height>
-                 </size>
-                </property>
-                <property name="styleSheet">
-                 <string notr="true"/>
-                </property>
-                <property name="frameShape">
-                 <enum>QFrame::Shape::NoFrame</enum>
-                </property>
-                <property name="frameShadow">
-                 <enum>QFrame::Shadow::Sunken</enum>
-                </property>
-                <property name="text">
-                 <string>Moving:</string>
-                </property>
-                <property name="alignment">
-                 <set>Qt::AlignmentFlag::AlignLeading|Qt::AlignmentFlag::AlignLeft|Qt::AlignmentFlag::AlignTop</set>
-                </property>
-               </widget>
-              </item>
-              <item>
-               <widget class="QLabel" name="ledMoving_5">
-                <property name="sizePolicy">
-                 <sizepolicy hsizetype="Fixed" vsizetype="Fixed">
-                  <horstretch>0</horstretch>
-                  <verstretch>0</verstretch>
-                 </sizepolicy>
-                </property>
-                <property name="minimumSize">
-                 <size>
-                  <width>14</width>
-                  <height>14</height>
-                 </size>
-                </property>
-                <property name="maximumSize">
-                 <size>
-                  <width>14</width>
-                  <height>14</height>
-                 </size>
-                </property>
-                <property name="layoutDirection">
-                 <enum>Qt::LayoutDirection::RightToLeft</enum>
-                </property>
-                <property name="styleSheet">
-                 <string notr="true">border-radius:7px;</string>
-                </property>
-                <property name="frameShape">
-                 <enum>QFrame::Shape::NoFrame</enum>
-                </property>
-                <property name="frameShadow">
-                 <enum>QFrame::Shadow::Sunken</enum>
-                </property>
-                <property name="text">
-                 <string/>
-                </property>
-                <property name="alignment">
-                 <set>Qt::AlignmentFlag::AlignCenter</set>
-                </property>
-                <property name="statusLed" stdset="0">
-                 <string>NOK</string>
-                </property>
-               </widget>
-              </item>
-             </layout>
-            </item>
-           </layout>
-          </widget>
-         </item>
-         <item>
-          <spacer name="verticalSpacer_4">
-           <property name="orientation">
-            <enum>Qt::Orientation::Vertical</enum>
-           </property>
-           <property name="sizeHint" stdset="0">
-            <size>
-             <width>20</width>
-             <height>40</height>
-            </size>
-           </property>
-          </spacer>
-         </item>
-         <item>
           <widget class="Line" name="line_2">
            <property name="frameShadow">
             <enum>QFrame::Shadow::Sunken</enum>
@@ -2233,19 +1861,6 @@ border-right: none;
             <enum>Qt::Orientation::Horizontal</enum>
            </property>
           </widget>
-         </item>
-         <item>
-          <spacer name="verticalSpacer_5">
-           <property name="orientation">
-            <enum>Qt::Orientation::Vertical</enum>
-           </property>
-           <property name="sizeHint" stdset="0">
-            <size>
-             <width>20</width>
-             <height>40</height>
-            </size>
-           </property>
-          </spacer>
          </item>
          <item>
           <layout class="QHBoxLayout" name="horizontalLayout_5">
@@ -2309,8 +1924,8 @@ border-right: none;
              </property>
              <property name="sizeHint" stdset="0">
               <size>
-               <width>40</width>
-               <height>13</height>
+               <width>13</width>
+               <height>17</height>
               </size>
              </property>
             </spacer>
@@ -2364,6 +1979,19 @@ border-right: none;
               <set>Qt::AlignmentFlag::AlignCenter</set>
              </property>
             </widget>
+           </item>
+           <item>
+            <spacer name="horizontalSpacer_15">
+             <property name="orientation">
+              <enum>Qt::Orientation::Horizontal</enum>
+             </property>
+             <property name="sizeHint" stdset="0">
+              <size>
+               <width>40</width>
+               <height>20</height>
+              </size>
+             </property>
+            </spacer>
            </item>
           </layout>
          </item>
@@ -4705,9 +4333,9 @@ QSlider::handle:horizontal {
        <widget class="QWidget" name="layoutWidget">
         <property name="geometry">
          <rect>
-          <x>1</x>
-          <y>410</y>
-          <width>289</width>
+          <x>0</x>
+          <y>360</y>
+          <width>291</width>
           <height>38</height>
          </rect>
         </property>

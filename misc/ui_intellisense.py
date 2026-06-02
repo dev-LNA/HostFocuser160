@@ -55,6 +55,9 @@ class UiWidgets(QWidget):
 
 
         # Buttons
+            self.lblMotor = window.findChild(QLabel, 'lblMotor')
+            self.lblMotor: QLabel = self.lblMotor
+
             self.lblTitle = window.findChild(QLabel, 'lblTitle')
             self.lblTitle: QLabel = self.lblTitle
 
@@ -198,9 +201,6 @@ class UiWidgets(QWidget):
 
             self.posSlider = window.findChild(QSlider, 'posSlider')
             self.posSlider: QSlider = self.posSlider
-
-            self.frameIAG = window.findChild(QFrame, 'frameIAG')
-            self.frameIAG: QFrame = self.frameIAG
 
 
 

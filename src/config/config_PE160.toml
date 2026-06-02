@@ -11,11 +11,7 @@ absolute = true
 device_name = "2ndMirror"
 deviceID = "3285e9af-8d1d-4f9d-b368-d129d8e9a24b"
 device_ip = "192.168.0.250"
-
-
-
 device_port = 5001
-encoder2microns = 42.2047244
 max_increment = 0
 tempcompavailable = false
 temp_comp = false
@@ -35,6 +31,9 @@ idle_current = 14
 run_current = 19
 acc_current = 41
 cmd_timeout = 5
+encoder2microns = 42.2047244
+steps2encoder = 20
+microns2rps = 0.0025
 
 [Network]
 server_ip = "*"

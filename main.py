@@ -112,7 +112,7 @@ class FocuserOPD (QMainWindow):
     #   Initializes every UI element of the main window.
     #   The initialization will set the initial values and the behavior of the elements.        
         self.ui_elements = UiWidgets(self, "main")                      # Creates "ui_elements" widget to hold intellisense references to the widgets
-        self.setFixedSize(QSize(310, 530))                              # Sets a fixed size for the main window
+        self.setFixedSize(QSize(310, 470))                              # Sets a fixed size for the main window
         self.ui_elements.pageSelect.setCurrentIndex(0)                  # Initializes the main window in the focalizer seletion page
 
         self.ui_elements.btnStartServer.clicked.connect(self._config_server)
@@ -243,6 +243,12 @@ class FocuserOPD (QMainWindow):
             else:
                 config_file_path = "src/config/config_PE160.toml"
 
+            print(f'Loading configuration file -> {config_file_path}')
+            logger.info(f'Loading configuration file -> {config_file_path}')
+
+            # Loads the configuration file from the path according to the selected focuser
+            self._load_config_file(config_file_path)
+
         elif self.ui_elements.rbIAG.isChecked():
             # Se 'False' significa que está rodando do Visual Studio (modo desenvolvimento)
             # Nesse caso a pasta com as configurações está dentro de 'src'
@@ -251,11 +257,13 @@ class FocuserOPD (QMainWindow):
             else:
                 config_file_path ="src/config/config_IAG.toml"
 
-        print(f'Loading configuration file -> {config_file_path}')
-        logger.info(f'Loading configuration file -> {config_file_path}')
+            print(f'Loading configuration file -> {config_file_path}')
+            logger.info(f'Loading configuration file -> {config_file_path}')
 
-        # Loads the configuration file from the path according to the selected focuser
-        self._load_config_file(config_file_path)
+            # Loads the configuration file from the path according to the selected focuser
+            self._load_config_file(config_file_path)
+
+
 
         
         if not CONFIG_FILE:                     # If configuration file was not found a message is displayed and the program will close after check
@@ -276,7 +284,6 @@ class FocuserOPD (QMainWindow):
             # Config.device_ip = get_toml('Device', 'ip_160')                     # Sets the IP address according to selection
             self.ui_elements.lblTitle.setText("Focuser 160")                    # Sets main window label according to selection
             self.server.init_device(MotorModels.ARCUS_DMX_ETH)                   # Initializes the motor driver according to the focuser
-            self.ui_elements.frameIAG.setFixedSize(QSize(0,0))
             self.ui_elements.gbFocuserStatus.setFixedSize(QSize(293,240))
             self._init_focuser()                                                # Changes to the server page                                  
         elif self.ui_elements.rbIAG.isChecked():                            # Checks radio button value
@@ -285,8 +292,8 @@ class FocuserOPD (QMainWindow):
             # Config.device_ip = get_toml('Device', 'ip_iag')                     # Sets the IP address according to selection
             self.ui_elements.lblTitle.setText("Focuser IAG")                    # Sets main window label according to selection
             self.server.init_device(MotorModels.AMP_MOTOR)                       # Initializes the motor driver according to the focuser
-            self.ui_elements.frameIAG.setFixedSize(QSize(273,62))
-            self.ui_elements.gbFocuserStatus.setFixedSize(QSize(293,301))
+            self.ui_elements.gbFocuserStatus.setFixedSize(QSize(293,240))
+            self.ui_elements.lblMotor.setText("CLP")
             self._init_focuser()                                                # Changes to the server page      
         else:                                                               # If the 'start server' button is pressed with no focuser selected shows a message
             QMessageBox.information(                                            
