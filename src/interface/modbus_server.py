@@ -212,17 +212,17 @@ class IAGModbusServer(mbServer):
             else:
                 # If the CLP reading process is not happening the weritting mode can be set
                 # waits up to 2 seconds the CLP reading
-                # t = time.time()
-                # t_over = False
-                # while self.CLP_reading:
-                #     if time.time() - t > 2:
-                #         t_over = True
-                # if t_over == False:
+                t = time.time()
+                t_over = False
+                while self.CLP_reading:
+                    if time.time() - t > 2:
+                        t_over = True
+                if t_over == False:
                     # sets server writting mode
 
-                self._writting = True
-                self.data_bank.set_discrete_inputs(dig_inputs_regs.TX_WRITTING.ADDRESS, [True])   # Informs the CLP that the Driver is writting some data to the modbus discrete inputs
-                self.RW_lock.acquire()
+                    self._writting = True
+                    self.data_bank.set_discrete_inputs(dig_inputs_regs.TX_WRITTING.ADDRESS, [True])   # Informs the CLP that the Driver is writting some data to the modbus discrete inputs
+                    self.RW_lock.acquire()
 
     @property
     def CLP_writting(self) -> bool:
@@ -517,7 +517,7 @@ class IAGModbusServer(mbServer):
             register (RegsInfo): Register that represents the command to be sent, it must be a discrete input register that represents a command (ex: 'TX_GS21')"""
 
         print(f"[*] Sending command {register.TAG.upper()} to CLP")
-        self._start_writting_data()
+        # self._start_writting_data()
         resp = self._write({(register, True)})   # Writes the command to the CLP
         self._stop_writting_data()
         if resp == "OK":
@@ -547,7 +547,7 @@ class IAGModbusServer(mbServer):
 
     def _handle_command_timeout(self, register: RegsInfo):
         print(f"\033[31mTIMEOUT\033[0m: {register.TAG} command was not confirmed by the CLP in less than {Config.cmd_timeout} seconds.")
-        # self._start_writting_data()
+        # # self._start_writting_data()
         self.data_bank.set_discrete_inputs(register.ADDRESS, [False])   # Clears the command discrete input to allow sending new commands to the CLP
         # self._stop_writting_data()
         #TODO: Implementar lógica de timeout, realizar a leitura dos status do CLP e verificar qual foi o erro que ocorreu
@@ -555,14 +555,14 @@ class IAGModbusServer(mbServer):
 
     def _handle_command_NOK(self, register: RegsInfo):
         print(f"CLP returned\033[31m NOK\033[0m for command: {register.TAG}")
-        # self._start_writting_data()
+        # # self._start_writting_data()
         self.data_bank.set_discrete_inputs(register.ADDRESS, [False])   # Clears the command discrete input to allow sending new commands to the CLP
         # self._stop_writting_data()
         # self.data_bank.set_discrete_inputs(dig_inputs_regs.NOK.ADDRESS, [True])   # Sets the NOK discrete input to indicate unsuccessful command execution
 
     def _handle_command_OK(self, register: RegsInfo):
         print(f"CLP returned\033[32m OK\033[0m for command: {register.TAG}")
-        # self._start_writting_data()
+        # # self._start_writting_data()
         self.data_bank.set_discrete_inputs(register.ADDRESS, [False])   # Clears the command discrete input to allow sending new commands to the CLP
         # self._stop_writting_data()
         # self.data_bank.set_discrete_inputs(dig_inputs_regs.OK.ADDRESS, [True])   # Sets the OK discrete input to indicate successful command execution
@@ -588,7 +588,7 @@ class IAGModbusServer(mbServer):
 
 
         # self._write({(reg, value)})   # Writes the command to the CLP
-        self._start_writting_data()
+        # self._start_writting_data()
         self._write(params)   # Writes the command to the CLP
         self._stop_writting_data()
     
@@ -597,7 +597,7 @@ class IAGModbusServer(mbServer):
         time.sleep(0.2)     # Time for CLP to process information
 
         for tries in range(2):
-            # self._start_writting_data()
+            # # self._start_writting_data()
             # Sends a parameter request command to the CLP to inform that the Driver will write a parameter to the CLP
             resp = self.send_command(dig_inputs_regs.TX_PR)   
             # self._stop_writting_data()
@@ -690,7 +690,7 @@ class IAGModbusServer(mbServer):
                 # If the CLP is not reading, the writting process can start
                 # if not write_timeout:            
                     # self.data_bank.set_discrete_inputs(dig_inputs_regs.TX_WRITTING.ADDRESS, [True]) # Informs CLP that the Driver is writting some data to the modbus discrete inputs
-                # self._start_writting_data()  # Informs CLP that the Driver is writting some data to the modbus discrete inputs
+                # # self._start_writting_data()  # Informs CLP that the Driver is writting some data to the modbus discrete inputs
 
 
                 self.mb_comm.task_progress.emit(0)  # Just to update the progress bar in the GUI, it does not represent the actual writting progress
