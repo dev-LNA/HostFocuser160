@@ -190,6 +190,9 @@ class UiWidgets(QWidget):
             self.ledLimMax = window.findChild(QLabel, 'ledLimMax')
             self.ledLimMax: QLabel = self.ledLimMax
 
+            self.ledProcessing = window.findChild(QLabel, 'ledProcessing')
+            self.ledProcessing: QLabel = self.ledProcessing
+
             self.lblEncoder_val = window.findChild(QLabel, 'lblEncoder_val')
             self.lblEncoder_val: QLabel = self.lblEncoder_val
 

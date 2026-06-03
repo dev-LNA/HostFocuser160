@@ -161,6 +161,7 @@ class FocuserOPD (QMainWindow):
 
         self.server.signals.router_status.info.connect(self.ui_elements.ledRouter.setProperty)
         self.server.signals.motor_status.info.connect(self.ui_elements.ledMotor.setProperty)
+        self.server.signals.processing_command.info.connect(self.ui_elements.ledProcessing.setProperty)
 
         self.server.signals.server_status.status.connect(self.ui_elements.btnStart.setDisabled)
         self.server.signals.server_status.status.connect(self.ui_elements.btnStop.setEnabled)

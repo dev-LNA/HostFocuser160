@@ -79,6 +79,8 @@ class ServerSignals(QObject):
     client_id = pyqtSignal(str)
     transaction_id = pyqtSignal(str)
 
+    processing_command = PropertySignals()
+
     teste = PropertySignals()
 
 class Server(QObject):
@@ -114,6 +116,12 @@ class Server(QObject):
         self.motor:Motor = None                               # Instantiates motor as None
         
         self._reaching_device_thread = None
+        self._processing_command: bool = False
+
+        self.last_command = {
+            'CLIENT_ID':  0,
+            'COMMAND': ""
+        }
 
         # Status Message
         if TESTE_TCSPD:                                 #TEST: O json do tcspd não está atualizado então é necessário usar o antigo para testar com o tcspd
@@ -276,6 +284,17 @@ class Server(QObject):
             self.logger.warning("CLP communication timeout")
             self.motor_reachable = ReachStatus.WAITING
             
+    @property
+    def processing_command(self) -> bool:
+        return self._processing_command
+    @processing_command.setter
+    def processing_command(self, value: bool):
+        self._processing_command = value
+        if value:
+            self.signals.processing_command.emit(value, 'statusLed', 'NOK')
+        else:
+            self.signals.processing_command.emit(value, 'statusLed', 'OFF')
+
 
 
 #endregion
@@ -421,6 +440,7 @@ class Server(QObject):
                 self.signals.status_message.emit("Connecting motor")       
                 time.sleep(0.2)                
                 # try:
+                self.processing_command = False
                 self.motor.connect()                                                        # Creates the socket and connects the server to the motor
                 self.signals.status_message.emit("Configuring motor...")         
                 self.motor.signals.progress.value.emit(True)
@@ -542,7 +562,7 @@ class Server(QObject):
                 if self.motor.connected and self.zmq_comm.poller:
                     
                     
-                    socks = dict(self.zmq_comm.poller.poll(10))  # poll(50)                                                                           # Polls the information from the ZMQ to receive commands from the client
+                    socks = dict(self.zmq_comm.poller.poll(50))  # poll(50)                                                                           # Polls the information from the ZMQ to receive commands from the client
                     if socks.get(self.zmq_comm.replier) == zmq.POLLIN:                                                                       # If the socket is configured as Pollin   #TODO: Necessário?
                         
                         received_client_msg = self.zmq_comm.replier.recv_string()
@@ -558,6 +578,7 @@ class Server(QObject):
                             print(e)
                             self.zmq_comm.reply('NAK')          # Replies 'NAK' to inform the client that an error occured                     
                             self.zmq_comm.pub(self.status)  
+                            self.processing_command = False
                             self.logger.error(e)
                     
                     self._update_status()
@@ -579,7 +600,7 @@ class Server(QObject):
                     
                     # If the connection was lost the server verifies if the gateway is reachable, if so then 
                     # the server tries to reach the motor. 
-
+                    self.processing_command = False
                     for _try in range(5):                                                                   # Tries 5 times to ping the router
                         time.sleep(0.1)             # delay between tries                         
                         self.signals.status_message.emit(f"Trying Connect to Router: Try number {_try+1}")                      # Emits signals for GUI update
@@ -642,7 +663,7 @@ class Server(QObject):
 
         return parsed    
     
-    def _command_validation(self, cmd: dict):
+    def _command_validation(self, cmd: dict) -> bool:
         """Validates the command received from the client
 
         Rules for validation:
@@ -656,7 +677,25 @@ class Server(QObject):
         :return: Bool indicating if the command can be processed
         :rtype: bool
         """
-        return
+
+        if cmd["COMMAND"] == ServerCommands.STATUS:
+            return True
+
+        if not self.processing_command:
+            program_status = self.motor.firmware_status
+            if  program_status == "Idle":
+                return True
+            elif program_status == "Running":
+                print(cmd["COMMAND"])
+                if cmd["COMMAND"] == ServerCommands.HALT:
+                    return True
+                else:
+                    raise RuntimeError(f"The focuser is already running the command '{self.last_command['COMMAND'].upper()}' requested by client ID '{self.last_command['CLIENT_ID']}'")
+            else:
+                raise RuntimeError(f"Cannot run command due to current motor program status '{program_status.upper()}'")
+        else:
+            raise RuntimeError(f"Server already processing a command...")
+        
         # if cmd["COMMAND"] == ServerCommands.STATUS:     # 'STATUS' is a command to the server
         #     return
 
@@ -689,14 +728,19 @@ class Server(QObject):
         if cmd["COMMAND"] == ServerCommands.STATUS:
             self.zmq_comm.pub(self.status)                  #TODO: Atualizar o status antes de publicar?
         else:
+            self.processing_command = True
             self.communicating_to_motor = True              #TODO: Na verdade não é somente nesse ponto que está comunicando, as propriedades também comunicam com o motor
             motor_response = self.motor.send_command(cmd)
             self.communicating_to_motor = False
+            self.processing_command = False
             if motor_response == "NOK":
+                self.processing_command = False
                 raise RuntimeError(f'Motor returned \033[31m"NOK"\033[0m trying to run command "{cmd["COMMAND"].upper()}"')
         
         # self.zmq_comm.reply('ACK')                  # Replies 'ACK' to inform the client that everything went ok
         self.logger.info(f'Command issued: {cmd}')
+        self.last_command['CLIENT_ID'] = cmd['CLIENT']
+        self.last_command['COMMAND'] = cmd['COMMAND']
                   
     def _reset_client_info(self):
         """Verifies if the motor ended the execution of the
@@ -709,7 +753,7 @@ class Server(QObject):
             self.status[SJson.CMD][SJson.CMD_CLIENT_ID] = 0
             self.status[SJson.CMD][SJson.CMD_CLIENT_TRANSACTION_ID] = 0
             self.status[SJson.CMD][SJson.CMD_CLIENT_NAME] = ''
-            self.status[SJson.CMD][SJson.CMD_ACTION] = ''
+        self.status[SJson.CMD][SJson.CMD_ACTION] = ''
 
 
 #endregion
