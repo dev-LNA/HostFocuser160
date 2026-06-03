@@ -337,16 +337,22 @@ class IAGModbusServer(mbServer):
 
 
     def _check_handshake(self):
+        # Mudei o handshake para ser feito pelo bit de reading, mas o handshake continua sendo 
+        # atualizado da mesma forma que antes, somente o valor que vai para a função de timeout
+        # que vai ser do bit de reading
 
-        new = self.data_bank.get_coils(coils_regs.HANDSHAKE.ADDRESS, coils_regs.HANDSHAKE.SIZE)[0]
+        hs = self.data_bank.get_coils(coils_regs.HANDSHAKE.ADDRESS, coils_regs.HANDSHAKE.SIZE)[0]
+        new = self.data_bank.get_coils(coils_regs.RX_READING.ADDRESS, coils_regs.RX_READING.SIZE)[0]
+
+
         # Checks if the time between handshakes has passed the timeout limit (False indicates that there is NO timeout)
         if self.timeout.check_timeout(new) == TimeoutState.NO_TIMEOUT:    
             self.handshake = True
             self.data_bank.set_discrete_inputs(dig_inputs_regs.TX_SVON.ADDRESS, [True])   # Informs the CLP that the Driver is active and ready to operate
 
         # Saves the new handshake value in the shadow register and mirror it to the CLP
-        self.db_shadow.set_coils(coils_regs.HANDSHAKE.ADDRESS, [new]) 
-        self.data_bank.set_discrete_inputs(dig_inputs_regs.HANDSHAKE.ADDRESS, [new])
+        self.db_shadow.set_coils(coils_regs.HANDSHAKE.ADDRESS, [hs]) 
+        self.data_bank.set_discrete_inputs(dig_inputs_regs.HANDSHAKE.ADDRESS, [hs])
 
     def _mirror_clp_owned_coils(self):
         for reg in CLP_Owned:

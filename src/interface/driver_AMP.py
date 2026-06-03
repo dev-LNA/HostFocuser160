@@ -672,7 +672,7 @@ class DriverAMP(Driver):
         Reset process:
             - Signals server that the connection to the motor was lost;
             - Resets modbus server"""
-        # super()._reset_communication()
+        super()._reset_communication()
 
         self.driver_comm.timeout.emit(True)
 
