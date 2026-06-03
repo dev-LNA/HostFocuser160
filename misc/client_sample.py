@@ -289,19 +289,19 @@ class ClientSimulator(QtWidgets.QMainWindow):
             self._clear_thread_sender()
             self.context.destroy()
             self._connect_to_server()
-            print(f"Communication reset success")
+            print(f"[ZMQ Client] Communication reset success")
         except:
-            print(f"Error establishing connection")
+            print(f"[ZMQ Client] Error establishing connection")
         
     
-    def _send_command(self, command: str, timeout: int=10000) -> str: #1500
+    def _send_command(self, command: str, timeout: int=1500) -> str: #1500
         try:
             self.transaction_ID += 1                                        #   Updates transaction ID
             self._sender.send_request(self, command, timeout)               #   Sets message
             self.threadpool.start(self._sender)                             #   Starts Sender thread    
             return "OK"
         except Exception as e:
-            return f"Error sending command to server -> {str(e)}"
+            return f"[ZMQ Client] Error sending command to server -> {str(e)}"
 
     def _connect(self):
         # self._send_command("CONNECT")
@@ -325,23 +325,23 @@ class ClientSimulator(QtWidgets.QMainWindow):
         self._send_command("HALT")
 
     def _move_to(self):
-        if not self.is_moving:
-            pos = self.txtMov.text()
-            self._send_command(f"MOVE={pos}")
+        # if not self.is_moving:
+        pos = self.txtMov.text()
+        self._send_command(f"MOVE={pos}")
 
     def _move_in(self):
-        if not self.is_moving:
-            if TEST_SETUP:
-                self._send_command("FOCUSIN=10")   #TEST_VALUE -> ORIGINAL VALUE => FOCUSIN=200
-            else:
-                self._send_command("FOCUSIN=200")
+        # if not self.is_moving:
+        if TEST_SETUP:
+            self._send_command("FOCUSIN=10")   #TEST_VALUE -> ORIGINAL VALUE => FOCUSIN=200
+        else:
+            self._send_command("FOCUSIN=200")
 
     def _move_out(self):
-        if not self.is_moving:
-            if TEST_SETUP:
-                self._send_command("FOCUSOUT=10")  #TEST_VALUE -> ORIGINAL VALUE => FOCUSOUT=200
-            else:
-                self._send_command("FOCUSOUT=200")
+        # if not self.is_moving:
+        if TEST_SETUP:
+            self._send_command("FOCUSOUT=10")  #TEST_VALUE -> ORIGINAL VALUE => FOCUSOUT=200
+        else:
+            self._send_command("FOCUSOUT=200")
                 
     def _get_status(self):
         if self._sender._send is False:                          # A new command is only sent if the last one was already sent

@@ -114,6 +114,7 @@ class Motor():
     @connected.setter
     def connected(self, status: bool):
         self._connected = status
+        print("**********MOTOR DISCONNECTED***********")
         self.signals.connected.emit(status)
    
     @property

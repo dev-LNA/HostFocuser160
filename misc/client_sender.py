@@ -50,9 +50,9 @@ class ReqSender(QRunnable):
                     "action": self._action
                 }
 
-                print(f"client = {self._msg_json["clientId"]}")
-                print(f"clientTransactionId = {self._msg_json["clientTransactionId"]}")
-                print(f"cmd = {self._msg_json["action"]}")
+                print(f"[ZMQ Client] client = {self._msg_json["clientId"]}")
+                print(f"[ZMQ Client] clientTransactionId = {self._msg_json["clientTransactionId"]}")
+                print(f"[ZMQ Client] cmd = {self._msg_json["action"]}")
                 # self.finished = True
 
                 self.signals.req.send_string(json.dumps(self._msg_json))
@@ -70,8 +70,8 @@ class ReqSender(QRunnable):
                         self._send = False
                         # break
                 else:
-                    print(f"No response received within {self._timeout} milliseconds.")
-                    print(f"Resetting client...")
+                    print(f"[ZMQ Client] No response received within {self._timeout} milliseconds.")
+                    print(f"[ZMQ Client] Resetting client...")
                     self.signals.timeout_error.emit(True)
                     # break
                 self.finished = True
