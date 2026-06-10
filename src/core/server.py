@@ -395,7 +395,7 @@ class Server(QObject):
                             
                 for _try in range(5):                                                                   # Tries 5 times to ping the router
                     time.sleep(0.1)             # delay between tries                         
-                    self.signals.status_message.emit(f"Trying Connect to Router: Try number {_try+1}")                      # Emits signals for GUI update
+                    self.signals.status_message.emit(f"Trying Connect to Router...")                      # Emits signals for GUI update
                     reachable = ping(Config.gateway_ip, count=1, timeout=0.6, privileged=False).is_alive         # Tries to ping the router IP
                     print(f'trying to ping gateway at {Config.gateway_ip}')
                     if reachable:                                                                               # If the ping is succesful
@@ -416,7 +416,7 @@ class Server(QObject):
                 
                 for _try in range(5):                                                                   # Tries 5 times to ping the router
                     time.sleep(0.1)             # delay between tries
-                    self.signals.status_message.emit(f"Trying Connect to Motor: Try number {_try+1}")               # Emits signals for GUI update
+                    self.signals.status_message.emit(f"Trying Connect to Motor...")               # Emits signals for GUI update
                     print(f'Trying to ping motor at {Config.device_ip}:{Config.device_port}')
                     reachable = self.motor.ping()                                              # Tries to ping the motor IP
                     if reachable:                                                               # If the ping is successful
@@ -603,7 +603,7 @@ class Server(QObject):
                     self.processing_command = False
                     for _try in range(5):                                                                   # Tries 5 times to ping the router
                         time.sleep(0.1)             # delay between tries                         
-                        self.signals.status_message.emit(f"Trying Connect to Router: Try number {_try+1}")                      # Emits signals for GUI update
+                        self.signals.status_message.emit(f"Trying Connect to Router...")                      # Emits signals for GUI update
                         reachable = ping(Config.gateway_ip, count=1, timeout=0.6, privileged=False).is_alive         # Tries to ping the router IP
                         print(f'trying to ping gateway at {Config.gateway_ip}')
                         if reachable:                                                                               # If the ping is succesful
@@ -656,9 +656,10 @@ class Server(QObject):
             parsed["COMMAND"] = cmd[:p]
             parsed["PARAMETER"] = int(cmd[p+1:])
 
+        # If the client json do not contain a 'clientName' it is set as 'UNIDENTIFIED'
         if parsed["CLIENT"] is None:
-            parsed["CLIENT"] = "TCS"
-
+            parsed["CLIENT"] = "UNIDENTIFIED"
+            msg_json[SJson.CMD_CLIENT_NAME] = parsed["CLIENT"]  
         print(parsed)
 
         return parsed    

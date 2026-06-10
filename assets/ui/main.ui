@@ -1016,27 +1016,6 @@ border-right: none;
               </property>
              </widget>
             </item>
-            <item row="1" column="0">
-             <widget class="QLabel" name="lblPUB">
-              <property name="text">
-               <string>PUB:</string>
-              </property>
-             </widget>
-            </item>
-            <item row="2" column="0">
-             <widget class="QLabel" name="lblREP">
-              <property name="text">
-               <string>REP:</string>
-              </property>
-             </widget>
-            </item>
-            <item row="3" column="0">
-             <widget class="QLabel" name="lblSpeed">
-              <property name="text">
-               <string>Com. Speed:</string>
-              </property>
-             </widget>
-            </item>
             <item row="0" column="1">
              <widget class="QLabel" name="lblSocketIP">
               <property name="minimumSize">
@@ -1074,6 +1053,13 @@ border-right: none;
               </property>
              </widget>
             </item>
+            <item row="1" column="0">
+             <widget class="QLabel" name="lblPUB">
+              <property name="text">
+               <string>PUB:</string>
+              </property>
+             </widget>
+            </item>
             <item row="1" column="1">
              <widget class="QLabel" name="lblPortPUB">
               <property name="minimumSize">
@@ -1105,6 +1091,13 @@ border-right: none;
               </property>
               <property name="alignment">
                <set>Qt::AlignmentFlag::AlignCenter</set>
+              </property>
+             </widget>
+            </item>
+            <item row="2" column="0">
+             <widget class="QLabel" name="lblREP">
+              <property name="text">
+               <string>REP:</string>
               </property>
              </widget>
             </item>
@@ -1176,6 +1169,13 @@ border-right: none;
               </property>
              </widget>
             </item>
+            <item row="3" column="0">
+             <widget class="QLabel" name="lblSpeed">
+              <property name="text">
+               <string>Com. Speed:</string>
+              </property>
+             </widget>
+            </item>
            </layout>
           </widget>
          </item>
@@ -1194,12 +1194,12 @@ border-right: none;
          </item>
         </layout>
        </widget>
-       <widget class="QWidget" name="">
+       <widget class="QWidget" name="layoutWidget">
         <property name="geometry">
          <rect>
           <x>0</x>
           <y>13</y>
-          <width>291</width>
+          <width>296</width>
           <height>441</height>
          </rect>
         </property>
@@ -3433,6 +3433,9 @@ border-right: none;
          </item>
          <item>
           <widget class="QGroupBox" name="gbFocuserStatus">
+           <property name="enabled">
+            <bool>false</bool>
+           </property>
            <property name="title">
             <string>Focuser Status</string>
            </property>
@@ -4157,7 +4160,7 @@ border-right: none;
               <item>
                <widget class="QLabel" name="lblPosition_val">
                 <property name="enabled">
-                 <bool>true</bool>
+                 <bool>false</bool>
                 </property>
                 <property name="minimumSize">
                  <size>
@@ -4545,6 +4548,9 @@ QSlider::handle:horizontal {
              </item>
              <item>
               <widget class="QPushButton" name="btnStop">
+               <property name="enabled">
+                <bool>false</bool>
+               </property>
                <property name="text">
                 <string>Stop</string>
                </property>
@@ -4567,7 +4573,7 @@ QSlider::handle:horizontal {
      <x>0</x>
      <y>0</y>
      <width>645</width>
-     <height>30</height>
+     <height>23</height>
     </rect>
    </property>
    <widget class="QMenu" name="menuOptions">

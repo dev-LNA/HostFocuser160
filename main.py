@@ -168,7 +168,7 @@ class FocuserOPD (QMainWindow):
         self.server.signals.server_status.info.connect(self.ui_elements.ledServer.setProperty)
 
         self.server.signals.status_message.connect(lambda msg: self.statusBar().showMessage(msg, 10000))
-        self.server.signals.connection_speed.connect(self.ui_elements.lblComSpeed.setText)
+        # self.server.signals.connection_speed.connect(self.ui_elements.lblComSpeed.setText)
         
         # self.server.signals.position_str.connect(self.ui_elements.lblPosition_val.setText)
         # self.server.signals.encoder.connect(self.ui_elements.lblEncoder_val.setText)
@@ -187,6 +187,7 @@ class FocuserOPD (QMainWindow):
         self.server.signals.motor_status.status.connect(self.ui_elements.gbConnectivity.setEnabled)
         self.server.signals.motor_status.status.connect(self.ui_elements.gbCommandInfo.setEnabled)
         self.server.signals.motor_status.status.connect(self.ui_elements.gbFocuserStatus.setEnabled)
+        self.server.signals.motor_status.status.connect(self.ui_elements.lblPosition_val.setEnabled)
 
         # self.server.signals.firmware_status.connect(self.ui_elements.lblStatus_val.setText)
         self.server.signals.last_command.connect(self._parse_last_command)
@@ -229,6 +230,13 @@ class FocuserOPD (QMainWindow):
 
 ######### OUTROS TESTES ##########
         self.ui_elements.btnTestes.clicked.connect(self._testes)
+
+    # Hiding some information from the GUI #TODO: Remove from the UI
+        self.ui_elements.btnTestes.setVisible(False)
+        self.ui_elements.lblEncoder.setVisible(False)
+        self.ui_elements.lblEncoder_val.setVisible(False)
+        self.ui_elements.lblComSpeed.setVisible(False)
+        self.ui_elements.lblSpeed.setVisible(False)
 
 
     def _config_server(self):
@@ -394,10 +402,11 @@ class FocuserOPD (QMainWindow):
             Dictionary holding the last command information
         """
         self.ui_elements.lblTime.setText(data[SJson.TIMESTAMP])                                     # Updates last command time
-        # self.ui_elements.lblClientName_val.setText(data[SJson.CMD.value][SJson.CMD_CLIENT_NAME.value])                   # Updates last command client name
+        self.ui_elements.lblClientName_val.setText(data[SJson.CMD.value][SJson.CMD_CLIENT_NAME.value])                   # Updates last command client name
         self.ui_elements.lblClientID_val.setText(str(data[SJson.CMD.value][SJson.CMD_CLIENT_ID.value]))                  # Updates last command client ID
         self.ui_elements.lblTransactionId_val.setText(str(data[SJson.CMD.value][SJson.CMD_CLIENT_TRANSACTION_ID.value]))  # Updates last command client transaction number
         self.ui_elements.lblCommand_val.setText(data[SJson.CMD.value][SJson.CMD_ACTION.value])                          # Updates last command action
+        print(data[SJson.CMD.value][SJson.CMD_ACTION.value])
         if(data[SJson.CMD.value][SJson.CMD_ACTION.value] == "HOME" or data[SJson.CMD.value][SJson.CMD_ACTION] == "PARK"):                 # If the last command was 'HOME' or 'PARK'
             self.ui_elements.lblLastHoming_val.setText(data[SJson.TIMESTAMP])                           # Updates the last homing time
 

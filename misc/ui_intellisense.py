@@ -141,6 +141,9 @@ class UiWidgets(QWidget):
             self.lblComSpeed = window.findChild(QLabel, 'lblComSpeed')
             self.lblComSpeed: QLabel = self.lblComSpeed
 
+            self.lblSpeed = window.findChild(QLabel, 'lblSpeed')
+            self.lblSpeed: QLabel = self.lblSpeed
+
     # Command info group box
 
             
@@ -192,6 +195,9 @@ class UiWidgets(QWidget):
 
             self.ledProcessing = window.findChild(QLabel, 'ledProcessing')
             self.ledProcessing: QLabel = self.ledProcessing
+
+            self.lblEncoder = window.findChild(QLabel, 'lblEncoder')
+            self.lblEncoder: QLabel = self.lblEncoder
 
             self.lblEncoder_val = window.findChild(QLabel, 'lblEncoder_val')
             self.lblEncoder_val: QLabel = self.lblEncoder_val
