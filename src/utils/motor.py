@@ -10,6 +10,7 @@ from src.interface.motor_driver import Driver
 from src.interface.driver_DMX import  DriverDMX
 from src.interface.driver_AMP import DriverAMP
 from src.utils.constants import MotorModels, MotorParamsIdx, ServerCommands, constants, MotorParameter, MotorStatusFlags, MotorAlarmInfo, MotorProgramStatus
+from src.utils.constants import ServerJsonKeys as SJson
 from src.utils.signals import PropertySignals, MultiSignal
 
 from src.utils.modbus_regs import dig_inputs_regs
@@ -575,23 +576,23 @@ class Motor():
 
     def send_command(self, cmd: dict) -> str:
         try:
-            if hasattr(ServerCommands, cmd["COMMAND"]):
+            if hasattr(ServerCommands, cmd[SJson.CMD_ACTION]):
                 if cmd['PARAMETER']:
-                    if self.driver.command_methods[cmd["COMMAND"]](cmd["PARAMETER"]) == "OK":
+                    if self.driver.command_methods[cmd[SJson.CMD_ACTION]](cmd["PARAMETER"]) == "OK":
                         return "OK"
                     else:
                         self.signals.error_msg.emit(self.driver.parse_alarm_info())                        
-                        raise Exception(f'[Device] Failed to execute command "{cmd["COMMAND"]}" with parameter "{cmd["PARAMETER"]}"')
+                        raise Exception(f'[Device] Failed to execute command "{cmd[SJson.CMD_ACTION]}" with parameter "{cmd["PARAMETER"]}"')
                     # return self.driver.command_methods[cmd["COMMAND"]](cmd["PARAMETER"])
                 else:
-                    if self.driver.command_methods[cmd["COMMAND"]]() == "OK":
+                    if self.driver.command_methods[cmd[SJson.CMD_ACTION]]() == "OK":
                         return "OK"
                     else:
                         self.signals.error_msg.emit(self.driver.parse_alarm_info())                        
-                        raise Exception(f'[Device] Failed to execute command "{cmd["COMMAND"]}"')
+                        raise Exception(f'[Device] Failed to execute command "{cmd[SJson.CMD_ACTION]}"')
             else:
-                self.signals.error_msg.emit(f'Invalid command "{cmd["COMMAND"]}"')
-                raise RuntimeError(f'"{cmd["COMMAND"]}" is not a valid command')
+                self.signals.error_msg.emit(f'Invalid command "{cmd[SJson.CMD_ACTION]}"')
+                raise RuntimeError(f'"{cmd[SJson.CMD_ACTION]}" is not a valid command')
         except Exception as e:
             # self.disconnect()
             self.signals.error_msg.emit(str(e))
