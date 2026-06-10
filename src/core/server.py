@@ -119,73 +119,73 @@ class Server(QObject):
         self._processing_command: bool = False
 
         self.last_command = {
-            SJson.TIMESTAMP.value: datetime.now(),
-            SJson.CMD_CLIENT_NAME.value: "",
-            SJson.CMD_CLIENT_ID.value:  0,
-            SJson.CMD_CLIENT_TRANSACTION_ID.value: 0,
-            SJson.CMD_ACTION.value : "",
+            SJson.TIMESTAMP: datetime.now(),
+            SJson.CMD_CLIENT_NAME: "",
+            SJson.CMD_CLIENT_ID:  0,
+            SJson.CMD_CLIENT_TRANSACTION_ID: 0,
+            SJson.CMD_ACTION : "",
             "PARAMETER": ""
         }
 
         # Status Message
         if TESTE_TCSPD:                                 #TEST: O json do tcspd não está atualizado então é necessário usar o antigo para testar com o tcspd
             self.status = {
-                SJson.ABSOLUTE.value: Config.absolute,            
-                SJson.ALARM.value: 0,
-                SJson.BROKER.value: "Focuser160",
-                SJson.CMD.value: {
-                    SJson.CMD_CLIENT_ID.value : self._client_id,
-                    SJson.CMD_CLIENT_TRANSACTION_ID.value: 0,
-                    SJson.CMD_CLIENT_NAME.value: "",
-                    SJson.CMD_ACTION.value: ""
+                SJson.ABSOLUTE: Config.absolute,            
+                SJson.ALARM: 0,
+                SJson.BROKER: "Focuser160",
+                SJson.CMD: {
+                    SJson.CMD_CLIENT_ID : self._client_id,
+                    SJson.CMD_CLIENT_TRANSACTION_ID: 0,
+                    SJson.CMD_CLIENT_NAME: "",
+                    SJson.CMD_ACTION: ""
                 },
-                SJson.CONNECTED.value: False,
-                SJson.CONTROLLER.value: Config.name,
-                SJson.DEVICE.value: Config.device_name,
-                SJson.ERROR.value: "",
-                SJson.HOMING.value: False,            # Homing solicited
-                SJson.INITIALIZED.value: False,       # Homing finalized
-                SJson.IS_MOVING.value: False,          # Executing a function inside the motor
-                SJson.MAX_SPEED.value: Config.max_speed,
-                SJson.MAX_STEP.value: Config.max_step,
-                SJson.POSITION.value: 0,
-                SJson.TEMP_COMP.value: Config.temp_comp,
-                SJson.TEMP_COMP_AVAIABLE.value: Config.tempcompavailable,
-                SJson.TEMPERATURE.value: 0,
-                SJson.TIMESTAMP.value: datetime.isoformat(datetime.now(), timespec='milliseconds'),
-                SJson.VERSION.value: "1.0.0",            #TODO: Pegar a versão do arquivo config.toml
+                SJson.CONNECTED: False,
+                SJson.CONTROLLER: Config.name,
+                SJson.DEVICE: Config.device_name,
+                SJson.ERROR: "",
+                SJson.HOMING: False,            # Homing solicited
+                SJson.INITIALIZED: False,       # Homing finalized
+                SJson.IS_MOVING: False,          # Executing a function inside the motor
+                SJson.MAX_SPEED: Config.max_speed,
+                SJson.MAX_STEP: Config.max_step,
+                SJson.POSITION: 0,
+                SJson.TEMP_COMP: Config.temp_comp,
+                SJson.TEMP_COMP_AVAIABLE: Config.tempcompavailable,
+                SJson.TEMPERATURE: 0,
+                SJson.TIMESTAMP: datetime.isoformat(datetime.now(), timespec='milliseconds'),
+                SJson.VERSION: "1.0.0",            #TODO: Pegar a versão do arquivo config.toml
             }
         else:
             self.status = {
-                SJson.ABSOLUTE.value: Config.absolute,            
-                SJson.ALARM.value: 0,
-                SJson.BROKER.value: "Focuser160",
-                SJson.CMD.value: {
-                    SJson.CMD_CLIENT_ID.value : self._client_id,
-                    SJson.CMD_CLIENT_TRANSACTION_ID.value: 0,
-                    SJson.CMD_CLIENT_NAME.value: "",
-                    SJson.CMD_ACTION.value: ""
+                SJson.ABSOLUTE: Config.absolute,            
+                SJson.ALARM: 0,
+                SJson.BROKER: "Focuser160",
+                SJson.CMD: {
+                    SJson.CMD_CLIENT_ID : self._client_id,
+                    SJson.CMD_CLIENT_TRANSACTION_ID: 0,
+                    SJson.CMD_CLIENT_NAME: "",
+                    SJson.CMD_ACTION: ""
                 },
-                SJson.CONNECTED.value: False,
-                SJson.CONTROLLER.value: Config.name,
-                SJson.DEVICE.value: Config.device_name,
-                SJson.ERROR.value: "",
-                SJson.HOMING.value: False,            # Homing solicited
-                SJson.INITIALIZED.value: False,       # Homing finalized
-                SJson.IS_MOVING.value: False,          # Executing a function inside the motor
-                SJson.MAX_SPEED.value: Config.max_speed,
-                SJson.MAX_STEP.value: Config.max_step,
-                SJson.POSITION.value: 0,
-                SJson.TEMP_COMP.value: Config.temp_comp,
-                SJson.TEMP_COMP_AVAIABLE.value: Config.tempcompavailable,
-                SJson.TEMPERATURE.value: 0,
-                SJson.TIMESTAMP.value: datetime.isoformat(datetime.now(), timespec='milliseconds'),
-                SJson.VERSION.value: "1.0.0",            #TODO: Pegar a versão do arquivo config.toml
-                SJson.PARKING.value: False,               # Executing Parking
-                SJson.DEVICE_IP.value: "127.0.0.1",       # Motor IP
-                SJson.DEVICE_ID.value: "",                # Motor ID
-                SJson.DEVICE_FIRMWARE_VERSION.value: "",  # Motor firmware version
-                SJson.TIMEOUT.value: False,               # Timeout
+                SJson.CONNECTED: False,
+                SJson.CONTROLLER: Config.name,
+                SJson.DEVICE: Config.device_name,
+                SJson.ERROR: "",
+                SJson.HOMING: False,            # Homing solicited
+                SJson.INITIALIZED: False,       # Homing finalized
+                SJson.IS_MOVING: False,          # Executing a function inside the motor
+                SJson.MAX_SPEED: Config.max_speed,
+                SJson.MAX_STEP: Config.max_step,
+                SJson.POSITION: 0,
+                SJson.TEMP_COMP: Config.temp_comp,
+                SJson.TEMP_COMP_AVAIABLE: Config.tempcompavailable,
+                SJson.TEMPERATURE: 0,
+                SJson.TIMESTAMP: datetime.isoformat(datetime.now(), timespec='milliseconds'),
+                SJson.VERSION: "1.0.0",            #TODO: Pegar a versão do arquivo config.toml
+                SJson.PARKING: False,               # Executing Parking
+                SJson.DEVICE_IP: "127.0.0.1",       # Motor IP
+                SJson.DEVICE_ID: "",                # Motor ID
+                SJson.DEVICE_FIRMWARE_VERSION: "",  # Motor firmware version
+                SJson.TIMEOUT: False,               # Timeout
             }
 
             self.test_var = 14.2
@@ -647,13 +647,13 @@ class Server(QObject):
         :return: Dictionary containing the command and parameters
         :rtype: dict
         """
-        cmd = msg_json.get(SJson.CMD_ACTION.value)
+        cmd = msg_json.get(SJson.CMD_ACTION)
 
-        parsed = {  SJson.TIMESTAMP.value: self.status[SJson.TIMESTAMP],
-                    SJson.CMD_CLIENT_NAME.value: msg_json.get(SJson.CMD_CLIENT_NAME),
-                    SJson.CMD_CLIENT_TRANSACTION_ID.value: msg_json.get(SJson.CMD_CLIENT_TRANSACTION_ID),
-                    SJson.CMD_CLIENT_ID.value: msg_json.get(SJson.CMD_CLIENT_ID),   #TODO: Verificar como checar qual cliente enviou a mensagem, nem todo cliente vai ter um "CLIENT NAME"
-                    SJson.CMD_ACTION.value: cmd,
+        parsed = {  SJson.TIMESTAMP: self.status[SJson.TIMESTAMP],
+                    SJson.CMD_CLIENT_NAME: msg_json.get(SJson.CMD_CLIENT_NAME),
+                    SJson.CMD_CLIENT_TRANSACTION_ID: msg_json.get(SJson.CMD_CLIENT_TRANSACTION_ID),
+                    SJson.CMD_CLIENT_ID: msg_json.get(SJson.CMD_CLIENT_ID),   #TODO: Verificar como checar qual cliente enviou a mensagem, nem todo cliente vai ter um "CLIENT NAME"
+                    SJson.CMD_ACTION: cmd,
                     'PARAMETER': None }
 
         p = cmd.find('=')                   # The '=' sign separates the command and its parameter
@@ -661,13 +661,13 @@ class Server(QObject):
         # 'p == -1' indicates that there is no '=' sign so the command has no parameter, in this case the 
         # parsed message dont need to be changed. 
         if p != -1:        
-            parsed[SJson.CMD_ACTION.value] = cmd[:p]
+            parsed[SJson.CMD_ACTION] = cmd[:p]
             parsed["PARAMETER"] = int(cmd[p+1:])
 
         # If the client json do not contain a 'clientName' it is set as 'UNIDENTIFIED'
-        if parsed[SJson.CMD_CLIENT_NAME.value] is None:
-            parsed[SJson.CMD_CLIENT_NAME.value] = "UNIDENTIFIED"
-            msg_json[SJson.CMD_CLIENT_NAME.value] = parsed[SJson.CMD_CLIENT_NAME.value]  
+        if parsed[SJson.CMD_CLIENT_NAME] is None:
+            parsed[SJson.CMD_CLIENT_NAME] = "UNIDENTIFIED"
+            msg_json[SJson.CMD_CLIENT_NAME] = parsed[SJson.CMD_CLIENT_NAME]  
         print(parsed)
 
         return parsed    
@@ -687,7 +687,7 @@ class Server(QObject):
         :rtype: bool
         """
 
-        if cmd[SJson.CMD_ACTION.value] == ServerCommands.STATUS:
+        if cmd[SJson.CMD_ACTION] == ServerCommands.STATUS:
             return True
 
         if not self.processing_command:
@@ -695,8 +695,8 @@ class Server(QObject):
             if  program_status == "Idle":
                 return True
             elif program_status == "Running":
-                print(cmd[SJson.CMD_ACTION.value])
-                if cmd[SJson.CMD_ACTION.value] == ServerCommands.HALT:
+                print(cmd[SJson.CMD_ACTION])
+                if cmd[SJson.CMD_ACTION] == ServerCommands.HALT:
                     return True
                 else:
                     raise RuntimeError(f"The focuser is already running the command '{self.last_command[SJson.CMD_ACTION].upper()}' requested by client ID '{self.last_command[SJson.CMD_CLIENT_ID]}'")
@@ -734,7 +734,7 @@ class Server(QObject):
         # self.status["error"] = ""             # Resets "error" status #TODO: Realizar um tratamento correto de erro
 
         # 'STATUS' is a command to the server and not to the motor
-        if cmd[SJson.CMD_ACTION.value] == ServerCommands.STATUS:
+        if cmd[SJson.CMD_ACTION] == ServerCommands.STATUS:
             self.zmq_comm.pub(self.status)                  #TODO: Atualizar o status antes de publicar?
         else:
             self.processing_command = True
@@ -744,7 +744,7 @@ class Server(QObject):
             self.processing_command = False
             if motor_response == "NOK":
                 self.processing_command = False
-                raise RuntimeError(f'Motor returned \033[31m"NOK"\033[0m trying to run command "{cmd[SJson.CMD_ACTION.value].upper()}"')
+                raise RuntimeError(f'Motor returned \033[31m"NOK"\033[0m trying to run command "{cmd[SJson.CMD_ACTION].upper()}"')
         
         # self.zmq_comm.reply('ACK')                  # Replies 'ACK' to inform the client that everything went ok
         self.logger.info(f'Command issued: {cmd}')
