@@ -184,7 +184,7 @@ class MotorProgramStatus(IntFlag):
     ERROR_RS485 = auto()
     ERROR_PADDLE = auto()
     ERROR_LIM_SWITCH = auto()
-    VALID_STATUS = auto()
+    ERROR_MOTOR_OFF_ID = auto()
     # Added for DMX compatibility
     RUNNING = auto()            
     PAUSED = auto()

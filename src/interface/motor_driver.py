@@ -1,5 +1,6 @@
 from abc import ABC, abstractmethod
 from typing import NamedTuple
+from enum import IntFlag
 
 from PyQt6.QtCore import pyqtSignal, QObject, pyqtSlot
 from src.utils.constants import MotorParamsIdx, ServerCommands
@@ -222,6 +223,10 @@ class Driver(ABC):
     @abstractmethod
     def park(self) -> str:
         """Precisa ser implementada pelo driver""" 
+        ...
+
+    def _extract_flags_info(self, input:int, flags_type:IntFlag, separator: str = "&") -> str:
+        """Pode ser implementado pelo driver caso necessário"""
         ...
 
     def _update_all_parameters(self) -> str:

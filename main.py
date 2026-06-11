@@ -232,7 +232,7 @@ class FocuserOPD (QMainWindow):
         self.ui_elements.btnTestes.clicked.connect(self._testes)
 
     # Hiding some information from the GUI #TODO: Remove from the UI
-        self.ui_elements.btnTestes.setVisible(False)
+        # self.ui_elements.btnTestes.setVisible(False)
         self.ui_elements.lblEncoder.setVisible(False)
         self.ui_elements.lblEncoder_val.setVisible(False)
         self.ui_elements.lblComSpeed.setVisible(False)

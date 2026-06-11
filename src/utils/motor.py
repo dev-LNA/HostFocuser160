@@ -272,7 +272,7 @@ class Motor():
         if val != self._alarm:
             self._alarm = val
             if self._alarm:
-                self.alarm_info = self.driver.parse_alarm_info()
+                # self.alarm_info = self.driver.parse_alarm_info()
                 self.signals.alarm.emit(True, "statusLed", "NOK")
             else:
                 self.signals.alarm.emit(False, "statusLed", "OFF")
@@ -287,13 +287,7 @@ class Motor():
         return self._alarm_info
     @alarm_info.setter
     def alarm_info(self, msg: str) -> str:
-        # self._alarm_info = "Alarm details: "
-        # for error in msg:
-        #     self._alarm_info += error.name + " / "
-        
-        # self._alarm_info = self._alarm_info.removesuffix(" / ")
-        
-        return self._alarm_info
+        self._alarm_info = msg
 
     @property
     def firmware_status(self) -> str: 
@@ -385,12 +379,16 @@ class Motor():
                         else:
                             self.signals.lim_max.emit(False, "statusLed", "OFF")
 
+                # The ALM modbus bit is set according to the CLP internal logic, however there
+                # are also other errors that do not set this modbus bit. So these errors
+                # must be checked independent from the ALM bit
+                # The ALM modbus it will set the 'motor.alarm' and publish the 'ALARM' signal to the Json
+                # The error checking will set 'motor.alarm_info' and publish the 'ERROR' signal to the Json
+                self.alarm = self.driver.read_alarm_status()                # Reads the alarm status (ALM modbus bit)
 
-                self.alarm = self.driver.read_alarm_status()                # Reads the alarm status
-                # if(motor_status & MotorStatusFlags.ALARM):    
-                #     self.alarm = True
-                # else:
-                #     self.alarm = False
+                # Checks all error bits (return empty string if no errors)
+                self.alarm_info = self.driver.parse_alarm_info()
+
 
                 return self._status
             else:

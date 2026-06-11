@@ -33,6 +33,8 @@ from src.interface.zmq_comm import zmqComm
 
 import socket
 
+from src.utils.constants import MotorProgramStatus, motor_program_errors_mask, MotorAlarmInfo  #TODO: remover apos teste
+
 # from src.interface.dmx_eth import FocuserDriver as Focuser
 # from src.interface.focuser_driver import FocuserDriver as Focuser
 
@@ -318,9 +320,60 @@ class Server(QObject):
         # self.motor.set_param(MotorParamsIdx.MOTOR_IP, "192.168.1.100")
         # self.test_var += 112.3
         # self.status[SJson.POSITION] = self.test_var
-        self.motor.signals.position.emit(self.test_var)
+        # self.motor.signals.position.emit(self.test_var)
 
-        
+        stat = 43011
+        msg = "Flags ativadas: "
+        msg += self.motor.driver._extract_flags_info(stat, MotorProgramStatus)
+        # for flag in MotorProgramStatus:
+        #     if stat & flag:
+        #         stat = stat - flag
+        #         if stat > 0:
+        #             msg += f"{flag.name} & "
+        #         else:
+        #             msg += f"{flag.name}"
+
+        print(msg)
+
+
+
+        msg_error = ''
+        alc = 4548
+        # alc = MotorAlarmInfo(alc_int)
+
+
+
+        sastat_alarm_int = stat & motor_program_errors_mask
+        # sastat_alarm = MotorProgramStatus(sastat_alarm_int)
+
+        # if alc > 0:
+        #     msg_error += 'Alarms ALC: '
+        #     for error in MotorAlarmInfo:
+        #         if alc & error:
+        #             alc = alc - error
+        #             if alc > 0:
+        #                 msg_error += f"{error.name} & "
+        #             else:
+        #                 msg_error += f"{error.name}"
+
+        # if sastat_alarm_int > 0:
+        #     msg_error += f"\nAlarms SASTAT: "
+        #     for error in MotorProgramStatus:
+        #         if sastat_alarm_int & error:
+        #             sastat_alarm_int = sastat_alarm_int - error
+        #             if sastat_alarm_int > 0:
+        #                 msg_error += f"{error.name} & "
+        #             else:
+        #                 msg_error += f"{error.name}"
+
+        if alc > 0:
+            msg_error += 'Alarms ALC: '
+            msg_error += self.motor.driver._extract_flags_info(alc, MotorAlarmInfo)
+        if sastat_alarm_int > 0:
+            msg_error += f"\nAlarms SASTAT: "
+            msg_error += self.motor.driver._extract_flags_info(sastat_alarm_int, MotorProgramStatus)
+
+        print(msg_error)
 
     def _start_server(self):
         """Starts server communication
@@ -503,9 +556,13 @@ class Server(QObject):
         self.status[SJson.ALARM] = self.motor.alarm
         self.motor.firmware_status
 
-        if self.motor.alarm:
-            self.status[SJson.ERROR] = self.motor.alarm_info
+        if self.motor.alarm_info:
+            if self.motor.alarm_info != self.status[SJson.ERROR]:
+                self.status[SJson.ERROR] = self.motor.alarm_info
+                self.logger.error(self.status[SJson.ERROR])
         else:
+            if self.status[SJson.ERROR] != "":
+                self.logger.info("Previous errors resolved")
             self.status[SJson.ERROR] = ""
 
     def _get_motor_params(self):

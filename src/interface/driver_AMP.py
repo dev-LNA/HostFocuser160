@@ -17,6 +17,7 @@ from src.core.exceptions import DriverException
 from src.utils.constants import constants, MotorStatusFlags, MotorParamsIdx, MotorAlarmInfo, motor_program_errors_mask, POSITION_COMMAND_CONVERSION, POSITION_VISUALIZATION_CONVERTION
 from src.utils.modbus_regs import RegsInfo, RegType, coils_regs, dig_inputs_regs, DB_size, CLP_Owned, TwosComplementReg, param_vars
 
+from enum import IntFlag
 from typing import TYPE_CHECKING
 
 if TYPE_CHECKING:
@@ -494,25 +495,44 @@ class DriverAMP(Driver):
         sastat_alarm_int = self.motor.SASTAT & motor_program_errors_mask
         sastat_alarm = MotorProgramStatus(sastat_alarm_int)
 
-        print(f"Motor alarm int: {motor_alarm_int} - Motor alarm: {motor_alarm}")
-        print(f"SASTAT alarm int: {sastat_alarm_int} - SASTAT alarm: {sastat_alarm}")
-        print(f"Motor alarm bits: {self.motor.SASTAT & motor_program_errors_mask:016b}")
-        print(f"mascara de erros: {bin(motor_program_errors_mask)}")
-
-        alarm_info = "Alarm details: "
-        for error in motor_alarm:
-            alarm_info += error.name + " / "
-
-        for error in sastat_alarm:
-            alarm_info += error.name + " / "
-        
-        alarm_info = alarm_info.removesuffix(" / ")
+        alarm_info = ''
+        if motor_alarm_int > 0:
+            alarm_info = "Alarm details ALC bits: "
+            alarm_info += self._extract_flags_info(motor_alarm_int, MotorAlarmInfo)
+        if sastat_alarm_int > 0:
+            if alarm_info != '':
+                alarm_info += ' | '
+            alarm_info += "Alarm details SASTAT bits: "
+            alarm_info += self._extract_flags_info(sastat_alarm_int, MotorProgramStatus)
 
         return alarm_info
 
+    def _extract_flags_info(self, input:int, flags_type:IntFlag, separator: str = "&") -> str:
+        """Extracts the name of the flags that are activated in a given object, the object
+        must be an IntFlag
 
+        :param input: Int value that represents the flags
+        :type input: int
+        :param flags_type: Type of the object
+        :type flags_type: IntFlag
+        :param separator: Value used to separate the flags in the message, defaults to "&"
+        :type separator: str, optional
+        :return: String with the parsed message according to the 
+        :rtype: str
+        """
+        msg = ''
+        # if input > 0:
+        while input > 0:
+            for error in flags_type:
+                if input & error:
+                    input = input - error
+                    if input > 0:
+                        msg += f"{error.name} {separator} "
+                    else:
+                        msg += f"{error.name}"
 
-    
+        return msg
+
     def read_firmware_status(self) -> str:
         """Precisa ser implementada pelo driver"""
 
