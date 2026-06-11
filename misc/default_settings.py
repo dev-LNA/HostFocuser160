@@ -56,13 +56,24 @@ class LoadConfigForm(QDialog):
 
         self.cbAccCurrent: QCheckBox = self.findChild(QCheckBox, 'cbAccCurrent')
 
+        self.cbServerIP: QCheckBox = self.findChild(QCheckBox, 'cbServerIP')
+
+        self.cbPortPub: QCheckBox = self.findChild(QCheckBox, 'cbPortPub')
+
+        self.cbPortRep: QCheckBox = self.findChild(QCheckBox, 'cbPortRep')
+
+        self.cbSubMask: QCheckBox = self.findChild(QCheckBox, 'cbSubMask')
+
+        self.cbGatewayIP: QCheckBox = self.findChild(QCheckBox, 'cbGatwayIP')
+
         self.buttonBox: QDialogButtonBox = self.findChild(QDialogButtonBox, 'buttonBox')
 
         self.lblInfo: QLabel = self.findChild(QLabel, 'lblInfo')
 
         self.check_list = (self.cbIpAddress, self.cbBacklash, self.cbPosMax, self.cbPark,
                            self.cbMaxSpeed, self.cbNormalSpeed, self.cbMinSpeed, self.cbAcceleration,
-                           self.cbDeceleration, self.cbIdleCurrent, self.cbRunCurrent, self.cbAccCurrent)
+                           self.cbDeceleration, self.cbIdleCurrent, self.cbRunCurrent, self.cbAccCurrent,
+                           self.cbServerIP, self.cbPortPub, self.cbPortRep, self.cbSubMask, self.cbGatewayIP)
 
         self.buttonBox.accepted.connect(self.accept)
         self.buttonBox.rejected.connect(self.reject)

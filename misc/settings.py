@@ -533,13 +533,24 @@ class SettingsWindow(QMainWindow):
                         #     config = get_toml('Device', 'ip_160', cfg_file)
                         # elif Config.name == "FocuserIAG":
                         #     config = get_toml('Device', 'ip_iag', cfg_file)
+                    elif isinstance(param.NAME, ServerParamsIdx):
+                        # The server parameters are saved in Network section
+                        config = get_toml('Network', param.NAME.name.lower(), cfg_file)
                     else:
+                        # The rest of the parameters are saved in Device section
                         config = str(get_toml('Device', param.NAME.name.lower(), cfg_file))
+                
 
                     if isinstance(param.OBJ, QLineEdit):
+                        # QLineEdits will use the string directly
                         param.OBJ.setText(config)
                     else:
-                        param.OBJ.setValue(int(float(config))) 
+                        # The value must be properly converted according to the parameter type
+                        if param.TYPE is int:
+                            param.OBJ.setValue(int(float(config))) 
+                        else:
+                            param.OBJ.setValue(float(config)) 
+
                     self._validate_parameters()    
 
 
