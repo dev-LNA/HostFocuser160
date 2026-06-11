@@ -83,8 +83,8 @@ class ServerJsonKeys(StrEnum):
 
 class ServerParamsIdx(Enum):
     SERVER_IP=0
-    PUB_PORT=1
-    REP_PORT=2
+    PORT_PUB=1
+    PORT_REP=2
     SUB_MASK=3
     GATEWAY_IP=4
 

@@ -2,7 +2,7 @@ from ast import Attribute
 
 from PyQt6 import uic, QtWidgets
 from PyQt6.QtWidgets import QMainWindow, QLineEdit, QProgressBar, QDialog, QMessageBox, QSpinBox, QDoubleSpinBox
-from PyQt6.QtCore import QThread, pyqtSignal, QObject
+from PyQt6.QtCore import QThread, pyqtSignal, QObject, QSize
 from PyQt6.QtGui import QFontMetrics, QKeyEvent
 # from src.core.exceptions import NotImplementedException
 from misc.load_bar import LoadBar
@@ -163,7 +163,7 @@ class SettingsWindow(QMainWindow):
     signals = SettingsWindowSignals()
 
     _engineering_mode = False                                       # Engineering mode state
-    _logged_user = ""                                               # Current logged user
+    _logged_user = "<b>USER</b>"                                           # Current logged user
 
     _motor_settings = dict()                                        # Motor current settings
     _settings_changed = False                                       # Informs if a setting was changed
@@ -179,13 +179,14 @@ class SettingsWindow(QMainWindow):
         self.logger = logger
         
         uic.loadUi(path_to_ui, self)                                # Loads the window UI
+        # self.setFixedSize(QSize(937, 508))
 
         self.ui_elements = UiWidgets(self, "settings")              # Generates UI elements intellisense
 
     # The QLineEdits must be initialized as 'disabled'. This is changed in engineering mode.
-        lineEdits = self.findChildren(QLineEdit)                                        # Makes a list of all QLineEdit widgets
-        for _ in lineEdits:                                                             # Connects the engineering mode signal to each QLineEdit setEnabled
-            self.signals.engineering_mode.connect(_.setEnabled)                         #  this way when engineering mode is activated the line edits automatically become enabled   
+        # lineEdits = self.findChildren(QLineEdit)                                        # Makes a list of all QLineEdit widgets
+        # for _ in lineEdits:                                                             # Connects the engineering mode signal to each QLineEdit setEnabled
+        #     self.signals.engineering_mode.connect(_.setEnabled)                         #  this way when engineering mode is activated the line edits automatically become enabled   
 
         self.ui_elements.gbMotorParameters.setEnabled(False)
         self.signals.engineering_mode.connect(self.ui_elements.gbMotorParameters.setEnabled)
@@ -196,9 +197,10 @@ class SettingsWindow(QMainWindow):
         self.ui_elements.gbZMQ.setEnabled(False)
         self.signals.engineering_mode.connect(self.ui_elements.gbZMQ.setEnabled)
 
-        self.signals.engineering_mode.connect(self.ui_elements.btnSave.setEnabled)      # Save button is only enabled in engineering mode
+        self.ui_elements.btnSave.setVisible(False)
+        self.signals.engineering_mode.connect(self.ui_elements.btnSave.setVisible)      # Save button is only enabled in engineering mode
 
-        self.engineering_mode = False                                                   # Initializes engineering mode to false
+        # self.engineering_mode = False                                                   # Initializes engineering mode to false
 
         self.ui_elements.btnEngineering.clicked.connect(self._login_engineering_mode)   # Connects engineering login button
         self.ui_elements.btnSave.clicked.connect(self._save_settings)                   # Connects save settings button
@@ -210,28 +212,33 @@ class SettingsWindow(QMainWindow):
         self.ui_elements.frameCommand.setVisible(False)                                 # Send commands frame begins not visible
         self.signals.engineering_mode.connect(self.ui_elements.frameCommand.setVisible) # The commands frame is only visible when in engineering mode
 
-        self.ui_elements.btnDefault.setVisible(False)                                   # Defaul configurations button begins not visible
-        self.signals.engineering_mode.connect(self.ui_elements.btnDefault.setVisible)   # The default configurations button is only visible in engineering mode
+        self.ui_elements.gbRetrieveParameters.setVisible(False)
+        self.signals.engineering_mode.connect(self.ui_elements.gbRetrieveParameters.setVisible)
 
-        self.ui_elements.btnBackup.setVisible(False)                                    # Defaul configurations button begins not visible
-        self.signals.engineering_mode.connect(self.ui_elements.btnBackup.setVisible)    # The default configurations button is only visible in engineering mode
+        # self.ui_elements.btnDefault.setVisible(False)                                   # Defaul configurations button begins not visible
+        # self.signals.engineering_mode.connect(self.ui_elements.btnDefault.setVisible)   # The default configurations button is only visible in engineering mode
 
-        self.ui_elements.btnReadMotor.setVisible(False)                                    # Defaul configurations button begins not visible
-        self.signals.engineering_mode.connect(self.ui_elements.btnReadMotor.setVisible)    # The default configurations button is only visible in engineering mode
+        # self.ui_elements.btnBackup.setVisible(False)                                    # Defaul configurations button begins not visible
+        # self.signals.engineering_mode.connect(self.ui_elements.btnBackup.setVisible)    # The default configurations button is only visible in engineering mode
+
+        # self.ui_elements.btnReadMotor.setVisible(False)                                    # Defaul configurations button begins not visible
+        # self.signals.engineering_mode.connect(self.ui_elements.btnReadMotor.setVisible)    # The default configurations button is only visible in engineering mode
 
         self.ui_elements.btnSendCommand.clicked.connect(self._send_test_command)
         self.ui_elements.txtCommand.returnPressed.connect(self._send_test_command)
         self.ui_elements.txtCommand.textChanged.connect(self._command_changed)
 
         self.ui_elements.lblServerVer_val.setText(Config.server_version)
+        self.ui_elements.lblAccessLvl.setText("Access level: " + self._logged_user)
+        
 
         self.signals.command_response.connect(self.ui_elements.lblResponse_Val.setText)
 
         self._config_settings = ConfigurableSettings(
                 # Server parameters
                     SERVER_IP = SettingsAttributes(ServerParamsIdx.SERVER_IP, 'Server IP Address', self.ui_elements.txtSocketIP, '0', str),
-                    PORT_PUB = SettingsAttributes(ServerParamsIdx.PUB_PORT, 'ZMQ PUB Port', self.ui_elements.spinPortPub, 0, int),
-                    PORT_REP = SettingsAttributes(ServerParamsIdx.REP_PORT, 'ZMQ REP Port', self.ui_elements.spinPortRep, 0, int),
+                    PORT_PUB = SettingsAttributes(ServerParamsIdx.PORT_PUB, 'ZMQ PUB Port', self.ui_elements.spinPortPub, 0, int),
+                    PORT_REP = SettingsAttributes(ServerParamsIdx.PORT_REP, 'ZMQ REP Port', self.ui_elements.spinPortRep, 0, int),
                     SUB_MASK = SettingsAttributes(ServerParamsIdx.SUB_MASK, 'Subnet Mask', self.ui_elements.txtSubMask, '0', str),
                     GATEWAY_IP = SettingsAttributes(ServerParamsIdx.GATEWAY_IP, 'Gateway IP Address', self.ui_elements.txtGatewayIP, '0', str),
                 # Motor parameters
@@ -283,14 +290,19 @@ class SettingsWindow(QMainWindow):
     @engineering_mode.setter                # Engineering mode setter
     def engineering_mode(self, value: bool):
         self._engineering_mode = value  
-        self.signals.engineering_mode.emit(self.engineering_mode)       # When the engineering mode changes signals all slots connected
+        self.signals.engineering_mode.emit(value)       # When the engineering mode changes signals all slots connected
 
     @property
     def logged_user(self) -> str:           # Property to read the current logged user
         return self._logged_user
+    @logged_user.setter
+    def logged_user(self, user:str):
+        self._logged_user = user
+        self.ui_elements.lblAccessLvl.setText("Access level: " + self._logged_user)
+        
     #TODO: Verificar outra forma de fazer isso. E se é necessário, acho que essa infomração nem existe atualmente.
-    def _logged_user_setter(self, name: str):   # Logged user setter (A method was used in order to be able to connect this method to the signal from the login form)
-        self._logged_user = name 
+    # def _logged_user_setter(self, name: str):   # Logged user setter (A method was used in order to be able to connect this method to the signal from the login form)
+    #     self._logged_user = name 
 
     @property
     def motor_settings(self):
@@ -360,7 +372,7 @@ class SettingsWindow(QMainWindow):
                 del self._changed_settings[param.NAME]
 
         # To be considered that the value was changed the value must be different from the current value OR
-        # if that parameter is already in "_changed_settings" than this new value must be different from the one in 
+        # if that parameter is already in "_changed_settings" then this new value must be different from the one in 
         # '_changed_settings'
         if (param.VALUE != value) or \
             ( (param.NAME in self._changed_settings) and self._changed_settings[param.NAME] != value):
@@ -437,10 +449,10 @@ class SettingsWindow(QMainWindow):
             # The backup config files are emebedded in the executable
             if Config.name == "Focuser160":
                 # backup_file_path = config_dir + "/config_backup_160.toml"
-                cfg_file = resource_path('src/config/config_backup_160.toml', external=False)
+                backup_file_path = resource_path('src/config/config_backup_160.toml', external=False)
             elif Config.name == "FocuserIAG":
                 # backup_file_path = config_dir + "/config_backup_IAG.toml"
-                cfg_file = resource_path('src/config/config_backup_IAG.toml', external=False)
+                backup_file_path = resource_path('src/config/config_backup_IAG.toml', external=False)
             
 
             shutil.copy(config_file, backup_file_path)            #TODO: 'copy' do not retain the metadata, if metadata is needed change to '.copy2'
@@ -536,6 +548,19 @@ class SettingsWindow(QMainWindow):
             print("DO NOT RETURN TO DEFAULT VALUES")
         self._default_widget.destroy()
 
+    def _check_values_conflicts(self):
+        """Verifies conflicts between configured values
+           If a conflict is found raises an error with more information"""
+        error_msg = ""
+        if (self._config_settings.PORT_PUB.NAME in self._changed_settings) or (self._config_settings.PORT_REP.NAME in self._changed_settings):
+            if self._config_settings.PORT_PUB.OBJ.value() == self._config_settings.PORT_REP.OBJ.value():
+                error_msg += "The ZMQ configuration PORT PUB and PORT REP must have different values"    
+                # raise ValueError("The ZMQ configuration PORT PUB and PORT REP must have different values")
+        
+        if error_msg != "":
+            raise ValueError(error_msg)
+
+
     def _save_settings(self):
         """Save to the motor the values configured in the text boxes
         Checks if the value in the text box changed in relation to the one read from the motor
@@ -554,6 +579,8 @@ class SettingsWindow(QMainWindow):
                     text = self._changed_settings[param.NAME].replace(".", "")                  # Remove dots from IP masked values
                     if not text:
                         raise ValueError(f"Cannot save empty value to parameters")
+
+            self._check_values_conflicts()
 
         except Exception as e:
             dialog = QMessageBox(self)
@@ -575,7 +602,7 @@ class SettingsWindow(QMainWindow):
                 text += f"<font color=red> {key_str}</font>: {self._config_settings[keys[i].value].VALUE} -> {values[i]} <br>"
             
             text += f"<br>"
-            text += f"<font color=red> * The motor must be restarted for the changes to take effect </font>"
+            text += f"<font color=red> * The server or the motor/CLP must be restarted for some changes to take effect </font>"
             verify.txtChanges.setText(text)
 
             font_size = QFontMetrics(verify.txtChanges.font())
@@ -669,12 +696,15 @@ class SettingsWindow(QMainWindow):
         """Opens the dialog window to login/logoff of engineering mode"""
         print(self._motor_settings)
         self._login = LoginForm(self.logged_user)                               # Creates login widget
-        self._login.user.connect(self._logged_user_setter)                      # Connects the user name to the settings window logged user (A method is needed because a property setter cannot be directly used)
+        # self._login.user.connect(self._logged_user_setter)                      # Connects the user name to the settings window logged user (A method is needed because a property setter cannot be directly used)
+        self._login.user.connect(lambda user: setattr(self, 'logged_user', user))
         if self._login.exec() == QDialog.DialogCode.Accepted:                   # If the dialog box closes with an accepted signal
-            if self.logged_user:                                                    # If a user was set
+            if self.logged_user == "<b>ADMIN</b>":                                                    # If a user was set
                 self.engineering_mode = True                                            # Enters engineering mode
             else:                                                                   # if no user set
                 self.engineering_mode = False                                           # Exits engineering mode 
+
+
 
     def _validate_parameters(self):
         """Verifies if a new configuration for the parameters is avaiable"""

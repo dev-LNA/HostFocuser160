@@ -32,35 +32,37 @@ class LoadConfigForm(QDialog):
         uic.loadUi(path_to_ui, self)
 
         # Creates UI intellisense
-        self.cbIpAddress = self.findChild(QCheckBox, 'cbIpAddress')     
-        self.cbIpAddress: QCheckBox = self.cbIpAddress
+        self.cbIpAddress: QCheckBox = self.findChild(QCheckBox, 'cbIpAddress')
 
-        self.cbBacklash = self.findChild(QCheckBox, 'cbBacklash')     
-        self.cbBacklash: QCheckBox = self.cbBacklash
+        self.cbBacklash: QCheckBox = self.findChild(QCheckBox, 'cbBacklash')
 
-        self.cbPosMax = self.findChild(QCheckBox, 'cbPosMax')     
-        self.cbPosMax: QCheckBox = self.cbPosMax
+        self.cbPosMax: QCheckBox = self.findChild(QCheckBox, 'cbPosMax')
 
-        self.cbPark = self.findChild(QCheckBox, 'cbPark')     
-        self.cbPark: QCheckBox = self.cbPark
+        self.cbPark: QCheckBox = self.findChild(QCheckBox, 'cbPark')
 
-        self.cbMaxSpeed = self.findChild(QCheckBox, 'cbMaxSpeed')     
-        self.cbMaxSpeed: QCheckBox = self.cbMaxSpeed
+        self.cbMaxSpeed: QCheckBox = self.findChild(QCheckBox, 'cbMaxSpeed')
 
-        self.cbNormalSpeed = self.findChild(QCheckBox, 'cbNormalSpeed')     
-        self.cbNormalSpeed: QCheckBox = self.cbNormalSpeed
+        self.cbNormalSpeed: QCheckBox = self.findChild(QCheckBox, 'cbNormalSpeed')
 
-        self.cbMinSpeed = self.findChild(QCheckBox, 'cbMinSpeed')     
-        self.cbMinSpeed: QCheckBox = self.cbMinSpeed
+        self.cbMinSpeed: QCheckBox = self.findChild(QCheckBox, 'cbMinSpeed')
 
-        self.buttonBox = self.findChild(QDialogButtonBox, 'buttonBox')     
-        self.buttonBox: QDialogButtonBox = self.buttonBox
+        self.cbAcceleration: QCheckBox = self.findChild(QCheckBox, 'cbAcceleration')
 
-        self.lblInfo = self.findChild(QLabel, 'lblInfo')     
-        self.lblInfo: QLabel = self.lblInfo
+        self.cbDeceleration: QCheckBox = self.findChild(QCheckBox, 'cbDeceleration')
+
+        self.cbIdleCurrent: QCheckBox = self.findChild(QCheckBox, 'cbIdleCurrent')
+
+        self.cbRunCurrent: QCheckBox = self.findChild(QCheckBox, 'cbRunCurrent')
+
+        self.cbAccCurrent: QCheckBox = self.findChild(QCheckBox, 'cbAccCurrent')
+
+        self.buttonBox: QDialogButtonBox = self.findChild(QDialogButtonBox, 'buttonBox')
+
+        self.lblInfo: QLabel = self.findChild(QLabel, 'lblInfo')
 
         self.check_list = (self.cbIpAddress, self.cbBacklash, self.cbPosMax, self.cbPark,
-                           self.cbMaxSpeed, self.cbNormalSpeed, self.cbMinSpeed)
+                           self.cbMaxSpeed, self.cbNormalSpeed, self.cbMinSpeed, self.cbAcceleration,
+                           self.cbDeceleration, self.cbIdleCurrent, self.cbRunCurrent, self.cbAccCurrent)
 
         self.buttonBox.accepted.connect(self.accept)
         self.buttonBox.rejected.connect(self.reject)

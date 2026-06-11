@@ -217,14 +217,17 @@ class UiWidgets(QWidget):
             # === Definitions for settings window components === #
             
 
-            self.gbMotorParameters = window.findChild(QGroupBox, 'gbMotorParameters')
-            self.gbMotorParameters: QGroupBox = self.gbMotorParameters
+            self.gbMotorParameters:QGroupBox = window.findChild(QGroupBox, 'gbMotorParameters')
+            # self.gbMotorParameters: QGroupBox = self.gbMotorParameters
 
             self.gbZMQ = window.findChild(QGroupBox, 'gbZMQ')
             self.gbZMQ: QGroupBox = self.gbZMQ
 
             self.gbNetwork = window.findChild(QGroupBox, 'gbNetwork')
             self.gbNetwork: QGroupBox = self.gbNetwork
+
+            self.gbRetrieveParameters: QGroupBox = window.findChild(QGroupBox, 'gbRetrieveParameters')
+
 
             # Buttons
             self.btnEngineering = window.findChild(QPushButton, 'btnEngineering')
@@ -252,6 +255,8 @@ class UiWidgets(QWidget):
 
             self.lblFocuser = window.findChild(QLabel, 'lblFocuser')
             self.lblFocuser: QLabel = self.lblFocuser
+
+            self.lblAccessLvl:QLabel = window.findChild(QLabel, 'lblAccessLvl')
 
         # Text boxes
         

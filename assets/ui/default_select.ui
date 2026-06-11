@@ -13,7 +13,10 @@
   <property name="windowTitle">
    <string>Form</string>
   </property>
-  <layout class="QGridLayout" name="gridLayout">
+  <layout class="QGridLayout" name="gridLayout_2">
+   <property name="bottomMargin">
+    <number>9</number>
+   </property>
    <item row="0" column="0" colspan="2">
     <layout class="QHBoxLayout" name="horizontalLayout">
      <item>
@@ -45,9 +48,9 @@
     </layout>
    </item>
    <item row="1" column="0" colspan="2">
-    <layout class="QFormLayout" name="formLayout">
-     <property name="horizontalSpacing">
-      <number>41</number>
+    <layout class="QGridLayout" name="gridLayout">
+     <property name="bottomMargin">
+      <number>5</number>
      </property>
      <item row="0" column="0">
       <widget class="QCheckBox" name="cbIpAddress">
@@ -72,6 +75,19 @@
        </property>
        <property name="TAG" stdset="0">
         <string>MAX_SPEED</string>
+       </property>
+      </widget>
+     </item>
+     <item row="0" column="2">
+      <widget class="QCheckBox" name="cbDeceleration">
+       <property name="text">
+        <string>Deceleration</string>
+       </property>
+       <property name="checked">
+        <bool>true</bool>
+       </property>
+       <property name="TAG" stdset="0">
+        <string>DECELERATION</string>
        </property>
       </widget>
      </item>
@@ -101,6 +117,19 @@
        </property>
       </widget>
      </item>
+     <item row="1" column="2">
+      <widget class="QCheckBox" name="cbIdleCurrent">
+       <property name="text">
+        <string>Idle Current</string>
+       </property>
+       <property name="checked">
+        <bool>true</bool>
+       </property>
+       <property name="TAG" stdset="0">
+        <string>IDLE_CURRENT</string>
+       </property>
+      </widget>
+     </item>
      <item row="2" column="0">
       <widget class="QCheckBox" name="cbPosMax">
        <property name="text">
@@ -127,6 +156,19 @@
        </property>
       </widget>
      </item>
+     <item row="2" column="2">
+      <widget class="QCheckBox" name="cbRunCurrent">
+       <property name="text">
+        <string>Run Current</string>
+       </property>
+       <property name="checked">
+        <bool>true</bool>
+       </property>
+       <property name="TAG" stdset="0">
+        <string>RUN_CURRENT</string>
+       </property>
+      </widget>
+     </item>
      <item row="3" column="0">
       <widget class="QCheckBox" name="cbPark">
        <property name="text">
@@ -137,6 +179,32 @@
        </property>
        <property name="TAG" stdset="0">
         <string>PARK_POS</string>
+       </property>
+      </widget>
+     </item>
+     <item row="3" column="1">
+      <widget class="QCheckBox" name="cbAcceleration">
+       <property name="text">
+        <string>Acceleration</string>
+       </property>
+       <property name="checked">
+        <bool>true</bool>
+       </property>
+       <property name="TAG" stdset="0">
+        <string>ACCELERATION</string>
+       </property>
+      </widget>
+     </item>
+     <item row="3" column="2">
+      <widget class="QCheckBox" name="cbAccCurrent">
+       <property name="text">
+        <string>Acc. Current</string>
+       </property>
+       <property name="checked">
+        <bool>true</bool>
+       </property>
+       <property name="TAG" stdset="0">
+        <string>ACC_CURRENT</string>
        </property>
       </widget>
      </item>
