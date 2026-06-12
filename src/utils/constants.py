@@ -47,6 +47,25 @@ class TimeoutState(Enum):
 # operators to use previously defined positions in the software
 POSITION_VISUALIZATION_CONVERTION = 0.09885853    # Convertion from value to PUB and DISPLAY
 POSITION_COMMAND_CONVERSION = 1.011546     # Convertion from received command to value to be sent to the motor
+
+class FocuserSignalsNames(StrEnum):
+    LIM_SWITCH_MIN = auto()
+    LIM_SWITCH_MAX = auto()
+    INITIALIZED = "HOMING"
+    MANUAL_MOVEMENT = auto()
+    RUN_FOCUS_IN = "FOCUS IN"
+    RUN_FOCUS_OUT = "FOCUS OUT"
+    RUN_PARK = "PARK"
+    STOPPED = ""
+
+@dataclass
+class FocuserHardwareStatus():
+    lim_switch_min: bool = False
+    lim_switch_max: bool = False
+    initialized: bool = False
+    manual_movement: bool = False
+    movement_info: str = ""
+    
 #endregion
 
 
@@ -191,7 +210,8 @@ class MotorProgramStatus(IntFlag):
     ERROR = auto()
     INVALID = auto()
 
-motor_program_errors_mask = 0xFC00 # Mask to extract only the error bits from the program status [bits 10~15]
+motor_program_errors_mask = 0x1FC00 # Mask to extract only the error bits from the program status [bits 10~16]
+motor_alc_errors_mask = 0xFFF9 # Mask to extract only the error bits from the ALC
 
 # MotorAlarmInfo é referente ao registro ALC do modbus
 class MotorAlarmInfo(IntFlag):

@@ -14,7 +14,7 @@ from threading import Lock, Thread, Timer
 
 from src.core.config import Config
 from src.core.exceptions import DriverException
-from src.utils.constants import constants, MotorStatusFlags, MotorParamsIdx, MotorAlarmInfo, motor_program_errors_mask, POSITION_COMMAND_CONVERSION, POSITION_VISUALIZATION_CONVERTION
+from src.utils.constants import constants, MotorStatusFlags, MotorParamsIdx, MotorAlarmInfo, motor_program_errors_mask, motor_alc_errors_mask, POSITION_COMMAND_CONVERSION, POSITION_VISUALIZATION_CONVERTION
 from src.utils.modbus_regs import RegsInfo, RegType, coils_regs, dig_inputs_regs, DB_size, CLP_Owned, TwosComplementReg, param_vars
 
 from enum import IntFlag
@@ -34,17 +34,42 @@ class DriverAMP(Driver):
 
         self.mb_server: IAGModbusServer = None
 
-        # self._task_progress: int = 0
 
-    # @property
-    # def mb_server_task_progress(self):
-    #     return self._task_progress
-    # @mb_server_task_progress.setter
-    # def mb_server_task_progress(self, value: int):
-    #     self._task_progress = value
-    #     self.motor.signals.progress.string.emit(self._task_progress)
+    @property
+    def focus_out_status(self) -> bool:
+        return self.current_state.focus_out
+    @focus_out_status.setter
+    def focus_out_status(self, val:bool):
+        if val != self.current_state.focus_out:
+            self.current_state.focus_out = val
+            if val:
+                self.driver_comm.run_focus_out.emit(True, "statusLed", "WAIT")
+            else:
+                self.driver_comm.run_focus_out.emit(False, "statusLed", "OFF")
 
+    @property
+    def focus_in_status(self) -> bool:
+        return self.current_state.focus_in
+    @focus_in_status.setter
+    def focus_in_status(self, val:bool):
+        if val != self.current_state.focus_in:
+            self.current_state.focus_in = val
+            if val:
+                self.driver_comm.run_focus_in.emit(True, "statusLed", "WAIT")
+            else:
+                self.driver_comm.run_focus_in.emit(False, "statusLed", "OFF")
 
+    @property
+    def park_status(self) -> bool:
+        return self.current_state.park
+    @park_status.setter
+    def park_status(self, val:bool):
+        if val != self.current_state.park:
+            self.current_state.park = val
+            if val:
+                self.driver_comm.run_park.emit(True, "statusLed", "WAIT")
+            else:
+                self.driver_comm.run_park.emit(False, "statusLed", "OFF")
 
     def connect_motor(self, max_retries: int = 5, delay: float = 0.1) -> str:
         """Precisa ser implementada pelo driver"""
@@ -489,11 +514,9 @@ class DriverAMP(Driver):
     
     def parse_alarm_info(self) -> str:
         """Precisa ser implementada pelo driver"""
-        motor_alarm_int = self.mb_server._conv_reg_to_value(coils_regs.RX_ALC, self.mb_server.db_shadow)
-        motor_alarm = MotorAlarmInfo(motor_alarm_int)
+        motor_alarm_int = self.mb_server._conv_reg_to_value(coils_regs.RX_ALC, self.mb_server.db_shadow) & motor_alc_errors_mask
         self.read_firmware_status()  # Update the SASTAT value
         sastat_alarm_int = self.motor.SASTAT & motor_program_errors_mask
-        sastat_alarm = MotorProgramStatus(sastat_alarm_int)
 
         alarm_info = ''
         if motor_alarm_int > 0:
@@ -536,44 +559,74 @@ class DriverAMP(Driver):
     def read_firmware_status(self) -> str:
         """Precisa ser implementada pelo driver"""
 
+        flag_status = False
+        msg_status = ''
+
         self.motor.SASTAT = self.mb_server._conv_reg_to_value(coils_regs.RX_SASTAT, self.mb_server.db_shadow)
         # print(f"SASTAT = {sastat}")
         
+        self.focus_out_status = ( self.motor.SASTAT & MotorProgramStatus.RUN_FOCUS_OUT )
+        # if self.motor.SASTAT & MotorProgramStatus.RUN_FOCUS_OUT:
+        #     self.driver_comm.run_focus_out.emit(True, "statusLed", "WAIT")
+        # else:
+        #     self.driver_comm.run_focus_out.emit(False, "statusLed", "OFF")
 
-        if self.motor.SASTAT & MotorProgramStatus.RUN_FOCUS_OUT:
-            self.driver_comm.run_focus_out.emit(True, "statusLed", "WAIT")
-        else:
-            self.driver_comm.run_focus_out.emit(False, "statusLed", "OFF")
+        self.focus_in_status = (self.motor.SASTAT & MotorProgramStatus.RUN_FOCUS_IN)
+        # if self.motor.SASTAT & MotorProgramStatus.RUN_FOCUS_IN:
+        #     self.driver_comm.run_focus_in.emit(True, "statusLed", "WAIT")
+        # else:
+        #     self.driver_comm.run_focus_in.emit(False, "statusLed", "OFF")
 
-        if self.motor.SASTAT & MotorProgramStatus.RUN_FOCUS_IN:
-            self.driver_comm.run_focus_in.emit(True, "statusLed", "WAIT")
-        else:
-            self.driver_comm.run_focus_in.emit(False, "statusLed", "OFF")
-
-        if self.motor.SASTAT & MotorProgramStatus.RUN_PARK:
-            self.driver_comm.run_park.emit(True, "statusLed", "WAIT")
-        else:
-            self.driver_comm.run_park.emit(False, "statusLed", "OFF")
+        self.park_status = (self.motor.SASTAT & MotorProgramStatus.RUN_PARK)
+        # if self.motor.SASTAT & MotorProgramStatus.RUN_PARK:
+        #     self.driver_comm.run_park.emit(True, "statusLed", "WAIT")
+        # else:
+        #     self.driver_comm.run_park.emit(False, "statusLed", "OFF")
 
         if self.motor.SASTAT & MotorProgramStatus.READY:
-            return "Idle"
+            # return "Idle"
+            msg = "Idle"
+            flag_status = True
 
         if self.motor.SASTAT & MotorProgramStatus.ERROR_NEED_HOME:
-            return "Must run HOME"
+            # return "Must run HOME"
+            if not flag_status:
+                msg = "Must run HOME"
+                flag_status = True
 
         if self.motor.SASTAT & MotorProgramStatus.ERROR_FOCUS_OUT:
-            return "Too close to HOME"
+            # return "Too close to HOME"
+            if not flag_status:
+                msg = "Too close to HOME"
+                flag_status = True
 
         if self.motor.SASTAT & MotorProgramStatus.MANUAL_MOVE:
-            return "Manual Movement"
+            self.driver_comm.manual_movement.status.emit(True)
+            # return "Manual Movement"
+            if not flag_status:
+                msg = "Manual Movement"
+                flag_status = True
+        else:
+            self.driver_comm.manual_movement.status.emit(False)
+            
         
         if self.motor.SASTAT & MotorProgramStatus.ERROR_RS485:
-            return "RS485 error"
+            # return "RS485 error"
+            if not flag_status:
+                msg = "RS485 error"
+                flag_status = True
         
         if self.motor.SASTAT & MotorProgramStatus.ERROR_OUT_OF_RANGE:
-            return "Out of range"
+            # return "Out of range"
+            if not flag_status:
+                msg = "Out of range"
+                flag_status = True
         
-        return "Running"
+        if not flag_status:
+            msg = "Running"
+        
+        # return "Running"
+        return msg
 
 
 

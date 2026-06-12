@@ -3,8 +3,9 @@ from typing import NamedTuple
 from enum import IntFlag
 
 from PyQt6.QtCore import pyqtSignal, QObject, pyqtSlot
-from src.utils.constants import MotorParamsIdx, ServerCommands
+from src.utils.constants import MotorParamsIdx, ServerCommands, FocuserSignalsNames
 from src.utils.signals import PropertySignals
+from dataclasses import dataclass
 
 from typing import TYPE_CHECKING
 
@@ -12,14 +13,28 @@ if TYPE_CHECKING:
     from src.utils.motor import Motor
 
     
+@dataclass
+class InternalState():
+    focus_in: bool = False
+    focus_out: bool = False
+    park: bool = False
+    homing: bool = False
+
 class DriverCommunicator(QObject):
     status = pyqtSignal(bool)
 
     run_focus_in = PropertySignals()
     run_focus_out = PropertySignals()
     run_park = PropertySignals()
+    manual_movement = PropertySignals()
 
     timeout = pyqtSignal(bool)
+
+    manual_movement.setObjectName(FocuserSignalsNames.MANUAL_MOVEMENT)
+    run_focus_in.setObjectName(FocuserSignalsNames.RUN_FOCUS_IN)
+    run_focus_out.setObjectName(FocuserSignalsNames.RUN_FOCUS_OUT)
+    run_park.setObjectName(FocuserSignalsNames.RUN_PARK)
+
 
 class Driver(ABC):
     def __init__(self, motor: Motor):
@@ -28,6 +43,8 @@ class Driver(ABC):
         self.motor = motor
 
         self.driver_comm = DriverCommunicator()
+
+        self.current_state = InternalState()
 
         self.param_methods = {
             MotorParamsIdx.MOTOR_IP : self.param_IP,
@@ -53,6 +70,36 @@ class Driver(ABC):
             ServerCommands.HOME : self.home,
             ServerCommands.PARK : self.park
         }    
+    
+    @property
+    @abstractmethod
+    def focus_out_status(self) -> bool:
+        """Precisa ser implementada pelo driver"""
+        ...
+    @focus_out_status.setter
+    def focus_out_status(self, val:bool):
+        """Precisa ser implementada pelo driver"""
+        ...
+
+    @property
+    @abstractmethod
+    def focus_in_status(self) -> bool:
+        """Precisa ser implementada pelo driver"""
+        ...
+    @focus_in_status.setter
+    def focus_in_status(self, val:bool):
+        """Precisa ser implementada pelo driver"""
+        ...
+
+    @property
+    @abstractmethod
+    def park_status(self) -> bool:
+        """Precisa ser implementada pelo driver"""
+        ...
+    @park_status.setter
+    def park_status(self, val:bool):
+        """Precisa ser implementada pelo driver"""
+
 
 
     @abstractmethod

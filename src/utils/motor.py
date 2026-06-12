@@ -9,7 +9,7 @@ from dataclasses import dataclass
 from src.interface.motor_driver import Driver
 from src.interface.driver_DMX import  DriverDMX
 from src.interface.driver_AMP import DriverAMP
-from src.utils.constants import MotorModels, MotorParamsIdx, ServerCommands, constants, MotorParameter, MotorStatusFlags, MotorAlarmInfo, MotorProgramStatus
+from src.utils.constants import MotorModels, MotorParamsIdx, ServerCommands, constants, MotorParameter, MotorStatusFlags, MotorAlarmInfo, MotorProgramStatus, FocuserHardwareStatus, FocuserSignalsNames
 from src.utils.constants import ServerJsonKeys as SJson
 from src.utils.signals import PropertySignals, MultiSignal
 
@@ -40,7 +40,11 @@ class MotorSignals(QObject):
 
     error_msg = pyqtSignal(str)
 
-    
+
+    # Define names for the signals so they can be identified in the code
+    lim_min.setObjectName(FocuserSignalsNames.LIM_SWITCH_MIN)
+    lim_max.setObjectName(FocuserSignalsNames.LIM_SWITCH_MAX)   
+    initialized.setObjectName(FocuserSignalsNames.INITIALIZED)
 
 class Motor():
 
@@ -85,6 +89,7 @@ class Motor():
         self.SASTAT: int = 0
 
         self._alarm_info: str = ''
+
 
         if model == MotorModels.ARCUS_DMX_ETH:
             self.driver = DriverDMX(self)
@@ -342,7 +347,8 @@ class Motor():
                 else:
                     self.is_moving = False
 
-
+                # The mechanical mounting of the two focusers are inverted, so the lim switches LEDs
+                # in the GUI must operated inverted
                 if self.model == MotorModels.ARCUS_DMX_ETH:
 
                     if(motor_status & MotorStatusFlags.LIM_MIN):

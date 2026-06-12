@@ -24,7 +24,7 @@ from threading import Thread
 from misc.client_sample import TEST_SETUP
 from src.core.config import Config
 import src.core.exceptions as AlpacaExceptions
-from src.utils.constants import POSITION_VISUALIZATION_CONVERTION, constants, MotorModels, ReachStatus, MotorParamsIdx, ServerCommands, MotorValidCommands
+from src.utils.constants import POSITION_VISUALIZATION_CONVERTION, constants, MotorModels, ReachStatus, MotorParamsIdx, ServerCommands, MotorValidCommands, FocuserHardwareStatus, FocuserSignalsNames
 from src.utils.constants import ServerMessageValidation as SVal
 from src.utils.constants import ServerJsonKeys as SJson
 from src.utils.signals import PropertySignals, MultiSignal
@@ -119,6 +119,14 @@ class Server(QObject):
         
         self._reaching_device_thread = None
         self._processing_command: bool = False
+
+        # self.focuser_hdw_current_status = FocuserHardwareStatus(
+        #     lim_switch_min=False,
+        #     lim_switch_max=False,
+        #     initialized=False,
+        #     manual_movement=False
+        # )
+        self.focuser_hdw_current_status = FocuserHardwareStatus()
 
         self.last_command = {
             SJson.TIMESTAMP: datetime.now(),
@@ -438,6 +446,16 @@ class Server(QObject):
 
             self.motor.driver.driver_comm.timeout.connect(lambda value: setattr(self, 'driver_timeout', value))
             self.motor.signals.alarm.status.connect(lambda val: self.logger.error(f'{self.motor._alarm_info}') if val == True else ... )
+
+            self.motor.signals.lim_max.status.connect(self._log_update)
+            self.motor.signals.lim_min.status.connect(self._log_update)
+            self.motor.signals.initialized.status.connect(self._log_update)
+            self.motor.driver.driver_comm.manual_movement.status.connect(self._log_update)
+            self.motor.driver.driver_comm.run_focus_in.status.connect(self._update_current_movement)
+            self.motor.driver.driver_comm.run_focus_out.status.connect(self._update_current_movement)
+            self.motor.driver.driver_comm.run_park.status.connect(self._update_current_movement)
+            self.motor.signals.initialized.status.connect(self._update_current_movement)
+            self.motor.signals.moving.status.connect(lambda val: self.logger.warning("FOCUSER MOVING") if val else self.logger.warning(f"FOCUSER STOPPED at {self.motor.position}"))
 
             self.motor.signals.error_msg.connect(lambda msg: self.logger.error(f'{msg}'))
         else:
@@ -823,6 +841,53 @@ class Server(QObject):
             self.status[SJson.CMD][SJson.CMD_CLIENT_TRANSACTION_ID] = 0
             self.status[SJson.CMD][SJson.CMD_CLIENT_NAME] = ''
         self.status[SJson.CMD][SJson.CMD_ACTION] = ''
+
+
+    def _log_update(self, val: bool):
+        """Updates the logger according to the signal received"""
+
+        if val:
+            val_str = "ACTIVATED"
+        else:
+            val_str = "DEACTIVATED"
+
+        if self.sender().objectName() == FocuserSignalsNames.LIM_SWITCH_MIN:
+            if self.focuser_hdw_current_status.lim_switch_min != val:
+                self.focuser_hdw_current_status.lim_switch_min = val
+                self.logger.warning(f"Limit switch min {val_str}")
+
+        if self.sender().objectName() == FocuserSignalsNames.LIM_SWITCH_MAX:
+            if self.focuser_hdw_current_status.lim_switch_max != val:
+                self.focuser_hdw_current_status.lim_switch_max = val
+                self.logger.warning(f"Limit switch max {val_str}")
+
+        if self.sender().objectName() == FocuserSignalsNames.INITIALIZED:
+            if self.focuser_hdw_current_status.initialized != val:
+                self.focuser_hdw_current_status.initialized = val
+                if val == True:
+                    self.logger.info(f"Focuser is INITIALIZED")
+
+        if self.sender().objectName() == FocuserSignalsNames.MANUAL_MOVEMENT:
+            if self.focuser_hdw_current_status.manual_movement != val:
+                self.focuser_hdw_current_status.manual_movement = val
+                if val == True:
+                    self.logger.warning(F"Started MANUAL MOVEMENT - {self.focuser_hdw_current_status.movement_info}")
+                else:
+                    self.logger.warning("Ended MANUAL MOVEMENT")
+
+    def _update_current_movement(self, val: bool):
+        print(self.sender().objectName())
+        self.focuser_hdw_current_status.movement_info = self.sender().objectName()
+
+        # The manual movement signal has a delay that may affect the signal in '_log_update' if different movements
+        # occur close to each other so the verification is done when a new movement begins
+        if self.focuser_hdw_current_status.manual_movement == True:
+            if self.sender().objectName() == FocuserSignalsNames.RUN_FOCUS_IN:
+                if val != self.motor.driver.focus_in_status:
+                    self.logger.warning(F"Started MANUAL MOVEMENT - {self.focuser_hdw_current_status.movement_info}")
+            elif self.sender().objectName() == FocuserSignalsNames.RUN_FOCUS_OUT:
+                if val != self.motor.driver.focus_out_status:
+                    self.logger.warning(F"Started MANUAL MOVEMENT - {self.focuser_hdw_current_status.movement_info}")
 
 
 #endregion

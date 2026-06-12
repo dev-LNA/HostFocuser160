@@ -341,7 +341,9 @@ class FocuserOPD (QMainWindow):
         # Now that the motor was instantiated the motor signals can be connected
         self.server.motor.signals.moving.info.connect(self.ui_elements.ledMoving.setProperty)
         self.server.motor.signals.lim_min.info.connect(self.ui_elements.ledLimMin.setProperty)
+        # self.server.motor.signals.lim_min.status.connect(lambda val: logger.warning("Limit switch MIN activated") if val else logger.warning("Limit switch MIN deactivated"))
         self.server.motor.signals.lim_max.info.connect(self.ui_elements.ledLimMax.setProperty)
+        # self.server.motor.signals.lim_max.status.connect(lambda val: logger.warning("Limit switch MAX activated") if val else logger.warning("Limit switch MAX deactivated"))
         self.server.motor.signals.position.string.connect(self.ui_elements.lblPosition_val.setText)
         self.server.motor.signals.position.value.connect(self.ui_elements.posSlider.setValue)
         self.server.motor.signals.encoder.connect(self.ui_elements.lblEncoder_val.setText)
