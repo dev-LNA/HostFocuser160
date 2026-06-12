@@ -30,7 +30,8 @@ from src.utils.constants import ServerJsonKeys as SJson
 from src.utils.signals import PropertySignals, MultiSignal
 from src.utils.motor import Motor
 from src.interface.zmq_comm import zmqComm
-
+from src.core.log import init_logging
+from logging import shutdown
 import socket
 
 from src.utils.constants import MotorProgramStatus, motor_program_errors_mask, MotorAlarmInfo  #TODO: remover apos teste
@@ -83,6 +84,8 @@ class ServerSignals(QObject):
 
     processing_command = PropertySignals()
 
+    create_new_log = pyqtSignal(bool)
+
     teste = PropertySignals()
 
 class Server(QObject):
@@ -109,6 +112,7 @@ class Server(QObject):
         self.last_pub_time:datetime = datetime.now()                  #|
         self._flag_change = False                       #|
         self._driver_timeout = False
+        self._log_creation_day: int = 0
 
         # Variables for status request
         self._client_id = 0 # '0' 
@@ -630,8 +634,18 @@ class Server(QObject):
         self.status[SJson.CONNECTED] = self.motor.connected
         while self._stop_loop == False:
             t0 = time.time()                                        # Keeps the time when the loop began
+            
             current_time = datetime.now()                           # Reads current time
             
+            print(current_time.day)
+            # print(self.logger.handlers[len(self.logger.handlers)-1].day)
+            # if current_time.day != self.logger.handlers[len(self.logger.handlers)-1].day:
+            #     if current_time.minute > 14:
+            #         self.logger = init_logging()
+            if current_time.day != self.logger.creation_day:
+                if current_time.minute > 14:
+                    self.logger = init_logging()
+
             try:
 
                 if abs(current_time.second - self.last_pub_time.second) >= Config.pub_interval and self.server_online:   # Publishes status every second
