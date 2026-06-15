@@ -2,7 +2,7 @@ name: Build with Spec File
 
 on:
   push:
-    branches: [ "main" ]
+    branches: [ "build_test" ]
   pull_request:
     branches: [ "main" ]
 
