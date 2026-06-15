@@ -1,7 +1,7 @@
 import string
 from PyQt6 import uic
-from PyQt6.QtWidgets import QDialog, QLineEdit, QPushButton, QMessageBox, QCheckBox, QDialogButtonBox, QLabel
-from PyQt6.QtCore import pyqtSignal
+from PyQt6.QtWidgets import QDialog, QLineEdit, QPushButton, QMessageBox, QCheckBox, QDialogButtonBox, QLabel, QListWidget, QListWidgetItem, QToolButton
+from PyQt6.QtCore import pyqtSignal, Qt
 
 from configparser import ConfigParser
 import sys
@@ -70,6 +70,25 @@ class LoadConfigForm(QDialog):
 
         self.lblInfo: QLabel = self.findChild(QLabel, 'lblInfo')
 
+        self.btnSelectParameters: QToolButton = self.findChild(QToolButton, 'btnSelectParameters')
+
+        self.btnRemoveParameters: QToolButton = self.findChild(QToolButton, 'btnRemoveParameters')
+
+        self.btnSelectParameters.clicked.connect(self._add_selected_items)
+        self.btnRemoveParameters.clicked.connect(self._remove_parameters)
+
+        # List widgets
+        self.listParameters: QListWidget = self.findChild(QListWidget, 'listParameters')
+        self.listSelectedParameters: QListWidget = self.findChild(QListWidget, 'listSelectedParameters')
+        self.listSelectedParameters.itemChanged.connect(self._validate_selected_param)
+
+        # for i in range(self.listParameters.count()):
+        #     item = self.listParameters.item(i)
+        #     for setting in ConfigurableSettings:
+                
+        #     item.setData(Qt.ItemDataRole.UserRole, )
+
+        
         self.check_list = (self.cbIpAddress, self.cbBacklash, self.cbPosMax, self.cbPark,
                            self.cbMaxSpeed, self.cbNormalSpeed, self.cbMinSpeed, self.cbAcceleration,
                            self.cbDeceleration, self.cbIdleCurrent, self.cbRunCurrent, self.cbAccCurrent,
@@ -78,19 +97,54 @@ class LoadConfigForm(QDialog):
         self.buttonBox.accepted.connect(self.accept)
         self.buttonBox.rejected.connect(self.reject)
 
-        self.lblInfo.setText(f"Checked items will be changed to its {message} value")
+        self.lblInfo.setText(f"Selected parameters will be changed to its {message} value   ")
+        self.setWindowTitle(message)
 
         #Variables
         self.selected_items=[]
 
     def accept(self):
-        for c in self.check_list:
-            if c.isChecked():
-                self.selected_items.append(c.property('TAG'))   # Gets the TAG for each selected item
+        # for c in self.check_list:
+        #     if c.isChecked():
+        #         self.selected_items.append(c.property('TAG'))   # Gets the TAG for each selected item
         
+        # for sel in self.selected_items:
+        #     print(f"{sel} selected")
+
+        # self._signal_selected_list.emit(self.selected_items)
+
+        for i in range(self.listSelectedParameters.count()):
+            item = self.listSelectedParameters.item(i)
+            self.selected_items.append(item.statusTip())
+        
+        self._signal_selected_list.emit(self.selected_items)
+
         for sel in self.selected_items:
             print(f"{sel} selected")
-
-        self._signal_selected_list.emit(self.selected_items)
         
         return super().accept()
+    
+    def _add_selected_items(self):
+        for i in range(self.listParameters.count()):
+            item = self.listParameters.item(i)
+            if item.isSelected():
+                self.listSelectedParameters.addItem(item)
+                pass
+
+    def _remove_parameters(self):
+        self.listSelectedParameters.clear()
+
+    def _validate_selected_param(self, item: QListWidgetItem):
+        """Avoids duplicated parameters being put on the selected param list
+
+        :param item: Item added to the list
+        :type item: QListWidgetItem
+        """
+        print(item.statusTip())
+        items = self.listSelectedParameters.findItems(item.text(), Qt.MatchFlag.MatchExactly)
+        # If more than one instance of the item is present on the list removes the last instance
+        if len(items) > 1:
+            item = self.listSelectedParameters.takeItem(self.listSelectedParameters.row(item))
+            del item
+
+        

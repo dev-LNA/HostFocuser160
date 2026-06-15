@@ -866,7 +866,7 @@ class RetrieveSettings(QThread):
         super().__init__()
 
         self.motor = motor
-        self.motor_data = Motor()
+        self.motor_data = Motor(self.motor.model)
 
     def run(self):
         p = 0

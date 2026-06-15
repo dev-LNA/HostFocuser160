@@ -18,7 +18,8 @@ from PyQt6.QtWidgets import (
     QStackedWidget,
     QRadioButton,
     QSpinBox,
-    QDoubleSpinBox)
+    QDoubleSpinBox,
+    QListWidget)
 
 
 
@@ -336,6 +337,7 @@ class UiWidgets(QWidget):
 
             self.btnSendCommand = window.findChild(QPushButton, 'btnSendCommand')
             self.btnSendCommand: QPushButton = self.btnSendCommand
+
 
 
 

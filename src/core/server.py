@@ -639,8 +639,8 @@ class Server(QObject):
             
             # A new log file must be created at noon if the log reference date
             # is different from the current date
-            if current_time.day != self.logger.reference_date:
-                if current_time.hour > 12:
+            if current_time.day != self.logger.reference_date.day:
+                if current_time.hour >= 12:
                     self.logger = init_logging()
 
             try:
