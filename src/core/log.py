@@ -30,7 +30,7 @@ def init_logging():
 
     # The log file path name is saved according to its start reference date
     # log_path = f"logs/focuser_{datetime.now().strftime("%Y_%m_%d")}"
-    log_path = f"logs/focuser_{log_reference_date.strftime("%Y_%m_%d")}"
+    log_path = f"logs/focuser_{log_reference_date.strftime("%Y_%m_%d")}.log"
 
     try:
         #TODO: Adicionar lógica para que um novo arquivo de logger seja

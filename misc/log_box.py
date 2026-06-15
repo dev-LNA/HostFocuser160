@@ -2,7 +2,10 @@ from PyQt6 import uic
 from PyQt6.QtCore import pyqtSignal
 from PyQt6.QtWidgets import (
     QWidget, 
-    QTextEdit,)
+    QTextEdit,
+    QLineEdit,
+    QPushButton,
+    QFileDialog)
 
 
 import os
@@ -35,6 +38,30 @@ class LogBox(QWidget):
 
         self.txtLog = self.findChild(QTextEdit, 'txtLog')
         self.txtLog: QTextEdit = self.txtLog
+
+        self.txtPath: QLineEdit = self.findChild(QLineEdit, "txtPath")
+
+        self.btnSearch: QPushButton = self.findChild(QPushButton, "btnSearch")
+
+        self.btnSearch.clicked.connect(self._search_log_file)
+
+    def _search_log_file(self):
+        file_name, _ = QFileDialog.getOpenFileName(
+            self, 
+            "Open File", 
+            "", 
+            "Log Files (*.log)"
+        )
+        if file_name:
+            self.txtPath.setText(file_name)
+            self._read_log_file(file_name)
+
+    def _read_log_file(self, file_path):
+        """Open LOG file and read its content"""
+        with open(file_path, "r") as file:                  # Opens log file in read only mode  
+            log_content = file.read()                           # Saves log content
+            self.txtLog.setPlainText(log_content)       # Puts the log content in the log window text box
+            file.close()                                        # Closes the log file
 
 
     def closeEvent(self, a0):

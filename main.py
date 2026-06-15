@@ -447,7 +447,8 @@ class FocuserOPD (QMainWindow):
         if checked is True:                                 #TODO: Abre por padrão o último logger (o da data atual caso exista), mas possibita a abertura de outros logs de outras datas
             try:
                 if logger.path is not None:               # Checks if the log file path is defined
-                    self._read_log_file(logger.path)          # Reads the log file and saves its content
+                    self.log_box._read_log_file(logger.path)          # Reads the log file and saves its content
+                    self.log_box.txtPath.setText(logger.path)
                     self.log_box.show()                         # Show log content in a separate window
                 else:                                       # If the log file path is not defined
                     QMessageBox.information(                                            
@@ -465,12 +466,12 @@ class FocuserOPD (QMainWindow):
         """Guarantees that the action is unchecked if the Log Box is closed by pressing the X button"""
         self.ui_elements.actionShow_Log.setChecked(False)                   # Unchecks logBox action when the logBox is closed
 
-    def _read_log_file(self, file_path):
-        """Open LOG file and read its content"""
-        with open(file_path, "r") as file:                  # Opens log file in read only mode  
-            log_content = file.read()                           # Saves log content
-            self.log_box.txtLog.setPlainText(log_content)       # Puts the log content in the log window text box
-            file.close()                                        # Closes the log file
+    # def _read_log_file(self, file_path):
+    #     """Open LOG file and read its content"""
+    #     with open(file_path, "r") as file:                  # Opens log file in read only mode  
+    #         log_content = file.read()                           # Saves log content
+    #         self.log_box.txtLog.setPlainText(log_content)       # Puts the log content in the log window text box
+    #         file.close()                                        # Closes the log file
 
     def _run_simulator(self, checked):
         """Opens the simulator window"""
