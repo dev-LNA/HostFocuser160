@@ -74,13 +74,20 @@ class LoadConfigForm(QDialog):
 
         self.btnRemoveParameters: QToolButton = self.findChild(QToolButton, 'btnRemoveParameters')
 
+        self.btnAddAll: QToolButton = self.findChild(QToolButton, 'btnAddAll')
+
         self.btnSelectParameters.clicked.connect(self._add_selected_items)
-        self.btnRemoveParameters.clicked.connect(self._remove_parameters)
+        self.btnRemoveParameters.clicked.connect(self._remove_all_parameters)
+        self.btnAddAll.clicked.connect(self._add_all_parameters)
 
         # List widgets
         self.listParameters: QListWidget = self.findChild(QListWidget, 'listParameters')
         self.listSelectedParameters: QListWidget = self.findChild(QListWidget, 'listSelectedParameters')
+
+        self.listParameters.doubleClicked.connect(self._add_selected_items)
         self.listSelectedParameters.itemChanged.connect(self._validate_selected_param)
+        self.listSelectedParameters.doubleClicked.connect(self._remove_parameter)
+
 
         # for i in range(self.listParameters.count()):
         #     item = self.listParameters.item(i)
@@ -124,15 +131,20 @@ class LoadConfigForm(QDialog):
         
         return super().accept()
     
-    def _add_selected_items(self):
-        for i in range(self.listParameters.count()):
-            item = self.listParameters.item(i)
-            if item.isSelected():
-                self.listSelectedParameters.addItem(item)
-                pass
+    def _add_all_parameters(self):
+        self.listParameters.selectAll()
+        self._add_selected_items()
+        self.listParameters.clearSelection()
 
-    def _remove_parameters(self):
-        self.listSelectedParameters.clear()
+    def _add_selected_items(self):
+
+        selected_items = self.listParameters.selectedItems()
+
+        for item in selected_items:
+            item_clone = item.clone()
+            self.listSelectedParameters.addItem(item_clone)
+            self._validate_selected_param(item_clone)
+
 
     def _validate_selected_param(self, item: QListWidgetItem):
         """Avoids duplicated parameters being put on the selected param list
@@ -140,11 +152,17 @@ class LoadConfigForm(QDialog):
         :param item: Item added to the list
         :type item: QListWidgetItem
         """
-        print(item.statusTip())
+        
         items = self.listSelectedParameters.findItems(item.text(), Qt.MatchFlag.MatchExactly)
         # If more than one instance of the item is present on the list removes the last instance
         if len(items) > 1:
             item = self.listSelectedParameters.takeItem(self.listSelectedParameters.row(item))
             del item
 
-        
+    def _remove_all_parameters(self):
+        self.listSelectedParameters.clear()
+    
+    def _remove_parameter(self):
+        selected_item = self.listSelectedParameters.selectedIndexes()[0]
+        item = self.listSelectedParameters.takeItem(selected_item.row())
+        del item
