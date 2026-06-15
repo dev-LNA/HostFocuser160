@@ -637,13 +637,10 @@ class Server(QObject):
             
             current_time = datetime.now()                           # Reads current time
             
-            print(current_time.day)
-            # print(self.logger.handlers[len(self.logger.handlers)-1].day)
-            # if current_time.day != self.logger.handlers[len(self.logger.handlers)-1].day:
-            #     if current_time.minute > 14:
-            #         self.logger = init_logging()
-            if current_time.day != self.logger.creation_day:
-                if current_time.minute > 14:
+            # A new log file must be created at noon if the log reference date
+            # is different from the current date
+            if current_time.day != self.logger.reference_date:
+                if current_time.hour > 12:
                     self.logger = init_logging()
 
             try:

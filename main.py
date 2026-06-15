@@ -90,7 +90,7 @@ class FocuserOPD (QMainWindow):
         self.log_box.closed.connect(self._closed_log_box)               # Signal to inform the main window that the log box was closed by pressing the X button            
         self.load_window = None                 # Initialize load window as None    
 
-        self.log_file = r"logs/focuser.log"                             # Path to log file              # TODO: inicializar o arquivo com o nome padronizado, de acordo com a data (dia inicia ao meio dia)
+        # self.log_file = r"logs/focuser.log"                             # Path to log file              # TODO: inicializar o arquivo com o nome padronizado, de acordo com a data (dia inicia ao meio dia)
 
         self.server = Server(logger)
 
@@ -446,8 +446,8 @@ class FocuserOPD (QMainWindow):
         """
         if checked is True:                                 #TODO: Abre por padrão o último logger (o da data atual caso exista), mas possibita a abertura de outros logs de outras datas
             try:
-                if self.log_file is not None:               # Checks if the log file path is defined
-                    self._read_log_file(self.log_file)          # Reads the log file and saves its content
+                if logger.path is not None:               # Checks if the log file path is defined
+                    self._read_log_file(logger.path)          # Reads the log file and saves its content
                     self.log_box.show()                         # Show log content in a separate window
                 else:                                       # If the log file path is not defined
                     QMessageBox.information(                                            
