@@ -1,6 +1,6 @@
 from PyQt6 import QtWidgets, uic
 from PyQt6.QtCore import pyqtSignal, QThreadPool, QEvent, QObject
-from PyQt6.QtWidgets import QPushButton, QLineEdit, QProgressBar, QTextEdit, QLabel, QStackedWidget
+from PyQt6.QtWidgets import QPushButton, QLineEdit, QProgressBar, QTextEdit, QLabel, QStackedWidget, QSpinBox
 
 from src.core.config import Config
 
@@ -55,8 +55,8 @@ class ClientSimulator(QtWidgets.QMainWindow):
     # Associate UI variables to allow intellisense with PyQt Widgets
         self.btnMove = self.findChild(QtWidgets.QPushButton, 'btnMove')
         self.btnMove: QPushButton = self.btnMove
-        self.btnConnect = self.findChild(QtWidgets.QPushButton, 'btnConnect')
-        self.btnConnect: QPushButton = self.btnConnect
+        # self.btnConnect = self.findChild(QtWidgets.QPushButton, 'btnConnect')
+        # self.btnConnect: QPushButton = self.btnConnect
         self.btnHalt = self.findChild(QtWidgets.QPushButton, 'btnHalt')
         self.btnHalt: QPushButton = self.btnHalt
         self.btnHome = self.findChild(QtWidgets.QPushButton, 'btnHome')
@@ -105,11 +105,22 @@ class ClientSimulator(QtWidgets.QMainWindow):
 
         self.stsBar = self.findChild(QtWidgets.QStatusBar, 'stsBar')
         self.stsBar: QStackedWidget = self.stsBar
+
+        self.sbMovePos: QSpinBox = self.findChild(QSpinBox, "sbMovePos")
+
+        self.ledFocusIn: QLabel = self.findChild(QLabel, "ledFocusIn")
+        self.ledFocusIn.installEventFilter(self)
+
+        self.ledFocusOut: QLabel = self.findChild(QLabel, "ledFocusOut")
+        self.ledFocusOut.installEventFilter(self)
+
+        self.sbFocusPos: QSpinBox = self.findChild(QSpinBox, "sbFocusPos")
+
         
     # Configure Widgets and Widgets Actions
         self.btnMove.clicked.connect(self._move_to)
         self.btnMove.setStatusTip("Set focus position")
-        self.btnConnect.clicked.connect(self._connect)
+        # self.btnConnect.clicked.connect(self._connect)
         self.btnHalt.clicked.connect(self._halt)
         self.btnHome.clicked.connect(self._home)
         self.btnUp.clicked.connect(self._move_out)
@@ -118,8 +129,10 @@ class ClientSimulator(QtWidgets.QMainWindow):
         self.btnUpdateStatus.clicked.connect(self._get_status)
         self.btnHome_Park.clicked.connect(self._home_park)
 
-        self.BarFocuser.setStyleSheet("QProgressBar::chunk { background-color: rgb(26, 26, 26) } QProgressBar { color: indianred; }")
+        # self.BarFocuser.setStyleSheet("QProgressBar::chunk { background-color: rgb(26, 26, 26) } QProgressBar { color: indianred; }")
         self.BarFocuser.setTextDirection(QProgressBar.Direction.BottomToTop) 
+        self.BarFocuser.setMaximum(2510)
+        self.BarFocuser.setMinimum(-200)
                             
         self.txtClientIp.setText(_get_private_ip())                      # Considers the Ip of the current machine
         self.txtClientIp.returnPressed.connect(self._clientIpDefined)    # Configures event of return key press
@@ -138,6 +151,7 @@ class ClientSimulator(QtWidgets.QMainWindow):
         self.statMov_2.installEventFilter(self)
         self.statBusy_2.installEventFilter(self)
         self.statInit_2.installEventFilter(self)
+        self.BarFocuser.installEventFilter(self)
 
         # self.context = zmq.Context()       
         self.context = None
@@ -219,7 +233,8 @@ class ClientSimulator(QtWidgets.QMainWindow):
             self._updater = Updater(poller=self.poller, subscriber=self.subscriber)          # Creates Updater thread
             self._updater.signals.message.connect(self.txtStatus.setText)                    # Updates status text box with updated message
             self._updater.signals.position.connect(self.BarFocuser.setValue)                 # Updates bar value with position
-            self._updater.signals.clientID.connect(self.statBusy_2.setText)                  # Updates client Id
+            self._updater.signals.position.connect(self.sbFocusPos.setValue)                 # Updates value with position
+            # self._updater.signals.clientID.connect(self.statBusy_2.setText)                  # Updates client Id
             self._updater.signals.lbl_clientId_style.connect(self.statBusy_2.setProperty)  # Updates style of client Id label according to status
             self._updater.signals.connected.connect(self._update_connect_status)
             self._updater.signals.lbl_conn_style.connect(self.statConn_2.setProperty)      #
@@ -227,6 +242,8 @@ class ClientSimulator(QtWidgets.QMainWindow):
             self._updater.signals.lbl_init_style.connect(self.statInit_2.setProperty)
             self._updater.signals.is_moving.connect(self._update_moving_status)
             self._updater.signals.lbl_mov_style.connect(self.statMov_2.setProperty)
+            self._updater.signals.focus_in_status.connect(self.ledFocusIn.setProperty)
+            self._updater.signals.focus_out_status.connect(self.ledFocusOut.setProperty)
             
             self._sender = ReqSender(req=self.req)
             self._sender.signals.timeout_error.connect(self._reset_client_context)
@@ -326,22 +343,26 @@ class ClientSimulator(QtWidgets.QMainWindow):
 
     def _move_to(self):
         # if not self.is_moving:
-        pos = self.txtMov.text()
+        pos = self.sbMovePos.text()
         self._send_command(f"MOVE={pos}")
 
     def _move_in(self):
-        # if not self.is_moving:
-        if TEST_SETUP:
-            self._send_command("FOCUSIN=10")   #TEST_VALUE -> ORIGINAL VALUE => FOCUSIN=200
+        if not self.is_moving:
+            if TEST_SETUP:
+                self._send_command("FOCUSIN=10")   #TEST_VALUE -> ORIGINAL VALUE => FOCUSIN=200
+            else:
+                self._send_command("FOCUSIN=200")
         else:
-            self._send_command("FOCUSIN=200")
+            self._send_command("HALT")
 
     def _move_out(self):
-        # if not self.is_moving:
-        if TEST_SETUP:
-            self._send_command("FOCUSOUT=10")  #TEST_VALUE -> ORIGINAL VALUE => FOCUSOUT=200
+        if not self.is_moving:
+            if TEST_SETUP:
+                self._send_command("FOCUSOUT=10")  #TEST_VALUE -> ORIGINAL VALUE => FOCUSOUT=200
+            else:
+                self._send_command("FOCUSOUT=200")
         else:
-            self._send_command("FOCUSOUT=200")
+            self._send_command("HALT")
                 
     def _get_status(self):
         if self._sender._send is False:                          # A new command is only sent if the last one was already sent
@@ -420,7 +441,6 @@ class ClientSimulator(QtWidgets.QMainWindow):
         self.sig.emit(self.client_ID)
         event.accept()
 
-
 def _get_private_ip():
     """
     Gets the IP address of the PC running the program.
@@ -435,3 +455,6 @@ def _get_private_ip():
             ip = '127.0.0.1'                            #TODO: Mostrar uma mensagem de erro?
         st.close()
     return ip
+
+
+

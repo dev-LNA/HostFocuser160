@@ -661,7 +661,7 @@ class Server(QObject):
                             parsed_cmd = self._parse_client_command(msg_json)                   # Parses client command
                             self._command_validation(parsed_cmd)                                # Validates the received command
                             self._handle_command(parsed_cmd)                                    # Executes the command
-                            self.status[SJson.CMD] = msg_json                                   # Updates status with the current command being executed                         
+                            self.status[SJson.CMD] = msg_json                                   # Updates status with the current command being executed
                             self.zmq_comm.reply('ACK')                                          # Replies 'ACK' to inform the client that everything went ok
                             # self.signals.last_command.emit(self.status)
                             self.signals.last_command.emit(self.last_command)
@@ -851,7 +851,7 @@ class Server(QObject):
             self.status[SJson.CMD][SJson.CMD_CLIENT_ID] = 0
             self.status[SJson.CMD][SJson.CMD_CLIENT_TRANSACTION_ID] = 0
             self.status[SJson.CMD][SJson.CMD_CLIENT_NAME] = ''
-        self.status[SJson.CMD][SJson.CMD_ACTION] = ''
+            self.status[SJson.CMD][SJson.CMD_ACTION] = ''
 
 
     def _log_update(self, val: bool):
