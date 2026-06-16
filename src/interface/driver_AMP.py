@@ -346,7 +346,7 @@ class DriverAMP(Driver):
             else:
                 return str(self._convert_pos(25389.8 - Config.park_pos * POSITION_COMMAND_CONVERSION)  )
 
-        value = 25389.8 - POSITION_COMMAND_CONVERSION * value   # Conversão necessária devido a montagem mecânica 
+        value = 25389.8 - POSITION_COMMAND_CONVERSION * value * 10   # Conversão necessária devido a montagem mecânica 
         
         value = value / Config.enc_2_microns
         value = int(value / Config.steps_2_encoder)
