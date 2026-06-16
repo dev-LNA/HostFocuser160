@@ -14,7 +14,7 @@ from threading import Lock, Thread, Timer
 
 from src.core.config import Config
 from src.core.exceptions import DriverException
-from src.utils.constants import constants, MotorStatusFlags, MotorParamsIdx, MotorAlarmInfo, motor_program_errors_mask, motor_alc_errors_mask, POSITION_COMMAND_CONVERSION, POSITION_VISUALIZATION_CONVERTION
+from src.utils.constants import constants, MotorStatusFlags, MotorParamsIdx, MotorAlarmInfo, motor_program_errors_mask, motor_alc_errors_mask, Conversion
 from src.utils.modbus_regs import RegsInfo, RegType, coils_regs, dig_inputs_regs, DB_size, CLP_Owned, TwosComplementReg, param_vars
 
 from enum import IntFlag
@@ -205,12 +205,13 @@ class DriverAMP(Driver):
         # pos = int(round(encoder_pos / Config.enc_2_microns))
         if type == "int":
             # Conversão necessário devido a montagem mecânica
-            pos = 2510 - int(round(encoder_pos * Config.enc_2_microns * POSITION_VISUALIZATION_CONVERTION))
-            # pos = int(round(encoder_pos * Config.enc_2_microns))
+            # pos = 2510 - int(round(encoder_pos * Config.enc_2_microns * Conversion.POSITION_VISUALIZATION))
+            pos = int(self.param_max_pos()) - int(round(encoder_pos * Config.enc_2_microns * Conversion.POSITION_VISUALIZATION))
         else:
             # Conversão necessário devido a montagem mecânica
-            pos = 2510 - round(encoder_pos * Config.enc_2_microns * POSITION_VISUALIZATION_CONVERTION, 1)
-            # pos = round(encoder_pos * Config.enc_2_microns, 1)
+            # pos = 2510 - round(encoder_pos * Config.enc_2_microns * Conversion.POSITION_VISUALIZATION, 1)
+
+            pos = int(self.param_max_pos()) - round(encoder_pos * Config.enc_2_microns * Conversion.POSITION_VISUALIZATION, 1)
         return pos
     
     def set_position(self, position: int) -> str:
@@ -322,13 +323,26 @@ class DriverAMP(Driver):
             if converted == False:
                 return str(Config.max_pos)
             else:
-                return str(self._convert_pos(Config.max_pos / POSITION_VISUALIZATION_CONVERTION)  )
+                return str(self._convert_pos(Config.max_pos / Conversion.POSITION_VISUALIZATION)  )
+
+        Conversion.POSITION_VISUALIZATION = (value - 1456) / 10661.7
+        Conversion.POSITION_COMMAND = 1 / Conversion.POSITION_VISUALIZATION
+
+        print('-' * 50)
+        print(f"VALUE: {value}")
+        print(f"POSITION VISUALIZATION: {Conversion.POSITION_VISUALIZATION}")
+        print(f"POSITION COMMAND: {Conversion.POSITION_COMMAND}")
+        
 
 
-        # value = 25389.8 - value * POSITION_COMMAND_CONVERSION   # Conversão necessária devido a montagem mecânica
-        value = value / POSITION_VISUALIZATION_CONVERTION   # Conversao para enviar para o CLP
+        # value = (Config.max_pos * Conversion.POSITION_COMMAND) - value * Conversion.POSITION_COMMAND   # Conversão necessária devido a montagem mecânica
+        value = value / Conversion.POSITION_VISUALIZATION   # Conversao para enviar para o CLP
         value = value / Config.enc_2_microns
         value = int(value / Config.steps_2_encoder)
+
+        print(f"VALUE MOTOR: {value}")
+
+        print('-' * 50)
 
         return self.mb_server.write_param(dig_inputs_regs.TX_V71, value)
             
@@ -344,9 +358,9 @@ class DriverAMP(Driver):
             if converted == False:
                 return str(Config.park_pos)
             else:
-                return str(self._convert_pos(25389.8 - Config.park_pos * POSITION_COMMAND_CONVERSION)  )
+                return str(self._convert_pos((Config.max_pos * Conversion.POSITION_COMMAND) - Config.park_pos * Conversion.POSITION_COMMAND)  )
 
-        value = 25389.8 - POSITION_COMMAND_CONVERSION * value * 10   # Conversão necessária devido a montagem mecânica 
+        value = (Config.max_pos * Conversion.POSITION_COMMAND) - Conversion.POSITION_COMMAND * value   # Conversão necessária devido a montagem mecânica 
         
         value = value / Config.enc_2_microns
         value = int(value / Config.steps_2_encoder)
@@ -665,7 +679,7 @@ class DriverAMP(Driver):
         elif pos > Config.max_pos:
             pos = Config.max_pos
         # Sends the position value to the CLP, and then sends the command to start the movement towards the target position
-        command_position = 25389.8 - POSITION_COMMAND_CONVERSION * 10*int(pos)   # Conversão necessária devido a montagem mecânica  
+        command_position = (Config.max_pos * Conversion.POSITION_COMMAND) - Conversion.POSITION_COMMAND * int(pos)   # Conversão necessária devido a montagem mecânica  
 
         print(f"Moving to position {pos} microns - Command position value: {command_position}")
 

@@ -46,7 +46,12 @@ class TimeoutState(Enum):
 # Due to the mechanical mounting the relative positions must be converted to allow
 # operators to use previously defined positions in the software
 POSITION_VISUALIZATION_CONVERTION = 0.09885853    # Convertion from value to PUB and DISPLAY
-POSITION_COMMAND_CONVERSION = 1.011546     # Convertion from received command to value to be sent to the motor
+POSITION_COMMAND_CONVERSION = 10.11546     # Convertion from received command to value to be sent to the motor
+
+@dataclass
+class Conversion():
+    POSITION_VISUALIZATION: float = 0.09885853    # Conversion from value to PUB and DISPLAY
+    POSITION_COMMAND: float = 10.11546     # Convertion from received command to value to be sent to the motor
 
 class FocuserSignalsNames(StrEnum):
     LIM_SWITCH_MIN = auto()
