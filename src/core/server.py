@@ -160,7 +160,7 @@ class Server(QObject):
                 SJson.HOMING: False,            # Homing solicited
                 SJson.INITIALIZED: False,       # Homing finalized
                 SJson.IS_MOVING: False,          # Executing a function inside the motor
-                SJson.MAX_SPEED: Config.max_speed,
+                SJson.MAX_SPEED: Config.normal_speed,
                 SJson.MAX_STEP: Config.max_step,
                 SJson.POSITION: 0,
                 SJson.TEMP_COMP: Config.temp_comp,
@@ -598,8 +598,8 @@ class Server(QObject):
             if param in MotorParamsIdx:
                 self.motor.get_param(param)
         self.status[SJson.DEVICE_IP] = self.motor.parameters[MotorParamsIdx.MOTOR_IP].VALUE
-        self.status[SJson.MAX_SPEED] = self.motor.parameters[MotorParamsIdx.MAX_SPEED].VALUE
-        self.status[SJson.MAX_STEP] = self.motor.parameters[MotorParamsIdx.MAX_STEP].VALUE
+        self.status[SJson.MAX_SPEED] = int(self.motor.parameters[MotorParamsIdx.NORMAL_SPEED].VALUE)     # The movements configured by tcs use the normal speed
+        self.status[SJson.MAX_STEP] = int(self.motor.parameters[MotorParamsIdx.MAX_POS].VALUE)
 
     # def _update_motor_params(self):
     #     """Sends to the CLP the updated values of the configurations"""

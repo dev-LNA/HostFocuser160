@@ -13,7 +13,7 @@ import shutil
 from src.core.server import Server
 from misc.client_sample import ClientSimulator
 from misc.ui_intellisense import UiWidgets
-from src.utils.constants import constants, DynamicProperties, Conversion
+from src.utils.constants import constants, DynamicProperties, Conversion, MotorParamsIdx
 from src.utils.constants import ServerJsonKeys as SJson
 from src.utils.motor import MotorModels
 
@@ -565,17 +565,24 @@ class FocuserOPD (QMainWindow):
 
     def _parse_changed_settings(self, data: dict):
         """Parses the settings that were changed in the moto configuration and updates GUI elements that depends on the settings
+        Also updates the server status if a variable that is published in the ZMQ is changed.
 
         :param data: Dictionary with all the changed settings
         :type data: dict
         """
-        if "MAX_POS" in data:                                                   # If the 'MAX_POS' is changed the slider must be resized accordingly
+        if  MotorParamsIdx.MAX_POS in data:                                                   # If the 'MAX_POS' is changed the slider must be resized accordingly
             if self.server.motor.model == MotorModels.ARCUS_DMX_ETH:                                      # If the motor model is 'ARCUS_DMX_ETH' the slider minimum value is set to -12, which is the maximum backlash configured for this motor
-                self.ui_elements.posSlider.setMaximum(int(data["MAX_POS"]) + 5)         # Sets slider max value
+                self.ui_elements.posSlider.setMaximum(int(data[MotorParamsIdx.MAX_POS]) + 5)         # Sets slider max value
                 self.ui_elements.posSlider.setMinimum(-12)                              # Sets slider min value #TODO: Acho que esse valor vai ser dependente do 'backlash'
             else:
-                self.ui_elements.posSlider.setMaximum(Conversion.POSITION_VISUALIZATION * int(data["MAX_POS"]) + 5)         # Sets slider max value
+                self.ui_elements.posSlider.setMaximum(int(Conversion.POSITION_VISUALIZATION * data[MotorParamsIdx.MAX_POS]) + 5)         # Sets slider max value
                 self.ui_elements.posSlider.setMinimum(-12)                              # Sets slider min value #TODO: Acho que esse valor vai ser dependente do 'backlash'
+        
+        if self.server:
+            if MotorParamsIdx.NORMAL_SPEED in data:
+                    self.server.status[SJson.MAX_SPEED] = data[MotorParamsIdx.NORMAL_SPEED]
+            if MotorParamsIdx.MAX_POS in data:
+                    self.server.status[SJson.MAX_STEP] = data[MotorParamsIdx.MAX_POS]
 
     def _minimize_to_tray(self):
         """Minimize to tray"""
