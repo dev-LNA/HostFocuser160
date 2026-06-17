@@ -152,6 +152,8 @@ class DriverAMP(Driver):
 
                 self.mb_server.mb_comm.task_progress.connect(lambda value: self.motor.signals.progress.string.emit(value))
 
+                self.motor.signals.moving.status.connect(self._check_normal_speed)
+
                 self.mb_server.start()
 
                 self.mb_run_thread = Thread(target=self.mb_server.run)
@@ -191,6 +193,12 @@ class DriverAMP(Driver):
                 print(str(e))
                 raise (e)
 
+    def _check_normal_speed(self, moving:bool):
+        if moving:
+            val = self.mb_server._conv_reg_to_value(dig_inputs_regs.TX_V77, self.mb_server.data_bank)
+            if val != Config.normal_speed:
+                print('**********Setting normal speed back to original value**********')
+                self.mb_server.write_param(dig_inputs_regs.TX_V77, Config.normal_speed)
     
     def conv_position_show(self, encoder_pos: int = None, type: str = "int") -> int | float:
         """Reads motor encoder position and converts to microns
@@ -691,11 +699,37 @@ class DriverAMP(Driver):
 
     def focus_in(self, speed: str = None) -> str:
         """Precisa ser implementada pelo driver""" 
-        return self.mb_server.send_command(dig_inputs_regs.TX_GS21)
+        speed_int = int(speed)
+        if speed_int != Config.normal_speed:
+            if speed_int <= 0:
+                speed_int = 5
+
+            command_speed = self._convert_speed(speed_int)
+
+            if self.mb_server.write_param(dig_inputs_regs.TX_V77, command_speed) == "OK":
+                time.sleep(TimeDelays.WAIT_PARAM)
+                return self.mb_server.send_command(dig_inputs_regs.TX_GS21)
+            else:
+                return "NOK"
+        else:
+            return self.mb_server.send_command(dig_inputs_regs.TX_GS21)
     
     def focus_out(self, speed: str = None) -> str:
         """Precisa ser implementada pelo driver""" 
-        return self.mb_server.send_command(dig_inputs_regs.TX_GS20)
+        speed_int = int(speed)
+        if speed_int != Config.normal_speed:
+            if speed_int <= 0:
+                speed_int = 5
+
+            command_speed = self._convert_speed(speed_int)
+
+            if self.mb_server.write_param(dig_inputs_regs.TX_V77, command_speed) == "OK":
+                time.sleep(TimeDelays.WAIT_PARAM)
+                return self.mb_server.send_command(dig_inputs_regs.TX_GS20)
+            else:
+                return "NOK"
+        else:
+            return self.mb_server.send_command(dig_inputs_regs.TX_GS20)
     
     def halt(self) -> str:
         """Precisa ser implementada pelo driver""" 

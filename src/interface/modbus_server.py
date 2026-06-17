@@ -463,24 +463,15 @@ class IAGModbusServer(mbServer):
                 if binary_string[0] == '1':
                     int_val = int_val - (1 << reg.SIZE)
 
-            # # Two's complement only applies for some registers
-            # if reg.TAG.lower() in TwosComplementReg:
+        elif reg.TYPE is RegType.DISCRETE_INPUT:
+            bits = db.get_discrete_inputs(reg.ADDRESS, reg.SIZE)
+            binary_string = "".join(reversed([str(int(b)) for b in bits]))
+            # binary_string = "".join([str(int(b)) for b in bits])
+            int_val = int(binary_string, base=2)
 
-            #     bits = db.get_coils(reg.ADDRESS, reg.SIZE)
-            #     # binary_string = "".join(reversed([str(int(b)) for b in bits]))
-            #     binary_string = "".join([str(int(b)) for b in bits])
-            #     int_val = int(binary_string, base=2)
-
-
-            #     if binary_string[0] == '1':
-            #         int_val = int_val - (1 << reg.SIZE)
-
-            # else:
-
-            #     bits = db.get_coils(reg.ADDRESS, reg.SIZE)
-            #     binary_string = "".join(reversed([str(int(b)) for b in bits]))
-            #     # binary_string = "".join([str(int(b)) for b in bits])
-            #     int_val = int(binary_string, base=2)
+            if reg.SIZE == 32:
+                if binary_string[0] == '1':
+                    int_val = int_val - (1 << reg.SIZE)
 
         return int_val
 

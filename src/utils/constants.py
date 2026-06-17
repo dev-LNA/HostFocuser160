@@ -52,7 +52,7 @@ class Conversion():
 
 class TimeDelays(float, Enum):
     RETRY_TIMEOUT = 0.2         # TODO: Colocar como configuração?
-    WAIT_PARAM = 0.3            # Delay to ensure the parameter value is written to the CLP register before sending a related command
+    WAIT_PARAM = 0.35            # Delay to ensure the parameter value is written to the CLP register before sending a related command
     WAIT_CLP_RESPONSE = 0.1 # 0.2     # Time waiting for OK/NOK from CLP
     WAIT_CLP_PROCESS = 0.1  # 0.2      # Time for CLP to process information   
     WAIT_CLP_MIRROR = 0.1   #0.1       # Time for CLP to mirror the value to the response register

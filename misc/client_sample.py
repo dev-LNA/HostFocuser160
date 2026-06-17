@@ -1,6 +1,6 @@
 from PyQt6 import QtWidgets, uic
 from PyQt6.QtCore import pyqtSignal, QThreadPool, QEvent, QObject
-from PyQt6.QtWidgets import QPushButton, QLineEdit, QProgressBar, QTextEdit, QLabel, QStackedWidget, QSpinBox
+from PyQt6.QtWidgets import QPushButton, QLineEdit, QProgressBar, QTextEdit, QLabel, QStackedWidget, QSpinBox, QSlider, QDoubleSpinBox
 
 from src.core.config import Config
 
@@ -115,6 +115,13 @@ class ClientSimulator(QtWidgets.QMainWindow):
         self.ledFocusOut.installEventFilter(self)
 
         self.sbFocusPos: QSpinBox = self.findChild(QSpinBox, "sbFocusPos")
+
+        self.sbSpeed: QDoubleSpinBox = self.findChild(QDoubleSpinBox, 'sbSpeed')
+        self.sliderSpeed: QSlider = self.findChild(QSlider, 'sliderSpeed')
+
+        self.sliderSpeed.valueChanged.connect(lambda val: self.sbSpeed.setValue(val * 0.1))
+        self.sbSpeed.setValue(self.sliderSpeed.value() * 0.1)
+
 
         
     # Configure Widgets and Widgets Actions
@@ -347,20 +354,27 @@ class ClientSimulator(QtWidgets.QMainWindow):
         self._send_command(f"MOVE={pos}")
 
     def _move_in(self):
+        status = json.loads(self.txtStatus.toPlainText())
+        max_speed = int(status['maxSpeed'])                 # actually is the Normal speed configuration
         if not self.is_moving:
             if TEST_SETUP:
-                self._send_command("FOCUSIN=10")   #TEST_VALUE -> ORIGINAL VALUE => FOCUSIN=200
+                a = str(int(max_speed * self.sbSpeed.value() * 0.01))
+                print(f'%%%%%%%%%%%%%%%%%%%VALOR DE A = {a}')
+                print(f"ENVIANDO COMANDO: {f"FOCUSIN=" + f"{str(int(max_speed * self.sbSpeed.value() * 0.01))}"}")
+                self._send_command(f"FOCUSIN=" + f"{str(int(max_speed * self.sbSpeed.value() * 0.01))}")   #TEST_VALUE -> ORIGINAL VALUE => FOCUSIN=200
             else:
-                self._send_command("FOCUSIN=200")
+                self._send_command(f"FOCUSIN=" + f"{str(int(max_speed * self.sbSpeed.value() * 0.01))}")
         else:
             self._send_command("HALT")
 
     def _move_out(self):
+        status = json.loads(self.txtStatus.toPlainText())
+        max_speed = int(status['maxSpeed'])                 # actually is the Normal speed configuration
         if not self.is_moving:
             if TEST_SETUP:
-                self._send_command("FOCUSOUT=10")  #TEST_VALUE -> ORIGINAL VALUE => FOCUSOUT=200
+                self._send_command(f"FOCUSOUT="  + f"{str(int(max_speed * self.sbSpeed.value() * 0.01))}")  #TEST_VALUE -> ORIGINAL VALUE => FOCUSOUT=200
             else:
-                self._send_command("FOCUSOUT=200")
+                self._send_command(f"FOCUSOUT="  + f"{str(int(max_speed * self.sbSpeed.value() * 0.01))}")
         else:
             self._send_command("HALT")
                 
