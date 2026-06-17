@@ -311,7 +311,7 @@ class ClientSimulator(QtWidgets.QMainWindow):
             print(f"[ZMQ Client] Error establishing connection")
         
     
-    def _send_command(self, command: str, timeout: int=1500) -> str: #1500
+    def _send_command(self, command: str, timeout: int=5000) -> str: #1500
         try:
             self.transaction_ID += 1                                        #   Updates transaction ID
             self._sender.send_request(self, command, timeout)               #   Sets message

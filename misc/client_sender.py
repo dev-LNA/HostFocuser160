@@ -89,7 +89,7 @@ class ReqSender(QRunnable):
         self._running = False
 
     @pyqtSlot()
-    def send_request(self, client: misc.client_sample.ClientSimulator, action, timeout=1500):
+    def send_request(self, client: misc.client_sample.ClientSimulator, action, timeout=3000):
         if self._send is False:                 # Checks if a message is already being processed    #TODO: Implementar uma fila de comandos?
             self._clientId = client.client_ID
             self._clientTransactionId = client.transaction_ID

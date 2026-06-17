@@ -2,7 +2,7 @@ from pyModbusTCP.server import ModbusServer as mbServer
 from pyModbusTCP.server import DataBank
 from src.core.config import Config
 from src.utils.modbus_regs import dig_inputs_regs, coils_regs, RegsInfo, RegType, CLP_Owned, TwosComplementReg, param_vars, DB_size
-from src.utils.constants import CommandTimeout, TimeoutState
+from src.utils.constants import CommandTimeout, TimeoutState, TimeDelays
 from src.interface.modbus_data_bank import MB_DataBank
 
 
@@ -537,7 +537,7 @@ class IAGModbusServer(mbServer):
             #  called and the function returns "NOK"
             cmd_timer = time.time()
             while (time.time() - cmd_timer) < Config.cmd_timeout:
-                time.sleep(0.2)                 # When no time is applied the program has a peak of cpu usage when waiting 
+                time.sleep(TimeDelays.WAIT_CLP_RESPONSE)                 # When no time is applied the program has a peak of cpu usage when waiting 
                 if self.CLP_OK:
                     self._handle_command_OK(register)
                     return "OK"
@@ -601,7 +601,7 @@ class IAGModbusServer(mbServer):
     
         self.mb_comm.task_progress.emit(0)  # Just to update the progress bar in the GUI, it does not represent the actual writting progress
         progress = 0
-        time.sleep(0.2)     # Time for CLP to process information
+        time.sleep(TimeDelays.WAIT_CLP_PROCESS)  #0.2   # Time for CLP to process information
 
         for tries in range(2):
             # # self._start_writting_data()
@@ -621,7 +621,7 @@ class IAGModbusServer(mbServer):
                         p_dict = param_vars._asdict()
                         for p in params:
                             # if p[0].TAG in p_dict:
-                            time.sleep(0.1)     # Time for CLP to mirror the value to the response register
+                            time.sleep(TimeDelays.WAIT_CLP_MIRROR)     # Time for CLP to mirror the value to the response register
                             progress += 1    
                             self.mb_comm.task_progress.emit(int((progress / len(params)) * 100))  # Just to update the progress bar in the GUI, it does not represent the actual writting progress   
     
@@ -646,7 +646,7 @@ class IAGModbusServer(mbServer):
 
                                         # self._start_reading_data()
 
-                                        time.sleep(0.1)
+                                        time.sleep(TimeDelays.WAIT_CLP_MIRROR)
                                         if time.time() - t > 3:
                                             t_over = True
                                         
@@ -689,7 +689,7 @@ class IAGModbusServer(mbServer):
                 # while self.data_bank.get_coils(coils_regs.RX_READING.ADDRESS, coils_regs.RX_READING.SIZE)[0]:
                 print("Waiting for CLP to finish reading before writting...")
                 while self.CLP_reading:
-                    time.sleep(0.1)
+                    time.sleep(TimeDelays.WAIT_CLP_PROCESS)
                     if time.time() - t > Config.write_timeout:
                         # write_timeout = True
                         raise TimeoutError(f"Timeout trying to write parameter(s) to CLP. CLP was reading for more than {Config.write_timeout} seconds")

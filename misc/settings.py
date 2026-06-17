@@ -15,7 +15,7 @@ from misc.verification import VerificationDialog
 # from src.interface.focuser_driver import FocuserDriver
 from src.core.config import Config, get_toml, update_config
 
-from src.utils.constants import constants, MotorModels, MotorParamsIdx, ServerParamsIdx, POSITION_VISUALIZATION_CONVERTION
+from src.utils.constants import constants, MotorModels, MotorParamsIdx, ServerParamsIdx, Conversion
 from src.interface.motor_driver import Driver
 from src.utils.motor import Motor
 
@@ -759,8 +759,8 @@ class SettingsWindow(QMainWindow):
         self._config_settings.BACKLASH.OBJ.setMaximum(int(150 * Config.steps_2_encoder * Config.enc_2_microns))
         
         # Max pos limits 6000~12600 steps
-        self._config_settings.MAX_POS.OBJ.setMinimum(int(8000 * Config.steps_2_encoder * Config.enc_2_microns * POSITION_VISUALIZATION_CONVERTION))
-        self._config_settings.MAX_POS.OBJ.setMaximum(int(12700 * Config.steps_2_encoder * Config.enc_2_microns * POSITION_VISUALIZATION_CONVERTION))
+        self._config_settings.MAX_POS.OBJ.setMinimum(int(8000 * Config.steps_2_encoder * Config.enc_2_microns * 0.09885853)) # 0.09885853 is the conversion for the maximum possible configuration
+        self._config_settings.MAX_POS.OBJ.setMaximum(int(12700 * Config.steps_2_encoder * Config.enc_2_microns * 0.09885853))# 0.09885853 is the conversion for the maximum possible configuration
 
         # The Park position is limited by the maximum position
         self._config_settings.PARK_POS.OBJ.setMaximum(self._config_settings.MAX_POS.OBJ.value())

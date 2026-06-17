@@ -13,7 +13,7 @@ import shutil
 from src.core.server import Server
 from misc.client_sample import ClientSimulator
 from misc.ui_intellisense import UiWidgets
-from src.utils.constants import constants, DynamicProperties, POSITION_VISUALIZATION_CONVERTION
+from src.utils.constants import constants, DynamicProperties, Conversion
 from src.utils.constants import ServerJsonKeys as SJson
 from src.utils.motor import MotorModels
 
@@ -574,7 +574,7 @@ class FocuserOPD (QMainWindow):
                 self.ui_elements.posSlider.setMaximum(int(data["MAX_POS"]) + 5)         # Sets slider max value
                 self.ui_elements.posSlider.setMinimum(-12)                              # Sets slider min value #TODO: Acho que esse valor vai ser dependente do 'backlash'
             else:
-                self.ui_elements.posSlider.setMaximum(POSITION_VISUALIZATION_CONVERTION * int(data["MAX_POS"]) + 5)         # Sets slider max value
+                self.ui_elements.posSlider.setMaximum(Conversion.POSITION_VISUALIZATION * int(data["MAX_POS"]) + 5)         # Sets slider max value
                 self.ui_elements.posSlider.setMinimum(-12)                              # Sets slider min value #TODO: Acho que esse valor vai ser dependente do 'backlash'
 
     def _minimize_to_tray(self):

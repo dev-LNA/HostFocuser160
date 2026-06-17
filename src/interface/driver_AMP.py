@@ -14,7 +14,7 @@ from threading import Lock, Thread, Timer
 
 from src.core.config import Config
 from src.core.exceptions import DriverException
-from src.utils.constants import constants, MotorStatusFlags, MotorParamsIdx, MotorAlarmInfo, motor_program_errors_mask, motor_alc_errors_mask, Conversion
+from src.utils.constants import constants, MotorStatusFlags, MotorParamsIdx, MotorAlarmInfo, motor_program_errors_mask, motor_alc_errors_mask, Conversion, TimeDelays
 from src.utils.modbus_regs import RegsInfo, RegType, coils_regs, dig_inputs_regs, DB_size, CLP_Owned, TwosComplementReg, param_vars
 
 from enum import IntFlag
@@ -158,7 +158,7 @@ class DriverAMP(Driver):
                 self.mb_run_thread.start()
 
                 while self.mb_server.handshake is False and retries < max_retries:
-                    time.sleep(0.2)             # Delay between retries #TODO: colocar isso no arquivo de configuração config_IAG.toml
+                    time.sleep(TimeDelays.RETRY_TIMEOUT)             # Delay between retries #TODO: colocar isso no arquivo de configuração config_IAG.toml
                     retries += 1
 
                 # If the max retries was reached and the handshake was not made, closes the dummy server and 
@@ -179,7 +179,7 @@ class DriverAMP(Driver):
         else:
             try:
                 while self.mb_server.handshake is False and retries < max_retries:
-                    time.sleep(0.2)             # Delay between retries #TODO: colocar isso no arquivo de configuração config_IAG.toml
+                    time.sleep(TimeDelays.RETRY_TIMEOUT)             # Delay between retries #TODO: colocar isso no arquivo de configuração config_IAG.toml
                     retries += 1
                     print(f"***** HANDSHAKE VALUE == {self.mb_server.data_bank.get_coils(coils_regs.HANDSHAKE.ADDRESS, 1)}")
                 if retries >= max_retries:
@@ -684,7 +684,7 @@ class DriverAMP(Driver):
         print(f"Moving to position {pos} microns - Command position value: {command_position}")
 
         if self.mb_server.write_param(dig_inputs_regs.TX_V20, int(self._convert_pos(command_position))) == "OK":
-            time.sleep(1)   # Delay to ensure the position value is written to the CLP before sending the command to start the movement
+            time.sleep(TimeDelays.WAIT_PARAM)   # Delay to ensure the position value is written to the CLP before sending the command to start the movement
             return self.mb_server.send_command(dig_inputs_regs.TX_GS29)
         else:
             return "NOK"

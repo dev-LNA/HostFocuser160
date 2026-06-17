@@ -24,7 +24,7 @@ from threading import Thread
 from misc.client_sample import TEST_SETUP
 from src.core.config import Config
 import src.core.exceptions as AlpacaExceptions
-from src.utils.constants import POSITION_VISUALIZATION_CONVERTION, constants, MotorModels, ReachStatus, MotorParamsIdx, ServerCommands, MotorValidCommands, FocuserHardwareStatus, FocuserSignalsNames
+from src.utils.constants import constants, MotorModels, ReachStatus, MotorParamsIdx, ServerCommands, MotorValidCommands, FocuserHardwareStatus, FocuserSignalsNames, TimeDelays
 from src.utils.constants import ServerMessageValidation as SVal
 from src.utils.constants import ServerJsonKeys as SJson
 from src.utils.signals import PropertySignals, MultiSignal
@@ -473,7 +473,7 @@ class Server(QObject):
                 self.communicating_to_motor = False                                                     # Not communicating to the motor
                             
                 for _try in range(5):                                                                   # Tries 5 times to ping the router
-                    time.sleep(0.1)             # delay between tries                         
+                    time.sleep(TimeDelays.RETRY_TIMEOUT)             # delay between tries                         
                     self.signals.status_message.emit(f"Trying Connect to Router...")                      # Emits signals for GUI update
                     reachable = ping(Config.gateway_ip, count=1, timeout=0.6, privileged=False).is_alive         # Tries to ping the router IP
                     print(f'trying to ping gateway at {Config.gateway_ip}')
@@ -489,12 +489,12 @@ class Server(QObject):
     def _reach_motor(self):
         try:
             if self.router_reachable and not self.motor_reachable:                                  # If the router is reachable and the motor is not reachable
-                time.sleep(0.3)
+                time.sleep(0.3) 
                 self.motor_reachable = ReachStatus.CONNECTING                                            # Emits signals for GUI update (Motor attempting connection)
                 self.communicating_to_motor = False                                                     # Not communicating to the motor
                 
                 for _try in range(5):                                                                   # Tries 5 times to ping the router
-                    time.sleep(0.1)             # delay between tries
+                    time.sleep(TimeDelays.RETRY_TIMEOUT)             # delay between tries
                     self.signals.status_message.emit(f"Trying Connect to Motor...")               # Emits signals for GUI update
                     print(f'Trying to ping motor at {Config.device_ip}:{Config.device_port}')
                     reachable = self.motor.ping()                                              # Tries to ping the motor IP
@@ -549,7 +549,6 @@ class Server(QObject):
                         self.signals.max_pos.emit(int(self.motor.get_param(MotorParamsIdx.MAX_POS)))                 # A small gap at the end to account the distance to the lim+ uswitch 
                         self.signals.backlash.emit(-(int(self.motor.get_param(MotorParamsIdx.BACKLASH))))            # A small gap at the end to account the distance to the lim+ uswitch 
                 else:
-                    print(POSITION_VISUALIZATION_CONVERTION * int(self.motor.get_param(MotorParamsIdx.MAX_POS)))
                     self.signals.max_pos.emit(int(self.motor.get_param(MotorParamsIdx.MAX_POS)))             # A small gap at the end to account the distance to the lim+ uswitch
                     self.signals.backlash.emit(-(int(self.motor.get_param(MotorParamsIdx.BACKLASH))))            # A small gap at the end to account the distance to the lim+ us
 
@@ -595,7 +594,7 @@ class Server(QObject):
             print(param)
             p += 1
             self.motor.signals.progress.string.emit(int(p/len(MotorParamsIdx)*100))
-            time.sleep(0.05)
+            time.sleep(0.05)            # Just for better visualization of ui update
             if param in MotorParamsIdx:
                 self.motor.get_param(param)
         self.status[SJson.DEVICE_IP] = self.motor.parameters[MotorParamsIdx.MOTOR_IP].VALUE
@@ -693,7 +692,7 @@ class Server(QObject):
                     # the server tries to reach the motor. 
                     self.processing_command = False
                     for _try in range(5):                                                                   # Tries 5 times to ping the router
-                        time.sleep(0.1)             # delay between tries                         
+                        time.sleep(TimeDelays.RETRY_TIMEOUT)             # delay between tries                         
                         self.signals.status_message.emit(f"Trying Connect to Router...")                      # Emits signals for GUI update
                         reachable = ping(Config.gateway_ip, count=1, timeout=0.6, privileged=False).is_alive         # Tries to ping the router IP
                         print(f'trying to ping gateway at {Config.gateway_ip}')
@@ -844,7 +843,7 @@ class Server(QObject):
         """Verifies if the motor ended the execution of the
         last command and resets the command information"""
         # print(self.status)
-        time.sleep(0.2) # Time to allow CLP to update internal variables in IAG controller
+        time.sleep(TimeDelays.WAIT_PARAM) # Time to allow CLP to update internal variables in IAG controller
         if self.motor.firmware_status == 'Idle' and \
             self.status[SJson.CMD][SJson.CMD_CLIENT_ID] != 0:   
 
