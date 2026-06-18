@@ -354,13 +354,11 @@ class ClientSimulator(QtWidgets.QMainWindow):
         self._send_command(f"MOVE={pos}")
 
     def _move_in(self):
-        status = json.loads(self.txtStatus.toPlainText())
-        max_speed = int(status['maxSpeed'])                 # actually is the Normal speed configuration
+        # status = json.loads(self.txtStatus.toPlainText())
+
+        max_speed = int(self._updater.data['maxSpeed'])                 # actually is the Normal speed configuration
         if not self.is_moving:
             if TEST_SETUP:
-                a = str(int(max_speed * self.sbSpeed.value() * 0.01))
-                print(f'%%%%%%%%%%%%%%%%%%%VALOR DE A = {a}')
-                print(f"ENVIANDO COMANDO: {f"FOCUSIN=" + f"{str(int(max_speed * self.sbSpeed.value() * 0.01))}"}")
                 self._send_command(f"FOCUSIN=" + f"{str(int(max_speed * self.sbSpeed.value() * 0.01))}")   #TEST_VALUE -> ORIGINAL VALUE => FOCUSIN=200
             else:
                 self._send_command(f"FOCUSIN=" + f"{str(int(max_speed * self.sbSpeed.value() * 0.01))}")
