@@ -585,85 +585,87 @@ class DriverAMP(Driver):
         msg = ''
 
         self.motor.SASTAT = self.mb_server._conv_reg_to_value(coils_regs.RX_SASTAT, self.mb_server.db_shadow)
+
+        sastat = self.motor.SASTAT      # Uses an internal variable that can be changed
         # print(f"SASTAT = {sastat}")
         
-        self.focus_out_status = ( self.motor.SASTAT & MotorProgramStatus.RUN_FOCUS_OUT )
+        self.focus_out_status = ( sastat & MotorProgramStatus.RUN_FOCUS_OUT )
 
-        self.focus_in_status = (self.motor.SASTAT & MotorProgramStatus.RUN_FOCUS_IN)
+        self.focus_in_status = (sastat & MotorProgramStatus.RUN_FOCUS_IN)
 
-        self.park_status = (self.motor.SASTAT & MotorProgramStatus.RUN_PARK)
+        self.park_status = (sastat & MotorProgramStatus.RUN_PARK)
         
-        if self.motor.SASTAT & MotorProgramStatus.READY:
-            self.motor.SASTAT -= MotorProgramStatus.READY
+        if sastat & MotorProgramStatus.READY:
+            sastat -= MotorProgramStatus.READY
             msg += "Idle"
-            if self.motor.SASTAT > 0:
+            if sastat > 0:
                 msg += ' / '
 
-        if self.motor.SASTAT & (MotorProgramStatus.RUN_HOMING | MotorProgramStatus.RUN_FOCUS_IN | MotorProgramStatus.RUN_FOCUS_OUT | MotorProgramStatus.RUN_GOTO | MotorProgramStatus.RUN_PARK):
-            if self.motor.SASTAT & MotorProgramStatus.RUN_HOMING:
-                self.motor.SASTAT -= MotorProgramStatus.RUN_HOMING
-            if self.motor.SASTAT & MotorProgramStatus.RUN_FOCUS_IN:
-                self.motor.SASTAT -= MotorProgramStatus.RUN_FOCUS_IN
-            if self.motor.SASTAT & MotorProgramStatus.RUN_FOCUS_OUT:
-                self.motor.SASTAT -= MotorProgramStatus.RUN_FOCUS_OUT
-            if self.motor.SASTAT & MotorProgramStatus.RUN_GOTO:
-                self.motor.SASTAT -= MotorProgramStatus.RUN_GOTO
-            if self.motor.SASTAT & MotorProgramStatus.RUN_PARK:
-                self.motor.SASTAT -= MotorProgramStatus.RUN_PARK
+        if sastat & (MotorProgramStatus.RUN_HOMING | MotorProgramStatus.RUN_FOCUS_IN | MotorProgramStatus.RUN_FOCUS_OUT | MotorProgramStatus.RUN_GOTO | MotorProgramStatus.RUN_PARK):
+            if sastat & MotorProgramStatus.RUN_HOMING:
+                sastat -= MotorProgramStatus.RUN_HOMING
+            if sastat & MotorProgramStatus.RUN_FOCUS_IN:
+                sastat -= MotorProgramStatus.RUN_FOCUS_IN
+            if sastat & MotorProgramStatus.RUN_FOCUS_OUT:
+                sastat -= MotorProgramStatus.RUN_FOCUS_OUT
+            if sastat & MotorProgramStatus.RUN_GOTO:
+                sastat -= MotorProgramStatus.RUN_GOTO
+            if sastat & MotorProgramStatus.RUN_PARK:
+                sastat -= MotorProgramStatus.RUN_PARK
             
             msg += "Running"
-            if self.motor.SASTAT > 0:
+            if sastat > 0:
                 msg += ' / '
 
-        if (self.motor.SASTAT > 0) and (self.motor.SASTAT & MotorProgramStatus.ERROR_NEED_HOME):
-            self.motor.SASTAT -= MotorProgramStatus.ERROR_NEED_HOME
+        if (sastat > 0) and (sastat & MotorProgramStatus.ERROR_NEED_HOME):
+            sastat -= MotorProgramStatus.ERROR_NEED_HOME
             msg += "Must run HOME"
-            if self.motor.SASTAT > 0:
+            if sastat > 0:
                 msg += ' / '
 
-        if (self.motor.SASTAT > 0) and (self.motor.SASTAT & MotorProgramStatus.ERROR_FOCUS_OUT):
-            self.motor.SASTAT -= MotorProgramStatus.ERROR_FOCUS_OUT
+        if (sastat > 0) and (sastat & MotorProgramStatus.ERROR_FOCUS_OUT):
+            sastat -= MotorProgramStatus.ERROR_FOCUS_OUT
             msg += "Too close to HOME"
-            if self.motor.SASTAT > 0:
+            if sastat > 0:
                 msg += ' / '
 
-        if (self.motor.SASTAT > 0) and (self.motor.SASTAT & MotorProgramStatus.MANUAL_MOVE):
-            self.motor.SASTAT -= MotorProgramStatus.MANUAL_MOVE
+        if (sastat > 0) and (sastat & MotorProgramStatus.MANUAL_MOVE):
+            sastat -= MotorProgramStatus.MANUAL_MOVE
             self.driver_comm.manual_movement.status.emit(True)
             msg += "Manual Move"
-            if self.motor.SASTAT > 0:
+            if sastat > 0:
                 msg += ' / '
         else:
             self.driver_comm.manual_movement.status.emit(False)
                 
-        if (self.motor.SASTAT > 0) and (self.motor.SASTAT & MotorProgramStatus.ERROR_RS485):
-            self.motor.SASTAT -= MotorProgramStatus.ERROR_RS485
+        if (sastat > 0) and (sastat & MotorProgramStatus.ERROR_RS485):
+            sastat -= MotorProgramStatus.ERROR_RS485
             msg += "RS485 error"
-            if self.motor.SASTAT > 0:
+            if sastat > 0:
                 msg += ' / '
                 
-        if (self.motor.SASTAT > 0) and (self.motor.SASTAT & MotorProgramStatus.ERROR_PADDLE):
-            self.motor.SASTAT -= MotorProgramStatus.ERROR_PADDLE
+        if (sastat > 0) and (sastat & MotorProgramStatus.ERROR_PADDLE):
+            sastat -= MotorProgramStatus.ERROR_PADDLE
             msg += "Paddle error"
-            if self.motor.SASTAT > 0:
+            if sastat > 0:
                 msg += ' / '
                 
-        if (self.motor.SASTAT > 0) and (self.motor.SASTAT & MotorProgramStatus.ERROR_MOTOR_OFF_ID):
-            self.motor.SASTAT -= MotorProgramStatus.ERROR_MOTOR_OFF_ID
+        if (sastat > 0) and (sastat & MotorProgramStatus.ERROR_MOTOR_OFF_ID):
+            sastat -= MotorProgramStatus.ERROR_MOTOR_OFF_ID
             msg += "Motor off or ID error"
-            if self.motor.SASTAT > 0:
+            if sastat > 0:
                 msg += ' / '
                 
-        if (self.motor.SASTAT > 0) and (self.motor.SASTAT & MotorProgramStatus.ERROR_LIM_SWITCH):
-            self.motor.SASTAT -= MotorProgramStatus.ERROR_LIM_SWITCH
+        if (sastat > 0) and (sastat & MotorProgramStatus.ERROR_LIM_SWITCH):
+            sastat -= MotorProgramStatus.ERROR_LIM_SWITCH
             msg += "Lim-switch error"
-            if self.motor.SASTAT > 0:
+            if sastat > 0:
                 msg += ' / '
 
-        if (self.motor.SASTAT > 0) and (self.motor.SASTAT & MotorProgramStatus.ERROR_OUT_OF_RANGE):
-            self.motor.SASTAT -= MotorProgramStatus.ERROR_OUT_OF_RANGE
+        if (sastat > 0) and (sastat & MotorProgramStatus.ERROR_OUT_OF_RANGE):
+            sastat -= MotorProgramStatus.ERROR_OUT_OF_RANGE
             msg += "Out of range"
-            if self.motor.SASTAT > 0:
+            if sastat > 0:
                 msg += ' / '
 
         # if not flag_status:
