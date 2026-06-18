@@ -1403,6 +1403,9 @@ margin: 1px 0px 1px 0px
            <property name="decimals">
             <number>1</number>
            </property>
+           <property name="maximum">
+            <double>3000.000000000000000</double>
+           </property>
            <property name="change" stdset="0">
             <bool>false</bool>
            </property>

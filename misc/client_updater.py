@@ -13,7 +13,7 @@ class UpdaterSignals(QObject):
     homing = pyqtSignal(bool)
     is_moving = pyqtSignal(bool)
     connected = pyqtSignal(bool)
-    position = pyqtSignal(int)
+    position = pyqtSignal(float)
 
     lbl_clientId_style = pyqtSignal(str, str)
     lbl_conn_style = pyqtSignal(str, str)
@@ -61,7 +61,7 @@ class Updater(QRunnable):
                     self.data = json.loads(received)
                     try:
                         # self.signals.message.emit(str(data["position"]))
-                        self.signals.position.emit(int(self.data["position"]))
+                        self.signals.position.emit(self.data["position"])
                         if self.data["cmd"]["clientId"] != self._clientId:
                             self._clientId = self.data["cmd"]["clientId"]
                             if self._clientId == 0:

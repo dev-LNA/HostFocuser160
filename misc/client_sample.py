@@ -106,7 +106,8 @@ class ClientSimulator(QtWidgets.QMainWindow):
         self.stsBar = self.findChild(QtWidgets.QStatusBar, 'stsBar')
         self.stsBar: QStackedWidget = self.stsBar
 
-        self.sbMovePos: QSpinBox = self.findChild(QSpinBox, "sbMovePos")
+        self.sbMovePos: QDoubleSpinBox = self.findChild(QDoubleSpinBox, "sbMovePos")
+        self.sbMovePos.setSuffix(u" mm\u207B\u00B2")    # Unicode symbols to show -2 superscript
 
         self.ledFocusIn: QLabel = self.findChild(QLabel, "ledFocusIn")
         self.ledFocusIn.installEventFilter(self)
@@ -114,7 +115,7 @@ class ClientSimulator(QtWidgets.QMainWindow):
         self.ledFocusOut: QLabel = self.findChild(QLabel, "ledFocusOut")
         self.ledFocusOut.installEventFilter(self)
 
-        self.sbFocusPos: QSpinBox = self.findChild(QSpinBox, "sbFocusPos")
+        self.sbFocusPos: QDoubleSpinBox = self.findChild(QDoubleSpinBox, "sbFocusPos")
 
         self.sbSpeed: QDoubleSpinBox = self.findChild(QDoubleSpinBox, 'sbSpeed')
         self.sliderSpeed: QSlider = self.findChild(QSlider, 'sliderSpeed')
@@ -244,7 +245,7 @@ class ClientSimulator(QtWidgets.QMainWindow):
             self.threadpool = QThreadPool()                                                  # Defines threadpool
             self._updater = Updater(poller=self.poller, subscriber=self.subscriber)          # Creates Updater thread
             self._updater.signals.message.connect(self.txtStatus.setText)                    # Updates status text box with updated message
-            self._updater.signals.position.connect(self.BarFocuser.setValue)                 # Updates bar value with position
+            self._updater.signals.position.connect(lambda val: self.BarFocuser.setValue(int(val)))                 # Updates bar value with position
             self._updater.signals.position.connect(self.sbFocusPos.setValue)                 # Updates value with position
             # self._updater.signals.clientID.connect(self.statBusy_2.setText)                  # Updates client Id
             self._updater.signals.lbl_clientId_style.connect(self.statBusy_2.setProperty)  # Updates style of client Id label according to status
@@ -357,7 +358,8 @@ class ClientSimulator(QtWidgets.QMainWindow):
 
     def _move_to(self):
         # if not self.is_moving:
-        pos = self.sbMovePos.text()
+        # pos = str(10 * self.sbMovePos.value())
+        pos = self.sbMovePos.text()[:-4]    # Must remove the suffix from the QSpinDoubleBox
         self._send_command(f"MOVE={pos}")
 
     def _move_in(self):

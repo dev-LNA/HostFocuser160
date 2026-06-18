@@ -294,10 +294,11 @@ class DriverAMP(Driver):
 
         # return self.mb_server.write_param(dig_inputs_regs.TX_V70, value)
 
-    def _convert_pos(self, pos: int | float) -> int:
+    def _convert_pos(self, pos: int | float) -> float:
         """Converts position in microns to steps, since the CLP receives position values in steps."""
         value = pos / Config.enc_2_microns
-        return int(value / Config.steps_2_encoder)
+        return value / Config.steps_2_encoder
+        # return int(value / Config.steps_2_encoder)
     
     def param_backlash(self, value: int | str | bool = None, converted:bool = False) -> str:
         """When no value is provided, returns the current backlash value from the configuration.
@@ -309,7 +310,7 @@ class DriverAMP(Driver):
             if converted == False:
                 return str(Config.backlash)
             else: 
-                return str(self._convert_pos(Config.backlash))
+                return str(int(self._convert_pos(Config.backlash)))
             # value = Config.backlash
 
         value = value / Config.enc_2_microns
@@ -331,7 +332,7 @@ class DriverAMP(Driver):
             if converted == False:
                 return str(Config.max_pos)
             else:
-                return str(self._convert_pos(Config.max_pos / Conversion.POSITION_VISUALIZATION)  )
+                return str(int(self._convert_pos(Config.max_pos / Conversion.POSITION_VISUALIZATION)  ))
 
         Conversion.POSITION_VISUALIZATION = (value - 1456) / 10661.7
         Conversion.POSITION_COMMAND = 1 / Conversion.POSITION_VISUALIZATION
@@ -366,7 +367,7 @@ class DriverAMP(Driver):
             if converted == False:
                 return str(Config.park_pos)
             else:
-                return str(self._convert_pos((Config.max_pos * Conversion.POSITION_COMMAND) - Config.park_pos * Conversion.POSITION_COMMAND)  )
+                return str(int(self._convert_pos((Config.max_pos * Conversion.POSITION_COMMAND) - Config.park_pos * Conversion.POSITION_COMMAND) ) )
 
         value = (Config.max_pos * Conversion.POSITION_COMMAND) - Conversion.POSITION_COMMAND * value   # Conversão necessária devido a montagem mecânica 
         
@@ -679,21 +680,24 @@ class DriverAMP(Driver):
         """Precisa ser implementada pelo driver"""
         ...
     
-    def move_to(self, pos: str) -> str:
+    def move_to(self, pos_str: str) -> str:
         """Precisa ser implementada pelo driver"""
 
         # return self.mb_server.send_command(dig_inputs_regs.TX_GS29)
-
+        pos = float(pos_str) 
         if pos < 0:
             pos = 0
         elif pos > Config.max_pos:
             pos = Config.max_pos
         # Sends the position value to the CLP, and then sends the command to start the movement towards the target position
-        command_position = (Config.max_pos * Conversion.POSITION_COMMAND) - Conversion.POSITION_COMMAND * int(pos)   # Conversão necessária devido a montagem mecânica  
-
+        # command_position = (Config.max_pos * Conversion.POSITION_COMMAND) - Conversion.POSITION_COMMAND * int(pos)   # Conversão necessária devido a montagem mecânica  
+        command_position = (Config.max_pos * Conversion.POSITION_COMMAND) - Conversion.POSITION_COMMAND * pos   # Conversão necessária devido a montagem mecânica 
         print(f"Moving to position {pos} microns - Command position value: {command_position}")
+        print(f"steps: {self._convert_pos(command_position)}  ---  int steps: {round(self._convert_pos(command_position))}")
 
-        if self.mb_server.write_param(dig_inputs_regs.TX_V20, int(self._convert_pos(command_position))) == "OK":
+        print(f'Steps to microns: {   -((round(self._convert_pos(command_position)) * Config.steps_2_encoder * Config.enc_2_microns) - (Config.max_pos * Conversion.POSITION_COMMAND)) / Conversion.POSITION_COMMAND}')
+
+        if self.mb_server.write_param(dig_inputs_regs.TX_V20, round(self._convert_pos(command_position)) + 1) == "OK":
             time.sleep(TimeDelays.WAIT_PARAM)   # Delay to ensure the position value is written to the CLP before sending the command to start the movement
             return self.mb_server.send_command(dig_inputs_regs.TX_GS29)
         else:

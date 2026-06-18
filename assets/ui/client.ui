@@ -6,7 +6,7 @@
    <rect>
     <x>0</x>
     <y>0</y>
-    <width>640</width>
+    <width>650</width>
     <height>500</height>
    </rect>
   </property>
@@ -18,13 +18,13 @@
   </property>
   <property name="minimumSize">
    <size>
-    <width>640</width>
+    <width>650</width>
     <height>500</height>
    </size>
   </property>
   <property name="maximumSize">
    <size>
-    <width>640</width>
+    <width>650</width>
     <height>500</height>
    </size>
   </property>
@@ -150,7 +150,7 @@ background-color: qradialgradient(spread:reflect, cx:0.5, cy:0.5, radius:0.486, 
        <string notr="true"/>
       </property>
       <property name="currentIndex">
-       <number>0</number>
+       <number>1</number>
       </property>
       <widget class="QWidget" name="page">
        <layout class="QGridLayout" name="gridLayout_6">
@@ -807,7 +807,7 @@ background-color: qradialgradient(spread:reflect, cx:0.5, cy:0.5, radius:0.486, 
                 </widget>
                </item>
                <item>
-                <widget class="QSpinBox" name="sbMovePos">
+                <widget class="QDoubleSpinBox" name="sbMovePos">
                  <property name="minimumSize">
                   <size>
                    <width>0</width>
@@ -815,7 +815,7 @@ background-color: qradialgradient(spread:reflect, cx:0.5, cy:0.5, radius:0.486, 
                   </size>
                  </property>
                  <property name="cursor">
-                  <cursorShape>SizeVerCursor</cursorShape>
+                  <cursorShape>ArrowCursor</cursorShape>
                  </property>
                  <property name="layoutDirection">
                   <enum>Qt::LayoutDirection::RightToLeft</enum>
@@ -829,8 +829,23 @@ background-color: qradialgradient(spread:reflect, cx:0.5, cy:0.5, radius:0.486, 
                  <property name="buttonSymbols">
                   <enum>QAbstractSpinBox::ButtonSymbols::UpDownArrows</enum>
                  </property>
+                 <property name="accelerated">
+                  <bool>true</bool>
+                 </property>
+                 <property name="suffix">
+                  <string/>
+                 </property>
+                 <property name="decimals">
+                  <number>1</number>
+                 </property>
                  <property name="maximum">
-                  <number>2510</number>
+                  <double>2510.000000000000000</double>
+                 </property>
+                 <property name="singleStep">
+                  <double>0.100000000000000</double>
+                 </property>
+                 <property name="value">
+                  <double>0.000000000000000</double>
                  </property>
                 </widget>
                </item>
@@ -921,7 +936,7 @@ background-color: qradialgradient(spread:reflect, cx:0.5, cy:0.5, radius:0.486, 
          <widget class="QFrame" name="frame_3">
           <property name="maximumSize">
            <size>
-            <width>180</width>
+            <width>193</width>
             <height>16777215</height>
            </size>
           </property>
@@ -991,11 +1006,11 @@ background-color: qradialgradient(spread:reflect, cx:0.5, cy:0.5, radius:0.486, 
              <property name="rightMargin">
               <number>0</number>
              </property>
-             <item alignment="Qt::AlignmentFlag::AlignHCenter">
-              <widget class="QSpinBox" name="sbFocusPos">
+             <item>
+              <widget class="QDoubleSpinBox" name="sbFocusPos">
                <property name="minimumSize">
                 <size>
-                 <width>35</width>
+                 <width>47</width>
                  <height>0</height>
                 </size>
                </property>
@@ -1023,14 +1038,20 @@ background-color: qradialgradient(spread:reflect, cx:0.5, cy:0.5, radius:0.486, 
                <property name="keyboardTracking">
                 <bool>false</bool>
                </property>
+               <property name="decimals">
+                <number>1</number>
+               </property>
                <property name="minimum">
-                <number>-10</number>
+                <double>-10.000000000000000</double>
                </property>
                <property name="maximum">
-                <number>2600</number>
+                <double>2510.000000000000000</double>
+               </property>
+               <property name="singleStep">
+                <double>0.100000000000000</double>
                </property>
                <property name="value">
-                <number>0</number>
+                <double>2510.000000000000000</double>
                </property>
               </widget>
              </item>
@@ -1107,6 +1128,19 @@ width:16px; }
                </property>
                <property name="format">
                 <string>%v</string>
+               </property>
+              </widget>
+             </item>
+             <item alignment="Qt::AlignmentFlag::AlignHCenter|Qt::AlignmentFlag::AlignTop">
+              <widget class="QLabel" name="label_8">
+               <property name="maximumSize">
+                <size>
+                 <width>16777215</width>
+                 <height>15</height>
+                </size>
+               </property>
+               <property name="text">
+                <string>mm&lt;sup&gt;-2&lt;/sup&gt;</string>
                </property>
               </widget>
              </item>

@@ -747,7 +747,8 @@ class Server(QObject):
         # parsed message dont need to be changed. 
         if p != -1:        
             parsed[SJson.CMD_ACTION] = cmd[:p]
-            parsed["PARAMETER"] = int(cmd[p+1:])
+            # parsed["PARAMETER"] = int(cmd[p+1:])
+            parsed["PARAMETER"] = cmd[p+1:]
 
         # If the client json do not contain a 'clientName' it is set as 'UNIDENTIFIED'
         if parsed[SJson.CMD_CLIENT_NAME] is None:

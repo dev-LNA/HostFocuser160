@@ -331,6 +331,8 @@ class SettingsWindow(QMainWindow):
             if param.NAME in MotorParamsIdx:
                 if isinstance(param.OBJ, QLineEdit):
                     param.OBJ.setText(data.parameters[param.NAME])
+                elif isinstance(param.OBJ, QDoubleSpinBox):
+                    param.OBJ.setValue(float(data.parameters[param.NAME]))
                 else:
                     param.OBJ.setValue(int(float(data.parameters[param.NAME]))) # Must first convert to float to avoid problems with the float parameters
 

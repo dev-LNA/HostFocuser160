@@ -149,7 +149,7 @@ class Config:
     acc_current: float = get_toml('Device', 'acc_current')
     cmd_timeout: int = get_toml('Device', 'cmd_timeout')
     enc_2_microns: float = get_toml('Device', 'encoder2microns')
-    steps_2_encoder: int = get_toml('Device', 'steps2encoder')
+    steps_2_encoder: float = get_toml('Device', 'steps2encoder')
     microns_2_rps: float = get_toml('Device', 'microns2rps')
     # ---------------
     # Logging Section
