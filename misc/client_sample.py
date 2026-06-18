@@ -122,6 +122,9 @@ class ClientSimulator(QtWidgets.QMainWindow):
         self.sliderSpeed.valueChanged.connect(lambda val: self.sbSpeed.setValue(val * 0.1))
         self.sbSpeed.setValue(self.sliderSpeed.value() * 0.1)
 
+        self.statInit: QLabel = self.findChild(QLabel, 'statInit')
+
+        self.statAlarm: QLabel = self.findChild(QLabel, 'statAlarm')
 
         
     # Configure Widgets and Widgets Actions
@@ -159,6 +162,8 @@ class ClientSimulator(QtWidgets.QMainWindow):
         self.statBusy_2.installEventFilter(self)
         self.statInit_2.installEventFilter(self)
         self.BarFocuser.installEventFilter(self)
+        self.statInit.installEventFilter(self)
+        self.statAlarm.installEventFilter(self)
 
         # self.context = zmq.Context()       
         self.context = None
@@ -251,6 +256,8 @@ class ClientSimulator(QtWidgets.QMainWindow):
             self._updater.signals.lbl_mov_style.connect(self.statMov_2.setProperty)
             self._updater.signals.focus_in_status.connect(self.ledFocusIn.setProperty)
             self._updater.signals.focus_out_status.connect(self.ledFocusOut.setProperty)
+            self._updater.signals.alarm.connect(self.statAlarm.setProperty)
+            self._updater.signals.initialized.connect(self.statInit.setProperty)
             
             self._sender = ReqSender(req=self.req)
             self._sender.signals.timeout_error.connect(self._reset_client_context)

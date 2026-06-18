@@ -23,6 +23,9 @@ class UpdaterSignals(QObject):
     focus_in_status = pyqtSignal(str, str)
     focus_out_status = pyqtSignal(str, str)
 
+    alarm = pyqtSignal(str, str)
+    initialized = pyqtSignal(str, str)
+
 
 class Updater(QRunnable):
     def __init__(self, *args, **kwargs):
@@ -36,6 +39,8 @@ class Updater(QRunnable):
         self._connected = False
         self._homing = False
         self._isMoving = False
+        self._alarm = False
+        self._initialized = False
 
         self.finished = False
         self.running = True
@@ -94,10 +99,20 @@ class Updater(QRunnable):
                             self.signals.is_moving.emit(self._isMoving)
                             if self._isMoving is False:
                                 self.signals.lbl_mov_style.emit("statusLed", "OFF")
-                                pass
                             else:                                
                                 self.signals.lbl_mov_style.emit("statusLed", "OK")
-                                pass
+                        if self.data["alarm"] != self._alarm:
+                            self._alarm = self.data["alarm"]
+                            if self._alarm is False:
+                                self.signals.alarm.emit("statusLed", "OFF")
+                            else:                                
+                                self.signals.alarm.emit("statusLed", "NOK")
+                        if self.data["initialized"] != self._initialized:
+                            self._initialized = self.data["initialized"]
+                            if self._initialized is False:
+                                self.signals.initialized.emit("statusLed", "OFF")
+                            else:                                
+                                self.signals.initialized.emit("statusLed", "OK")
                         
                     except Exception as e:
                         print(e)
