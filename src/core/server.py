@@ -14,7 +14,7 @@ import time
 import zmq
 import json
 from enum import Enum, StrEnum
-from datetime import datetime
+from datetime import datetime, UTC
 # from pythonping import ping
 from icmplib import ping
 import os
@@ -108,8 +108,8 @@ class Server(QObject):
         self.previous_initialized = False               #|
         self.previous_parking = False                   #|  Control variables initialization
         self.previous_pos = 0                           #|
-        self.last_ping_time = datetime.now()            #|
-        self.last_pub_time:datetime = datetime.now()                  #|
+        self.last_ping_time = datetime.now(UTC)            #|
+        self.last_pub_time:datetime = datetime.now(UTC)                  #|
         self._flag_change = False                       #|
         self._driver_timeout = False
         self._log_creation_day: int = 0
@@ -133,7 +133,7 @@ class Server(QObject):
         self.focuser_hdw_current_status = FocuserHardwareStatus()
 
         self.last_command = {
-            SJson.TIMESTAMP: datetime.now(),
+            SJson.TIMESTAMP: datetime.now(UTC),
             SJson.CMD_CLIENT_NAME: "",
             SJson.CMD_CLIENT_ID:  0,
             SJson.CMD_CLIENT_TRANSACTION_ID: 0,
@@ -831,12 +831,13 @@ class Server(QObject):
                 self.processing_command = False
                 raise RuntimeError(f'Motor returned \033[31m"NOK"\033[0m trying to run command "{cmd[SJson.CMD_ACTION].upper()}"')
         
-        # self.zmq_comm.reply('ACK')                  # Replies 'ACK' to inform the client that everything went ok
-        self.logger.info(f'Command issued: {cmd}')
-        # self.last_command[SJson.CMD_CLIENT_ID.value] = cmd[SJson.CMD_CLIENT_ID.value]
-        # self.last_command[SJson.CMD_ACTION.value] = cmd[SJson.CMD_ACTION.value]
+
+        
         if cmd["PARAMETER"] is not None:
             cmd[SJson.CMD_ACTION] = cmd[SJson.CMD_ACTION] + " : " + str(cmd["PARAMETER"])
+
+        self.logger.info(f'[ Command issued ] Client Name: {cmd[SJson.CMD_CLIENT_NAME]} | Client ID: {cmd[SJson.CMD_CLIENT_ID]} | Command: {cmd[SJson.CMD_ACTION]}')
+
         self.last_command = cmd                         # Motor recognized and returned OK to command so updates last command
 
     def _reset_client_info(self):

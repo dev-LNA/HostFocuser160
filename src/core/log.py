@@ -8,7 +8,7 @@
 import logging
 import logging.handlers
 import time
-from datetime import datetime, timedelta
+from datetime import datetime, timedelta, UTC
 from pathlib import Path
 try:
     from src.core.config import Config    
@@ -22,7 +22,7 @@ def init_logging():
     if not CONFIG_FILE:
         return
     logs_dir_path = os.path.join('logs')
-    log_reference_date = datetime.now()
+    log_reference_date = datetime.now(UTC)
     # log_path = r"logs/focuser.log"
     if log_reference_date.hour < 12:
         # If the logger is being created before noon it must consider as being from the previous day
@@ -48,11 +48,11 @@ def init_logging():
             file.write("-" * 20 + "\n")
             file.write("     LOG FILE      \n")
             file.write("-" * 20 + "\n\n")
-            file.write("This is a file to log all the important events occurred during the execution of the Focuser.\n\n")
+            file.write(f"This is a file to log all the important events occurred during the execution of the {Config.name}.\n\n")
 
             # file.write(f"This file was created in: {datetime.month}/{datetime.day}/{datetime.year} {datetime.hour}:{datetime.minute}:{datetime.second}")
             file.write("_" * 100 + "\n\n")
-            file.write(f"This file was created in: {datetime.now().strftime("%m/%d/%Y %I:%M:%S %p")}\n")
+            file.write(f"This file was created in: {datetime.now(UTC).strftime("%m/%d/%Y %I:%M:%S %p")}\n")
 
             # start_date = log_reference_date
             # log_reference_date = log_reference_date + timedelta(days=1)

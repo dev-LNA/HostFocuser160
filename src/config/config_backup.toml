@@ -1,7 +1,7 @@
 title = "FocuserIAG"
 
 [General]
-name = "FocuserIAG"
+name = "IAG Focuser"
 version = "1.0.0"
 date = "02/06/2026"
 description = "Interface for IAG Focuser"
@@ -19,14 +19,14 @@ temp_comp = false
 speed_security = 215000
 speedFactor = 428
 step_size = 0
-backlash = 21
-max_pos = 2400
-park_pos = 1800
+backlash = 20
+max_pos = 1990
+park_pos = 1900
 normal_speed = 250
 low_speed = 42
 max_step = 9
 max_speed = 470
-acceleration = 69.7
+acceleration = 69.0
 deceleration = 1398.0
 idle_current = 80.0
 run_current = 1993.0

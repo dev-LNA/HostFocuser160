@@ -4,7 +4,7 @@ from src.interface.comm_protocol import CommProtocol
 from src.utils.constants import ServerJsonKeys as SJson
 import zmq
 import json
-from datetime import datetime
+from datetime import datetime, UTC
 
 class zmqComm(CommProtocol):
     def __init__(self, ip: str, port_pub: str = None, port_rep: str = None,
@@ -96,7 +96,7 @@ class zmqComm(CommProtocol):
         :return: String with timestamp of the moment of the pub
         :rtype: str
         """
-        timestamp = datetime.now()
+        timestamp = datetime.now(UTC)
         info[SJson.TIMESTAMP] = datetime.isoformat(timestamp, timespec='milliseconds')              # Sets status timestamp
         json_string = json.dumps(info)
         try:      
