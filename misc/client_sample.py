@@ -3,6 +3,8 @@ from PyQt6.QtCore import pyqtSignal, QThreadPool, QEvent, QObject
 from PyQt6.QtWidgets import QPushButton, QLineEdit, QProgressBar, QTextEdit, QLabel, QStackedWidget, QSpinBox, QSlider, QDoubleSpinBox
 
 from src.core.config import Config
+from src.utils.constants import constants
+from src.utils.constants import ServerJsonKeys as SJson
 
 from misc.client_updater import Updater
 from misc.client_sender import ReqSender
@@ -115,7 +117,6 @@ class ClientSimulator(QtWidgets.QMainWindow):
         self.ledFocusOut: QLabel = self.findChild(QLabel, "ledFocusOut")
         self.ledFocusOut.installEventFilter(self)
 
-        self.sbFocusPos: QDoubleSpinBox = self.findChild(QDoubleSpinBox, "sbFocusPos")
 
         self.sbSpeed: QDoubleSpinBox = self.findChild(QDoubleSpinBox, 'sbSpeed')
         self.sliderSpeed: QSlider = self.findChild(QSlider, 'sliderSpeed')
@@ -126,6 +127,8 @@ class ClientSimulator(QtWidgets.QMainWindow):
         self.statInit: QLabel = self.findChild(QLabel, 'statInit')
 
         self.statAlarm: QLabel = self.findChild(QLabel, 'statAlarm')
+
+        self.lblFocusPos: QLabel = self.findChild(QLabel, 'lblFocusPos')
 
         
     # Configure Widgets and Widgets Actions
@@ -246,7 +249,7 @@ class ClientSimulator(QtWidgets.QMainWindow):
             self._updater = Updater(poller=self.poller, subscriber=self.subscriber)          # Creates Updater thread
             self._updater.signals.message.connect(self.txtStatus.setText)                    # Updates status text box with updated message
             self._updater.signals.position.connect(lambda val: self.BarFocuser.setValue(int(val)))                 # Updates bar value with position
-            self._updater.signals.position.connect(self.sbFocusPos.setValue)                 # Updates value with position
+            self._updater.signals.position.connect(lambda val: self.lblFocusPos.setText(str(val)) if val!=constants.INVALID_RESPONSE else self.lblFocusPos.setText('Invalid'))
             # self._updater.signals.clientID.connect(self.statBusy_2.setText)                  # Updates client Id
             self._updater.signals.lbl_clientId_style.connect(self.statBusy_2.setProperty)  # Updates style of client Id label according to status
             self._updater.signals.connected.connect(self._update_connect_status)
@@ -274,6 +277,7 @@ class ClientSimulator(QtWidgets.QMainWindow):
             self.lblMotorID.setText(data["device_ID"])
             self.lblMotorIP.setText(data["device_IP"])
             self.lblClientID.setText(str(self.client_ID))
+            self.sbMovePos.setValue(data[SJson.MAX_STEP])
             
             self.statusBar().clearMessage()
             self.pageSelect.setCurrentIndex(1)

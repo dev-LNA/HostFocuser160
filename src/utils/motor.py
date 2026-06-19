@@ -155,7 +155,7 @@ class Motor():
                 self._position = pos
                 self.signals.position.emit(pos)
         else:
-            self.signals.position.emit(pos, "???")
+            self.signals.position.emit(pos, "Invalid")
         return self._position
     @position.setter
     def position(self, value: int) -> str:

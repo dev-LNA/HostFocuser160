@@ -408,7 +408,6 @@ class FocuserOPD (QMainWindow):
         self.ui_elements.lblClientID_val.setText(str(data[SJson.CMD_CLIENT_ID]))                  # Updates last command client ID
         self.ui_elements.lblTransactionId_val.setText(str(data[SJson.CMD_CLIENT_TRANSACTION_ID]))  # Updates last command client transaction number
         self.ui_elements.lblCommand_val.setText(data[SJson.CMD_ACTION])                          # Updates last command action
-        print(data[SJson.CMD_ACTION])
         if(data[SJson.CMD_ACTION] == "HOME" or data[SJson.CMD_ACTION] == "PARK"):                 # If the last command was 'HOME' or 'PARK'
             self.ui_elements.lblLastHoming_val.setText(data[SJson.TIMESTAMP])                           # Updates the last homing time
 

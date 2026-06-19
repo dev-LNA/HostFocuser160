@@ -4190,7 +4190,7 @@ border-right: none;
                  <number>0</number>
                 </property>
                 <property name="text">
-                 <string/>
+                 <string>Invalid</string>
                 </property>
                 <property name="alignment">
                  <set>Qt::AlignmentFlag::AlignCenter</set>
