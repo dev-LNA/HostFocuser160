@@ -150,7 +150,7 @@ background-color: qradialgradient(spread:reflect, cx:0.5, cy:0.5, radius:0.486, 
        <string notr="true"/>
       </property>
       <property name="currentIndex">
-       <number>1</number>
+       <number>0</number>
       </property>
       <widget class="QWidget" name="page">
        <layout class="QGridLayout" name="gridLayout_6">
@@ -711,7 +711,7 @@ background-color: qradialgradient(spread:reflect, cx:0.5, cy:0.5, radius:0.486, 
              <string notr="true">background-color: forestGreen;</string>
             </property>
             <property name="text">
-             <string>Conectar</string>
+             <string>Connect</string>
             </property>
            </widget>
           </item>
@@ -1042,7 +1042,7 @@ background-color: qradialgradient(spread:reflect, cx:0.5, cy:0.5, radius:0.486, 
                 <number>1</number>
                </property>
                <property name="minimum">
-                <double>-10.000000000000000</double>
+                <double>-200.000000000000000</double>
                </property>
                <property name="maximum">
                 <double>2510.000000000000000</double>
@@ -1139,8 +1139,17 @@ width:16px; }
                  <height>15</height>
                 </size>
                </property>
+               <property name="styleSheet">
+                <string notr="true">margin: 0 0 0 5</string>
+               </property>
                <property name="text">
-                <string>mm&lt;sup&gt;-2&lt;/sup&gt;</string>
+                <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt; mm&lt;span style=&quot; vertical-align:super;&quot;&gt;-2&lt;/span&gt;&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
+               </property>
+               <property name="alignment">
+                <set>Qt::AlignmentFlag::AlignCenter</set>
+               </property>
+               <property name="margin">
+                <number>0</number>
                </property>
               </widget>
              </item>
@@ -1721,10 +1730,21 @@ width:16px; }
 				  border: 1px solid rgb(149, 149, 149);
                 background-color: rgb(222, 222, 222);
                 border-radius: 10px; 
+        /* Simulating shadow via independent border rules */
+        border-top:0px solid rgb(139, 139, 139);
+        border-left: 0px solid rgb(139, 139, 139);
+        border-right: 1px solid rgb(190, 190, 190);
+        border-bottom: 1px solid rgb(190, 190, 190)
             }
 
+
     QPushButton:pressed {
-        background-color:  rgb(179, 179, 179); 
+	background-color:  rgb(179, 179, 179); 
+        /* Move the border when pressed to mimic a real click */
+        border-top:1px solid rgb(139, 139, 139);
+        border-left: 1px solid rgb(139, 139, 139);
+        border-right: 0px solid rgb(190, 190, 190);
+        border-bottom: 0px solid rgb(190, 190, 190)
     }</string>
            </property>
            <property name="text">
@@ -1754,10 +1774,21 @@ width:16px; }
 				  border: 1px solid rgb(149, 149, 149);
                 background-color: rgb(222, 222, 222);
                 border-radius: 10px; 
+        /* Simulating shadow via independent border rules */
+        border-top:0px solid rgb(139, 139, 139);
+        border-left: 0px solid rgb(139, 139, 139);
+        border-right: 1px solid rgb(190, 190, 190);
+        border-bottom: 1px solid rgb(190, 190, 190)
             }
 
+
     QPushButton:pressed {
-        background-color:  rgb(179, 179, 179); 
+	background-color:  rgb(179, 179, 179); 
+        /* Move the border when pressed to mimic a real click */
+        border-top:1px solid rgb(139, 139, 139);
+        border-left: 1px solid rgb(139, 139, 139);
+        border-right: 0px solid rgb(190, 190, 190);
+        border-bottom: 0px solid rgb(190, 190, 190)
     }</string>
            </property>
            <property name="text">
