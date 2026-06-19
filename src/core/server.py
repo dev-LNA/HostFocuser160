@@ -863,29 +863,34 @@ class Server(QObject):
         else:
             val_str = "DEACTIVATED"
 
-        if self.sender().objectName() == FocuserSignalsNames.LIM_SWITCH_MIN:
-            if self.focuser_hdw_current_status.lim_switch_min != val:
-                self.focuser_hdw_current_status.lim_switch_min = val
-                self.logger.warning(f"Limit switch min {val_str}")
+        try:
 
-        if self.sender().objectName() == FocuserSignalsNames.LIM_SWITCH_MAX:
-            if self.focuser_hdw_current_status.lim_switch_max != val:
-                self.focuser_hdw_current_status.lim_switch_max = val
-                self.logger.warning(f"Limit switch max {val_str}")
+            if self.sender().objectName() == FocuserSignalsNames.LIM_SWITCH_MIN:
+                if self.focuser_hdw_current_status.lim_switch_min != val:
+                    self.focuser_hdw_current_status.lim_switch_min = val
+                    self.logger.warning(f"Limit switch min {val_str}")
 
-        if self.sender().objectName() == FocuserSignalsNames.INITIALIZED:
-            if self.focuser_hdw_current_status.initialized != val:
-                self.focuser_hdw_current_status.initialized = val
-                if val == True:
-                    self.logger.info(f"Focuser is INITIALIZED")
+            if self.sender().objectName() == FocuserSignalsNames.LIM_SWITCH_MAX:
+                if self.focuser_hdw_current_status.lim_switch_max != val:
+                    self.focuser_hdw_current_status.lim_switch_max = val
+                    self.logger.warning(f"Limit switch max {val_str}")
 
-        if self.sender().objectName() == FocuserSignalsNames.MANUAL_MOVEMENT:
-            if self.focuser_hdw_current_status.manual_movement != val:
-                self.focuser_hdw_current_status.manual_movement = val
-                if val == True:
-                    self.logger.warning(F"Started MANUAL MOVEMENT - {self.focuser_hdw_current_status.movement_info}")
-                else:
-                    self.logger.warning("Ended MANUAL MOVEMENT")
+            if self.sender().objectName() == FocuserSignalsNames.INITIALIZED:
+                if self.focuser_hdw_current_status.initialized != val:
+                    self.focuser_hdw_current_status.initialized = val
+                    if val == True:
+                        self.logger.info(f"Focuser is INITIALIZED")
+
+            if self.sender().objectName() == FocuserSignalsNames.MANUAL_MOVEMENT:
+                if self.focuser_hdw_current_status.manual_movement != val:
+                    self.focuser_hdw_current_status.manual_movement = val
+                    if val == True:
+                        self.logger.warning(F"Started MANUAL MOVEMENT - {self.focuser_hdw_current_status.movement_info}")
+                    else:
+                        self.logger.warning("Ended MANUAL MOVEMENT")
+
+        except:
+            print('Invalid log info, log not updated')
 
     def _update_current_movement(self, val: bool):
         print(self.sender().objectName())
