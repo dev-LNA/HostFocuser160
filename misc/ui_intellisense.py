@@ -19,7 +19,8 @@ from PyQt6.QtWidgets import (
     QRadioButton,
     QSpinBox,
     QDoubleSpinBox,
-    QListWidget)
+    QListWidget,
+    QCheckBox)
 
 
 
@@ -229,6 +230,8 @@ class UiWidgets(QWidget):
 
             self.gbRetrieveParameters: QGroupBox = window.findChild(QGroupBox, 'gbRetrieveParameters')
 
+            self.gbServerParams: QGroupBox = window.findChild(QGroupBox, 'gbServerParams')
+
 
             # Buttons
             self.btnEngineering = window.findChild(QPushButton, 'btnEngineering')
@@ -337,6 +340,10 @@ class UiWidgets(QWidget):
 
             self.btnSendCommand = window.findChild(QPushButton, 'btnSendCommand')
             self.btnSendCommand: QPushButton = self.btnSendCommand
+
+        # Check boxes
+
+            self.cbAutoStartup: QCheckBox = window.findChild(QCheckBox, 'cbAutoStartup')
 
 
 

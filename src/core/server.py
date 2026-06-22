@@ -640,6 +640,9 @@ class Server(QObject):
             # is different from the current date
             if current_time.day != self.logger.reference_date.day:
                 if current_time.hour >= 12:
+                    self.logger('_' * 50)
+                    self.logger.info('END OF FILE')
+                    self.logger('_' * 50)
                     self.logger = init_logging()
 
             try:

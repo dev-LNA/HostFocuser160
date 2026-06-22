@@ -115,6 +115,7 @@ class ServerParamsIdx(Enum):
     PORT_REP=2
     SUB_MASK=3
     GATEWAY_IP=4
+    STARTUP=5
 
 #endregion
 
@@ -123,8 +124,9 @@ class MotorModels(StrEnum):
     ARCUS_DMX_ETH = 'DMX'
     AMP_MOTOR = 'AMP'
 
+# The MotorParamIdx first value must be a continuation from ServerParamsIdx
 class MotorParamsIdx(Enum):     
-    MOTOR_IP=5
+    MOTOR_IP=6
     BACKLASH=auto()
     MAX_POS=auto()
     PARK_POS=auto()

@@ -162,6 +162,14 @@
        </item>
        <item>
         <property name="text">
+         <string>Auto Start</string>
+        </property>
+        <property name="statusTip">
+         <string>STARTUP</string>
+        </property>
+       </item>
+       <item>
+        <property name="text">
          <string>Motor IP</string>
         </property>
         <property name="statusTip">

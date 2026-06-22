@@ -44,6 +44,7 @@ sub_mask = "255.255.255.0"
 gateway_ip = "200.131.64.254"
 pub_interval = 1
 write_timeout = 3
+startup = 0
 
 [Logging]
 log_level = "INFO"

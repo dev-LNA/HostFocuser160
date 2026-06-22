@@ -5,7 +5,7 @@ name = "IAG Focuser"
 version = "1.0.0"
 date = "02/06/2026"
 description = "Interface for IAG Focuser"
-startup = false
+startup = true
 
 [Device]
 absolute = true
@@ -20,7 +20,7 @@ speed_security = 215000
 speedFactor = 428
 step_size = 0
 backlash = 20
-max_pos = 2390
+max_pos = 2490
 park_pos = 1900
 normal_speed = 250
 low_speed = 42

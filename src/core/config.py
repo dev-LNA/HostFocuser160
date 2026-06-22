@@ -105,7 +105,7 @@ class Config:
     # ---------------
     # General Section
     # ---------------
-    startup: str = get_toml('General', 'startup')
+    startup: bool = get_toml('General', 'startup')
     name: str = get_toml('General', 'name')
     server_version: str = get_toml('General', 'version')
     version_date: str = get_toml('General', 'date')

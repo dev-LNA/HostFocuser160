@@ -1,7 +1,7 @@
 from ast import Attribute
 
 from PyQt6 import uic, QtWidgets
-from PyQt6.QtWidgets import QMainWindow, QLineEdit, QProgressBar, QDialog, QMessageBox, QSpinBox, QDoubleSpinBox
+from PyQt6.QtWidgets import QMainWindow, QLineEdit, QProgressBar, QDialog, QMessageBox, QSpinBox, QDoubleSpinBox, QCheckBox
 from PyQt6.QtCore import QThread, pyqtSignal, QObject, QSize
 from PyQt6.QtGui import QFontMetrics, QKeyEvent
 # from src.core.exceptions import NotImplementedException
@@ -125,8 +125,8 @@ else:
 class SettingsAttributes():
     NAME: MotorParamsIdx | ServerParamsIdx
     TAG: str
-    OBJ: QLineEdit | QSpinBox
-    VALUE: str | int
+    OBJ: QLineEdit | QSpinBox | QCheckBox
+    VALUE: str | int | bool
     TYPE: object
 
 
@@ -136,6 +136,7 @@ class ConfigurableSettings(NamedTuple):
     PORT_REP: SettingsAttributes
     SUB_MASK: SettingsAttributes 
     GATEWAY_IP: SettingsAttributes
+    STARTUP : SettingsAttributes
     MOTOR_IP: SettingsAttributes
     BACKLASH: SettingsAttributes
     MAX_POS: SettingsAttributes
@@ -191,11 +192,14 @@ class SettingsWindow(QMainWindow):
         self.ui_elements.gbMotorParameters.setEnabled(False)
         self.signals.engineering_mode.connect(self.ui_elements.gbMotorParameters.setEnabled)
 
-        self.ui_elements.gbNetwork.setEnabled(False)
+        # self.ui_elements.gbNetwork.setEnabled(False)
         self.signals.engineering_mode.connect(self.ui_elements.gbNetwork.setEnabled)
 
-        self.ui_elements.gbZMQ.setEnabled(False)
+        # self.ui_elements.gbZMQ.setEnabled(False)
         self.signals.engineering_mode.connect(self.ui_elements.gbZMQ.setEnabled)
+
+        self.ui_elements.gbServerParams.setEnabled(False)
+        self.signals.engineering_mode.connect(self.ui_elements.gbServerParams.setEnabled)
 
         self.ui_elements.btnSave.setVisible(False)
         self.signals.engineering_mode.connect(self.ui_elements.btnSave.setVisible)      # Save button is only enabled in engineering mode
@@ -241,6 +245,7 @@ class SettingsWindow(QMainWindow):
                     PORT_REP = SettingsAttributes(ServerParamsIdx.PORT_REP, 'ZMQ REP Port', self.ui_elements.spinPortRep, 0, int),
                     SUB_MASK = SettingsAttributes(ServerParamsIdx.SUB_MASK, 'Subnet Mask', self.ui_elements.txtSubMask, '0', str),
                     GATEWAY_IP = SettingsAttributes(ServerParamsIdx.GATEWAY_IP, 'Gateway IP Address', self.ui_elements.txtGatewayIP, '0', str),
+                    STARTUP= SettingsAttributes(ServerParamsIdx.STARTUP, 'Auto Startup', self.ui_elements.cbAutoStartup, False, bool ),
                 # Motor parameters
                     MOTOR_IP = SettingsAttributes(MotorParamsIdx.MOTOR_IP, 'Motor IP Address' , self.ui_elements.txtMotorIP, '0', str),
                     BACKLASH = SettingsAttributes(MotorParamsIdx.BACKLASH, 'Backlash', self.ui_elements.spinBacklash, 0, int),
@@ -342,6 +347,7 @@ class SettingsWindow(QMainWindow):
         self._config_settings.PORT_REP.OBJ.setValue(Config.port_rep)
         self._config_settings.SUB_MASK.OBJ.setText(Config.sub_mask)
         self._config_settings.GATEWAY_IP.OBJ.setText(Config.gateway_ip)
+        self._config_settings.STARTUP.OBJ.setChecked(Config.startup)
 
     def _initialize_motor_settings(self, value):
         """Updates the dictionary with the values retrieved from the motor
@@ -356,6 +362,9 @@ class SettingsWindow(QMainWindow):
                 elif isinstance(param.OBJ, QSpinBox) or isinstance(param.OBJ, QDoubleSpinBox):
                     param.VALUE = param.OBJ.value()
                     param.OBJ.valueChanged.connect(self._validate_parameters)
+                elif isinstance(param.OBJ, QCheckBox):
+                    param.VALUE = param.OBJ.isChecked()
+                    param.OBJ.checkStateChanged.connect(self._validate_parameters)
 
             for param in self._config_settings:
                 print(f"{param.NAME} -> {param.VALUE}")
@@ -366,6 +375,8 @@ class SettingsWindow(QMainWindow):
             value = param.OBJ.text()
         elif isinstance(param.OBJ, QSpinBox) or isinstance(param.OBJ, QDoubleSpinBox):
             value = param.OBJ.value()
+        elif isinstance(param.OBJ, QCheckBox):
+            value = param.OBJ.isChecked()
 
         # If the value being set is equal to the current value the parameter
         # is removed from the "_changed_settings" dict
@@ -449,10 +460,10 @@ class SettingsWindow(QMainWindow):
         """
         try:
             # The backup config files are emebedded in the executable
-            if Config.name == "Focuser160":
+            if Config.name == "PE 160 Focuser":
                 # backup_file_path = config_dir + "/config_backup_160.toml"
                 backup_file_path = resource_path('src/config/config_backup_160.toml', external=False)
-            elif Config.name == "FocuserIAG":
+            elif Config.name == "IAG Focuser":
                 # backup_file_path = config_dir + "/config_backup_IAG.toml"
                 backup_file_path = resource_path('src/config/config_backup_IAG.toml', external=False)
             
@@ -476,6 +487,8 @@ class SettingsWindow(QMainWindow):
             config = toml.load(f)
             for k in keys:
                 if isinstance(k, ServerParamsIdx):
+                    if isinstance(self._changed_settings[k], bool):
+                        config['General'][k.name.lower()] = self._changed_settings[k]
                     if isinstance(self._changed_settings[k], int):
                         config['Network'][k.name.lower()] = int(self._changed_settings[k])
                     else:
@@ -506,20 +519,20 @@ class SettingsWindow(QMainWindow):
         backup configurations"""
         if self.sender() is self.ui_elements.btnDefault:
             # The default config files will be embedded in the executable
-            if Config.name == "Focuser160":
+            if Config.name == "PE 160 Focuser":
                 # cfg_file = config_dir + "/config_default_160.toml"
                 cfg_file = resource_path('src/config/config_default_160.toml', external=False)
-            elif Config.name == "FocuserIAG":
+            elif Config.name == "IAG Focuser":
                 # cfg_file = config_dir + "/config_default_IAG.toml"
                 cfg_file = resource_path('src/config/config_default_IAG.toml', external=False)
             msg = "DEFAULT"
             self.logger.info("Loading default motor configuration")
         elif self.sender() is self.ui_elements.btnBackup:
             # The backup config files are emebedded in the executable
-            if Config.name == "Focuser160":
+            if Config.name == "PE 160 Focuser":
                 # cfg_file = config_dir + "/config_backup_160.toml"
                 cfg_file = resource_path('src/config/config_backup_160.toml', external=False)
-            elif Config.name == "FocuserIAG":
+            elif Config.name == "IAG Focuser":
                 # cfg_file = config_dir + "/config_backup_IAG.toml"
                 cfg_file = resource_path('src/config/config_backup_IAG.toml', external=False)
             msg = "BACKUP"
@@ -537,7 +550,10 @@ class SettingsWindow(QMainWindow):
                         #     config = get_toml('Device', 'ip_iag', cfg_file)
                     elif isinstance(param.NAME, ServerParamsIdx):
                         # The server parameters are saved in Network section
-                        config = get_toml('Network', param.NAME.name.lower(), cfg_file)
+                        if param.NAME == ServerParamsIdx.STARTUP:
+                            config = get_toml('General', param.NAME.name.lower(), cfg_file)
+                        else:
+                            config = get_toml('Network', param.NAME.name.lower(), cfg_file)
                     else:
                         # The rest of the parameters are saved in Device section
                         config = str(get_toml('Device', param.NAME.name.lower(), cfg_file))
@@ -546,6 +562,8 @@ class SettingsWindow(QMainWindow):
                     if isinstance(param.OBJ, QLineEdit):
                         # QLineEdits will use the string directly
                         param.OBJ.setText(config)
+                    elif isinstance(param.OBJ, QCheckBox):
+                        param.OBJ.setChecked(config)
                     else:
                         # The value must be properly converted according to the parameter type
                         if param.TYPE is int:
@@ -658,9 +676,9 @@ class SettingsWindow(QMainWindow):
                     self._create_backup_config()                                # Creates a backup of the current configuration file
                     self._update_config_file(config_file ,keys)                              # Updates Config file and saves new server configurations
 
-                    if Config.name == "Focuser160":
+                    if Config.name == "PE 160 Focuser":
                         self._update_config_file(config_file_160 ,keys)                              # Updates Config file and saves new motor configurations
-                    elif Config.name == "FocuserIAG":
+                    elif Config.name == "IAG Focuser":
                         self._update_config_file(config_file_iag ,keys)                              # Updates Config file and saves new motor configurations
 
                     for key in keys:
@@ -698,6 +716,10 @@ class SettingsWindow(QMainWindow):
             elif param.TYPE is int or param.TYPE is float:
                 param.OBJ.valueChanged.disconnect()
                 param.OBJ.setValue(param.VALUE)
+                param.OBJ.valueChanged.connect(self._validate_parameters)
+            elif param.TYPE is bool:
+                param.OBJ.valueChanged.disconnect()
+                param.OBJ.setCheckable(param.VALUE)
                 param.OBJ.valueChanged.connect(self._validate_parameters)
 
 
