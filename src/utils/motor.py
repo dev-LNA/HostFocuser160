@@ -151,7 +151,7 @@ class Motor():
         if self.initialized:
             if pos != self._position:
                 self.last_position = self._position
-                pos = round(pos,1)
+                pos = round(pos)
                 self._position = pos
                 self.signals.position.emit(pos)
         else:

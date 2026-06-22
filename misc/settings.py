@@ -783,8 +783,8 @@ class SettingsWindow(QMainWindow):
         self._config_settings.BACKLASH.OBJ.setMaximum(int(150 * Config.steps_2_encoder * Config.enc_2_microns))
         
         # Max pos limits 6000~12600 steps
-        self._config_settings.MAX_POS.OBJ.setMinimum(int(8000 * Config.steps_2_encoder * Config.enc_2_microns * 0.09885853)) # 0.09885853 is the conversion for the maximum possible configuration
-        self._config_settings.MAX_POS.OBJ.setMaximum(int(12700 * Config.steps_2_encoder * Config.enc_2_microns * 0.09885853))# 0.09885853 is the conversion for the maximum possible configuration
+        self._config_settings.MAX_POS.OBJ.setMinimum(int(8000 * Config.steps_2_encoder * Config.enc_2_microns * 0.9885853)) # 0.9885853 is the conversion for the maximum possible configuration
+        self._config_settings.MAX_POS.OBJ.setMaximum(int(12700 * Config.steps_2_encoder * Config.enc_2_microns * 0.9885853))# 0.9885853 is the conversion for the maximum possible configuration
 
         # The Park position is limited by the maximum position
         self._config_settings.PARK_POS.OBJ.setMaximum(self._config_settings.MAX_POS.OBJ.value())

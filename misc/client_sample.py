@@ -109,7 +109,8 @@ class ClientSimulator(QtWidgets.QMainWindow):
         self.stsBar: QStackedWidget = self.stsBar
 
         self.sbMovePos: QDoubleSpinBox = self.findChild(QDoubleSpinBox, "sbMovePos")
-        self.sbMovePos.setSuffix(u" mm\u207B\u00B2")    # Unicode symbols to show -2 superscript
+        # self.sbMovePos.setSuffix(u" mm\u207B\u00B2")    # Unicode symbols to show -2 superscript
+        self.sbMovePos.setSuffix(u" \u03bc")    # Unicode symbols to show -2 superscript
 
         self.ledFocusIn: QLabel = self.findChild(QLabel, "ledFocusIn")
         self.ledFocusIn.installEventFilter(self)
@@ -145,7 +146,7 @@ class ClientSimulator(QtWidgets.QMainWindow):
 
         # self.BarFocuser.setStyleSheet("QProgressBar::chunk { background-color: rgb(26, 26, 26) } QProgressBar { color: indianred; }")
         self.BarFocuser.setTextDirection(QProgressBar.Direction.BottomToTop) 
-        self.BarFocuser.setMaximum(2510)
+        self.BarFocuser.setMaximum(25100)
         self.BarFocuser.setMinimum(-200)
                             
         self.txtClientIp.setText(_get_private_ip())                      # Considers the Ip of the current machine
@@ -363,7 +364,7 @@ class ClientSimulator(QtWidgets.QMainWindow):
     def _move_to(self):
         # if not self.is_moving:
         # pos = str(10 * self.sbMovePos.value())
-        pos = self.sbMovePos.text()[:-4]    # Must remove the suffix from the QSpinDoubleBox
+        pos = self.sbMovePos.text()[:-2]    # Must remove the suffix from the QSpinDoubleBox
         self._send_command(f"MOVE={pos}")
 
     def _move_in(self):

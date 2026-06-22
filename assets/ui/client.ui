@@ -836,13 +836,13 @@ background-color: qradialgradient(spread:reflect, cx:0.5, cy:0.5, radius:0.486, 
                   <string/>
                  </property>
                  <property name="decimals">
-                  <number>1</number>
+                  <number>0</number>
                  </property>
                  <property name="maximum">
-                  <double>2510.000000000000000</double>
+                  <double>25100.000000000000000</double>
                  </property>
                  <property name="singleStep">
-                  <double>0.100000000000000</double>
+                  <double>1.000000000000000</double>
                  </property>
                  <property name="value">
                   <double>0.000000000000000</double>
@@ -991,7 +991,7 @@ background-color: qradialgradient(spread:reflect, cx:0.5, cy:0.5, radius:0.486, 
            </item>
            <item row="1" column="0">
             <layout class="QVBoxLayout" name="verticalLayout_2">
-             <item>
+             <item alignment="Qt::AlignmentFlag::AlignHCenter">
               <widget class="QLabel" name="lblFocusPos">
                <property name="minimumSize">
                 <size>
@@ -1064,7 +1064,7 @@ width:16px; }
                 <number>-10</number>
                </property>
                <property name="maximum">
-                <number>2510</number>
+                <number>25100</number>
                </property>
                <property name="value">
                 <number>1000</number>
@@ -1098,10 +1098,13 @@ width:16px; }
                 </size>
                </property>
                <property name="styleSheet">
-                <string notr="true">margin: 0 0 0 5</string>
+                <string notr="true"/>
                </property>
                <property name="text">
-                <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt; mm&lt;span style=&quot; vertical-align:super;&quot;&gt;-2&lt;/span&gt;&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
+                <string>µ</string>
+               </property>
+               <property name="textFormat">
+                <enum>Qt::TextFormat::PlainText</enum>
                </property>
                <property name="alignment">
                 <set>Qt::AlignmentFlag::AlignCenter</set>

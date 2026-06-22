@@ -47,8 +47,8 @@ class TimeoutState(Enum):
 # operators to use previously defined positions in the software
 @dataclass
 class Conversion():
-    POSITION_VISUALIZATION: float = 0.09885853    # Conversion from value to PUB and DISPLAY
-    POSITION_COMMAND: float = 10.11546     # Convertion from received command to value to be sent to the motor
+    POSITION_VISUALIZATION: float = 1 #0.09885853    # Conversion from value to PUB and DISPLAY
+    POSITION_COMMAND: float = 1 #10.11546     # Conversion from received command to value to be sent to the motor
 
 class TimeDelays(float, Enum):
     RETRY_TIMEOUT = 0.2         # TODO: Colocar como configuração?

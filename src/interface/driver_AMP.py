@@ -334,18 +334,21 @@ class DriverAMP(Driver):
             else:
                 return str(int(self._convert_pos(Config.max_pos / Conversion.POSITION_VISUALIZATION)  ))
 
-        Conversion.POSITION_VISUALIZATION = (value - 1456) / 10661.7
+        Conversion.POSITION_VISUALIZATION = (value - 14560) / 10661.7
         Conversion.POSITION_COMMAND = 1 / Conversion.POSITION_VISUALIZATION
+        # Conversion.POSITION_VISUALIZATION = 1
+        # Conversion.POSITION_COMMAND = 1
 
         print('-' * 50)
         print(f"VALUE: {value}")
         print(f"POSITION VISUALIZATION: {Conversion.POSITION_VISUALIZATION}")
         print(f"POSITION COMMAND: {Conversion.POSITION_COMMAND}")
         
+        Config.max_pos = value
 
 
         # value = (Config.max_pos * Conversion.POSITION_COMMAND) - value * Conversion.POSITION_COMMAND   # Conversão necessária devido a montagem mecânica
-        value = value / Conversion.POSITION_VISUALIZATION   # Conversao para enviar para o CLP
+        # value = value / Conversion.POSITION_VISUALIZATION   # Conversao para enviar para o CLP
         value = value / Config.enc_2_microns
         value = int(value / Config.steps_2_encoder)
 
@@ -353,7 +356,12 @@ class DriverAMP(Driver):
 
         print('-' * 50)
 
-        return self.mb_server.write_param(dig_inputs_regs.TX_V71, value)
+        # When the max position is changed the park position must also be changed due to
+        # the update conversion value
+        if self.mb_server.write_param(dig_inputs_regs.TX_V71, value) ==  "OK":
+            return self.param_park_pos(value=Config.park_pos)                   
+
+        # return self.mb_server.write_param(dig_inputs_regs.TX_V71, value)
             
 
     
@@ -369,11 +377,22 @@ class DriverAMP(Driver):
             else:
                 return str(int(self._convert_pos((Config.max_pos * Conversion.POSITION_COMMAND) - Config.park_pos * Conversion.POSITION_COMMAND) ) )
 
+
+        print('_*' * 50)
+        print(f"POSITION VISUALIZATION: {Conversion.POSITION_VISUALIZATION}")
+        print(f"POSITION COMMAND: {Conversion.POSITION_COMMAND}")
+        print(f'PARK POS: {value}')
+
+
         value = (Config.max_pos * Conversion.POSITION_COMMAND) - Conversion.POSITION_COMMAND * value   # Conversão necessária devido a montagem mecânica 
         
         value = value / Config.enc_2_microns
         value = int(value / Config.steps_2_encoder)
 
+        value = value + 1       # Adjust in steps
+
+        print(f"SEND PARK MOTOR: {value}")
+        print('_*' * 50)
         
         return self.mb_server.write_param(dig_inputs_regs.TX_V83, value)
 

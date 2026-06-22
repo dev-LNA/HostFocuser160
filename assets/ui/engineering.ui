@@ -657,8 +657,11 @@ margin: 1px 0px 1px 0px
            <property name="suffix">
             <string> µm</string>
            </property>
+           <property name="minimum">
+            <number>24800</number>
+           </property>
            <property name="maximum">
-            <number>99999</number>
+            <number>25100</number>
            </property>
            <property name="stepType">
             <enum>QAbstractSpinBox::StepType::AdaptiveDecimalStepType</enum>
@@ -742,7 +745,7 @@ margin: 1px 0px 1px 0px
             <string> µm</string>
            </property>
            <property name="maximum">
-            <number>99999</number>
+            <number>25100</number>
            </property>
            <property name="stepType">
             <enum>QAbstractSpinBox::StepType::AdaptiveDecimalStepType</enum>
