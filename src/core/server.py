@@ -566,7 +566,7 @@ class Server(QObject):
         if self.motor.initialized:
             # self.status[SJson.POSITION] = self.motor.position
             self.motor.position
-            self.status[SJson.POSITION] = self.motor.driver.conv_position_show(type="float")
+            self.status[SJson.POSITION] = self.motor.driver.conv_position_show(type="int")
         else:
             self.motor.position # Updates the position but does not save it to the JSON since the motor is not initialized and the position value is not reliable
             self.status[SJson.POSITION] = constants.INVALID_RESPONSE

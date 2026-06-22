@@ -147,7 +147,7 @@ class ClientSimulator(QtWidgets.QMainWindow):
         # self.BarFocuser.setStyleSheet("QProgressBar::chunk { background-color: rgb(26, 26, 26) } QProgressBar { color: indianred; }")
         self.BarFocuser.setTextDirection(QProgressBar.Direction.BottomToTop) 
         self.BarFocuser.setMaximum(25100)
-        self.BarFocuser.setMinimum(-200)
+        self.BarFocuser.setMinimum(-500)
                             
         self.txtClientIp.setText(_get_private_ip())                      # Considers the Ip of the current machine
         self.txtClientIp.returnPressed.connect(self._clientIpDefined)    # Configures event of return key press
@@ -250,7 +250,7 @@ class ClientSimulator(QtWidgets.QMainWindow):
             self._updater = Updater(poller=self.poller, subscriber=self.subscriber)          # Creates Updater thread
             self._updater.signals.message.connect(self.txtStatus.setText)                    # Updates status text box with updated message
             self._updater.signals.position.connect(lambda val: self.BarFocuser.setValue(int(val)))                 # Updates bar value with position
-            self._updater.signals.position.connect(lambda val: self.lblFocusPos.setText(str(val)) if val!=constants.INVALID_RESPONSE else self.lblFocusPos.setText('Invalid'))
+            self._updater.signals.position.connect(lambda val: self.lblFocusPos.setText(str(val).strip()) if val!=constants.INVALID_RESPONSE else self.lblFocusPos.setText('Invalid'))
             # self._updater.signals.clientID.connect(self.statBusy_2.setText)                  # Updates client Id
             self._updater.signals.lbl_clientId_style.connect(self.statBusy_2.setProperty)  # Updates style of client Id label according to status
             self._updater.signals.connected.connect(self._update_connect_status)
@@ -380,8 +380,9 @@ class ClientSimulator(QtWidgets.QMainWindow):
             self._send_command("HALT")
 
     def _move_out(self):
-        status = json.loads(self.txtStatus.toPlainText())
-        max_speed = int(status['maxSpeed'])                 # actually is the Normal speed configuration
+        # status = json.loads(self.txtStatus.toPlainText())
+        # max_speed = int(status['maxSpeed'])                 # actually is the Normal speed configuration
+        max_speed = int(self._updater.data['maxSpeed'])
         if not self.is_moving:
             if TEST_SETUP:
                 self._send_command(f"FOCUSOUT="  + f"{str(int(max_speed * self.sbSpeed.value() * 0.01))}")  #TEST_VALUE -> ORIGINAL VALUE => FOCUSOUT=200

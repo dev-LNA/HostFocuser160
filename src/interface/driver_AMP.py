@@ -334,10 +334,8 @@ class DriverAMP(Driver):
             else:
                 return str(int(self._convert_pos(Config.max_pos / Conversion.POSITION_VISUALIZATION)  ))
 
-        Conversion.POSITION_VISUALIZATION = (value - 14560) / 10661.7
-        Conversion.POSITION_COMMAND = 1 / Conversion.POSITION_VISUALIZATION
-        # Conversion.POSITION_VISUALIZATION = 1
-        # Conversion.POSITION_COMMAND = 1
+        # Conversion.POSITION_VISUALIZATION = (value - 14560) / 10661.7
+        # Conversion.POSITION_COMMAND = 1 / Conversion.POSITION_VISUALIZATION
 
         print('-' * 50)
         print(f"VALUE: {value}")
@@ -711,12 +709,14 @@ class DriverAMP(Driver):
         # Sends the position value to the CLP, and then sends the command to start the movement towards the target position
         # command_position = (Config.max_pos * Conversion.POSITION_COMMAND) - Conversion.POSITION_COMMAND * int(pos)   # Conversão necessária devido a montagem mecânica  
         command_position = (Config.max_pos * Conversion.POSITION_COMMAND) - Conversion.POSITION_COMMAND * pos   # Conversão necessária devido a montagem mecânica 
+        # command_position = (Config.max_pos * Conversion.POSITION_VISUALIZATION) - Conversion.POSITION_VISUALIZATION * pos   # Conversão necessária devido a montagem mecânica 
+
         print(f"Moving to position {pos} microns - Command position value: {command_position}")
         print(f"steps: {self._convert_pos(command_position)}  ---  int steps: {round(self._convert_pos(command_position))}")
 
         print(f'Steps to microns: {   -((round(self._convert_pos(command_position)) * Config.steps_2_encoder * Config.enc_2_microns) - (Config.max_pos * Conversion.POSITION_COMMAND)) / Conversion.POSITION_COMMAND}')
 
-        if self.mb_server.write_param(dig_inputs_regs.TX_V20, round(self._convert_pos(command_position)) + 1) == "OK":
+        if self.mb_server.write_param(dig_inputs_regs.TX_V20, round(self._convert_pos(command_position))) == "OK":
             time.sleep(TimeDelays.WAIT_PARAM)   # Delay to ensure the position value is written to the CLP before sending the command to start the movement
             return self.mb_server.send_command(dig_inputs_regs.TX_GS29)
         else:
