@@ -200,6 +200,8 @@ class Server(QObject):
                 SJson.DEVICE_ID: "",                # Motor ID
                 SJson.DEVICE_FIRMWARE_VERSION: "",  # Motor firmware version
                 SJson.TIMEOUT: False,               # Timeout
+                SJson.PROCESSING: False,
+
             }
 
             self.test_var = 14.2
@@ -462,6 +464,7 @@ class Server(QObject):
             self.motor.signals.moving.status.connect(lambda val: self.logger.warning("FOCUSER MOVING") if val else self.logger.warning(f"FOCUSER STOPPED at {self.motor.position}"))
 
             self.motor.signals.error_msg.connect(lambda msg: self.logger.error(f'{msg}'))
+
         else:
             raise ValueError("Invalid motor model")
 
@@ -575,6 +578,7 @@ class Server(QObject):
         self.status[SJson.PARKING] = self.motor.parking
         self.status[SJson.IS_MOVING] = self.motor.is_moving
         self.status[SJson.ALARM] = self.motor.alarm
+        self.status[SJson.PROCESSING] = self.processing_command
         self.motor.firmware_status
 
         if self.motor.alarm_info:

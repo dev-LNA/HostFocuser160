@@ -171,7 +171,6 @@ class FocuserOPD (QMainWindow):
         # self.server.signals.connection_speed.connect(self.ui_elements.lblComSpeed.setText)
         
         # self.server.signals.position_str.connect(self.ui_elements.lblPosition_val.setText)
-        # self.server.signals.encoder.connect(self.ui_elements.lblEncoder_val.setText)
 
         # self.server.signals.position_int.connect(self.ui_elements.posSlider.setValue)
         self.server.signals.max_pos.connect(self.ui_elements.posSlider.setMaximum)
@@ -233,8 +232,6 @@ class FocuserOPD (QMainWindow):
 
     # Hiding some information from the GUI #TODO: Remove from the UI
         self.ui_elements.btnTestes.setVisible(False)
-        self.ui_elements.lblEncoder.setVisible(False)
-        self.ui_elements.lblEncoder_val.setVisible(False)
         self.ui_elements.lblComSpeed.setVisible(False)
         self.ui_elements.lblSpeed.setVisible(False)
 
@@ -344,9 +341,8 @@ class FocuserOPD (QMainWindow):
         # self.server.motor.signals.lim_min.status.connect(lambda val: logger.warning("Limit switch MIN activated") if val else logger.warning("Limit switch MIN deactivated"))
         self.server.motor.signals.lim_max.info.connect(self.ui_elements.ledLimMax.setProperty)
         # self.server.motor.signals.lim_max.status.connect(lambda val: logger.warning("Limit switch MAX activated") if val else logger.warning("Limit switch MAX deactivated"))
-        self.server.motor.signals.position.string.connect(lambda pos: self.ui_elements.lblPosition_val.setText(pos) if pos == 'Invalid' else  self.ui_elements.lblPosition_val.setText(pos + u' \u03BC')) # \u03BC is unicode for micron
+        self.server.motor.signals.position.string.connect(lambda pos: self.ui_elements.lblPosition_val.setText(pos) if pos == 'Invalid' else  self.ui_elements.lblPosition_val.setText(pos))
         self.server.motor.signals.position.value.connect(self.ui_elements.posSlider.setValue)
-        self.server.motor.signals.encoder.connect(self.ui_elements.lblEncoder_val.setText)
         self.server.motor.signals.initialized.info.connect(self.ui_elements.ledHome.setProperty)
         self.server.motor.signals.firmware_status.connect(self.ui_elements.lblStatus_val.setText)
         self.server.motor.signals.firmware_status.connect(self.ui_elements.lblStatus_val.setToolTip)

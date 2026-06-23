@@ -198,12 +198,6 @@ class UiWidgets(QWidget):
             self.ledProcessing = window.findChild(QLabel, 'ledProcessing')
             self.ledProcessing: QLabel = self.ledProcessing
 
-            self.lblEncoder = window.findChild(QLabel, 'lblEncoder')
-            self.lblEncoder: QLabel = self.lblEncoder
-
-            self.lblEncoder_val = window.findChild(QLabel, 'lblEncoder_val')
-            self.lblEncoder_val: QLabel = self.lblEncoder_val
-
             self.lblPosition_val = window.findChild(QLabel, 'lblPosition_val')
             self.lblPosition_val: QLabel = self.lblPosition_val
 

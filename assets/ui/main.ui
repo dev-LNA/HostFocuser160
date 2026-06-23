@@ -4198,6 +4198,13 @@ border-right: none;
                </widget>
               </item>
               <item>
+               <widget class="QLabel" name="label_2">
+                <property name="text">
+                 <string>[µm]</string>
+                </property>
+               </widget>
+              </item>
+              <item>
                <spacer name="horizontalSpacer_3">
                 <property name="orientation">
                  <enum>Qt::Orientation::Horizontal</enum>
@@ -4206,69 +4213,6 @@ border-right: none;
                  <size>
                   <width>13</width>
                   <height>17</height>
-                 </size>
-                </property>
-               </spacer>
-              </item>
-              <item>
-               <widget class="QLabel" name="lblEncoder">
-                <property name="maximumSize">
-                 <size>
-                  <width>16777215</width>
-                  <height>20</height>
-                 </size>
-                </property>
-                <property name="text">
-                 <string>Encoder:</string>
-                </property>
-               </widget>
-              </item>
-              <item>
-               <widget class="QLabel" name="lblEncoder_val">
-                <property name="minimumSize">
-                 <size>
-                  <width>67</width>
-                  <height>0</height>
-                 </size>
-                </property>
-                <property name="maximumSize">
-                 <size>
-                  <width>50</width>
-                  <height>20</height>
-                 </size>
-                </property>
-                <property name="styleSheet">
-                 <string notr="true">background-color: white</string>
-                </property>
-                <property name="frameShape">
-                 <enum>QFrame::Shape::Panel</enum>
-                </property>
-                <property name="frameShadow">
-                 <enum>QFrame::Shadow::Sunken</enum>
-                </property>
-                <property name="lineWidth">
-                 <number>2</number>
-                </property>
-                <property name="midLineWidth">
-                 <number>0</number>
-                </property>
-                <property name="text">
-                 <string/>
-                </property>
-                <property name="alignment">
-                 <set>Qt::AlignmentFlag::AlignCenter</set>
-                </property>
-               </widget>
-              </item>
-              <item>
-               <spacer name="horizontalSpacer_15">
-                <property name="orientation">
-                 <enum>Qt::Orientation::Horizontal</enum>
-                </property>
-                <property name="sizeHint" stdset="0">
-                 <size>
-                  <width>40</width>
-                  <height>20</height>
                  </size>
                 </property>
                </spacer>

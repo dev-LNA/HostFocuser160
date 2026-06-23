@@ -716,7 +716,7 @@ class DriverAMP(Driver):
 
         print(f'Steps to microns: {   -((round(self._convert_pos(command_position)) * Config.steps_2_encoder * Config.enc_2_microns) - (Config.max_pos * Conversion.POSITION_COMMAND)) / Conversion.POSITION_COMMAND}')
 
-        if self.mb_server.write_param(dig_inputs_regs.TX_V20, round(self._convert_pos(command_position))) == "OK":
+        if self.mb_server.write_param(dig_inputs_regs.TX_V20, round(self._convert_pos(command_position) + 1)) == "OK":
             time.sleep(TimeDelays.WAIT_PARAM)   # Delay to ensure the position value is written to the CLP before sending the command to start the movement
             return self.mb_server.send_command(dig_inputs_regs.TX_GS29)
         else:

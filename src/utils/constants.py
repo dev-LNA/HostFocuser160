@@ -108,6 +108,7 @@ class ServerJsonKeys(StrEnum):
     DEVICE_ID = "device_ID"                                 # Motor ID
     DEVICE_FIRMWARE_VERSION = "device_Firmware_Version"     # Motor firmware version
     TIMEOUT = "timeout"                                     # Timeout
+    PROCESSING = "processing"
 
 class ServerParamsIdx(Enum):
     SERVER_IP=0

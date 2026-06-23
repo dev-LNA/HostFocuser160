@@ -759,183 +759,97 @@ background-color: qradialgradient(spread:reflect, cx:0.5, cy:0.5, radius:0.486, 
         </size>
        </property>
        <layout class="QGridLayout" name="gridLayout_3">
-        <property name="horizontalSpacing">
-         <number>10</number>
-        </property>
-        <item row="0" column="0">
-         <widget class="QFrame" name="frame">
-          <property name="maximumSize">
-           <size>
-            <width>201</width>
-            <height>16777215</height>
-           </size>
+        <item row="0" column="2">
+         <layout class="QFormLayout" name="formLayout_2">
+          <property name="horizontalSpacing">
+           <number>15</number>
           </property>
-          <property name="frameShape">
-           <enum>QFrame::Shape::StyledPanel</enum>
+          <property name="verticalSpacing">
+           <number>9</number>
           </property>
-          <property name="frameShadow">
-           <enum>QFrame::Shadow::Sunken</enum>
-          </property>
-          <property name="lineWidth">
-           <number>2</number>
-          </property>
-          <property name="midLineWidth">
-           <number>1</number>
-          </property>
-          <layout class="QGridLayout" name="gridLayout_5">
-           <property name="horizontalSpacing">
-            <number>32</number>
-           </property>
-           <item row="0" column="0" colspan="2">
-            <layout class="QGridLayout" name="gridLayout_4">
-             <property name="horizontalSpacing">
-              <number>18</number>
-             </property>
-             <item row="0" column="0">
-              <layout class="QVBoxLayout" name="verticalLayout">
-               <property name="spacing">
-                <number>0</number>
-               </property>
-               <item alignment="Qt::AlignmentFlag::AlignHCenter">
-                <widget class="QLabel" name="label_6">
-                 <property name="maximumSize">
-                  <size>
-                   <width>16777215</width>
-                   <height>17</height>
-                  </size>
-                 </property>
-                 <property name="text">
-                  <string>Target</string>
-                 </property>
-                </widget>
-               </item>
-               <item>
-                <widget class="QDoubleSpinBox" name="sbMovePos">
-                 <property name="minimumSize">
-                  <size>
-                   <width>0</width>
-                   <height>22</height>
-                  </size>
-                 </property>
-                 <property name="cursor">
-                  <cursorShape>ArrowCursor</cursorShape>
-                 </property>
-                 <property name="layoutDirection">
-                  <enum>Qt::LayoutDirection::RightToLeft</enum>
-                 </property>
-                 <property name="styleSheet">
-                  <string notr="true"/>
-                 </property>
-                 <property name="frame">
-                  <bool>true</bool>
-                 </property>
-                 <property name="buttonSymbols">
-                  <enum>QAbstractSpinBox::ButtonSymbols::UpDownArrows</enum>
-                 </property>
-                 <property name="accelerated">
-                  <bool>true</bool>
-                 </property>
-                 <property name="suffix">
-                  <string/>
-                 </property>
-                 <property name="decimals">
-                  <number>0</number>
-                 </property>
-                 <property name="maximum">
-                  <double>25100.000000000000000</double>
-                 </property>
-                 <property name="singleStep">
-                  <double>1.000000000000000</double>
-                 </property>
-                 <property name="value">
-                  <double>0.000000000000000</double>
-                 </property>
-                </widget>
-               </item>
-              </layout>
-             </item>
-             <item row="0" column="1" alignment="Qt::AlignmentFlag::AlignBottom">
-              <widget class="QPushButton" name="btnMove">
-               <property name="maximumSize">
-                <size>
-                 <width>60</width>
-                 <height>16777215</height>
-                </size>
-               </property>
-               <property name="font">
-                <font>
-                 <bold>true</bold>
-                </font>
-               </property>
-               <property name="toolTip">
-                <string>Go to</string>
-               </property>
-               <property name="styleSheet">
-                <string notr="true">background-color: rgb(222, 222, 222);</string>
-               </property>
-               <property name="text">
-                <string>GO</string>
-               </property>
-               <property name="icon">
-                <iconset>
-                 <normaloff>../../../BlackStar/src/assets/icons/start.ico</normaloff>../../../BlackStar/src/assets/icons/start.ico</iconset>
-               </property>
-              </widget>
-             </item>
-            </layout>
-           </item>
-           <item row="1" column="0">
-            <widget class="QPushButton" name="btnHome">
-             <property name="maximumSize">
-              <size>
-               <width>60</width>
-               <height>16777215</height>
-              </size>
-             </property>
-             <property name="styleSheet">
-              <string notr="true">background-color: forestGreen;</string>
-             </property>
-             <property name="text">
-              <string>INIT</string>
-             </property>
-            </widget>
-           </item>
-           <item row="1" column="1">
-            <widget class="QPushButton" name="btnHalt">
-             <property name="maximumSize">
-              <size>
-               <width>60</width>
-               <height>16777215</height>
-              </size>
-             </property>
-             <property name="styleSheet">
-              <string notr="true">background-color: Brown;</string>
-             </property>
-             <property name="text">
-              <string>STOP</string>
-             </property>
-            </widget>
-           </item>
-           <item row="2" column="0">
-            <widget class="QPushButton" name="btnHome_Park">
-             <property name="maximumSize">
-              <size>
-               <width>60</width>
-               <height>16777215</height>
-              </size>
-             </property>
-             <property name="styleSheet">
-              <string notr="true">background-color: forestGreen;</string>
-             </property>
-             <property name="text">
-              <string>Park</string>
-             </property>
-            </widget>
-           </item>
-          </layout>
-         </widget>
+          <item row="0" column="0">
+           <widget class="QLabel" name="label_10">
+            <property name="font">
+             <font>
+              <pointsize>10</pointsize>
+              <bold>true</bold>
+             </font>
+            </property>
+            <property name="text">
+             <string>Server IP Address:</string>
+            </property>
+           </widget>
+          </item>
+          <item row="0" column="1">
+           <widget class="QLabel" name="lblServerIP">
+            <property name="text">
+             <string>127.0.0.1</string>
+            </property>
+           </widget>
+          </item>
+          <item row="1" column="0">
+           <widget class="QLabel" name="label_16">
+            <property name="font">
+             <font>
+              <pointsize>10</pointsize>
+              <bold>true</bold>
+             </font>
+            </property>
+            <property name="text">
+             <string>Motor IP Address:</string>
+            </property>
+           </widget>
+          </item>
+          <item row="1" column="1">
+           <widget class="QLabel" name="lblMotorIP">
+            <property name="text">
+             <string>127.0.0.1</string>
+            </property>
+           </widget>
+          </item>
+          <item row="2" column="0">
+           <widget class="QLabel" name="label_11">
+            <property name="font">
+             <font>
+              <pointsize>10</pointsize>
+              <bold>true</bold>
+             </font>
+            </property>
+            <property name="text">
+             <string>Device ID: </string>
+            </property>
+           </widget>
+          </item>
+          <item row="2" column="1">
+           <widget class="QLabel" name="lblMotorID">
+            <property name="text">
+             <string>MOTOR ID</string>
+            </property>
+           </widget>
+          </item>
+          <item row="3" column="0">
+           <widget class="QLabel" name="label_17">
+            <property name="font">
+             <font>
+              <pointsize>10</pointsize>
+              <bold>true</bold>
+             </font>
+            </property>
+            <property name="text">
+             <string>Client ID:</string>
+            </property>
+           </widget>
+          </item>
+          <item row="3" column="1">
+           <widget class="QLabel" name="lblClientID">
+            <property name="text">
+             <string>Client ID</string>
+            </property>
+           </widget>
+          </item>
+         </layout>
         </item>
-        <item row="0" column="1" rowspan="2">
+        <item row="0" column="1" rowspan="6">
          <widget class="QFrame" name="frame_3">
           <property name="maximumSize">
            <size>
@@ -1004,7 +918,7 @@ background-color: qradialgradient(spread:reflect, cx:0.5, cy:0.5, radius:0.486, 
                </property>
                <property name="maximumSize">
                 <size>
-                 <width>43</width>
+                 <width>52</width>
                  <height>16777215</height>
                 </size>
                </property>
@@ -1012,7 +926,11 @@ background-color: qradialgradient(spread:reflect, cx:0.5, cy:0.5, radius:0.486, 
                 <string notr="true">color:red</string>
                </property>
                <property name="text">
-                <string>Invalid</string>
+                <string>Invalid
+Position</string>
+               </property>
+               <property name="alignment">
+                <set>Qt::AlignmentFlag::AlignCenter</set>
                </property>
               </widget>
              </item>
@@ -1134,7 +1052,7 @@ width:16px; }
                 <string notr="true"/>
                </property>
                <property name="text">
-                <string>µ</string>
+                <string>[µm]</string>
                </property>
                <property name="textFormat">
                 <enum>Qt::TextFormat::PlainText</enum>
@@ -1558,97 +1476,285 @@ width:16px; }
           </layout>
          </widget>
         </item>
-        <item row="0" column="2">
-         <layout class="QFormLayout" name="formLayout_2">
-          <property name="horizontalSpacing">
-           <number>15</number>
+        <item row="6" column="0" colspan="3">
+         <widget class="QTextEdit" name="txtStatus">
+          <property name="minimumSize">
+           <size>
+            <width>0</width>
+            <height>122</height>
+           </size>
           </property>
-          <property name="verticalSpacing">
-           <number>9</number>
+          <property name="maximumSize">
+           <size>
+            <width>7010</width>
+            <height>135</height>
+           </size>
           </property>
-          <item row="0" column="0">
-           <widget class="QLabel" name="label_10">
-            <property name="font">
-             <font>
-              <pointsize>10</pointsize>
-              <bold>true</bold>
-             </font>
+         </widget>
+        </item>
+        <item row="0" column="0" rowspan="2">
+         <widget class="QFrame" name="frame">
+          <property name="maximumSize">
+           <size>
+            <width>201</width>
+            <height>16777215</height>
+           </size>
+          </property>
+          <property name="frameShape">
+           <enum>QFrame::Shape::StyledPanel</enum>
+          </property>
+          <property name="frameShadow">
+           <enum>QFrame::Shadow::Sunken</enum>
+          </property>
+          <property name="lineWidth">
+           <number>2</number>
+          </property>
+          <property name="midLineWidth">
+           <number>1</number>
+          </property>
+          <layout class="QGridLayout" name="gridLayout_5">
+           <property name="horizontalSpacing">
+            <number>32</number>
+           </property>
+           <item row="0" column="0" colspan="2">
+            <layout class="QGridLayout" name="gridLayout_4">
+             <property name="horizontalSpacing">
+              <number>18</number>
+             </property>
+             <item row="0" column="0">
+              <layout class="QVBoxLayout" name="verticalLayout">
+               <property name="spacing">
+                <number>0</number>
+               </property>
+               <item alignment="Qt::AlignmentFlag::AlignHCenter">
+                <widget class="QLabel" name="label_6">
+                 <property name="maximumSize">
+                  <size>
+                   <width>16777215</width>
+                   <height>17</height>
+                  </size>
+                 </property>
+                 <property name="text">
+                  <string>Target [µm]</string>
+                 </property>
+                </widget>
+               </item>
+               <item>
+                <widget class="QDoubleSpinBox" name="sbMovePos">
+                 <property name="minimumSize">
+                  <size>
+                   <width>0</width>
+                   <height>22</height>
+                  </size>
+                 </property>
+                 <property name="cursor">
+                  <cursorShape>ArrowCursor</cursorShape>
+                 </property>
+                 <property name="layoutDirection">
+                  <enum>Qt::LayoutDirection::RightToLeft</enum>
+                 </property>
+                 <property name="styleSheet">
+                  <string notr="true"/>
+                 </property>
+                 <property name="frame">
+                  <bool>true</bool>
+                 </property>
+                 <property name="buttonSymbols">
+                  <enum>QAbstractSpinBox::ButtonSymbols::UpDownArrows</enum>
+                 </property>
+                 <property name="accelerated">
+                  <bool>true</bool>
+                 </property>
+                 <property name="suffix">
+                  <string/>
+                 </property>
+                 <property name="decimals">
+                  <number>0</number>
+                 </property>
+                 <property name="maximum">
+                  <double>25100.000000000000000</double>
+                 </property>
+                 <property name="singleStep">
+                  <double>1.000000000000000</double>
+                 </property>
+                 <property name="value">
+                  <double>0.000000000000000</double>
+                 </property>
+                </widget>
+               </item>
+              </layout>
+             </item>
+             <item row="0" column="1" alignment="Qt::AlignmentFlag::AlignBottom">
+              <widget class="QPushButton" name="btnMove">
+               <property name="maximumSize">
+                <size>
+                 <width>60</width>
+                 <height>16777215</height>
+                </size>
+               </property>
+               <property name="font">
+                <font>
+                 <bold>true</bold>
+                </font>
+               </property>
+               <property name="toolTip">
+                <string>Go to</string>
+               </property>
+               <property name="styleSheet">
+                <string notr="true">background-color: rgb(222, 222, 222);</string>
+               </property>
+               <property name="text">
+                <string>GO</string>
+               </property>
+               <property name="icon">
+                <iconset>
+                 <normaloff>../../../BlackStar/src/assets/icons/start.ico</normaloff>../../../BlackStar/src/assets/icons/start.ico</iconset>
+               </property>
+              </widget>
+             </item>
+            </layout>
+           </item>
+           <item row="1" column="0">
+            <widget class="QPushButton" name="btnHome">
+             <property name="maximumSize">
+              <size>
+               <width>60</width>
+               <height>16777215</height>
+              </size>
+             </property>
+             <property name="styleSheet">
+              <string notr="true">background-color: forestGreen;</string>
+             </property>
+             <property name="text">
+              <string>INIT</string>
+             </property>
+            </widget>
+           </item>
+           <item row="1" column="1">
+            <widget class="QPushButton" name="btnHalt">
+             <property name="maximumSize">
+              <size>
+               <width>60</width>
+               <height>16777215</height>
+              </size>
+             </property>
+             <property name="styleSheet">
+              <string notr="true">background-color: Brown;</string>
+             </property>
+             <property name="text">
+              <string>STOP</string>
+             </property>
+            </widget>
+           </item>
+           <item row="2" column="0">
+            <widget class="QPushButton" name="btnHome_Park">
+             <property name="maximumSize">
+              <size>
+               <width>60</width>
+               <height>16777215</height>
+              </size>
+             </property>
+             <property name="styleSheet">
+              <string notr="true">background-color: forestGreen;</string>
+             </property>
+             <property name="text">
+              <string>Park</string>
+             </property>
+            </widget>
+           </item>
+          </layout>
+         </widget>
+        </item>
+        <item row="1" column="2" alignment="Qt::AlignmentFlag::AlignRight">
+         <widget class="QPushButton" name="btnUpdateStatus">
+          <property name="maximumSize">
+           <size>
+            <width>100</width>
+            <height>16777215</height>
+           </size>
+          </property>
+          <property name="styleSheet">
+           <string notr="true">background-color: forestGreen;</string>
+          </property>
+          <property name="text">
+           <string>Status</string>
+          </property>
+         </widget>
+        </item>
+        <item row="5" column="2">
+         <layout class="QHBoxLayout" name="horizontalLayout_4">
+          <property name="spacing">
+           <number>6</number>
+          </property>
+          <item>
+           <spacer name="horizontalSpacer_3">
+            <property name="orientation">
+             <enum>Qt::Orientation::Horizontal</enum>
+            </property>
+            <property name="sizeType">
+             <enum>QSizePolicy::Policy::Expanding</enum>
+            </property>
+            <property name="sizeHint" stdset="0">
+             <size>
+              <width>40</width>
+              <height>22</height>
+             </size>
+            </property>
+           </spacer>
+          </item>
+          <item>
+           <widget class="QLabel" name="label_9">
+            <property name="minimumSize">
+             <size>
+              <width>0</width>
+              <height>22</height>
+             </size>
+            </property>
+            <property name="maximumSize">
+             <size>
+              <width>16777215</width>
+              <height>22</height>
+             </size>
             </property>
             <property name="text">
-             <string>Server IP Address:</string>
+             <string>Response:</string>
             </property>
            </widget>
           </item>
-          <item row="0" column="1">
-           <widget class="QLabel" name="lblServerIP">
-            <property name="text">
-             <string>127.0.0.1</string>
+          <item>
+           <widget class="QLabel" name="lblResponse">
+            <property name="minimumSize">
+             <size>
+              <width>45</width>
+              <height>22</height>
+             </size>
             </property>
-           </widget>
-          </item>
-          <item row="1" column="0">
-           <widget class="QLabel" name="label_16">
-            <property name="font">
-             <font>
-              <pointsize>10</pointsize>
-              <bold>true</bold>
-             </font>
+            <property name="maximumSize">
+             <size>
+              <width>45</width>
+              <height>22</height>
+             </size>
             </property>
-            <property name="text">
-             <string>Motor IP Address:</string>
+            <property name="styleSheet">
+             <string notr="true">background=white</string>
             </property>
-           </widget>
-          </item>
-          <item row="1" column="1">
-           <widget class="QLabel" name="lblMotorIP">
-            <property name="text">
-             <string>127.0.0.1</string>
+            <property name="frameShape">
+             <enum>QFrame::Shape::Panel</enum>
             </property>
-           </widget>
-          </item>
-          <item row="2" column="0">
-           <widget class="QLabel" name="label_11">
-            <property name="font">
-             <font>
-              <pointsize>10</pointsize>
-              <bold>true</bold>
-             </font>
+            <property name="frameShadow">
+             <enum>QFrame::Shadow::Raised</enum>
             </property>
             <property name="text">
-             <string>Device ID: </string>
+             <string/>
             </property>
-           </widget>
-          </item>
-          <item row="2" column="1">
-           <widget class="QLabel" name="lblMotorID">
-            <property name="text">
-             <string>MOTOR ID</string>
-            </property>
-           </widget>
-          </item>
-          <item row="3" column="0">
-           <widget class="QLabel" name="label_17">
-            <property name="font">
-             <font>
-              <pointsize>10</pointsize>
-              <bold>true</bold>
-             </font>
-            </property>
-            <property name="text">
-             <string>Client ID:</string>
-            </property>
-           </widget>
-          </item>
-          <item row="3" column="1">
-           <widget class="QLabel" name="lblClientID">
-            <property name="text">
-             <string>Client ID</string>
+            <property name="alignment">
+             <set>Qt::AlignmentFlag::AlignCenter</set>
             </property>
            </widget>
           </item>
          </layout>
         </item>
-        <item row="1" column="0" alignment="Qt::AlignmentFlag::AlignHCenter|Qt::AlignmentFlag::AlignTop">
+        <item row="2" column="0">
          <widget class="QFrame" name="frame_2">
           <property name="minimumSize">
            <size>
@@ -1951,38 +2057,6 @@ width:16px; }
           <zorder>label_4</zorder>
           <zorder>ledFocusIn</zorder>
           <zorder>ledFocusOut</zorder>
-         </widget>
-        </item>
-        <item row="1" column="2" alignment="Qt::AlignmentFlag::AlignRight|Qt::AlignmentFlag::AlignBottom">
-         <widget class="QPushButton" name="btnUpdateStatus">
-          <property name="maximumSize">
-           <size>
-            <width>100</width>
-            <height>16777215</height>
-           </size>
-          </property>
-          <property name="styleSheet">
-           <string notr="true">background-color: forestGreen;</string>
-          </property>
-          <property name="text">
-           <string>Status</string>
-          </property>
-         </widget>
-        </item>
-        <item row="2" column="0" colspan="3">
-         <widget class="QTextEdit" name="txtStatus">
-          <property name="minimumSize">
-           <size>
-            <width>0</width>
-            <height>122</height>
-           </size>
-          </property>
-          <property name="maximumSize">
-           <size>
-            <width>7010</width>
-            <height>135</height>
-           </size>
-          </property>
          </widget>
         </item>
        </layout>
