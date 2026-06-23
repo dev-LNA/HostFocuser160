@@ -108,8 +108,8 @@ class Server(QObject):
         self.previous_initialized = False               #|
         self.previous_parking = False                   #|  Control variables initialization
         self.previous_pos = 0                           #|
-        self.last_ping_time = datetime.now(UTC)            #|
-        self.last_pub_time:datetime = datetime.now(UTC)                  #|
+        self.last_ping_time = datetime.now(UTC).replace(tzinfo=None)            #|
+        self.last_pub_time:datetime = datetime.now(UTC).replace(tzinfo=None)                  #|
         self._flag_change = False                       #|
         self._driver_timeout = False
         self._log_creation_day: int = 0
@@ -133,7 +133,7 @@ class Server(QObject):
         self.focuser_hdw_current_status = FocuserHardwareStatus()
 
         self.last_command = {
-            SJson.TIMESTAMP: datetime.now(UTC),
+            SJson.TIMESTAMP: datetime.now(UTC).replace(tzinfo=None),
             SJson.CMD_CLIENT_NAME: "",
             SJson.CMD_CLIENT_ID:  0,
             SJson.CMD_CLIENT_TRANSACTION_ID: 0,

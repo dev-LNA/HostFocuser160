@@ -96,7 +96,7 @@ class zmqComm(CommProtocol):
         :return: String with timestamp of the moment of the pub
         :rtype: str
         """
-        timestamp = datetime.now(UTC)
+        timestamp = datetime.now(UTC).replace(tzinfo=None)
         info[SJson.TIMESTAMP] = datetime.isoformat(timestamp, timespec='milliseconds')              # Sets status timestamp
         json_string = json.dumps(info)
         try:      
