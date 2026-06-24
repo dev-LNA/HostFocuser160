@@ -166,7 +166,7 @@ class Server(QObject):
                 SJson.TEMP_COMP: Config.temp_comp,
                 SJson.TEMP_COMP_AVAIABLE: Config.tempcompavailable,
                 SJson.TEMPERATURE: 0,
-                SJson.TIMESTAMP: datetime.isoformat(datetime.now(), timespec='milliseconds'),
+                SJson.TIMESTAMP: datetime.isoformat(datetime.now(UTC), timespec='milliseconds'),
                 SJson.VERSION: "1.0.0",            #TODO: Pegar a versão do arquivo config.toml
             }
         else:
@@ -193,7 +193,7 @@ class Server(QObject):
                 SJson.TEMP_COMP: Config.temp_comp,
                 SJson.TEMP_COMP_AVAIABLE: Config.tempcompavailable,
                 SJson.TEMPERATURE: 0,
-                SJson.TIMESTAMP: datetime.isoformat(datetime.now(), timespec='milliseconds'),
+                SJson.TIMESTAMP: datetime.isoformat(datetime.now(UTC).replace(tzinfo=None), timespec='milliseconds'),
                 SJson.VERSION: "1.0.0",            #TODO: Pegar a versão do arquivo config.toml
                 SJson.PARKING: False,               # Executing Parking
                 SJson.DEVICE_IP: "127.0.0.1",       # Motor IP
@@ -513,7 +513,7 @@ class Server(QObject):
         """Verifies if the router and the motor are reachable. 
         If its reachable connects to the motor and updates status information"""
         _try = 0
-        self.last_ping_time = datetime.now()                                                    # Saves the time when the method was called
+        self.last_ping_time = datetime.now(UTC).replace(tzinfo=None)                                                    # Saves the time when the method was called
         try:
                             
             if self.motor_reachable:                                                                # If the motor is reachable
@@ -638,7 +638,7 @@ class Server(QObject):
         while self._stop_loop == False:
             t0 = time.time()                                        # Keeps the time when the loop began
             
-            current_time = datetime.now()                           # Reads current time
+            current_time = datetime.now(UTC)                           # Reads current time
             
             # A new log file must be created at noon if the log reference date
             # is different from the current date
