@@ -21,7 +21,7 @@ from src.interface.motor_driver import Driver
 from src.utils.motor import Motor
 
 from datetime import datetime
-from typing import NamedTuple
+from typing import NamedTuple, Generic, TypeVar
 from dataclasses import dataclass
 
 import sys
@@ -121,35 +121,38 @@ else:
     config_file_iag = config_dir + "/config_IAG.toml" 
 
 
+# Using a generic type for the widgets guarantees typing is resolved
+T_Widget = TypeVar('T_Widget', QLineEdit, QSpinBox, QCheckBox, QDoubleSpinBox)
+
 @dataclass
-class SettingsAttributes():
+class SettingsAttributes(Generic[T_Widget]):
     NAME: MotorParamsIdx | ServerParamsIdx
     TAG: str
-    OBJ: QLineEdit | QSpinBox | QCheckBox | QDoubleSpinBox
-    VALUE: str | int | bool
+    OBJ: T_Widget
+    VALUE: str | int | bool | float
     TYPE: object
 
 
 class ConfigurableSettings(NamedTuple):
-    SERVER_IP : SettingsAttributes
-    PORT_PUB: SettingsAttributes
-    PORT_REP: SettingsAttributes
-    SUB_MASK: SettingsAttributes 
-    GATEWAY_IP: SettingsAttributes
-    STARTUP : SettingsAttributes
-    MOTOR_IP: SettingsAttributes
-    BACKLASH: SettingsAttributes
-    MAX_POS: SettingsAttributes
-    PARK_POS: SettingsAttributes
-    MAX_SPEED: SettingsAttributes
-    NORMAL_SPEED: SettingsAttributes
-    LOW_SPEED: SettingsAttributes
-    MAX_STEP: SettingsAttributes
-    ACCELERATION: SettingsAttributes
-    DECELERATION: SettingsAttributes
-    IDLE_CURRENT: SettingsAttributes
-    RUN_CURRENT: SettingsAttributes
-    ACC_CURRENT: SettingsAttributes
+    SERVER_IP : SettingsAttributes[QLineEdit]
+    PORT_PUB: SettingsAttributes[QSpinBox]
+    PORT_REP: SettingsAttributes[QSpinBox]
+    SUB_MASK: SettingsAttributes[QLineEdit]
+    GATEWAY_IP: SettingsAttributes[QLineEdit]
+    STARTUP : SettingsAttributes[QCheckBox]
+    MOTOR_IP: SettingsAttributes[QLineEdit]
+    BACKLASH: SettingsAttributes[QSpinBox]
+    MAX_POS: SettingsAttributes[QSpinBox]
+    PARK_POS: SettingsAttributes[QSpinBox]
+    MAX_SPEED: SettingsAttributes[QSpinBox]
+    NORMAL_SPEED: SettingsAttributes[QSpinBox]
+    LOW_SPEED: SettingsAttributes[QSpinBox]
+    MAX_STEP: SettingsAttributes[QSpinBox]
+    ACCELERATION: SettingsAttributes[QDoubleSpinBox]
+    DECELERATION: SettingsAttributes[QDoubleSpinBox]
+    IDLE_CURRENT: SettingsAttributes[QDoubleSpinBox]
+    RUN_CURRENT: SettingsAttributes[QDoubleSpinBox]
+    ACC_CURRENT: SettingsAttributes[QDoubleSpinBox]
 
 
 class SettingsWindowSignals(QObject):
@@ -168,7 +171,7 @@ class SettingsWindow(QMainWindow):
 
     _motor_settings = dict()                                        # Motor current settings
     _settings_changed = False                                       # Informs if a setting was changed
-    _changed_settings = dict[MotorParamsIdx | ServerParamsIdx, str | int]()                                      # Dict of settings that were changed, keeping the old values for reference
+    _changed_settings = dict[MotorParamsIdx | ServerParamsIdx, str | int | float | bool]()                                      # Dict of settings that were changed, keeping the old values for reference
 
     def __init__(self, motor: Motor, logger: FocusLogger):
         super().__init__()
@@ -337,14 +340,13 @@ class SettingsWindow(QMainWindow):
             # if param.NAME in MotorParamsIdx:
             if isinstance(param.NAME, MotorParamsIdx):
                 if isinstance(param.OBJ, QLineEdit):
-                    param.OBJ.setText(str(data.parameters[param.NAME]))
+                    param.OBJ.setText(str(data.parameters[param.NAME].VALUE))
                 elif isinstance(param.OBJ, QDoubleSpinBox):
-                    param.OBJ.setValue(data.parameters[param.NAME])
+                    param.OBJ.setValue(float(data.parameters[param.NAME].VALUE))
                 elif isinstance(param.OBJ, QCheckBox):
-                    param.OBJ.setChecked(bool(data.parameters[param.NAME]))
+                    param.OBJ.setChecked(bool(data.parameters[param.NAME].VALUE))
                 else:
-                    param.OBJ.setValue(int(float(data.parameters[param.NAME]))) # Must first convert to float to avoid problems with the float parameters
-
+                    param.OBJ.setValue(int(float(data.parameters[param.NAME].VALUE))) # Must first convert to float to avoid problems with the float parameters
 
         self._config_settings.SERVER_IP.OBJ.setText(Config.ip_address)
         self._config_settings.PORT_PUB.OBJ.setValue(Config.port_pub)
@@ -917,7 +919,8 @@ class RetrieveSettings(QThread):
         for param in MotorParamsIdx:
             p += step_size
             self.signal_progress.emit(p)
-            self.motor_data.parameters[param] = self.motor.get_param(param)
+            if self.motor.get_param(param):
+                self.motor_data.parameters[param] = self.motor.parameters[param]
 
         p = 100
         self.signal_progress.emit(p)

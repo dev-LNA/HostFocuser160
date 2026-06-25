@@ -146,7 +146,7 @@ class MotorParameter():
     IDX: MotorParamsIdx
     NAME: str
     REGISTER: RegsInfo
-    VALUE: int | bool | str
+    VALUE: int | bool | str |float
 
 class ReachStatus(StrEnum):
     CONNECTED = 'connected'

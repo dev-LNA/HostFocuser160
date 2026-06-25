@@ -549,7 +549,7 @@ class Motor():
             # self.driver._reset_communication()
             raise e
         
-    def get_param(self, ParamIndex: MotorParamsIdx) -> int | str | bool:
+    def get_param(self, ParamIndex: MotorParamsIdx) -> int | str | bool | float:
         """Reads a parameter value from the motor
 
         :param ParamIndex: Motor parameter to be read
