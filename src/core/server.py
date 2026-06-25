@@ -204,7 +204,7 @@ class Server(QObject):
 
             }
 
-            self.test_var = 14.2
+            self.test_var = 10000
 
 #region  ========== PROPERTIES ========== # 
 
@@ -324,6 +324,10 @@ class Server(QObject):
 
 #region ========== METHODS ========== # 
     def teste(self):
+        self.test_var += 100
+        if self.test_var > 50000:
+            self.test_var = 0
+        self.motor.set_param(MotorParamsIdx.MAX_SPEED, self.test_var)
         # self.motor._alarm = not self.motor._alarm
         # self.motor.driver.sendCommand("POL=0")
         # self.motor.driver.sendCommand("SR1=1")
@@ -336,9 +340,9 @@ class Server(QObject):
         # self.status[SJson.POSITION] = self.test_var
         # self.motor.signals.position.emit(self.test_var)
 
-        stat = 43011
-        msg = "Flags ativadas: "
-        msg += self.motor.driver._extract_flags_info(stat, MotorProgramStatus)
+        # stat = 43011
+        # msg = "Flags ativadas: "
+        # msg += self.motor.driver._extract_flags_info(stat, MotorProgramStatus)
         # for flag in MotorProgramStatus:
         #     if stat & flag:
         #         stat = stat - flag
@@ -347,17 +351,17 @@ class Server(QObject):
         #         else:
         #             msg += f"{flag.name}"
 
-        print(msg)
+        # print(msg)
 
 
 
-        msg_error = ''
-        alc = 4548
+        # msg_error = ''
+        # alc = 4548
         # alc = MotorAlarmInfo(alc_int)
 
 
 
-        sastat_alarm_int = stat & motor_program_errors_mask
+        # sastat_alarm_int = stat & motor_program_errors_mask
         # sastat_alarm = MotorProgramStatus(sastat_alarm_int)
 
         # if alc > 0:
@@ -380,14 +384,14 @@ class Server(QObject):
         #             else:
         #                 msg_error += f"{error.name}"
 
-        if alc > 0:
-            msg_error += 'Alarms ALC: '
-            msg_error += self.motor.driver._extract_flags_info(alc, MotorAlarmInfo)
-        if sastat_alarm_int > 0:
-            msg_error += f"\nAlarms SASTAT: "
-            msg_error += self.motor.driver._extract_flags_info(sastat_alarm_int, MotorProgramStatus)
+        # if alc > 0:
+        #     msg_error += 'Alarms ALC: '
+        #     msg_error += self.motor.driver._extract_flags_info(alc, MotorAlarmInfo)
+        # if sastat_alarm_int > 0:
+        #     msg_error += f"\nAlarms SASTAT: "
+        #     msg_error += self.motor.driver._extract_flags_info(sastat_alarm_int, MotorProgramStatus)
 
-        print(msg_error)
+        # print(msg_error)
 
     def _start_server(self):
         """Starts server communication
