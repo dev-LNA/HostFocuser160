@@ -2,7 +2,7 @@ name: Build with Spec File
 
 on:
   push:
-    branches: [ "" ]
+    branches: [ "clp_com_tests" ]
   pull_request:
     branches: [ "main" ]
 

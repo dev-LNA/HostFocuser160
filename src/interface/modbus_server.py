@@ -346,9 +346,9 @@ class IAGModbusServer(mbServer):
 
 
         # Checks if the time between handshakes has passed the timeout limit (False indicates that there is NO timeout)
-        if self.timeout.check_timeout(new) == TimeoutState.NO_TIMEOUT:    
-            self.handshake = True
-            self.data_bank.set_discrete_inputs(dig_inputs_regs.TX_SVON.ADDRESS, [True])   # Informs the CLP that the Driver is active and ready to operate
+        # if self.timeout.check_timeout(new) == TimeoutState.NO_TIMEOUT:    
+        self.handshake = True
+        self.data_bank.set_discrete_inputs(dig_inputs_regs.TX_SVON.ADDRESS, [True])   # Informs the CLP that the Driver is active and ready to operate
 
         # Saves the new handshake value in the shadow register and mirror it to the CLP
         self.db_shadow.set_coils(coils_regs.HANDSHAKE.ADDRESS, [hs]) 
