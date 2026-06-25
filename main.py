@@ -57,7 +57,7 @@ def resource_path(relative_path, external=False):
             base_path = os.path.dirname(sys.executable)
         else:
             # Caminho dentro da pasta temporária do .exe
-            base_path = sys._MEIPASS
+            base_path = getattr(sys, '_MEIPASS', os.path.dirname(sys.executable))
     else:
         # 2. Modo Desenvolvimento (Visual Studio / VS Code)
         # Como este arquivo está em src/core, subimos dois níveis para chegar na raiz
@@ -80,7 +80,7 @@ class FocuserOPD (QMainWindow):
 
     def __init__(self):
         super(FocuserOPD, self).__init__()
-        uic.loadUi(main_ui_path, self)          # Loads UI file
+        uic.loadUi(main_ui_path, self)          # Loads UI file     # type: ignore 
 
         self.clients = list[ClientSimulator]()  # Initializes client simulators list
         self._num_clients = 0                   # Number of opened clients
@@ -116,7 +116,7 @@ class FocuserOPD (QMainWindow):
         self.ui_elements.pageSelect.setCurrentIndex(0)                  # Initializes the main window in the focalizer seletion page
 
         self.ui_elements.btnStartServer.clicked.connect(self._config_server)
-        self.menuBar().setVisible(False)                                        # The menu bar is not displayed in the focalizer selection page
+        self.ui_elements.menuBar.setVisible(False)                                        # The menu bar is not displayed in the focalizer selection page
         self.ui_elements.toolBar.setVisible(False)                              # The tool bar is not displayed in the focalizer selection page
 
         self.ui_elements.btnStart.clicked.connect(self._start)
@@ -149,7 +149,7 @@ class FocuserOPD (QMainWindow):
 
         shortcut = QShortcut(QKeySequence("Ctrl+M"), self)
         shortcut.setContext(Qt.ShortcutContext.ApplicationShortcut)
-        shortcut.activated.connect(lambda: self.menuBar().setHidden(not self.menuBar().isHidden()))
+        shortcut.activated.connect(lambda: self.ui_elements.menuBar.setHidden(not self.ui_elements.menuBar.isHidden()))
 
     # Configuration of signals
         self.server.signals.socket_ip.connect(self.ui_elements.lblSocketIP.setText)
@@ -167,7 +167,7 @@ class FocuserOPD (QMainWindow):
         self.server.signals.server_status.status.connect(self.ui_elements.btnStop.setEnabled)
         self.server.signals.server_status.info.connect(self.ui_elements.ledServer.setProperty)
 
-        self.server.signals.status_message.connect(lambda msg: self.statusBar().showMessage(msg, 10000))
+        self.server.signals.status_message.connect(lambda msg: self.ui_elements.statusBar.showMessage(msg, 10000))
         # self.server.signals.connection_speed.connect(self.ui_elements.lblComSpeed.setText)
         
         # self.server.signals.position_str.connect(self.ui_elements.lblPosition_val.setText)
@@ -194,18 +194,18 @@ class FocuserOPD (QMainWindow):
     #--- Events definitions
         #   sets animations and install event filter on objects
         self.ui_elements.conBarServerRouter.setValue(0)
-        self.ui_elements.conBarServerRouter.animation = QPropertyAnimation(                         # Animation for the connection bar between server and router
+        self.ui_elements.conBarServerRouter.animation = QPropertyAnimation(                         # Animation for the connection bar between server and router # type: ignore
             self.ui_elements.conBarServerRouter, b'value', self                                     # The animation is triggered when the property value is changed
         )
-        self.ui_elements.conBarServerRouter.animation.setEasingCurve(QEasingCurve.Type.OutCubic)
-        self.ui_elements.conBarServerRouter.animation.setDuration(300)
+        self.ui_elements.conBarServerRouter.animation.setEasingCurve(QEasingCurve.Type.OutCubic)    # type: ignore
+        self.ui_elements.conBarServerRouter.animation.setDuration(300)                              # type: ignore
 
         self.ui_elements.conBarRouterMotor.setValue(0)
-        self.ui_elements.conBarRouterMotor.animation = QPropertyAnimation(                          # Animation for the connection bar between router and motor
+        self.ui_elements.conBarRouterMotor.animation = QPropertyAnimation(                          # Animation for the connection bar between router and motor     # type: ignore
             self.ui_elements.conBarRouterMotor, b'value', self                                      # The animation is triggered when the property value is changed
         )
-        self.ui_elements.conBarRouterMotor.animation.setEasingCurve(QEasingCurve.Type.OutCubic)
-        self.ui_elements.conBarRouterMotor.animation.setDuration(300)
+        self.ui_elements.conBarRouterMotor.animation.setEasingCurve(QEasingCurve.Type.OutCubic)     # type: ignore
+        self.ui_elements.conBarRouterMotor.animation.setDuration(300)                               # type: ignore
         
         # Window animation
         self.window_expand_animation = QPropertyAnimation(self, b"size")                                          # Animation for the window expansion
@@ -217,7 +217,7 @@ class FocuserOPD (QMainWindow):
 
         self._progress_bar = LoadBar()                                                  # Creates load bar
 
-        self.statusBar().addPermanentWidget(self._progress_bar)                         # Add load bar to status bar, it is not visible by default and is made visible when needed
+        self.ui_elements.statusBar.addPermanentWidget(self._progress_bar)                         # Add load bar to status bar, it is not visible by default and is made visible when needed
 
 
         # Install event filters in the LEDs so that when a property is changed the values are automatically updated
@@ -355,8 +355,7 @@ class FocuserOPD (QMainWindow):
 
         self.server.motor.signals.progress.value.connect(self._progress_bar.setVisible)
         self.server.motor.signals.progress.string.connect(self._progress_bar.progress.setValue)
-
-        self.menuBar().setVisible(True)                                     # Sets menu bar visibility
+        self.ui_elements.menuBar.setVisible(True)                                     # Sets menu bar visibility
         self.ui_elements.toolBar.setVisible(True)                           # Sets tool bar visibility
         self.server.server_online = False                               # Emits signal with initial server status as disconnected
         self.ui_elements.pageSelect.setCurrentIndex(1)                      # Changes view to the main server page
@@ -682,6 +681,7 @@ class FocuserOPD (QMainWindow):
 if __name__ == "__main__":
 
     logger = init_logging()                     # Configures and initializes the logger
+
     app = QtWidgets.QApplication([])            # Instantiates QApplication
 
     main_window1 = FocuserOPD()                 # Instantiates main window

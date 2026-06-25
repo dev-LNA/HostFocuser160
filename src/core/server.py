@@ -30,7 +30,7 @@ from src.utils.constants import ServerJsonKeys as SJson
 from src.utils.signals import PropertySignals, MultiSignal
 from src.utils.motor import Motor
 from src.interface.zmq_comm import zmqComm
-from src.core.log import init_logging
+from src.core.log import init_logging, end_log_file
 from logging import shutdown
 import socket
 
@@ -644,9 +644,7 @@ class Server(QObject):
             # is different from the current date
             if current_time.day != self.logger.reference_date.day:
                 if current_time.hour >= 12:
-                    self.logger('_' * 50)
-                    self.logger.info('END OF FILE')
-                    self.logger('_' * 50)
+                    end_log_file(self.logger)
                     self.logger = init_logging()
 
             try:

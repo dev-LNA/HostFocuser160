@@ -19,10 +19,12 @@ except:
 import os
 
 def init_logging():
+
     if not CONFIG_FILE:
-        return
+        raise RuntimeError("Config file not found")
+    
     logs_dir_path = os.path.join('logs')
-    log_reference_date = datetime.now(UTC)
+    log_reference_date = datetime.now(UTC).replace(tzinfo=None)
     # log_path = r"logs/focuser.log"
     if log_reference_date.hour < 12:
         # If the logger is being created before noon it must consider as being from the previous day
@@ -95,3 +97,17 @@ def init_logging():
     logger.reference_date = start_date
 
     return logger
+
+
+def end_log_file(logger: logging.Logger):
+        # Open the file in exclusive write mode, if the file do not
+        # exist creates it, if the file already exists raises an error
+
+        path = Path(logger.path)
+        if path.is_file():
+
+            with open(logger.path, 'a') as file:
+                file.write("_" * 100 + "\n")
+                file.write(' ' * 44 + 'END OF FILE' + ' ' * 26)
+                file.write(datetime.now(UTC).replace(tzinfo=None).strftime('%Y-%m-%dT%H:%M:%S') + '\n')
+                

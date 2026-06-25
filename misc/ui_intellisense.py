@@ -1,4 +1,5 @@
 from PyQt6.QtGui import QAction, QIcon
+from PyQt6.QtCore import QPropertyAnimation
 from PyQt6.QtWidgets import (
     QWidget, 
     QMessageBox, 
@@ -20,7 +21,8 @@ from PyQt6.QtWidgets import (
     QSpinBox,
     QDoubleSpinBox,
     QListWidget,
-    QCheckBox)
+    QCheckBox,
+    QMenuBar)
 
 
 
@@ -33,6 +35,8 @@ class UiWidgets(QWidget):
         if window_name == "main":
         # === Definitions for main window components === #
         
+            self.menuBar: QMenuBar = window.menuBar()
+            self.statusBar: QStatusBar = window.statusBar()
 
             self.pageSelect = window.findChild(QStackedWidget, 'pageSelect')
             self.pageSelect: QStackedWidget = self.pageSelect
