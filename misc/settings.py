@@ -78,7 +78,7 @@ def resource_path(relative_path, external=False):
             base_path = os.path.dirname(sys.executable)
         else:
             # Caminho dentro da pasta temporária do .exe
-            base_path = sys._MEIPASS
+            base_path = getattr(sys, '_MEIPASS', os.path.dirname(sys.executable))
     else:
         # 2. Modo Desenvolvimento (Visual Studio / VS Code)
         base_path = os.path.abspath(os.path.join(os.path.dirname(__file__), "../"))
@@ -125,7 +125,7 @@ else:
 class SettingsAttributes():
     NAME: MotorParamsIdx | ServerParamsIdx
     TAG: str
-    OBJ: QLineEdit | QSpinBox | QCheckBox
+    OBJ: QLineEdit | QSpinBox | QCheckBox | QDoubleSpinBox
     VALUE: str | int | bool
     TYPE: object
 
@@ -179,7 +179,7 @@ class SettingsWindow(QMainWindow):
         self.motor = motor
         self.logger = logger
         
-        uic.loadUi(path_to_ui, self)                                # Loads the window UI
+        uic.loadUi(path_to_ui, self)                                # Loads the window UI  # type: ignore 
         # self.setFixedSize(QSize(937, 508))
 
         self.ui_elements = UiWidgets(self, "settings")              # Generates UI elements intellisense
@@ -264,8 +264,9 @@ class SettingsWindow(QMainWindow):
 
 
         self._progress_bar = LoadBar()                                                  # Creates load bar
-
-        self.statusBar().addPermanentWidget(self._progress_bar)                         # Add load bar to status bar, it is not visible by default and is made visible when needed
+        
+        if self.ui_elements.statusBar:
+            self.ui_elements.statusBar.addPermanentWidget(self._progress_bar)                         # Add load bar to status bar, it is not visible by default and is made visible when needed
 
         # The updater runs on a different thread and retrieves the motor current configured parameters
         self._updater = RetrieveSettings(self.motor)
@@ -333,11 +334,14 @@ class SettingsWindow(QMainWindow):
         self.ui_elements.lblFirmVer_value.setText(data._firmware_version)
 
         for param in self._config_settings:
-            if param.NAME in MotorParamsIdx:
+            # if param.NAME in MotorParamsIdx:
+            if isinstance(param.NAME, MotorParamsIdx):
                 if isinstance(param.OBJ, QLineEdit):
-                    param.OBJ.setText(data.parameters[param.NAME])
+                    param.OBJ.setText(str(data.parameters[param.NAME]))
                 elif isinstance(param.OBJ, QDoubleSpinBox):
-                    param.OBJ.setValue(float(data.parameters[param.NAME]))
+                    param.OBJ.setValue(data.parameters[param.NAME])
+                elif isinstance(param.OBJ, QCheckBox):
+                    param.OBJ.setChecked(bool(data.parameters[param.NAME]))
                 else:
                     param.OBJ.setValue(int(float(data.parameters[param.NAME]))) # Must first convert to float to avoid problems with the float parameters
 

@@ -898,7 +898,7 @@ class Server(QObject):
             print('Invalid log info, log not updated')
 
     def _update_current_movement(self, val: bool):
-        print(self.sender().objectName())
+        # print(self.sender().objectName())
         self.focuser_hdw_current_status.movement_info = self.sender().objectName()
 
         # The manual movement signal has a delay that may affect the signal in '_log_update' if different movements

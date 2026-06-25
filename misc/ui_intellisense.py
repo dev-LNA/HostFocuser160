@@ -217,6 +217,8 @@ class UiWidgets(QWidget):
             # === Definitions for settings window components === #
             
 
+            self.statusBar: QStatusBar = window.statusBar()
+            
             self.gbMotorParameters:QGroupBox = window.findChild(QGroupBox, 'gbMotorParameters')
             # self.gbMotorParameters: QGroupBox = self.gbMotorParameters
 
