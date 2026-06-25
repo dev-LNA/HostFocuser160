@@ -503,9 +503,9 @@ class FocuserOPD (QMainWindow):
             self._server_info_window.show()
 
     def _server_info_closed(self, msg: bool):
-        if msg is True:
-            self._server_info_window.window_closed.disconnect(self._server_info_closed)
-            self._server_info_window = None
+        if (msg is True) and self._server_info_window:
+                self._server_info_window.window_closed.disconnect(self._server_info_closed)
+                self._server_info_window = None
 
     def _open_settings(self):
         """Opens the settings window"""
@@ -552,7 +552,7 @@ class FocuserOPD (QMainWindow):
         #   To avoid astacking the signals connections it is necessary to 
         # disconnect the settings window signals before reassigning the 
         # _setting_window.
-        if msg is True:                         # If the settings window was closed
+        if (msg is True) and self._settings_window:                         # If the settings window was closed
             self._settings_window.signals.window_closed.disconnect(self._settings_closed)                          
             self._settings_window.signals.changed_settings.disconnect(self._parse_changed_settings)  
             self._settings_window = None            # Reassign the settings window to allow a new instantiation
@@ -600,7 +600,7 @@ class FocuserOPD (QMainWindow):
         if QSystemTrayIcon.ActivationReason.DoubleClick:      # If a double click was detected
             self._restore_from_tray()                                   # Restores the window
 
-    def _update_gui_element(self, widget: QtWidgets):
+    def _update_gui_element(self, widget: QWidget):
         """Updates the GUI element style after an event occured.
         According to QT framework this functions must be executed to update visual elements when a property is changed.
         Re-polish the style to apply CSS changes linked to this property
@@ -610,11 +610,13 @@ class FocuserOPD (QMainWindow):
         widget : QtWidgets
             Widget to be updated
         """
-        widget.style().unpolish(widget)
-        widget.style().polish(widget)
+        w_style = widget.style()
+        if w_style:
+            w_style.unpolish(widget)
+            w_style.polish(widget)
         widget.update()
 
-    def eventFilter(self, obj: QObject, event: QEvent) -> bool:
+    def eventFilter(self, obj: QWidget, event: QEvent) -> bool:
         """Process events.
         The events are processed according to the class of the object that called the event.
 
@@ -638,15 +640,15 @@ class FocuserOPD (QMainWindow):
                 # Animations related to progress bars
                     # The 'conStatusBar' property describes the current situation of the connection between 'server/router' and 'router/motor'
                     if obj.property("conStatusBar") == "waiting":           # Waiting to start connection
-                        obj.animation.setEndValue(0)                            # The progress bar is set to 0 (not shown) and changes color to red (The color change is defined in the stylesheet)
-                        obj.animation.start()                                   # Triggers the start of the animation
+                        obj.animation.setEndValue(0)                            # The progress bar is set to 0 (not shown) and changes color to red (The color change is defined in the stylesheet) # type: ignore 
+                        obj.animation.start()                                   # Triggers the start of the animation # type: ignore 
                     elif obj.property("conStatusBar") == "connecting":      # Connecting to the next device 'server to router' or 'router to motor'
-                        obj.animation.setEndValue(50)                           # The progress bar is set to 50 and changes color to yellow (The color change is defined in the stylesheet)
-                        obj.animation.start()                                   # Triggers the start of the animation
+                        obj.animation.setEndValue(50)                           # The progress bar is set to 50 and changes color to yellow (The color change is defined in the stylesheet) # type: ignore 
+                        obj.animation.start()                                   # Triggers the start of the animation # type: ignore 
                     elif obj.property("conStatusBar") == "connected":       # The connection was estabilished
-                        obj.animation.setEndValue(100)                          # The progress bar is set to 100 and changes color to green (The color change is defined in the stylesheet)
-                        obj.animation.start()                                   # Triggers the start of the animation
-                    self._update_gui_element(obj)                           # Updates the color of the progress bar
+                        obj.animation.setEndValue(100)                          # The progress bar is set to 100 and changes color to green (The color change is defined in the stylesheet) # type: ignore 
+                        obj.animation.start()                                   # Triggers the start of the animation # type: ignore 
+                    self._update_gui_element(obj)                           # Updates the color of the progress bar 
                     return True                                             # Returns OK
                     
             if obj.__class__ is QtWidgets.QLabel or obj.__class__ is QtWidgets.QSlider:

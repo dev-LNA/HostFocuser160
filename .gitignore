@@ -9,3 +9,4 @@ logs
 *.uxf
 *.zip
 TODO.md
+build.yml
