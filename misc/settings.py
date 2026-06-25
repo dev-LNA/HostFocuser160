@@ -14,12 +14,12 @@ from misc.verification import VerificationDialog
 # from src.interface.dmx_eth import FocuserDriver
 # from src.interface.focuser_driver import FocuserDriver
 from src.core.config import Config, get_toml, update_config
+from src.core.log import FocusLogger
 
 from src.utils.constants import constants, MotorModels, MotorParamsIdx, ServerParamsIdx, Conversion
 from src.interface.motor_driver import Driver
 from src.utils.motor import Motor
 
-from logging import Logger
 from datetime import datetime
 from typing import NamedTuple
 from dataclasses import dataclass
@@ -170,7 +170,7 @@ class SettingsWindow(QMainWindow):
     _settings_changed = False                                       # Informs if a setting was changed
     _changed_settings = dict[MotorParamsIdx | ServerParamsIdx, str | int]()                                      # Dict of settings that were changed, keeping the old values for reference
 
-    def __init__(self, motor: Motor, logger: Logger):
+    def __init__(self, motor: Motor, logger: FocusLogger):
         super().__init__()
 
         if type(motor.driver).__base__ is not Driver:

@@ -9,7 +9,6 @@ from src.interface.modbus_server import IAGModbusServer #, TimeoutCheck
 # from pyModbusTCP.server import DataBank
 from src.interface.modbus_data_bank import MB_DataBank
 
-from logging import Logger
 from threading import Lock, Thread, Timer
 
 from src.core.config import Config

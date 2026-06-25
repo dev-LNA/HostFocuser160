@@ -8,7 +8,6 @@
 from PyQt6.QtCore import pyqtSignal, QObject
 from PyQt6.QtGui import QPixmap
 
-from logging import Logger
 
 import time
 import zmq
@@ -23,6 +22,7 @@ from threading import Thread
 
 from misc.client_sample import TEST_SETUP
 from src.core.config import Config
+from src.core.log import FocusLogger
 import src.core.exceptions as AlpacaExceptions
 from src.utils.constants import constants, MotorModels, ReachStatus, MotorParamsIdx, ServerCommands, MotorValidCommands, FocuserHardwareStatus, FocuserSignalsNames, TimeDelays
 from src.utils.constants import ServerMessageValidation as SVal
@@ -30,7 +30,7 @@ from src.utils.constants import ServerJsonKeys as SJson
 from src.utils.signals import PropertySignals, MultiSignal
 from src.utils.motor import Motor
 from src.interface.zmq_comm import zmqComm
-from src.core.log import init_logging, end_log_file
+from src.core.log import init_logging
 from logging import shutdown
 import socket
 
@@ -93,7 +93,7 @@ class Server(QObject):
     signals = ServerSignals()
 
 
-    def __init__(self, logger: Logger):
+    def __init__(self, logger: FocusLogger):
         super(Server, self).__init__()
         self.logger = logger                            # Instantiates logger
     
@@ -642,10 +642,10 @@ class Server(QObject):
             
             # A new log file must be created at noon if the log reference date
             # is different from the current date
-            if current_time.day != self.logger.reference_date.day:
-                if current_time.hour >= 12:
-                    end_log_file(self.logger)
-                    self.logger = init_logging()
+            # if current_time.day != self.logger.reference_date.day:
+            if current_time.minute >= 12:
+                self.logger.end_log_file()          # Prints message of end of file
+                self.logger = init_logging()        # Creates a new log for the new day
 
             try:
 

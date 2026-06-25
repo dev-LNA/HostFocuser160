@@ -5,7 +5,6 @@ from PyQt6.QtGui import QPixmap
 
 from misc.login_form import LoginForm
 from src.core.config import get_toml
-from logging import Logger
 
 import sys
 import os
