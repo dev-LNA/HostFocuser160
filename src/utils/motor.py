@@ -157,13 +157,16 @@ class Motor():
         else:
             self.signals.position.emit(pos, "Invalid")
         return self._position
-    @position.setter
+    @position.setter                        
     def position(self, value: int) -> str:
+        #TODO: Deprecated, não é utilizado em lugar nenhum do código
         try:
             if self._is_moving:
                 raise Exception('[Device] Cannot start a movement while the focuser is already moving')
-            if value <= 0 or value >= self.parameters[MotorParamsIdx.MAX_STEP]:
-                raise Exception(f'[Device] Invalid Target Position: {value}')     
+            max_pos = self.parameters[MotorParamsIdx.MAX_POS].VALUE
+            if isinstance(max_pos, int):
+                if value <= 0 or value >= max_pos:
+                    raise Exception(f'[Device] Invalid Target Position: {value}')     
             resp = self.driver.set_position(value)
             if resp == "OK":
                 return f'[Device] move={str(value)}'
@@ -404,7 +407,7 @@ class Motor():
             raise e
         
 
-    def connect(self, max_retries: int = 5, delay: float = 0.1) -> bool:
+    def connect(self, max_retries: int = 5, delay: float = 0.1) -> bool | None:
         """Connects to the motor
 
         :param max_retries: Max tries to connect to the motor, defaults to 5
@@ -471,7 +474,7 @@ class Motor():
         self._initialized = False
         self._alarm = False
         self._firmware_status = 'invalid'
-        self._status = ""
+        self._status = 0
 
     def ping(self) -> bool:
         """Pings the motor to check if it is reachable
@@ -532,7 +535,7 @@ class Motor():
         try:
             var = self.parameters[ParamIndex]
             if var.IDX in self.driver.param_methods:  
-                resp = self.driver.param_methods[var.IDX](value)
+                resp = self.driver.param_methods[var.IDX](value)    # The value type depends on the parameter function  # type: ignore
                 if resp == "OK":
                     var.VALUE = value
                     self.parameters[var.IDX] = var

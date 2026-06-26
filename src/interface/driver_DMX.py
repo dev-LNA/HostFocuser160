@@ -15,6 +15,32 @@ class DriverDMX(Driver):
         super().__init__(model)
         self.socket = None
         self._lock = Lock()
+
+    @property
+    def focus_out_status(self) -> bool:
+        """Precisa ser implementada pelo driver"""
+        ...
+    @focus_out_status.setter
+    def focus_out_status(self, val:bool):
+        """Precisa ser implementada pelo driver"""
+        ...
+
+    @property
+    def focus_in_status(self) -> bool:
+        """Precisa ser implementada pelo driver"""
+        ...
+    @focus_in_status.setter
+    def focus_in_status(self, val:bool):
+        """Precisa ser implementada pelo driver"""
+        ...
+
+    @property
+    def park_status(self) -> bool:
+        """Precisa ser implementada pelo driver"""
+        ...
+    @park_status.setter
+    def park_status(self, val:bool):
+        """Precisa ser implementada pelo driver"""
     
     def connect_motor(self, max_retries = 5, delay = 0.1) -> str:
         """Connects the device and open socket connection
