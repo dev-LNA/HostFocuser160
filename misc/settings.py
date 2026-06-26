@@ -1,7 +1,7 @@
 from ast import Attribute
 
 from PyQt6 import uic, QtWidgets
-from PyQt6.QtWidgets import QMainWindow, QLineEdit, QProgressBar, QDialog, QMessageBox, QSpinBox, QDoubleSpinBox, QCheckBox
+from PyQt6.QtWidgets import QMainWindow, QLineEdit, QProgressBar, QDialog, QMessageBox, QSpinBox, QDoubleSpinBox, QCheckBox,QWidget
 from PyQt6.QtCore import QThread, pyqtSignal, QObject, QSize
 from PyQt6.QtGui import QFontMetrics, QKeyEvent
 # from src.core.exceptions import NotImplementedException
@@ -487,7 +487,7 @@ class SettingsWindow(QMainWindow):
             print("Source and destination are the same file.")
             self.logger.error(f"Could not create configuration backup file. Source and destination are the same file.")
 
-    def _update_config_file(self, cfg_file: str, keys: str):
+    def _update_config_file(self, cfg_file: str, keys: tuple[MotorParamsIdx | ServerParamsIdx]):
         #TODO: Atualizar esse método para não apagar comentários no arquivo de configuração
         with open(cfg_file, 'r') as f:
             config = toml.load(f)
@@ -501,17 +501,9 @@ class SettingsWindow(QMainWindow):
                         config['Network'][k.name.lower()] = self._changed_settings[k]
 
                 elif k == MotorParamsIdx.MOTOR_IP:
-                    # if Config.name == "Focuser160":
-                    #     config['Device']['ip_160'] = self._changed_settings[MotorParamsIdx.MOTOR_IP]
-                    #     Config.device_ip = config['Device']['ip_160'] # get_toml('Device', 'ip_160')
-                    # elif Config.name == "FocuserIAG":
-                    #     config['Device']['ip_iag'] = self._changed_settings[MotorParamsIdx.MOTOR_IP]
-                    #     Config.device_ip = config['Device']['ip_iag'] # get_toml('Device', 'ip_iag'
                     Config.device_ip = config['Device']['device_ip']
 
                 else:
-                    # config['Device'][k.lower()] = int(self._changed_settings[k])
-                    # config['Device'][self.motor.parameters[k].NAME.lower()] = int(self._changed_settings[k])
                     if isinstance(self._changed_settings[k], int):
                         config['Device'][k.name.lower()] = int(self._changed_settings[k])
                     else:
@@ -565,17 +557,22 @@ class SettingsWindow(QMainWindow):
                         config = str(get_toml('Device', param.NAME.name.lower(), cfg_file))
                 
 
-                    if isinstance(param.OBJ, QLineEdit):
+                    if isinstance(param.OBJ, QLineEdit) and isinstance(config, str):
                         # QLineEdits will use the string directly
                         param.OBJ.setText(config)
-                    elif isinstance(param.OBJ, QCheckBox):
+                    elif isinstance(param.OBJ, QCheckBox) and isinstance(config, bool):
                         param.OBJ.setChecked(config)
-                    else:
-                        # The value must be properly converted according to the parameter type
-                        if param.TYPE is int:
+                    elif isinstance(param.OBJ, QSpinBox):
                             param.OBJ.setValue(int(float(config))) 
-                        else:
+                    elif isinstance(param.OBJ, QDoubleSpinBox):
                             param.OBJ.setValue(float(config)) 
+                    
+                    # else:
+                    #     # The value must be properly converted according to the parameter type
+                    #     if param.TYPE is int and isinstance(param.OBJ, QSpinBox):
+                    #         param.OBJ.setValue(int(float(config))) 
+                    #     elif isinstance(param.OBJ, QDoubleSpinBox):
+                    #         param.OBJ.setValue(float(config)) 
 
                     self._validate_parameters()    
 
@@ -613,9 +610,11 @@ class SettingsWindow(QMainWindow):
             for param in self._config_settings:
                 
                 if isinstance(param.OBJ, QLineEdit) and param.NAME in self._changed_settings:
-                    text = self._changed_settings[param.NAME].replace(".", "")                  # Remove dots from IP masked values
-                    if not text:
-                        raise ValueError(f"Cannot save empty value to parameters")
+                    val = self._changed_settings[param.NAME]
+                    if isinstance(val, str):
+                        text = val.replace(".", "")                  # Remove dots from IP masked values
+                        if not text:
+                            raise ValueError(f"Cannot save empty value to parameters")
 
             self._check_values_conflicts()
 
@@ -714,19 +713,24 @@ class SettingsWindow(QMainWindow):
         for param in self._config_settings:
             # Signal must be disconnected because validation cannot be called when the
             # values are reset
-            if param.TYPE is str:
+            if isinstance(param.OBJ, QLineEdit) and isinstance(param.VALUE, str):
                 param.OBJ.textChanged.disconnect()
                 param.OBJ.setText(param.VALUE)
                 param.OBJ.textChanged.connect(self._validate_parameters)
 
-            elif param.TYPE is int or param.TYPE is float:
+            # elif param.TYPE is int or param.TYPE is float:
+            elif isinstance(param.OBJ, QSpinBox) and (isinstance(param.VALUE, int)):
                 param.OBJ.valueChanged.disconnect()
                 param.OBJ.setValue(param.VALUE)
                 param.OBJ.valueChanged.connect(self._validate_parameters)
-            elif param.TYPE is bool:
+            elif isinstance(param.OBJ, QDoubleSpinBox) and (isinstance(param.VALUE, float)):
                 param.OBJ.valueChanged.disconnect()
-                param.OBJ.setCheckable(param.VALUE)
+                param.OBJ.setValue(param.VALUE)
                 param.OBJ.valueChanged.connect(self._validate_parameters)
+            elif isinstance(param.OBJ, QCheckBox) and isinstance(param.VALUE, bool):
+                # param.OBJ.valueChanged.disconnect()
+                param.OBJ.setCheckable(param.VALUE)
+                # param.OBJ.valueChanged.connect(self._validate_parameters)
 
 
         self._validate_parameters()
@@ -774,8 +778,7 @@ class SettingsWindow(QMainWindow):
                 else:
                     param.OBJ.setProperty("change", False)
 
-            # elif isinstance(param.OBJ, QSpinBox):
-            elif param.TYPE is int or param.TYPE is float:
+            elif isinstance(param.OBJ, QSpinBox) or isinstance(param.OBJ, QDoubleSpinBox):
                 if param.OBJ.value() != param.VALUE:
                     param.OBJ.setProperty("change", True)
                 else:
@@ -810,7 +813,7 @@ class SettingsWindow(QMainWindow):
         else:
             self._config_settings.LOW_SPEED.OBJ.setMaximum(167)
 
-    def _update_gui_element(self, widget: QtWidgets):
+    def _update_gui_element(self, widget: QWidget):
         """Updates the GUI element style after an event occured.
         According to QT framework this functions must be executed to update visual elements when a property is changed.
         Re-polish the style to apply CSS changes linked to this property
@@ -820,8 +823,10 @@ class SettingsWindow(QMainWindow):
         widget : QtWidgets
             Widget to be updated
         """
-        widget.style().unpolish(widget)
-        widget.style().polish(widget)
+        w_style = widget.style()
+        if w_style:
+            w_style.unpolish(widget)
+            w_style.polish(widget)
         widget.update()
 
 

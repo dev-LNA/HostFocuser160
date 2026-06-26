@@ -167,11 +167,10 @@ class Motor():
             resp = self.driver.set_position(value)
             if resp == "OK":
                 return f'[Device] move={str(value)}'
+            else:
+                raise Exception('[Device] Error setting position')
         except Exception as e:
-            # self.disconnect()
-            # self.driver._reset_communication()
-            raise e
-            # return str(e)
+            return str(e)
     
     @property
     def encoder(self) -> int:
@@ -288,10 +287,10 @@ class Motor():
         #     raise e
     
     @property
-    def alarm_info(self):
+    def alarm_info(self) -> str:
         return self._alarm_info
     @alarm_info.setter
-    def alarm_info(self, msg: str) -> str:
+    def alarm_info(self, msg: str):
         self._alarm_info = msg
 
     @property
@@ -519,7 +518,7 @@ class Motor():
             # self.motor.set_param(MotorParamsIdx.BACKLASH, Config.backlash)
             # self.logger.info("Motor parameters initialized")
 
-    def set_param(self, ParamIndex: MotorParamsIdx, value: int | bool | str) -> str:
+    def set_param(self, ParamIndex: MotorParamsIdx, value: int | bool | str | float) -> str:
         """Sets values for motor parameters
 
         :param ParamIndex: Motor parameter to be set
