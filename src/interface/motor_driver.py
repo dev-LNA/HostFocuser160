@@ -154,37 +154,37 @@ class Driver(ABC):
     ...
 
     @abstractmethod
-    def param_IP(self, value: int | str | bool = None) -> str:
+    def param_IP(self, value: str | None = None, converted:bool = False) -> str | None:
         """Precisa ser implementada pelo driver"""
     ...
 
     @abstractmethod
-    def param_backlash(self, value: int | str | bool = None) -> str:
+    def param_backlash(self, value: int | float | None = None, converted:bool = False) -> str | None:
         """Precisa ser implementada pelo driver"""
     ...
 
     @abstractmethod
-    def param_max_pos(self, value: int | str | bool = None) -> str:
+    def param_max_pos(self, value: int | float | None = None, converted:bool = False) -> str | None:
         """Precisa ser implementada pelo driver"""
     ...
 
     @abstractmethod
-    def param_park_pos(self, value: int | str | bool = None) -> str:
+    def param_park_pos(self, value: int | float | None = None, converted:bool = False) -> str | None:
         """Precisa ser implementada pelo driver"""
     ...
 
     @abstractmethod
-    def param_max_speed(self, value: int | str | bool = None) -> str:
+    def param_max_speed(self, value: int | None = None, converted:bool = False) -> str | None:
         """Precisa ser implementada pelo driver"""
     ...
 
     @abstractmethod
-    def param_normal_speed(self, value: int | str | bool = None) -> str:
+    def param_normal_speed(self, value: int | None = None, converted:bool = False) -> str | None:
         """Precisa ser implementada pelo driver"""
     ...
 
     @abstractmethod
-    def param_low_speed(self, value: int | str | bool = None) -> str:
+    def param_low_speed(self, value: int | None = None, converted:bool = False) -> str | None:
         """Precisa ser implementada pelo driver"""
     ...
 
@@ -194,27 +194,27 @@ class Driver(ABC):
     ...
 
     @abstractmethod
-    def param_acceleration(self, value: int | str | bool = None) -> str:
+    def param_acceleration(self, value: int | float | None = None, converted:bool = False) -> str | None:
         """Precisa ser implementada pelo driver"""
     ...
 
     @abstractmethod
-    def param_deceleration(self, value: int | str | bool = None) -> str:
+    def param_deceleration(self, value: int | float | None = None, converted:bool = False) -> str | None:
         """Precisa ser implementada pelo driver"""
     ...
 
     @abstractmethod
-    def param_idle_current(self, value: int | str | bool = None) -> str:
+    def param_idle_current(self, value: int | float | None = None, converted:bool = False) -> str | None:
         """Precisa ser implementada pelo driver"""
     ...
 
     @abstractmethod
-    def param_run_current(self, value: int | str | bool = None) -> str:
+    def param_run_current(self, value: int | float | None = None, converted:bool = False) -> str | None:
         """Precisa ser implementada pelo driver"""
     ...
 
     @abstractmethod
-    def param_acc_current(self, value: int | str | bool = None) -> str:
+    def param_acc_current(self, value: int | float | None = None, converted:bool = False) -> str | None:
         """Precisa ser implementada pelo driver"""
     ...
 

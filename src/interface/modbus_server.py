@@ -566,7 +566,7 @@ class IAGModbusServer(mbServer):
         # self.data_bank.set_discrete_inputs(dig_inputs_regs.OK.ADDRESS, [True])   # Sets the OK discrete input to indicate successful command execution
 
 
-    def write_param(self, reg: RegsInfo | tuple[RegsInfo], value: int | bool | tuple[int | bool]) -> str:
+    def write_param(self, reg: RegsInfo | tuple[RegsInfo, ...], value: int | bool | tuple[int, ...] | tuple[bool, ...] | tuple[str, ...]) -> str:
         
         params = set()
         if (type(reg) is tuple and type(value) is not tuple) or (type(reg) is not tuple and type(value) is tuple):

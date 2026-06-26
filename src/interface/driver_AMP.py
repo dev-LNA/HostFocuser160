@@ -31,7 +31,7 @@ class DriverAMP(Driver):
     def __init__(self, motor: Motor):
         super().__init__(motor)
 
-        self.mb_server: IAGModbusServer = None
+        self.mb_server: IAGModbusServer | None = None
 
 
     @property
@@ -75,36 +75,23 @@ class DriverAMP(Driver):
         retries = 0
         _con = False
 
-        # dataBank_config = MB_DataBank(coils_size=DB_size.COIL_LAST_ADDRESS+1, coils_default_value=False,        #|      
-        #         d_inputs_size=DB_size.DI_LAST_ADDRESS+1, d_inputs_default_value=False,               #|  Config value for the modbus data bank.
-        #         h_regs_size=0, h_regs_default_value=0,                          #|  
-        #         i_regs_size=0, i_regs_default_value=0)                          #|
-                
         while retries < max_retries and not _con:
             try:
-                # host => Server IP Address
-                # self.mb_server = IAGModbusServer(host=Config.device_ip, port=Config.device_port,no_block=True, data_bank=dataBank_config)
-                # self.mb_server.start()
-                # # self.mb_server.signals.signal_stop.connect(self.disconnect_motor)
-                # self.mb_run_thread = Thread(target=self.mb_server.run)
-                # self.mb_run_thread.start()
+                if self.mb_server:
+                    self.mb_server.timeout.reset()
+                    self.mb_server.timeout.running = True   # Starts timeout counter
 
-                self.mb_server.timeout.reset()
-                self.mb_server.timeout.running = True   # Starts timeout counter
-
-                self.mb_server.running = True
-                _con = True
-                self.mb_server.data_bank.set_discrete_inputs(dig_inputs_regs.TX_WRITTING.ADDRESS, [False])  #| TX_WAIT e TX_BUSY must be
-                self.mb_server.data_bank.set_discrete_inputs(dig_inputs_regs.TX_READING.ADDRESS, [False])   #| initialized as False
-
-                # self.mb_server.timeout.signal_timeout.connect(self.driver_comm.received_timeout)    # Connects timeout signal to the motor driver
-                
-
+                    self.mb_server.running = True
+                    _con = True
+                    self.mb_server.data_bank.set_discrete_inputs(dig_inputs_regs.TX_WRITTING.ADDRESS, [False])  #| TX_WAIT e TX_BUSY must be
+                    self.mb_server.data_bank.set_discrete_inputs(dig_inputs_regs.TX_READING.ADDRESS, [False])   #| initialized as False
 
                 print("Modbus server started")
                 return "OK"
             except Exception as e:
                 print(f"Error starting modbus server: {e}")
+                return "NOK"
+        return "NOK"
 
     def disconnect_motor(self) -> str:
         """Closes the modbus server connection"""
@@ -193,13 +180,13 @@ class DriverAMP(Driver):
                 raise (e)
 
     def _check_normal_speed(self, moving:bool):
-        if moving:
+        if moving and self.mb_server:
             val = self.mb_server._conv_reg_to_value(dig_inputs_regs.TX_V77, self.mb_server.data_bank)
             if val != Config.normal_speed:
                 print('**********Setting normal speed back to original value**********')
                 self.mb_server.write_param(dig_inputs_regs.TX_V77, Config.normal_speed)
     
-    def conv_position_show(self, encoder_pos: int = None, type: str = "int") -> int | float:
+    def conv_position_show(self, encoder_pos: int | None = None, type: str = "int") -> int | float | None:
         """Reads motor encoder position and converts to microns
         Used for PUB and display values
 
@@ -210,19 +197,23 @@ class DriverAMP(Driver):
         if encoder_pos is None:
             encoder_pos = self.read_encoder()
         # pos = int(round(encoder_pos / Config.enc_2_microns))
-        if type == "int":
-            # Conversão necessário devido a montagem mecânica
-            # pos = 2510 - int(round(encoder_pos * Config.enc_2_microns * Conversion.POSITION_VISUALIZATION))
-            pos = int(self.param_max_pos()) - int(round(encoder_pos * Config.enc_2_microns * Conversion.POSITION_VISUALIZATION))
-        else:
-            # Conversão necessário devido a montagem mecânica
-            # pos = 2510 - round(encoder_pos * Config.enc_2_microns * Conversion.POSITION_VISUALIZATION, 1)
-
-            pos = int(self.param_max_pos()) - round(encoder_pos * Config.enc_2_microns * Conversion.POSITION_VISUALIZATION, 1)
-        return pos
+        if encoder_pos:
+            max_pos = self.param_max_pos()
+            if max_pos:
+                if type == "int":
+                    # Conversão necessário devido a montagem mecânica
+                    
+                    pos = int(max_pos) - int(round(encoder_pos * Config.enc_2_microns * Conversion.POSITION_VISUALIZATION))
+                else:
+                    # Conversão necessário devido a montagem mecânica
+                    pos = int(max_pos) - round(encoder_pos * Config.enc_2_microns * Conversion.POSITION_VISUALIZATION, 1)
+                return pos
+        
+        return None
     
-    def set_position(self, position: int) -> str:
-        """Moves the motor to a specific position in microns
+    def set_position(self, position: int):
+        """ DEPRECATED
+        Moves the motor to a specific position in microns
 
         :param position: Target position in microns
         :type position: int
@@ -240,18 +231,22 @@ class DriverAMP(Driver):
 
 
     
-    def read_encoder(self) -> int:
+    def read_encoder(self) -> int | None:
         """Reads encoder value from the motor and 
         returns it as an integer"""
-        response = self.mb_server._conv_reg_to_value(coils_regs.RX_EX, self.mb_server.db_shadow)
-        return response
+        if self.mb_server:
+            response = self.mb_server._conv_reg_to_value(coils_regs.RX_EX, self.mb_server.db_shadow)
+            return response
     
 
-    def read_homing(self) -> bool:
+    def read_homing(self) -> bool | None:
         """Precisa ser implementada pelo driver"""
-        return self.mb_server.db_shadow.get_coils(coils_regs.RX_V15.ADDRESS, coils_regs.RX_V15.SIZE)[0]
-
-       # return False
+        if self.mb_server:
+            val = self.mb_server.db_shadow.get_coils(coils_regs.RX_V15.ADDRESS, coils_regs.RX_V15.SIZE)
+            if val:
+                return val[0]
+            else:
+                return None
 
     
     def read_parking(self) -> bool:
@@ -259,16 +254,20 @@ class DriverAMP(Driver):
         return False
 
     
-    def read_initialized(self) -> bool:
+    def read_initialized(self) -> bool | None:
         """Precisa ser implementada pelo driver"""
-        return self.mb_server.db_shadow.get_coils(coils_regs.RX_V44.ADDRESS, 1)[0]
+        if self.mb_server:
+            val = self.mb_server.db_shadow.get_coils(coils_regs.RX_V44.ADDRESS, coils_regs.RX_V44.SIZE)
+            if val:
+                return val[0]
+            else:
+                return None
 
     
-    def read_status(self) -> int:
+    def read_status(self) -> int | None:
         """Precisa ser implementada pelo driver"""
-
-        return self.mb_server._conv_reg_to_value(coils_regs.RX_MST, self.mb_server.db_shadow)
-
+        if self.mb_server:
+            return self.mb_server._conv_reg_to_value(coils_regs.RX_MST, self.mb_server.db_shadow)
 
         # return MotorStatusFlags.ENABLED  #TODO: Implementar a leitura do status do motor, e retornar os flags correspondentes
 
@@ -276,9 +275,10 @@ class DriverAMP(Driver):
 
 
     
-    def param_IP(self, value: int | str | bool = None) -> str:
+    def param_IP(self, value: str | None = None, converted:bool = False) -> str | None:
         """When no value is provided, returns the current IP value from the configuration.
         When a value is provided, writes the new IP value to the CLP"""
+
         if value is None:
             return Config.device_ip
         
@@ -289,7 +289,9 @@ class DriverAMP(Driver):
 
         ip_param_regs = (dig_inputs_regs.TX_IP_A, dig_inputs_regs.TX_IP_B, dig_inputs_regs.TX_IP_C, dig_inputs_regs.TX_IP_D)
         ip_values = (ip_a, ip_b, ip_c, ip_d)
-        return self.mb_server.write_param(ip_param_regs, ip_values)
+        
+        if self.mb_server:
+            return self.mb_server.write_param(ip_param_regs, ip_values)
 
         # return self.mb_server.write_param(dig_inputs_regs.TX_V70, value)
 
@@ -299,7 +301,7 @@ class DriverAMP(Driver):
         return value / Config.steps_2_encoder
         # return int(value / Config.steps_2_encoder)
     
-    def param_backlash(self, value: int | str | bool = None, converted:bool = False) -> str:
+    def param_backlash(self, value: int | float | None = None, converted:bool = False) -> str | None:
         """When no value is provided, returns the current backlash value from the configuration.
         When a value is provided, writes the new backlash value to the CLP
         Receives value in steps -> range 0 ~ 150 steps => 0 ~ 300 microns
@@ -311,17 +313,18 @@ class DriverAMP(Driver):
             else: 
                 return str(int(self._convert_pos(Config.backlash)))
             # value = Config.backlash
-
+        
         value = value / Config.enc_2_microns
         value = int(value / Config.steps_2_encoder)
 
-        return self.mb_server.write_param(dig_inputs_regs.TX_V74, value)
+        if self.mb_server:  
+            return self.mb_server.write_param(dig_inputs_regs.TX_V74, value)
 
 
         
 
     
-    def param_max_pos(self, value: int | str | bool = None, converted:bool = False) -> str:
+    def param_max_pos(self, value: int | float | None = None, converted:bool = False) -> str | None:
         """When no value is provided, returns the current maximum position value from the configuration.
         When a value is provided, writes the new maximum position value to the CLP
         Receives value in steps
@@ -341,7 +344,7 @@ class DriverAMP(Driver):
         print(f"POSITION VISUALIZATION: {Conversion.POSITION_VISUALIZATION}")
         print(f"POSITION COMMAND: {Conversion.POSITION_COMMAND}")
         
-        Config.max_pos = value
+        Config.max_pos = int(value)
 
 
         # value = (Config.max_pos * Conversion.POSITION_COMMAND) - value * Conversion.POSITION_COMMAND   # Conversão necessária devido a montagem mecânica
@@ -355,14 +358,15 @@ class DriverAMP(Driver):
 
         # When the max position is changed the park position must also be changed due to
         # the update conversion value
-        if self.mb_server.write_param(dig_inputs_regs.TX_V71, value) ==  "OK":
-            return self.param_park_pos(value=Config.park_pos)                   
+        if self.mb_server:
+            if self.mb_server.write_param(dig_inputs_regs.TX_V71, value) ==  "OK":
+                return self.param_park_pos(value=Config.park_pos)                   
 
         # return self.mb_server.write_param(dig_inputs_regs.TX_V71, value)
             
 
     
-    def param_park_pos(self, value: int | str | bool = None, converted:bool = False) -> str:
+    def param_park_pos(self, value: int | float | None = None, converted:bool = False) -> str | None:
         """When no value is provided, returns the current parking position value from the configuration.
         When a value is provided, writes the new parking position value to the CLP
         Receives value in steps
@@ -391,12 +395,13 @@ class DriverAMP(Driver):
         print(f"SEND PARK MOTOR: {value}")
         print('_*' * 50)
         
-        return self.mb_server.write_param(dig_inputs_regs.TX_V83, value)
+        if self.mb_server:
+            return self.mb_server.write_param(dig_inputs_regs.TX_V83, value)
 
     def _convert_speed(self, speed: int | float) -> int:
         return int(speed * Config.microns_2_rps * 240)
     
-    def param_max_speed(self, value: int | str | bool = None, converted:bool = False) -> str:
+    def param_max_speed(self, value: int | None = None, converted:bool = False) -> str | None:
         """When no value is provided, returns the current maximum speed value from the configuration.
         When a value is provided, writes the new maximum speed value to the CLP
         CLP receives value rps/s * 240 
@@ -410,10 +415,11 @@ class DriverAMP(Driver):
 
         value = int(value * Config.microns_2_rps * 240)
 
-        return self.mb_server.write_param(dig_inputs_regs.TX_V75, value)
+        if self.mb_server:
+            return self.mb_server.write_param(dig_inputs_regs.TX_V75, value)
 
     
-    def param_normal_speed(self, value: int | str | bool = None, converted:bool = False) -> str:
+    def param_normal_speed(self, value: int | None = None, converted:bool = False) -> str | None:
         """When no value is provided, returns the current normal speed value from the configuration.
         When a value is provided, writes the new normal speed value to the CLP
         CLP receives value rps/s * 240 
@@ -427,10 +433,11 @@ class DriverAMP(Driver):
 
         value = int(value * Config.microns_2_rps * 240)
 
-        return self.mb_server.write_param(dig_inputs_regs.TX_V77, value)
+        if self.mb_server:
+            return self.mb_server.write_param(dig_inputs_regs.TX_V77, value)
 
     
-    def param_low_speed(self, value: int | str | bool = None, converted:bool = False) -> str:
+    def param_low_speed(self, value: int | None = None, converted:bool = False) -> str | None:
         """When no value is provided, returns the current low speed value from the configuration.
         When a value is provided, writes the new low speed value to the CLP
         CLP receives value rps/s * 240 
@@ -444,20 +451,22 @@ class DriverAMP(Driver):
 
         value = int(value * Config.microns_2_rps * 240)
 
-        return self.mb_server.write_param(dig_inputs_regs.TX_V76, value)
+        if self.mb_server:
+            return self.mb_server.write_param(dig_inputs_regs.TX_V76, value)
 
     
-    def param_max_step(self, value: int | str | bool = None) -> str:
+    def param_max_step(self, value: int | None = None) -> str | None:
         """deprecated - use param_max_pos instead"""
         if value is None:
             return str(Config.max_step)
-
-        return self.mb_server.write_param(dig_inputs_regs.TX_V79, value)
+        
+        if self.mb_server:
+            return self.mb_server.write_param(dig_inputs_regs.TX_V79, value)
 
     def _convert_acceleration(self, acc: int | float) -> int:
         return int(acc * Config.microns_2_rps * 6)
 
-    def param_acceleration(self, value: int | str | bool = None, converted:bool = False) -> str:
+    def param_acceleration(self, value: int | float | None = None, converted:bool = False) -> str | None:
         """When no value is provided, returns the current acceleration value from the configuration.
         When a value is provided, writes the new acceleration value to the CLP
         CLP receives value in rps/s * 6
@@ -470,11 +479,13 @@ class DriverAMP(Driver):
             else:
                 return str(self._convert_acceleration(Config.acceleration))
 
-        value = int( value * Config.microns_2_rps * 6 )
-        return self.mb_server.write_param(dig_inputs_regs.TX_V80, value)
+        value = int( value * Config.microns_2_rps * 6 )     # Acceleration can be float but must be converted to int to send to CLP
+
+        if self.mb_server:
+            return self.mb_server.write_param(dig_inputs_regs.TX_V80, value)
 
     
-    def param_deceleration(self, value: int | str | bool = None, converted:bool = False) -> str:
+    def param_deceleration(self, value: int | float | None = None, converted:bool = False) -> str | None:
         """When no value is provided, returns the current deceleration value from the configuration.
         When a value is provided, writes the new deceleration value to the CLP
         CLP receives value in rps/s * 6
@@ -487,13 +498,15 @@ class DriverAMP(Driver):
             else:
                 return str(self._convert_acceleration(Config.deceleration))
 
-        value = int( value * Config.microns_2_rps * 6 )
-        return self.mb_server.write_param(dig_inputs_regs.TX_V79, value)
+        value = int( value * Config.microns_2_rps * 6 )     # Deceleration can be float but must be converted to int to send to CLP
+
+        if self.mb_server:
+            return self.mb_server.write_param(dig_inputs_regs.TX_V79, value)
 
     def _convert_current(self, current: int | float) -> int:
         return int(current * 0.1)
 
-    def param_idle_current(self, value: int | str | bool = None, converted:bool = False) -> str:
+    def param_idle_current(self, value: int | float | None = None, converted:bool = False) -> str | None:
         """When no value is provided, returns the current idle current value from the configuration.
         When a value is provided, writes the new idle current value to the CLP
         CLP receives value Amps * 100 
@@ -505,11 +518,13 @@ class DriverAMP(Driver):
             else:
                 return str(self._convert_current(Config.idle_current))
 
-        value  = int(value * 0.1)
-        return self.mb_server.write_param(dig_inputs_regs.TX_V78, value)
+        value  = int(value * 0.1)     # Current can be float but must be converted to int to send to CLP
+        
+        if self.mb_server:
+            return self.mb_server.write_param(dig_inputs_regs.TX_V78, value)
 
     
-    def param_run_current(self, value: int | str | bool = None, converted:bool = False) -> str:
+    def param_run_current(self, value: int | float | None = None, converted:bool = False) -> str | None:
         """When no value is provided, returns the current run current value from the configuration.
         When a value is provided, writes the new run current value to the CLP
         CLP receives value Amps * 100 
@@ -522,10 +537,12 @@ class DriverAMP(Driver):
                 return str(self._convert_current(Config.run_current))
 
         value = int(value * 0.1)
-        return self.mb_server.write_param(dig_inputs_regs.TX_V81, value)
+
+        if self.mb_server:
+            return self.mb_server.write_param(dig_inputs_regs.TX_V81, value)
 
     
-    def param_acc_current(self, value: int | str | bool = None, converted:bool = False) -> str:
+    def param_acc_current(self, value: int | float | None = None, converted:bool = False) -> str | None:
         """When no value is provided, returns the current acceleration current value from the configuration.
         When a value is provided, writes the new acceleration current value to the CLP
         CLP receives value Amps * 100 
@@ -537,39 +554,46 @@ class DriverAMP(Driver):
             else:
                 return str(self._convert_current(Config.acc_current))
 
-        value = int(value * 0.1)
-        return self.mb_server.write_param(dig_inputs_regs.TX_V82, value)
+        value = int(value * 0.1)         # Current can be float but must be converted to int to send to CLP
+        
+        if self.mb_server:
+            return self.mb_server.write_param(dig_inputs_regs.TX_V82, value)
 
     
-    def read_firmware_version(self) -> str:
+    def read_firmware_version(self) -> str | None:
         """Precisa ser implementada pelo driver"""
-        return str(self.mb_server._conv_reg_to_value(coils_regs.RX_V90, self.mb_server.db_shadow))
+        if self.mb_server:
+            return str(self.mb_server._conv_reg_to_value(coils_regs.RX_V90, self.mb_server.db_shadow))
 
     
-    def read_alarm_status(self) -> bool:
+    def read_alarm_status(self) -> bool | None:
         """Precisa ser implementada pelo driver"""
-        return self.mb_server.db_shadow.get_coils(coils_regs.RX_ALM.ADDRESS, coils_regs.RX_ALM.SIZE)[0]     
+        if self.mb_server:
+            val = self.mb_server.db_shadow.get_coils(coils_regs.RX_ALM.ADDRESS, coils_regs.RX_ALM.SIZE)
+            if val: 
+                return val[0]     
 
     
-    def parse_alarm_info(self) -> str:
+    def parse_alarm_info(self) -> str | None:
         """Precisa ser implementada pelo driver"""
-        motor_alarm_int = self.mb_server._conv_reg_to_value(coils_regs.RX_ALC, self.mb_server.db_shadow) & motor_alc_errors_mask
-        self.read_firmware_status()  # Update the SASTAT value
-        sastat_alarm_int = self.motor.SASTAT & motor_program_errors_mask
+        if self.mb_server:
+            motor_alarm_int = self.mb_server._conv_reg_to_value(coils_regs.RX_ALC, self.mb_server.db_shadow) & motor_alc_errors_mask
+            self.read_firmware_status()  # Update the SASTAT value
+            sastat_alarm_int = self.motor.SASTAT & motor_program_errors_mask
 
-        alarm_info = ''
-        if motor_alarm_int > 0:
-            alarm_info = "Alarm details ALC bits: "
-            alarm_info += self._extract_flags_info(motor_alarm_int, MotorAlarmInfo)
-        if sastat_alarm_int > 0:
-            if alarm_info != '':
-                alarm_info += ' | '
-            alarm_info += "Alarm details SASTAT bits: "
-            alarm_info += self._extract_flags_info(sastat_alarm_int, MotorProgramStatus)
+            alarm_info = ''
+            if motor_alarm_int > 0:
+                alarm_info = "Alarm details ALC bits: "
+                alarm_info += self._extract_flags_info(motor_alarm_int, MotorAlarmInfo)
+            if sastat_alarm_int > 0:
+                if alarm_info != '':
+                    alarm_info += ' | '
+                alarm_info += "Alarm details SASTAT bits: "
+                alarm_info += self._extract_flags_info(sastat_alarm_int, MotorProgramStatus)
 
-        return alarm_info
+            return alarm_info
 
-    def _extract_flags_info(self, input:int, flags_type:IntFlag, separator: str = "&") -> str:
+    def _extract_flags_info(self, input:int, flags_type: type[MotorAlarmInfo] | type[MotorProgramStatus], separator: str = "&") -> str:
         """Extracts the name of the flags that are activated in a given object, the object
         must be an IntFlag
 
@@ -595,100 +619,100 @@ class DriverAMP(Driver):
 
         return msg
 
-    def read_firmware_status(self) -> str:
+    def read_firmware_status(self) -> str | None:
         """Precisa ser implementada pelo driver"""
 
         flag_status = False
         msg = ''
+        if self.mb_server:
+            self.motor.SASTAT = self.mb_server._conv_reg_to_value(coils_regs.RX_SASTAT, self.mb_server.db_shadow)
 
-        self.motor.SASTAT = self.mb_server._conv_reg_to_value(coils_regs.RX_SASTAT, self.mb_server.db_shadow)
-
-        sastat = self.motor.SASTAT      # Uses an internal variable that can be changed
-        # print(f"SASTAT = {sastat}")
-        
-        self.focus_out_status = ( sastat & MotorProgramStatus.RUN_FOCUS_OUT )
-
-        self.focus_in_status = (sastat & MotorProgramStatus.RUN_FOCUS_IN)
-
-        self.park_status = (sastat & MotorProgramStatus.RUN_PARK)
-        
-        if sastat & MotorProgramStatus.READY:
-            sastat -= MotorProgramStatus.READY
-            msg += "Idle"
-            if sastat > 0:
-                msg += ' / '
-
-        if sastat & (MotorProgramStatus.RUN_HOMING | MotorProgramStatus.RUN_FOCUS_IN | MotorProgramStatus.RUN_FOCUS_OUT | MotorProgramStatus.RUN_GOTO | MotorProgramStatus.RUN_PARK):
-            if sastat & MotorProgramStatus.RUN_HOMING:
-                sastat -= MotorProgramStatus.RUN_HOMING
-            if sastat & MotorProgramStatus.RUN_FOCUS_IN:
-                sastat -= MotorProgramStatus.RUN_FOCUS_IN
-            if sastat & MotorProgramStatus.RUN_FOCUS_OUT:
-                sastat -= MotorProgramStatus.RUN_FOCUS_OUT
-            if sastat & MotorProgramStatus.RUN_GOTO:
-                sastat -= MotorProgramStatus.RUN_GOTO
-            if sastat & MotorProgramStatus.RUN_PARK:
-                sastat -= MotorProgramStatus.RUN_PARK
+            sastat = self.motor.SASTAT      # Uses an internal variable that can be changed
+            # print(f"SASTAT = {sastat}")
             
-            msg += "Running"
-            if sastat > 0:
-                msg += ' / '
+            self.focus_out_status = ( sastat & MotorProgramStatus.RUN_FOCUS_OUT ) != 0
 
-        if (sastat > 0) and (sastat & MotorProgramStatus.ERROR_NEED_HOME):
-            sastat -= MotorProgramStatus.ERROR_NEED_HOME
-            msg += "Must run HOME"
-            if sastat > 0:
-                msg += ' / '
+            self.focus_in_status = (sastat & MotorProgramStatus.RUN_FOCUS_IN) != 0
 
-        if (sastat > 0) and (sastat & MotorProgramStatus.ERROR_FOCUS_OUT):
-            sastat -= MotorProgramStatus.ERROR_FOCUS_OUT
-            msg += "Too close to HOME"
-            if sastat > 0:
-                msg += ' / '
+            self.park_status = (sastat & MotorProgramStatus.RUN_PARK) != 0
+            
+            if sastat & MotorProgramStatus.READY:
+                sastat -= MotorProgramStatus.READY
+                msg += "Idle"
+                if sastat > 0:
+                    msg += ' / '
 
-        if (sastat > 0) and (sastat & MotorProgramStatus.MANUAL_MOVE):
-            sastat -= MotorProgramStatus.MANUAL_MOVE
-            self.driver_comm.manual_movement.status.emit(True)
-            msg += "Manual Move"
-            if sastat > 0:
-                msg += ' / '
-        else:
-            self.driver_comm.manual_movement.status.emit(False)
+            if sastat & (MotorProgramStatus.RUN_HOMING | MotorProgramStatus.RUN_FOCUS_IN | MotorProgramStatus.RUN_FOCUS_OUT | MotorProgramStatus.RUN_GOTO | MotorProgramStatus.RUN_PARK):
+                if sastat & MotorProgramStatus.RUN_HOMING:
+                    sastat -= MotorProgramStatus.RUN_HOMING
+                if sastat & MotorProgramStatus.RUN_FOCUS_IN:
+                    sastat -= MotorProgramStatus.RUN_FOCUS_IN
+                if sastat & MotorProgramStatus.RUN_FOCUS_OUT:
+                    sastat -= MotorProgramStatus.RUN_FOCUS_OUT
+                if sastat & MotorProgramStatus.RUN_GOTO:
+                    sastat -= MotorProgramStatus.RUN_GOTO
+                if sastat & MotorProgramStatus.RUN_PARK:
+                    sastat -= MotorProgramStatus.RUN_PARK
                 
-        if (sastat > 0) and (sastat & MotorProgramStatus.ERROR_RS485):
-            sastat -= MotorProgramStatus.ERROR_RS485
-            msg += "RS485 error"
-            if sastat > 0:
-                msg += ' / '
-                
-        if (sastat > 0) and (sastat & MotorProgramStatus.ERROR_PADDLE):
-            sastat -= MotorProgramStatus.ERROR_PADDLE
-            msg += "Paddle error"
-            if sastat > 0:
-                msg += ' / '
-                
-        if (sastat > 0) and (sastat & MotorProgramStatus.ERROR_MOTOR_OFF_ID):
-            sastat -= MotorProgramStatus.ERROR_MOTOR_OFF_ID
-            msg += "Motor off or ID error"
-            if sastat > 0:
-                msg += ' / '
-                
-        if (sastat > 0) and (sastat & MotorProgramStatus.ERROR_LIM_SWITCH):
-            sastat -= MotorProgramStatus.ERROR_LIM_SWITCH
-            msg += "Lim-switch error"
-            if sastat > 0:
-                msg += ' / '
+                msg += "Running"
+                if sastat > 0:
+                    msg += ' / '
 
-        if (sastat > 0) and (sastat & MotorProgramStatus.ERROR_OUT_OF_RANGE):
-            sastat -= MotorProgramStatus.ERROR_OUT_OF_RANGE
-            msg += "Out of range"
-            if sastat > 0:
-                msg += ' / '
+            if (sastat > 0) and (sastat & MotorProgramStatus.ERROR_NEED_HOME):
+                sastat -= MotorProgramStatus.ERROR_NEED_HOME
+                msg += "Must run HOME"
+                if sastat > 0:
+                    msg += ' / '
 
-        # if not flag_status:
-        #     msg = "Running"
+            if (sastat > 0) and (sastat & MotorProgramStatus.ERROR_FOCUS_OUT):
+                sastat -= MotorProgramStatus.ERROR_FOCUS_OUT
+                msg += "Too close to HOME"
+                if sastat > 0:
+                    msg += ' / '
 
-        return msg
+            if (sastat > 0) and (sastat & MotorProgramStatus.MANUAL_MOVE):
+                sastat -= MotorProgramStatus.MANUAL_MOVE
+                self.driver_comm.manual_movement.status.emit(True)
+                msg += "Manual Move"
+                if sastat > 0:
+                    msg += ' / '
+            else:
+                self.driver_comm.manual_movement.status.emit(False)
+                    
+            if (sastat > 0) and (sastat & MotorProgramStatus.ERROR_RS485):
+                sastat -= MotorProgramStatus.ERROR_RS485
+                msg += "RS485 error"
+                if sastat > 0:
+                    msg += ' / '
+                    
+            if (sastat > 0) and (sastat & MotorProgramStatus.ERROR_PADDLE):
+                sastat -= MotorProgramStatus.ERROR_PADDLE
+                msg += "Paddle error"
+                if sastat > 0:
+                    msg += ' / '
+                    
+            if (sastat > 0) and (sastat & MotorProgramStatus.ERROR_MOTOR_OFF_ID):
+                sastat -= MotorProgramStatus.ERROR_MOTOR_OFF_ID
+                msg += "Motor off or ID error"
+                if sastat > 0:
+                    msg += ' / '
+                    
+            if (sastat > 0) and (sastat & MotorProgramStatus.ERROR_LIM_SWITCH):
+                sastat -= MotorProgramStatus.ERROR_LIM_SWITCH
+                msg += "Lim-switch error"
+                if sastat > 0:
+                    msg += ' / '
+
+            if (sastat > 0) and (sastat & MotorProgramStatus.ERROR_OUT_OF_RANGE):
+                sastat -= MotorProgramStatus.ERROR_OUT_OF_RANGE
+                msg += "Out of range"
+                if sastat > 0:
+                    msg += ' / '
+
+            # if not flag_status:
+            #     msg = "Running"
+
+            return msg
 
             
     
@@ -696,77 +720,82 @@ class DriverAMP(Driver):
         """Precisa ser implementada pelo driver"""
         ...
     
-    def move_to(self, pos_str: str) -> str:
+    def move_to(self, pos_str: str) -> str | None:
         """Precisa ser implementada pelo driver"""
-
+        if self.mb_server:
         # return self.mb_server.send_command(dig_inputs_regs.TX_GS29)
-        pos = float(pos_str) 
-        if pos < 0:
-            pos = 0
-        elif pos > Config.max_pos:
-            pos = Config.max_pos
-        # Sends the position value to the CLP, and then sends the command to start the movement towards the target position
-        # command_position = (Config.max_pos * Conversion.POSITION_COMMAND) - Conversion.POSITION_COMMAND * int(pos)   # Conversão necessária devido a montagem mecânica  
-        command_position = (Config.max_pos * Conversion.POSITION_COMMAND) - Conversion.POSITION_COMMAND * pos   # Conversão necessária devido a montagem mecânica 
-        # command_position = (Config.max_pos * Conversion.POSITION_VISUALIZATION) - Conversion.POSITION_VISUALIZATION * pos   # Conversão necessária devido a montagem mecânica 
+            pos = float(pos_str) 
+            if pos < 0:
+                pos = 0
+            elif pos > Config.max_pos:
+                pos = Config.max_pos
+            # Sends the position value to the CLP, and then sends the command to start the movement towards the target position
+            # command_position = (Config.max_pos * Conversion.POSITION_COMMAND) - Conversion.POSITION_COMMAND * int(pos)   # Conversão necessária devido a montagem mecânica  
+            command_position = (Config.max_pos * Conversion.POSITION_COMMAND) - Conversion.POSITION_COMMAND * pos   # Conversão necessária devido a montagem mecânica 
+            # command_position = (Config.max_pos * Conversion.POSITION_VISUALIZATION) - Conversion.POSITION_VISUALIZATION * pos   # Conversão necessária devido a montagem mecânica 
 
-        print(f"Moving to position {pos} microns - Command position value: {command_position}")
-        print(f"steps: {self._convert_pos(command_position)}  ---  int steps: {round(self._convert_pos(command_position))}")
+            print(f"Moving to position {pos} microns - Command position value: {command_position}")
+            print(f"steps: {self._convert_pos(command_position)}  ---  int steps: {round(self._convert_pos(command_position))}")
 
-        print(f'Steps to microns: {   -((round(self._convert_pos(command_position)) * Config.steps_2_encoder * Config.enc_2_microns) - (Config.max_pos * Conversion.POSITION_COMMAND)) / Conversion.POSITION_COMMAND}')
+            print(f'Steps to microns: {   -((round(self._convert_pos(command_position)) * Config.steps_2_encoder * Config.enc_2_microns) - (Config.max_pos * Conversion.POSITION_COMMAND)) / Conversion.POSITION_COMMAND}')
 
-        if self.mb_server.write_param(dig_inputs_regs.TX_V20, round(self._convert_pos(command_position) + 1)) == "OK":
-            time.sleep(TimeDelays.WAIT_PARAM)   # Delay to ensure the position value is written to the CLP before sending the command to start the movement
-            return self.mb_server.send_command(dig_inputs_regs.TX_GS29)
-        else:
-            return "NOK"
+            if self.mb_server.write_param(dig_inputs_regs.TX_V20, round(self._convert_pos(command_position) + 1)) == "OK":
+                time.sleep(TimeDelays.WAIT_PARAM)   # Delay to ensure the position value is written to the CLP before sending the command to start the movement
+                return self.mb_server.send_command(dig_inputs_regs.TX_GS29)
+            else:
+                return "NOK"
 
-    def focus_in(self, speed: str = None) -> str:
+    def focus_in(self, speed: str | int = Config.normal_speed) -> str | None:
         """Precisa ser implementada pelo driver""" 
-        speed_int = int(speed)
-        if speed_int != Config.normal_speed:
-            if speed_int <= 0:
-                speed_int = 5
+        if self.mb_server:
+            speed_int = int(speed)
+            if speed_int != Config.normal_speed:
+                if speed_int <= 0:
+                    speed_int = 5
 
-            command_speed = self._convert_speed(speed_int)
+                command_speed = self._convert_speed(speed_int)
 
-            if self.mb_server.write_param(dig_inputs_regs.TX_V77, command_speed) == "OK":
-                time.sleep(TimeDelays.WAIT_PARAM)
+                if self.mb_server.write_param(dig_inputs_regs.TX_V77, command_speed) == "OK":
+                    time.sleep(TimeDelays.WAIT_PARAM)
+                    return self.mb_server.send_command(dig_inputs_regs.TX_GS21)
+                else:
+                    return "NOK"
+            else:
                 return self.mb_server.send_command(dig_inputs_regs.TX_GS21)
-            else:
-                return "NOK"
-        else:
-            return self.mb_server.send_command(dig_inputs_regs.TX_GS21)
     
-    def focus_out(self, speed: str = None) -> str:
+    def focus_out(self, speed: str | int = Config.normal_speed) -> str | None:
         """Precisa ser implementada pelo driver""" 
-        speed_int = int(speed)
-        if speed_int != Config.normal_speed:
-            if speed_int <= 0:
-                speed_int = 5
+        if self.mb_server:
+            speed_int = int(speed)
+            if speed_int != Config.normal_speed:
+                if speed_int <= 0:
+                    speed_int = 5
 
-            command_speed = self._convert_speed(speed_int)
+                command_speed = self._convert_speed(speed_int)
 
-            if self.mb_server.write_param(dig_inputs_regs.TX_V77, command_speed) == "OK":
-                time.sleep(TimeDelays.WAIT_PARAM)
+                if self.mb_server.write_param(dig_inputs_regs.TX_V77, command_speed) == "OK":
+                    time.sleep(TimeDelays.WAIT_PARAM)
+                    return self.mb_server.send_command(dig_inputs_regs.TX_GS20)
+                else:
+                    return "NOK"
+            else:
                 return self.mb_server.send_command(dig_inputs_regs.TX_GS20)
-            else:
-                return "NOK"
-        else:
-            return self.mb_server.send_command(dig_inputs_regs.TX_GS20)
     
-    def halt(self) -> str:
+    def halt(self) -> str | None:
         """Precisa ser implementada pelo driver""" 
-        return self.mb_server.send_command(dig_inputs_regs.TX_V42)
+        if self.mb_server:
+            return self.mb_server.send_command(dig_inputs_regs.TX_V42)
 
 
-    def home(self) -> str:
+    def home(self) -> str | None:
         """Precisa ser implementada pelo driver"""
-        return self.mb_server.send_command(dig_inputs_regs.TX_GS30)
+        if self.mb_server:
+            return self.mb_server.send_command(dig_inputs_regs.TX_GS30)
     
-    def park(self) -> str:
+    def park(self) -> str | None:
         """Precisa ser implementada pelo driver""" 
-        return self.mb_server.send_command(dig_inputs_regs.TX_GS5)
+        if self.mb_server:
+            return self.mb_server.send_command(dig_inputs_regs.TX_GS5)
         
     def _reset_communication(self):
         """Resets and tries to re-establish the modbus connection with the CLP.
@@ -774,14 +803,16 @@ class DriverAMP(Driver):
             - Signals server that the connection to the motor was lost;
             - Resets modbus server"""
         super()._reset_communication()
+        
 
         self.driver_comm.timeout.emit(True)
 
         self.motor.connected = False
 
-        self.mb_server.timeout.running = False  # Stops timeout counter
-        self.mb_server.timeout.reset()
-        self.mb_server.handshake = False
+        if self.mb_server:
+            self.mb_server.timeout.running = False  # Stops timeout counter
+            self.mb_server.timeout.reset()
+            self.mb_server.handshake = False
 
         
     def _update_all_parameters(self):
@@ -790,18 +821,16 @@ class DriverAMP(Driver):
 
         # self.motor.signals.progress.value.emit(True)
         # self.motor.signals.progress.string.emit(0)
+        if self.mb_server:
+            for param_idx in MotorParamsIdx:
+                    if param_idx != MotorParamsIdx.MOTOR_IP and param_idx != MotorParamsIdx.MAX_STEP:
+                        params += (self.motor.parameters[param_idx].REGISTER,)
+                        
+                        values += (int(self.param_methods[param_idx](converted=True)), )   # Mounts tuple with parameters values 
 
-        for param_idx in MotorParamsIdx:
-                if param_idx != MotorParamsIdx.MOTOR_IP and param_idx != MotorParamsIdx.MAX_STEP:
-                    params += (self.motor.parameters[param_idx].REGISTER,)
-                    # values += (int(float(self.motor.parameters[param_idx].VALUE)),)
-                    values += (int(self.param_methods[param_idx](converted=True)),)
-                    # p += 1
-                    # self.motor.signals.progress.string.emit(int((p/(len(MotorParamsIdx) - 2))*100)) # Exclude IP and MAX_STEP, which are not written in the same way as the others
-
-                    print(f'{self.motor.parameters[param_idx].REGISTER} - {int(self.param_methods[param_idx](converted=True))}')
-                    
-        self.mb_server.write_param(params, values)
+                        print(f'{self.motor.parameters[param_idx].REGISTER} - {int(self.param_methods[param_idx](converted=True))}')
+                        
+            self.mb_server.write_param(params, values)
 
         # self.motor.signals.progress.value.emit(False)
         # self.motor.signals.progress.string.emit(0)
