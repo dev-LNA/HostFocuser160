@@ -133,7 +133,7 @@ class DriverAMP(Driver):
                                 d_inputs_size=DB_size.DI_LAST_ADDRESS+1, d_inputs_default_value=False,               #|  Config value for the modbus data bank.
                                 h_regs_size=0, h_regs_default_value=0,                          #|  
                                 i_regs_size=0, i_regs_default_value=0)                          #|
-                self.mb_server = IAGModbusServer(host=Config.device_ip, port=Config.device_port ,no_block=True, data_bank=dataBank_config,
+                self.mb_server = IAGModbusServer(data_bank=dataBank_config, host=Config.device_ip, port=Config.device_port ,no_block=True,
                                                  timeout_callback_function=self._reset_communication)
 
                 self.mb_server.mb_comm.task_progress.connect(lambda value: self.motor.signals.progress.string.emit(value))

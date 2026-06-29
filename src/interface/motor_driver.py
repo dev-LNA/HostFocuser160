@@ -118,7 +118,7 @@ class Driver(ABC):
         ...
     
     @abstractmethod
-    def conv_position_show(self, val_enc: int = None, type: str = "int") -> int | float:
+    def conv_position_show(self, val_enc: int | None = None, type: str = "int") -> int | float:
         """Precisa ser implementada pelo driver"""
         ...
     
@@ -189,7 +189,7 @@ class Driver(ABC):
     ...
 
     @abstractmethod
-    def param_max_step(self, value: int | str | bool = None) -> str:
+    def param_max_step(self, value: int | str | bool | None = None) -> str:
         """Precisa ser implementada pelo driver"""
     ...
 
@@ -248,12 +248,12 @@ class Driver(ABC):
         ...
              
     @abstractmethod
-    def focus_in(self, speed: str = None) -> str:
+    def focus_in(self, speed: str | None = None) -> str:
         """Precisa ser implementada pelo driver""" 
         ...
              
     @abstractmethod
-    def focus_out(self, speed: str = None) -> str:
+    def focus_out(self, speed: str | None = None) -> str:
         """Precisa ser implementada pelo driver""" 
         ...
              
@@ -286,9 +286,10 @@ class Driver(ABC):
         print("*** Resetting communication...\n\n")
         ...
 
-    def _store_to_flash(self) -> str:
+    def _store_to_flash(self) -> str | None:
         """Pode ser implementada pelo driver caso necessário"""
         print("Motor driver does not implement flash storage. Ignoring command.")
+        return None
 
     def is_convertible_to_int(self, value):
         try:

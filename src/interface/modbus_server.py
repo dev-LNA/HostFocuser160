@@ -20,7 +20,7 @@ class TimeoutCheck(QObject):
     def __init__(self, driver_timeout_method, timeout: int = 8):
         super(QObject, self).__init__()
         self._timeout_limit = timeout                           # Timeout limit
-        self.timer: int = 0                                     # Current timer
+        self.timer: float = 0                                     # Current timer
 
         self.status: TimeoutState = TimeoutState.NO_TIMEOUT     # Timeout status (True -> timeout occured)
         self.old_val = False
@@ -103,8 +103,8 @@ class IAGModbusServer(mbServer):
     _writting = False
     RW_lock = Lock()
     _params_initialized: bool = False
-    def __init__(self, host: str='0.0.0.0', port: int=5005, no_block: bool=False, ipv6: bool=False, device_id=None,
-                 data_bank: MB_DataBank | None = None, timeout_callback_function = None):
+    def __init__(self, data_bank: MB_DataBank, host: str='0.0.0.0', port: int=5005, no_block: bool=False, ipv6: bool=False, device_id=None,
+                 timeout_callback_function = None):
         super().__init__(host=host, port=port, no_block=no_block, ipv6=ipv6, data_bank=data_bank, device_id=device_id)
 
             # self.dataBank = DataBank(coils_size=1127, coils_default_value=False, d_inputs_size=0, h_regs_size=0, i_regs_size=0)
@@ -117,7 +117,7 @@ class IAGModbusServer(mbServer):
 
         # self.host = host
         # self.port = port
-
+        
         self.db_shadow = DataBank(coils_size=data_bank.coils_size, coils_default_value=data_bank.coils_default_value,               #|      
                                 d_inputs_size=data_bank.d_inputs_size, d_inputs_default_value=data_bank.d_inputs_default_value,     #|  Config value for the modbus data bank.
                                 h_regs_size=data_bank.h_regs_size, h_regs_default_value=data_bank.h_regs_default_value,             #|  
@@ -226,27 +226,35 @@ class IAGModbusServer(mbServer):
                     self.RW_lock.acquire()
 
     @property
-    def CLP_writting(self) -> bool:
+    def CLP_writting(self) -> bool | None:
         """Returns if the CLP is writting data to the ModbusServer by checking 
         the status of the 'RX_WRITTING' coil register that is set by the CLP when it is writting data"""
-        return self.data_bank.get_coils(coils_regs.RX_WRITTING.ADDRESS, coils_regs.RX_WRITTING.SIZE)[0]
+        val = self.data_bank.get_coils(coils_regs.RX_WRITTING.ADDRESS, coils_regs.RX_WRITTING.SIZE)
+        if val:
+            return val[0]
     
     @property
-    def CLP_reading(self) -> bool:
+    def CLP_reading(self) -> bool | None:
         """Returns if the CLP is reading data from the ModbusServer by checking 
         the status of the 'RX_READING' coil register that is set by the CLP when it is reading data"""
-        return self.data_bank.get_coils(coils_regs.RX_READING.ADDRESS, coils_regs.RX_READING.SIZE)[0]
+        val = self.data_bank.get_coils(coils_regs.RX_READING.ADDRESS, coils_regs.RX_READING.SIZE)
+        if val:
+            return val[0]
 
     @property
-    def CLP_OK(self) -> bool:
+    def CLP_OK(self) -> bool | None:
         """Returns the status of the CLP OK coil register"""
-        return self.data_bank.get_coils(coils_regs.OK.ADDRESS, coils_regs.OK.SIZE)[0]
+        val = self.data_bank.get_coils(coils_regs.OK.ADDRESS, coils_regs.OK.SIZE)
+        if val:
+            return val[0]
         # return self.db_shadow.get_coils(coils_regs.OK.ADDRESS, coils_regs.OK.SIZE)[0]
 
     @property
-    def CLP_NOK(self) -> bool:
+    def CLP_NOK(self) -> bool| None:
         """Returns the status of the CLP NOK coil register"""
-        return self.data_bank.get_coils(coils_regs.NOK.ADDRESS, coils_regs.NOK.SIZE)[0]
+        val = self.data_bank.get_coils(coils_regs.NOK.ADDRESS, coils_regs.NOK.SIZE)
+        if val:
+            return val[0]
         # return self.db_shadow.get_coils(coils_regs.NOK.ADDRESS, coils_regs.NOK.SIZE)[0]
 
     def run(self):
@@ -340,31 +348,34 @@ class IAGModbusServer(mbServer):
         # Mudei o handshake para ser feito pelo bit de reading, mas o handshake continua sendo 
         # atualizado da mesma forma que antes, somente o valor que vai para a função de timeout
         # que vai ser do bit de reading
+        temp1 = self.data_bank.get_coils(coils_regs.HANDSHAKE.ADDRESS, coils_regs.HANDSHAKE.SIZE)
+        temp2 = self.data_bank.get_coils(coils_regs.RX_READING.ADDRESS, coils_regs.RX_READING.SIZE)
+        if temp1 and temp2:
+            hs = temp1[0]
+            new = temp2[0]
 
-        hs = self.data_bank.get_coils(coils_regs.HANDSHAKE.ADDRESS, coils_regs.HANDSHAKE.SIZE)[0]
-        new = self.data_bank.get_coils(coils_regs.RX_READING.ADDRESS, coils_regs.RX_READING.SIZE)[0]
 
+            # Checks if the time between handshakes has passed the timeout limit (False indicates that there is NO timeout)
+            if self.timeout.check_timeout(new) == TimeoutState.NO_TIMEOUT:    
+                self.handshake = True
+                self.data_bank.set_discrete_inputs(dig_inputs_regs.TX_SVON.ADDRESS, [True])   # Informs the CLP that the Driver is active and ready to operate
 
-        # Checks if the time between handshakes has passed the timeout limit (False indicates that there is NO timeout)
-        if self.timeout.check_timeout(new) == TimeoutState.NO_TIMEOUT:    
-            self.handshake = True
-            self.data_bank.set_discrete_inputs(dig_inputs_regs.TX_SVON.ADDRESS, [True])   # Informs the CLP that the Driver is active and ready to operate
-
-        # Saves the new handshake value in the shadow register and mirror it to the CLP
-        self.db_shadow.set_coils(coils_regs.HANDSHAKE.ADDRESS, [hs]) 
-        self.data_bank.set_discrete_inputs(dig_inputs_regs.HANDSHAKE.ADDRESS, [hs])
+            # Saves the new handshake value in the shadow register and mirror it to the CLP
+            self.db_shadow.set_coils(coils_regs.HANDSHAKE.ADDRESS, [hs]) 
+            self.data_bank.set_discrete_inputs(dig_inputs_regs.HANDSHAKE.ADDRESS, [hs])
 
     def _mirror_clp_owned_coils(self):
         for reg in CLP_Owned:
             current_reg_value = self.data_bank.get_coils(reg.ORIGIN.ADDRESS, reg.ORIGIN.SIZE)
             # self.data_bank.set_discrete_inputs(reg.RESPONSE.ADDRESS, current_reg_value)
-            match reg.ORIGIN.SIZE:
-                case 32:
-                    # current_reg_value.reverse()
-                    self.data_bank.set_discrete_inputs(reg.RESPONSE.ADDRESS, current_reg_value[16:])     #|  If the register is 32 bits the higher bits must be saved to the first 16 bits of the address   
-                    self.data_bank.set_discrete_inputs(reg.RESPONSE.ADDRESS+16, current_reg_value[:16]) 
-                case _:            
-                    self.data_bank.set_discrete_inputs(reg.RESPONSE.ADDRESS, current_reg_value)
+            if current_reg_value:
+                match reg.ORIGIN.SIZE:
+                    case 32:
+                        # current_reg_value.reverse()
+                        self.data_bank.set_discrete_inputs(reg.RESPONSE.ADDRESS, current_reg_value[16:])     #|  If the register is 32 bits the higher bits must be saved to the first 16 bits of the address   
+                        self.data_bank.set_discrete_inputs(reg.RESPONSE.ADDRESS+16, current_reg_value[:16]) 
+                    case _:            
+                        self.data_bank.set_discrete_inputs(reg.RESPONSE.ADDRESS, current_reg_value)
 
 
 
@@ -377,38 +388,23 @@ class IAGModbusServer(mbServer):
 
                 print("**********************************************************")
                 bit_list = self.data_bank.get_coils(reg.ADDRESS, reg.SIZE)
-                bit_string = "".join([str(int(b)) for b in bit_list])
-                print(f"Register {reg.TAG} received value {bit_string}")
-                print("**********************************************************")
+                if bit_list:
+                    bit_string = "".join([str(int(b)) for b in bit_list])
+                    print(f"Register {reg.TAG} received value {bit_string}")
+                    print("**********************************************************")
 
-                a = self._conv_reg_to_value(reg, self.data_bank)
-                b = self._conv_reg_to_value(reg, self.db_shadow)
-                print("--------------------------------------------------------------------")
-                print(f"Comparing register {reg.TAG} -> DB value: {a} | Shadow value: {b}")
+                    a = self._conv_reg_to_value(reg, self.data_bank)
+                    b = self._conv_reg_to_value(reg, self.db_shadow)
+                    print("--------------------------------------------------------------------")
+                    print(f"Comparing register {reg.TAG} -> DB value: {a} | Shadow value: {b}")
 
-                resp_reg = clp_owned_reg.RESPONSE
-                num = self._conv_reg_to_value(reg, self.data_bank)
+                    resp_reg = clp_owned_reg.RESPONSE
+                    num = self._conv_reg_to_value(reg, self.data_bank)
 
-                # resp = self._write(num, resp_reg)
+                    self._changed_coils.add( (resp_reg, num) )   # Adds the changed register to the set of changed coils
 
-                
-                self._changed_coils.add( (resp_reg, num) )   # Adds the changed register to the set of changed coils
-
-                if not self.CLP_writting:    
-                    self.db_shadow.set_coils(reg.ADDRESS, self.data_bank.get_coils(reg.ADDRESS, reg.SIZE))   # Saves the updated value in the shadow register
-
-                # if resp == "OK":
-                #     # Must update the shadow coil with the current value
-                #     print(f"Mirroring {reg.TAG} value {num} to {resp_reg.TAG}")
-                #     self.db_shadow.set_coils(reg.ADDRESS, self.data_bank.get_coils(reg.ADDRESS, reg.SIZE))
-                
-                #     a = self._conv_reg_to_value(reg, self.data_bank)
-                #     b = self._conv_reg_to_value(reg, self.db_shadow)
-                #     print(f"After mirror register {reg.TAG} -> DB value: {a} | Shadow value: {b}")
-                #     print("--------------------------------------------------------------------")
-
-                # else:
-                #     print("--------------------------------------------------------------------")
+                    if not self.CLP_writting:    
+                        self.db_shadow.set_coils(reg.ADDRESS, self.data_bank.get_coils(reg.ADDRESS, reg.SIZE))   # Saves the updated value in the shadow register
 
        
     def wait_confirmation(self, reg: RegsInfo) -> bool:
@@ -455,23 +451,25 @@ class IAGModbusServer(mbServer):
 
 
             bits = db.get_coils(reg.ADDRESS, reg.SIZE)
-            binary_string = "".join(reversed([str(int(b)) for b in bits]))
-            # binary_string = "".join([str(int(b)) for b in bits])
-            int_val = int(binary_string, base=2)
+            if bits:
+                binary_string = "".join(reversed([str(int(b)) for b in bits]))
+                # binary_string = "".join([str(int(b)) for b in bits])
+                int_val = int(binary_string, base=2)
 
-            if reg.SIZE == 32:
-                if binary_string[0] == '1':
-                    int_val = int_val - (1 << reg.SIZE)
+                if reg.SIZE == 32:
+                    if binary_string[0] == '1':
+                        int_val = int_val - (1 << reg.SIZE)
 
         elif reg.TYPE is RegType.DISCRETE_INPUT:
             bits = db.get_discrete_inputs(reg.ADDRESS, reg.SIZE)
-            binary_string = "".join(reversed([str(int(b)) for b in bits]))
-            # binary_string = "".join([str(int(b)) for b in bits])
-            int_val = int(binary_string, base=2)
+            if bits:
+                binary_string = "".join(reversed([str(int(b)) for b in bits]))
+                # binary_string = "".join([str(int(b)) for b in bits])
+                int_val = int(binary_string, base=2)
 
-            if reg.SIZE == 32:
-                if binary_string[0] == '1':
-                    int_val = int_val - (1 << reg.SIZE)
+                if reg.SIZE == 32:
+                    if binary_string[0] == '1':
+                        int_val = int_val - (1 << reg.SIZE)
 
         return int_val
 
@@ -566,18 +564,18 @@ class IAGModbusServer(mbServer):
         # self.data_bank.set_discrete_inputs(dig_inputs_regs.OK.ADDRESS, [True])   # Sets the OK discrete input to indicate successful command execution
 
 
-    def write_param(self, reg: RegsInfo | tuple[RegsInfo, ...], value: int | bool | tuple[int, ...] | tuple[bool, ...] | tuple[str, ...]) -> str:
+    def write_param(self, reg: RegsInfo | tuple[RegsInfo, ...], value: int | bool | tuple[int, ...] | tuple[bool, ...] | tuple[str, ...]) -> str | None:
         
         params = set()
         if (type(reg) is tuple and type(value) is not tuple) or (type(reg) is not tuple and type(value) is tuple):
             raise ValueError(f"[Writting parameter] Both 'reg' and 'value' must be tuples when writting multiple parameters")
 
-        if type(reg) is tuple:
+        if type(reg) is tuple and type(value) is tuple:
             for r, v in zip(reg, value):
                 if r.TYPE != RegType.DISCRETE_INPUT:
                     raise ValueError(f"Cannot write to register {r.TAG} because it is not a discrete input register.")
                 params.add( (r, v) )
-        else:
+        elif type(reg) is RegsInfo:
             if reg.TYPE != RegType.DISCRETE_INPUT:
                 raise ValueError(f"Cannot write to register {reg.TAG} because it is not a discrete input register.")
             params.add( (reg, value) )
@@ -629,7 +627,7 @@ class IAGModbusServer(mbServer):
 
                                     mirrored = self.data_bank.get_coils(p_dict[p[0].TAG].RESPONSE.ADDRESS, p_dict[p[0].TAG].RESPONSE.SIZE) == self.data_bank.get_discrete_inputs(p[0].ADDRESS, p[0].SIZE)
                                     if mirrored:
-                                        print(f"[+] Parameter {reg.TAG} updated with value {value} by CLP")
+                                        print(f"[+] Parameter {p[0].TAG} updated with value {value} by CLP")
                                     else:
                                         # self._stop_reading_data()
 
@@ -641,9 +639,9 @@ class IAGModbusServer(mbServer):
                                         if time.time() - t > 3:
                                             t_over = True
                                         
-                                            print(f"[-] Could not update parameter {reg.TAG}, timeout checking mirror value")
-                                            print(f"Sent value {self.data_bank.get_discrete_inputs(p[0].ADDRESS, p[0].SIZE)[0]} ======> Mirror Coil Value  {self.data_bank.get_coils(p_dict[p[0].TAG].RESPONSE.ADDRESS, p_dict[p[0].TAG].RESPONSE.SIZE)[0]}")
-                                            raise TimeoutError(f"[§]Timeout while updating paramater {reg.TAG}")
+                                            print(f"[-] Could not update parameter {p[0].TAG}, timeout checking mirror value")
+                                            # print(f"Sent value {self.data_bank.get_discrete_inputs(p[0].ADDRESS, p[0].SIZE)[0]} ======> Mirror Coil Value  {self.data_bank.get_coils(p_dict[p[0].TAG].RESPONSE.ADDRESS, p_dict[p[0].TAG].RESPONSE.SIZE)[0]}")
+                                            raise TimeoutError(f"[§]Timeout while updating paramater {p[0].TAG}")
        
 
                     self._stop_reading_data() # Informs CLP that the Driver finished reading data from the modbus coils
@@ -656,10 +654,10 @@ class IAGModbusServer(mbServer):
                     
 
             elif resp == "NOK":
-                print(f"CLP responded with NOK for parameter {reg.TAG} request operation. Retrying...")
+                print(f"CLP responded with NOK for parameter request operation. Retrying...")
                 time.sleep(0.2)
         
-        print(f"Failed to write parameter {reg.TAG} after {tries} tries. CLP did not confirm the operation.")
+        print(f"Failed to write parameter after {tries} tries. CLP did not confirm the operation.")
         return "NOK"
         
 
