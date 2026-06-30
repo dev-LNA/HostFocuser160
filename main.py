@@ -573,7 +573,7 @@ class FocuserOPD (QMainWindow):
                 self.ui_elements.posSlider.setMaximum(int(Conversion.POSITION_VISUALIZATION * data[MotorParamsIdx.MAX_POS]) + 5)         # Sets slider max value
                 self.ui_elements.posSlider.setMinimum(-12)                              # Sets slider min value #TODO: Acho que esse valor vai ser dependente do 'backlash'
         
-        if self.server:
+        if self.server: # TODO: Mudar essa parte para dentro do server.py
             if MotorParamsIdx.NORMAL_SPEED in data:
                     self.server.status[SJson.MAX_SPEED] = data[MotorParamsIdx.NORMAL_SPEED]
             if MotorParamsIdx.MAX_POS in data:

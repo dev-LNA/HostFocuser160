@@ -13,7 +13,7 @@ class PropertySignals(QObject):
     info = pyqtSignal(str, str)             # The dynamic property handles related to the property
 
 
-    def emit(self, value: bool|int|float, prop: str=None, prop_value: str=None):
+    def emit(self, value: bool|int|float, prop: str | None =None, prop_value: str | None=None):
         """Emits the value and the dynamic property that must be changed
 
         Parameters
@@ -35,7 +35,7 @@ class MultiSignal(QObject):
     string = pyqtSignal(object)
     value_float = pyqtSignal(float)
 
-    def emit(self, value: bool|int|float, value2orstring: bool | str | int | float=None, convert2string: bool=True):
+    def emit(self, value: bool|int|float, value2orstring: bool | str | int | float | None=None, convert2string: bool=True):
         """Emits the variable value and its string OR emits two different values, being the second any other string, int or float
 
         :param value: Variable value to be transmitted

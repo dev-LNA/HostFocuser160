@@ -130,7 +130,7 @@ class Config:
     port_rep: int = int(get_toml('Network', 'port_rep'))
     sub_mask: str = str(get_toml('Network', 'sub_mask'))
     gateway_ip: str = str(get_toml('Network', 'gateway_ip'))
-    pub_interval: int = int(get_toml('Network', 'pub_interval'))
+    pub_interval: float = float(get_toml('Network', 'pub_interval'))
     write_timeout: int = int(get_toml('Network', 'write_timeout'))
     # --------------
     # Device Section
@@ -190,7 +190,7 @@ def update_config():
     Config.port_rep = int(get_toml('Network', 'port_rep'))
     Config.sub_mask = str(get_toml('Network', 'sub_mask'))
     Config.gateway_ip = str(get_toml('Network', 'gateway_ip'))
-    Config.pub_interval = int(get_toml('Network', 'pub_interval'))
+    Config.pub_interval = float(get_toml('Network', 'pub_interval'))
     Config.write_timeout = int(get_toml('Network', 'write_timeout'))
     # --------------
     # Device Section

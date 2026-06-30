@@ -16,9 +16,10 @@ class CommProtocol(ABC):
     @abstractmethod
     def send(self, msg: str) -> str:
         """Must be defined by driver"""
-        ...
+        raise RuntimeError("Method 'send' not defined in the driver")
 
     @abstractmethod
     def receive(self) -> str:
         """Must be defined by driver"""
-        ...
+        raise RuntimeError("Method 'receive' not defined in the driver")
+    

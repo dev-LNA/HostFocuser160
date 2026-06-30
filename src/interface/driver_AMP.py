@@ -197,7 +197,7 @@ class DriverAMP(Driver):
         if encoder_pos is None:
             encoder_pos = self.read_encoder()
         # pos = int(round(encoder_pos / Config.enc_2_microns))
-        if encoder_pos:
+        if encoder_pos is not None:
             max_pos = self.param_max_pos()
             if max_pos:
                 if type == "int":
