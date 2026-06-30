@@ -336,31 +336,34 @@ class FocuserOPD (QMainWindow):
         page to show the focuser main window and starts the server if
         auto startup is configured """
         # Now that the motor was instantiated the motor signals can be connected
-        self.server.motor.signals.moving.info.connect(self.ui_elements.ledMoving.setProperty)
-        self.server.motor.signals.lim_min.info.connect(self.ui_elements.ledLimMin.setProperty)
-        # self.server.motor.signals.lim_min.status.connect(lambda val: logger.warning("Limit switch MIN activated") if val else logger.warning("Limit switch MIN deactivated"))
-        self.server.motor.signals.lim_max.info.connect(self.ui_elements.ledLimMax.setProperty)
-        # self.server.motor.signals.lim_max.status.connect(lambda val: logger.warning("Limit switch MAX activated") if val else logger.warning("Limit switch MAX deactivated"))
-        self.server.motor.signals.position.string.connect(lambda pos: self.ui_elements.lblPosition_val.setText(pos) if pos == 'Invalid' else  self.ui_elements.lblPosition_val.setText(pos))
-        self.server.motor.signals.position.value.connect(self.ui_elements.posSlider.setValue)
-        self.server.motor.signals.initialized.info.connect(self.ui_elements.ledHome.setProperty)
-        self.server.motor.signals.firmware_status.connect(self.ui_elements.lblStatus_val.setText)
-        self.server.motor.signals.firmware_status.connect(self.ui_elements.lblStatus_val.setToolTip)
-        self.server.motor.signals.parking.info.connect(self.ui_elements.ledPark.setProperty)
-        self.server.motor.signals.alarm.info.connect(self.ui_elements.ledAlarm.setProperty)
+        if self.server.motor:
+            self.server.motor.signals.moving.info.connect(self.ui_elements.ledMoving.setProperty)
+            self.server.motor.signals.lim_min.info.connect(self.ui_elements.ledLimMin.setProperty)
+            # self.server.motor.signals.lim_min.status.connect(lambda val: logger.warning("Limit switch MIN activated") if val else logger.warning("Limit switch MIN deactivated"))
+            self.server.motor.signals.lim_max.info.connect(self.ui_elements.ledLimMax.setProperty)
+            # self.server.motor.signals.lim_max.status.connect(lambda val: logger.warning("Limit switch MAX activated") if val else logger.warning("Limit switch MAX deactivated"))
+            self.server.motor.signals.position.string.connect(lambda pos: self.ui_elements.lblPosition_val.setText(pos) if pos == 'Invalid' else  self.ui_elements.lblPosition_val.setText(pos))
+            self.server.motor.signals.position.value.connect(self.ui_elements.posSlider.setValue)
+            self.server.motor.signals.initialized.info.connect(self.ui_elements.ledHome.setProperty)
+            self.server.motor.signals.firmware_status.connect(self.ui_elements.lblStatus_val.setText)
+            self.server.motor.signals.firmware_status.connect(self.ui_elements.lblStatus_val.setToolTip)
+            self.server.motor.signals.parking.info.connect(self.ui_elements.ledPark.setProperty)
+            self.server.motor.signals.alarm.info.connect(self.ui_elements.ledAlarm.setProperty)
 
-        self.server.motor.driver.driver_comm.run_focus_in.info.connect(self.ui_elements.ledFocusIn.setProperty)
-        self.server.motor.driver.driver_comm.run_focus_out.info.connect(self.ui_elements.ledFocusOut.setProperty)
-        self.server.motor.driver.driver_comm.run_park.info.connect(self.ui_elements.ledPark.setProperty)
+            self.server.motor.driver.driver_comm.run_focus_in.info.connect(self.ui_elements.ledFocusIn.setProperty)
+            self.server.motor.driver.driver_comm.run_focus_out.info.connect(self.ui_elements.ledFocusOut.setProperty)
+            self.server.motor.driver.driver_comm.run_park.info.connect(self.ui_elements.ledPark.setProperty)
 
-        self.server.motor.signals.progress.value.connect(self._progress_bar.setVisible)
-        self.server.motor.signals.progress.string.connect(self._progress_bar.progress.setValue)
-        self.ui_elements.menuBar.setVisible(True)                                     # Sets menu bar visibility
-        self.ui_elements.toolBar.setVisible(True)                           # Sets tool bar visibility
-        self.server.server_online = False                               # Emits signal with initial server status as disconnected
-        self.ui_elements.pageSelect.setCurrentIndex(1)                      # Changes view to the main server page
-        if Config.startup:                                                  # If configured to 'auto start'
-            self._start()                                                       # Starts the server
+            self.server.motor.signals.progress.value.connect(self._progress_bar.setVisible)
+            self.server.motor.signals.progress.string.connect(self._progress_bar.progress.setValue)
+            self.ui_elements.menuBar.setVisible(True)                                     # Sets menu bar visibility
+            self.ui_elements.toolBar.setVisible(True)                           # Sets tool bar visibility
+            self.server.server_online = False                               # Emits signal with initial server status as disconnected
+            self.ui_elements.pageSelect.setCurrentIndex(1)                      # Changes view to the main server page
+            if Config.startup:                                                  # If configured to 'auto start'
+                self._start()                                                       # Starts the server
+        else:
+            raise RuntimeError("Could not initiate focuser: Motor not instantiated")
 
     def _testes(self):
         
@@ -510,7 +513,7 @@ class FocuserOPD (QMainWindow):
     def _open_settings(self):
         """Opens the settings window"""
         #To open the settings the motor must be connected
-        if self.server.motor.connected:
+        if self.server.motor and self.server.motor.connected:
             if self._settings_window is None:
                 self._settings_window = SettingsWindow(self.server.motor, logger)                                 # Starts the main window according to the initialized focuser
                 self._settings_window.signals.window_closed.connect(self._settings_closed)                          # Connects function that must be executed when the settings window is closed
@@ -526,7 +529,7 @@ class FocuserOPD (QMainWindow):
             if(msg == QMessageBox.StandardButton.Yes):                                                          # If the user whishes to connect the motor
                 self._start()                                                                                       # Connects the server to the motor and starts server operation #TODO: Talvez seja bom ter essas coisas separadas, com um método só para conectar (criar o socket) e outro para iniciar a thread de App, pois a thread de App vai começar a fazer o polling de informações sem parar uma vez iniciada
                 t = time.time()                                                                                     # Keeps current time
-                while not self.server.motor.connected:                                                            # Waits 5 seconds while the server tries to connect to the motor
+                while self.server.motor and not self.server.motor.connected:                                                            # Waits 5 seconds while the server tries to connect to the motor
                     if round(time.time()-t, 3) > 5:                                                                     # If the server cannot connect after 5 seconds informs the user
                         QMessageBox.information(                                                                        # Shows message to the user
                             self,  # Parent widget (None centers on the screen; 'self' for a parent window)
@@ -535,7 +538,7 @@ class FocuserOPD (QMainWindow):
                             buttons=QMessageBox.StandardButton.Ok)                                                      # Configures the message button
                         self._stop()
                         break                                                                                           # Break the while loop and continues operation
-                if self.server.motor.connected:                                                               # If the connection to the motor was successful
+                if self.server.motor and self.server.motor.connected:                                                               # If the connection to the motor was successful
                     if self._settings_window is None:                                                               # If the settings windows was not yet defined
                         self._settings_window = SettingsWindow(self.server.motor, logger)                                 # Instantiate settings window
                         self._settings_window.signals.window_closed.connect(self._settings_closed)                  # Connects closed window signal
@@ -566,7 +569,7 @@ class FocuserOPD (QMainWindow):
         :type data: dict
         """
         if  MotorParamsIdx.MAX_POS in data:                                                   # If the 'MAX_POS' is changed the slider must be resized accordingly
-            if self.server.motor.model == MotorModels.ARCUS_DMX_ETH:                                      # If the motor model is 'ARCUS_DMX_ETH' the slider minimum value is set to -12, which is the maximum backlash configured for this motor
+            if self.server.motor and self.server.motor.model == MotorModels.ARCUS_DMX_ETH:                                      # If the motor model is 'ARCUS_DMX_ETH' the slider minimum value is set to -12, which is the maximum backlash configured for this motor
                 self.ui_elements.posSlider.setMaximum(int(data[MotorParamsIdx.MAX_POS]) + 5)         # Sets slider max value
                 self.ui_elements.posSlider.setMinimum(-12)                              # Sets slider min value #TODO: Acho que esse valor vai ser dependente do 'backlash'
             else:
