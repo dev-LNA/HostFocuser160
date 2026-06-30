@@ -45,7 +45,7 @@ def resource_path(relative_path):
     """ Retorna o caminho absoluto para o recurso, compatível com PyInstaller """
     if hasattr(sys, '_MEIPASS'):
         # No executável, sys._MEIPASS é a raiz da pasta temporária
-        base_path = sys._MEIPASS
+        base_path = getattr(sys, '_MEIPASS', os.path.dirname(sys.executable))
     else:
         # No desenvolvimento, a base é a pasta raiz do projeto (onde está o main4.py)
         # Como este arquivo está em src/core, pegamos o avô dele
@@ -120,7 +120,7 @@ class Server(QObject):
         self.busy_id = 0
         self._router_reachable = False 
         self._motor_reachable = False
-        self.motor:Motor = None                               # Instantiates motor as None
+        self.motor:Motor | None = None                               # Instantiates motor as None
         
         self._reaching_device_thread = None
         self._processing_command: bool = False
@@ -235,7 +235,7 @@ class Server(QObject):
     @server_online.setter
     def server_online(self, value: bool):
         self._server_connected = value
-        if value:
+        if value and self.zmq_comm:
             self.signals.server_status.emit(value,"statusLed", "OK")          # When server is connected the 'statusLed' is green (defined in the stylesheet)
             self.signals.socket_ip.emit(self.zmq_comm.ip_address)
             self.signals.port_pub.emit(self.zmq_comm.port_pub)
@@ -351,7 +351,8 @@ class Server(QObject):
 
         stat = 43011
         msg = "Flags ativadas: "
-        msg += self.motor.driver._extract_flags_info(stat, MotorProgramStatus)
+        if self.motor:
+            msg += self.motor.driver._extract_flags_info(stat, MotorProgramStatus)
         # for flag in MotorProgramStatus:
         #     if stat & flag:
         #         stat = stat - flag
@@ -392,13 +393,13 @@ class Server(QObject):
         #                 msg_error += f"{error.name} & "
         #             else:
         #                 msg_error += f"{error.name}"
-
-        if alc > 0:
-            msg_error += 'Alarms ALC: '
-            msg_error += self.motor.driver._extract_flags_info(alc, MotorAlarmInfo)
-        if sastat_alarm_int > 0:
-            msg_error += f"\nAlarms SASTAT: "
-            msg_error += self.motor.driver._extract_flags_info(sastat_alarm_int, MotorProgramStatus)
+        if self.motor:
+            if alc > 0:
+                msg_error += 'Alarms ALC: '
+                msg_error += self.motor.driver._extract_flags_info(alc, MotorAlarmInfo)
+            if sastat_alarm_int > 0:
+                msg_error += f"\nAlarms SASTAT: "
+                msg_error += self.motor.driver._extract_flags_info(sastat_alarm_int, MotorProgramStatus)
 
         print(msg_error)
 
@@ -437,7 +438,7 @@ class Server(QObject):
         When the server is stopped the motor is disconnected 
         and one last pub is performed with the current server status
         before the server communication is closed."""
-        if self.server_online and self.zmq_comm:
+        if self.server_online and self.zmq_comm and self.motor:
             try:
                 self.logger.info(f'Disconnecting motor')
                 self.motor.disconnect()
@@ -456,7 +457,8 @@ class Server(QObject):
 
     def stop_poll(self):
         """Stops the ZMQ poller"""
-        self.zmq_comm.stop_poller()
+        if self.zmq_comm:
+            self.zmq_comm.stop_poller()
 
     def init_device(self, motor_model: MotorModels):
         """Initializes the motor driver according to the selected focuser
@@ -465,25 +467,27 @@ class Server(QObject):
         :type motor_model: MotorModels
         :raises ValueError: Raises exception if the motor model is not valid
         """
-        if self.motor == None:
-            self.motor = Motor(motor_model) 
+        try:
+            if self.motor == None:
+                self.motor = Motor(motor_model) 
+                
+                self.motor.driver.driver_comm.timeout.connect(lambda value: setattr(self, 'driver_timeout', value))
+                self.motor.signals.alarm.status.connect(lambda val: self.logger.error(f'{self.motor._alarm_info}') if val == True else ... )     # type: ignore # Lambda function will run when called 
 
-            self.motor.driver.driver_comm.timeout.connect(lambda value: setattr(self, 'driver_timeout', value))
-            self.motor.signals.alarm.status.connect(lambda val: self.logger.error(f'{self.motor._alarm_info}') if val == True else ... )
+                self.motor.signals.lim_max.status.connect(self._log_update)
+                self.motor.signals.lim_min.status.connect(self._log_update)
+                self.motor.signals.initialized.status.connect(self._log_update)
+                self.motor.driver.driver_comm.manual_movement.status.connect(self._log_update)
+                self.motor.driver.driver_comm.run_focus_in.status.connect(self._update_current_movement)
+                self.motor.driver.driver_comm.run_focus_out.status.connect(self._update_current_movement)
+                self.motor.driver.driver_comm.run_park.status.connect(self._update_current_movement)
+                self.motor.signals.initialized.status.connect(self._update_current_movement)
+                self.motor.signals.moving.status.connect(lambda val: self.logger.warning("FOCUSER MOVING") if val else self.logger.warning(f"FOCUSER STOPPED at {self.motor.position}"))    # type: ignore # Lambda function will run when called 
 
-            self.motor.signals.lim_max.status.connect(self._log_update)
-            self.motor.signals.lim_min.status.connect(self._log_update)
-            self.motor.signals.initialized.status.connect(self._log_update)
-            self.motor.driver.driver_comm.manual_movement.status.connect(self._log_update)
-            self.motor.driver.driver_comm.run_focus_in.status.connect(self._update_current_movement)
-            self.motor.driver.driver_comm.run_focus_out.status.connect(self._update_current_movement)
-            self.motor.driver.driver_comm.run_park.status.connect(self._update_current_movement)
-            self.motor.signals.initialized.status.connect(self._update_current_movement)
-            self.motor.signals.moving.status.connect(lambda val: self.logger.warning("FOCUSER MOVING") if val else self.logger.warning(f"FOCUSER STOPPED at {self.motor.position}"))
+                self.motor.signals.error_msg.connect(lambda msg: self.logger.error(f'{msg}'))
 
-            self.motor.signals.error_msg.connect(lambda msg: self.logger.error(f'{msg}'))
 
-        else:
+        except Exception as e:
             raise ValueError("Invalid motor model")
 
     def _reach_gateway(self):
@@ -496,7 +500,7 @@ class Server(QObject):
                 for _try in range(5):                                                                   # Tries 5 times to ping the router
                     time.sleep(TimeDelays.RETRY_TIMEOUT)             # delay between tries                         
                     self.signals.status_message.emit(f"Trying Connect to Router...")                      # Emits signals for GUI update
-                    reachable = ping(Config.gateway_ip, count=1, timeout=0.6, privileged=False).is_alive         # Tries to ping the router IP
+                    reachable = ping(Config.gateway_ip, count=1, timeout=1, privileged=False).is_alive         # Tries to ping the router IP
                     print(f'trying to ping gateway at {Config.gateway_ip}')
                     if reachable:                                                                               # If the ping is succesful
                         self.router_reachable = ReachStatus.CONNECTED
@@ -512,7 +516,7 @@ class Server(QObject):
 
     def _reach_motor(self):
         try:
-            if self.router_reachable and not self.motor_reachable:                                  # If the router is reachable and the motor is not reachable
+            if self.router_reachable and not self.motor_reachable and self.motor:                                  # If the router is reachable and the motor is not reachable
                 time.sleep(0.3) 
                 self.motor_reachable = ReachStatus.CONNECTING                                            # Emits signals for GUI update (Motor attempting connection)
                 self.communicating_to_motor = False                                                     # Not communicating to the motor
@@ -540,7 +544,7 @@ class Server(QObject):
         self.last_ping_time = datetime.now(UTC).replace(tzinfo=None)                                                    # Saves the time when the method was called
         try:
                             
-            if self.motor_reachable:                                                                # If the motor is reachable
+            if self.motor and self.motor_reachable:                                                                # If the motor is reachable
                 self.router_reachable = ReachStatus.CONNECTED                                            # Emits signals for GUI update
                 self.motor_reachable = ReachStatus.CONNECTED                                           # Emits signals for GUI update
                 self.signals.status_message.emit("Connecting motor")       
@@ -591,47 +595,49 @@ class Server(QObject):
         """Updates motor status and saves to JSON"""
         # if not self.update_lock.locked():
         #     self.update_lock.acquire()
-        self.status[SJson.CONNECTED] = self.motor.connected
-        if self.motor.initialized:
-            # self.status[SJson.POSITION] = self.motor.position
-            self.motor.position
-            self.status[SJson.POSITION] = self.motor.driver.conv_position_show(type="int")
-        else:
-            self.motor.position # Updates the position but does not save it to the JSON since the motor is not initialized and the position value is not reliable
-            self.status[SJson.POSITION] = constants.INVALID_RESPONSE
-        self.status[SJson.INITIALIZED] = self.motor.initialized
-        self.status[SJson.HOMING] = self.motor.homing
-        self.status[SJson.PARKING] = self.motor.parking
-        self.status[SJson.IS_MOVING] = self.motor.is_moving
-        self.status[SJson.ALARM] = self.motor.alarm
-        # self.status[SJson.PROCESSING] = self.processing_command
-        self.motor.firmware_status
+        if self.motor:
+            self.status[SJson.CONNECTED] = self.motor.connected
+            if self.motor.initialized:
+                # self.status[SJson.POSITION] = self.motor.position
+                self.motor.position
+                self.status[SJson.POSITION] = self.motor.driver.conv_position_show(type="int")
+            else:
+                self.motor.position # Updates the position but does not save it to the JSON since the motor is not initialized and the position value is not reliable
+                self.status[SJson.POSITION] = constants.INVALID_RESPONSE
+            self.status[SJson.INITIALIZED] = self.motor.initialized
+            self.status[SJson.HOMING] = self.motor.homing
+            self.status[SJson.PARKING] = self.motor.parking
+            self.status[SJson.IS_MOVING] = self.motor.is_moving
+            self.status[SJson.ALARM] = self.motor.alarm
+            # self.status[SJson.PROCESSING] = self.processing_command
+            self.motor.firmware_status
 
-        if self.motor.alarm_info:
-            if self.motor.alarm_info != self.status[SJson.ERROR]:
-                self.status[SJson.ERROR] = self.motor.alarm_info
-                self.logger.error(self.status[SJson.ERROR])
-        else:
-            if self.status[SJson.ERROR] != "":
-                self.logger.info("Previous errors resolved")
-            self.status[SJson.ERROR] = ""
+            if self.motor.alarm_info:
+                if self.motor.alarm_info != self.status[SJson.ERROR]:
+                    self.status[SJson.ERROR] = self.motor.alarm_info
+                    self.logger.error(self.status[SJson.ERROR])
+            else:
+                if self.status[SJson.ERROR] != "":
+                    self.logger.info("Previous errors resolved")
+                self.status[SJson.ERROR] = ""
             
             # self.update_lock.release()
 
     def _get_motor_params(self):
         """Updates the motor parameters in the JSON"""
         #TODO: Adicionar os outros parâmetros no JSON
-        p = 0
-        for param in MotorParamsIdx:
-            print(param)
-            p += 1
-            self.motor.signals.progress.string.emit(int(p/len(MotorParamsIdx)*100))
-            time.sleep(0.05)            # Just for better visualization of ui update
-            if param in MotorParamsIdx:
-                self.motor.get_param(param)
-        self.status[SJson.DEVICE_IP] = self.motor.parameters[MotorParamsIdx.MOTOR_IP].VALUE
-        self.status[SJson.MAX_SPEED] = int(self.motor.parameters[MotorParamsIdx.NORMAL_SPEED].VALUE)     # The movements configured by tcs use the normal speed
-        self.status[SJson.MAX_STEP] = int(self.motor.parameters[MotorParamsIdx.MAX_POS].VALUE)
+        if self.motor:
+            p = 0
+            for param in MotorParamsIdx:
+                print(param)
+                p += 1
+                self.motor.signals.progress.string.emit(int(p/len(MotorParamsIdx)*100))
+                time.sleep(0.05)            # Just for better visualization of ui update
+                if param in MotorParamsIdx:
+                    self.motor.get_param(param)
+            self.status[SJson.DEVICE_IP] = self.motor.parameters[MotorParamsIdx.MOTOR_IP].VALUE
+            self.status[SJson.MAX_SPEED] = int(self.motor.parameters[MotorParamsIdx.NORMAL_SPEED].VALUE)     # The movements configured by tcs use the normal speed
+            self.status[SJson.MAX_STEP] = int(self.motor.parameters[MotorParamsIdx.MAX_POS].VALUE)
 
     # def _update_motor_params(self):
     #     """Sends to the CLP the updated values of the configurations"""
@@ -662,8 +668,10 @@ class Server(QObject):
             self._reach_motor() 
             self._link_device()
         
-        self.status[SJson.CONNECTED] = self.motor.connected
-        while self._stop_loop == False:
+        if self.motor:
+            self.status[SJson.CONNECTED] = self.motor.connected
+
+        while self._stop_loop == False and self.motor:
             t0 = time.time()                                        # Keeps the time when the loop began
             
             current_time = datetime.now(UTC)                           # Reads current time
@@ -681,7 +689,7 @@ class Server(QObject):
                 #     self.last_pub_time = self.zmq_comm.pub(self.status)
 
                 # Motor must be connected, poller defined and the 'reach_device' thread must have finished
-                if self.motor.connected and self.zmq_comm.poller:
+                if self.motor.connected and self.zmq_comm and self.zmq_comm.poller and self.zmq_comm.replier:
                     
                     
                     socks = dict(self.zmq_comm.poller.poll(50))  # poll(50)                                                                           # Polls the information from the ZMQ to receive commands from the client
@@ -727,7 +735,7 @@ class Server(QObject):
                     for _try in range(5):                                                                   # Tries 5 times to ping the router
                         time.sleep(TimeDelays.RETRY_TIMEOUT)             # delay between tries                         
                         self.signals.status_message.emit(f"Trying Connect to Router...")                      # Emits signals for GUI update
-                        reachable = ping(Config.gateway_ip, count=1, timeout=0.6, privileged=False).is_alive         # Tries to ping the router IP
+                        reachable = ping(Config.gateway_ip, count=1, timeout=1, privileged=False).is_alive         # Tries to ping the router IP
                         print(f'trying to ping gateway at {Config.gateway_ip}')
                         if reachable:                                                                               # If the ping is succesful
                             self.router_reachable = ReachStatus.CONNECTED
@@ -757,7 +765,7 @@ class Server(QObject):
         self.communicating_to_motor = False 
 
     
-    def _parse_client_command(self, msg_json: json) -> dict:
+    def _parse_client_command(self, msg_json: dict) -> dict:
         """Parses received command and updates status
 
         :param msg: received command
@@ -765,7 +773,7 @@ class Server(QObject):
         :return: Dictionary containing the command and parameters
         :rtype: dict
         """
-        cmd = msg_json.get(SJson.CMD_ACTION)
+        cmd: str = str(msg_json.get(SJson.CMD_ACTION))
 
         parsed = {  SJson.TIMESTAMP: self.status[SJson.TIMESTAMP],
                     SJson.CMD_CLIENT_NAME: msg_json.get(SJson.CMD_CLIENT_NAME),
@@ -809,7 +817,7 @@ class Server(QObject):
         if cmd[SJson.CMD_ACTION] == ServerCommands.STATUS:
             return True
 
-        if not self.processing_command:
+        if not self.processing_command and self.motor:
             program_status = self.motor.firmware_status
             if  program_status == "Idle":
                 return True
@@ -853,17 +861,20 @@ class Server(QObject):
         # self.status["error"] = ""             # Resets "error" status #TODO: Realizar um tratamento correto de erro
 
         # 'STATUS' is a command to the server and not to the motor
-        if cmd[SJson.CMD_ACTION] == ServerCommands.STATUS:
+        if self.zmq_comm and cmd[SJson.CMD_ACTION] == ServerCommands.STATUS:
             self.zmq_comm.pub(self.status)                  #TODO: Atualizar o status antes de publicar?
         else:
-            self.processing_command = True
-            self.communicating_to_motor = True              #TODO: Na verdade não é somente nesse ponto que está comunicando, as propriedades também comunicam com o motor
-            motor_response = self.motor.send_command(cmd)
-            self.communicating_to_motor = False
-            self.processing_command = False
-            if motor_response == "NOK":
+            if self.motor:
+                self.processing_command = True
+                self.communicating_to_motor = True              #TODO: Na verdade não é somente nesse ponto que está comunicando, as propriedades também comunicam com o motor
+                motor_response = self.motor.send_command(cmd)
+                self.communicating_to_motor = False
                 self.processing_command = False
-                raise RuntimeError(f'Motor returned \033[31m"NOK"\033[0m trying to run command "{cmd[SJson.CMD_ACTION].upper()}"')
+                if motor_response == "NOK":
+                    self.processing_command = False
+                    raise RuntimeError(f'Motor returned \033[31m"NOK"\033[0m trying to run command "{cmd[SJson.CMD_ACTION].upper()}"')
+            else:
+                raise RuntimeError(f'[handle_command] Motor not defined')
         
 
         
@@ -879,7 +890,7 @@ class Server(QObject):
         last command and resets the command information"""
         # print(self.status)
         time.sleep(TimeDelays.WAIT_PARAM) # Time to allow CLP to update internal variables in IAG controller
-        if self.motor.firmware_status == 'Idle' and \
+        if self.motor and self.motor.firmware_status == 'Idle' and \
             self.status[SJson.CMD][SJson.CMD_CLIENT_ID] != 0:   
 
             self.status[SJson.CMD][SJson.CMD_CLIENT_ID] = 0
@@ -897,47 +908,52 @@ class Server(QObject):
             val_str = "DEACTIVATED"
 
         try:
+            sender = self.sender()
+            if sender:
+                sender_name = sender.objectName()
+                if sender_name == FocuserSignalsNames.LIM_SWITCH_MIN:
+                    if self.focuser_hdw_current_status.lim_switch_min != val:
+                        self.focuser_hdw_current_status.lim_switch_min = val
+                        self.logger.warning(f"Limit switch min {val_str}")
 
-            if self.sender().objectName() == FocuserSignalsNames.LIM_SWITCH_MIN:
-                if self.focuser_hdw_current_status.lim_switch_min != val:
-                    self.focuser_hdw_current_status.lim_switch_min = val
-                    self.logger.warning(f"Limit switch min {val_str}")
+                if sender_name == FocuserSignalsNames.LIM_SWITCH_MAX:
+                    if self.focuser_hdw_current_status.lim_switch_max != val:
+                        self.focuser_hdw_current_status.lim_switch_max = val
+                        self.logger.warning(f"Limit switch max {val_str}")
 
-            if self.sender().objectName() == FocuserSignalsNames.LIM_SWITCH_MAX:
-                if self.focuser_hdw_current_status.lim_switch_max != val:
-                    self.focuser_hdw_current_status.lim_switch_max = val
-                    self.logger.warning(f"Limit switch max {val_str}")
+                if sender_name == FocuserSignalsNames.INITIALIZED:
+                    if self.focuser_hdw_current_status.initialized != val:
+                        self.focuser_hdw_current_status.initialized = val
+                        if val == True:
+                            self.logger.info(f"Focuser is INITIALIZED")
 
-            if self.sender().objectName() == FocuserSignalsNames.INITIALIZED:
-                if self.focuser_hdw_current_status.initialized != val:
-                    self.focuser_hdw_current_status.initialized = val
-                    if val == True:
-                        self.logger.info(f"Focuser is INITIALIZED")
-
-            if self.sender().objectName() == FocuserSignalsNames.MANUAL_MOVEMENT:
-                if self.focuser_hdw_current_status.manual_movement != val:
-                    self.focuser_hdw_current_status.manual_movement = val
-                    if val == True:
-                        self.logger.warning(F"Started MANUAL MOVEMENT - {self.focuser_hdw_current_status.movement_info}")
-                    else:
-                        self.logger.warning("Ended MANUAL MOVEMENT")
+                if sender_name == FocuserSignalsNames.MANUAL_MOVEMENT:
+                    if self.focuser_hdw_current_status.manual_movement != val:
+                        self.focuser_hdw_current_status.manual_movement = val
+                        if val == True:
+                            self.logger.warning(F"Started MANUAL MOVEMENT - {self.focuser_hdw_current_status.movement_info}")
+                        else:
+                            self.logger.warning("Ended MANUAL MOVEMENT")
 
         except:
             print('Invalid log info, log not updated')
 
     def _update_current_movement(self, val: bool):
-        # print(self.sender().objectName())
-        self.focuser_hdw_current_status.movement_info = self.sender().objectName()
+        # print(self.sender().objectName())sender = self.sender()
+        sender = self.sender()
+        if sender and self.motor:
+            sender_name = sender.objectName()
+            self.focuser_hdw_current_status.movement_info = sender_name
 
-        # The manual movement signal has a delay that may affect the signal in '_log_update' if different movements
-        # occur close to each other so the verification is done when a new movement begins
-        if self.focuser_hdw_current_status.manual_movement == True:
-            if self.sender().objectName() == FocuserSignalsNames.RUN_FOCUS_IN:
-                if val != self.motor.driver.focus_in_status:
-                    self.logger.warning(F"Started MANUAL MOVEMENT - {self.focuser_hdw_current_status.movement_info}")
-            elif self.sender().objectName() == FocuserSignalsNames.RUN_FOCUS_OUT:
-                if val != self.motor.driver.focus_out_status:
-                    self.logger.warning(F"Started MANUAL MOVEMENT - {self.focuser_hdw_current_status.movement_info}")
+            # The manual movement signal has a delay that may affect the signal in '_log_update' if different movements
+            # occur close to each other so the verification is done when a new movement begins
+            if self.focuser_hdw_current_status.manual_movement == True:
+                if sender_name == FocuserSignalsNames.RUN_FOCUS_IN:
+                    if val != self.motor.driver.focus_in_status:
+                        self.logger.warning(F"Started MANUAL MOVEMENT - {self.focuser_hdw_current_status.movement_info}")
+                elif sender_name == FocuserSignalsNames.RUN_FOCUS_OUT:
+                    if val != self.motor.driver.focus_out_status:
+                        self.logger.warning(F"Started MANUAL MOVEMENT - {self.focuser_hdw_current_status.movement_info}")
 
 
 
@@ -969,7 +985,7 @@ class Server(QObject):
     def _run_pub(self):
         """ Method that will run in a thread to publish the status
         in a configurable interval."""
-        while not self.pub_control.stop_event.wait(timeout=self.pub_control.pub_interval):
+        while not self.pub_control.stop_event.wait(timeout=self.pub_control.pub_interval) and self.motor:
             try:
 
                 if self.motor.connected:

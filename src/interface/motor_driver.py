@@ -3,7 +3,7 @@ from typing import NamedTuple
 from enum import IntFlag
 
 from PyQt6.QtCore import pyqtSignal, QObject, pyqtSlot
-from src.utils.constants import MotorParamsIdx, ServerCommands, FocuserSignalsNames
+from src.utils.constants import MotorParamsIdx, ServerCommands, FocuserSignalsNames, MotorAlarmInfo, MotorProgramStatus
 from src.utils.signals import PropertySignals
 from dataclasses import dataclass
 
@@ -272,7 +272,7 @@ class Driver(ABC):
         """Precisa ser implementada pelo driver""" 
         ...
 
-    def _extract_flags_info(self, input:int, flags_type:IntFlag, separator: str = "&") -> str:
+    def _extract_flags_info(self, input:int, flags_type: type[MotorAlarmInfo] | type[MotorProgramStatus], separator: str = "&") -> str:
         """Pode ser implementado pelo driver caso necessário"""
         ...
 
