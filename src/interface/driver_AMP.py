@@ -14,7 +14,7 @@ from threading import Lock, Thread, Timer
 from src.core.config import Config
 from src.core.exceptions import DriverException
 from src.utils.constants import constants, MotorStatusFlags, MotorParamsIdx, MotorAlarmInfo, motor_program_errors_mask, motor_alc_errors_mask, Conversion, TimeDelays
-from src.utils.modbus_regs import RegsInfo, RegType, coils_regs, dig_inputs_regs, DB_size, CLP_Owned, TwosComplementReg, param_vars
+from src.utils.modbus_regs import RegsInfo, RegType, coils_regs, dig_inputs_regs, DB_size, CLP_Owned, TwosComplementReg, param_vars, holding_regs
 
 from enum import IntFlag
 from typing import TYPE_CHECKING
@@ -129,10 +129,12 @@ class DriverAMP(Driver):
             _con = False
             # while retries < max_retries and not _con:
             try:
-                dataBank_config = MB_DataBank(coils_size=DB_size.COIL_LAST_ADDRESS+1, coils_default_value=False,        #|      
-                                d_inputs_size=DB_size.DI_LAST_ADDRESS+1, d_inputs_default_value=False,               #|  Config value for the modbus data bank.
-                                h_regs_size=0, h_regs_default_value=0,                          #|  
-                                i_regs_size=0, i_regs_default_value=0)                          #|
+                holding_regs_size = holding_regs[-1].ADDRESS + holding_regs[-1].SIZE + 1
+
+                dataBank_config = MB_DataBank(coils_size=DB_size.COIL_LAST_ADDRESS+1, coils_default_value=False,                #|      
+                                d_inputs_size=DB_size.DI_LAST_ADDRESS+1, d_inputs_default_value=False,                          #|  Config value for the modbus data bank.
+                                h_regs_size=holding_regs_size, h_regs_default_value=0,                                          #|  
+                                i_regs_size=0, i_regs_default_value=0)                                                          #|
                 self.mb_server = IAGModbusServer(data_bank=dataBank_config, host=Config.device_ip, port=Config.device_port ,no_block=True,
                                                  timeout_callback_function=self._reset_communication)
 

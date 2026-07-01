@@ -6,6 +6,8 @@ class DB_size(IntEnum):
     COIL_LAST_ADDRESS=668
     DI_FIRST_ADDRESS=761
     DI_LAST_ADDRESS=1443
+    HR_FIRST_ADDRESS=1
+    HR_LAST_ADDRESS=69
 
 class RegType(Enum):
     COIL=0
@@ -18,6 +20,103 @@ class RegsInfo(NamedTuple):
     ADDRESS: int
     SIZE: int
     TYPE: RegType
+
+
+class HoldingRegs(NamedTuple):
+# == REGISTROS DO CLP == #
+    RX_PACKSTATUS: RegsInfo
+    RX_EX: RegsInfo
+    RX_MST: RegsInfo
+    RX_SASTAT: RegsInfo
+    RX_V20: RegsInfo
+    RX_V50: RegsInfo
+    RX_V71: RegsInfo
+    RX_V74: RegsInfo
+    RX_V75: RegsInfo
+    RX_V76: RegsInfo
+    RX_V77: RegsInfo
+    RX_V78: RegsInfo
+    RX_V79: RegsInfo
+    RX_V80: RegsInfo
+    RX_V81: RegsInfo
+    RX_V82: RegsInfo
+    RX_V83: RegsInfo
+    RX_TCPRTMO: RegsInfo
+    RX_TCPCYCLE: RegsInfo
+    RX_TCPMBTMO: RegsInfo
+    RX_TCPKATMO: RegsInfo
+    TX_ALC: RegsInfo
+    RX_V90: RegsInfo
+    RX_V92: RegsInfo
+    RX_PACKOK: RegsInfo
+# == REGISTROS DO SERVIDOR == #
+    TX_V20: RegsInfo
+    TX_V71: RegsInfo
+    TX_V74: RegsInfo
+    TX_V75: RegsInfo
+    TX_V76: RegsInfo
+    TX_V77: RegsInfo
+    TX_V78: RegsInfo
+    TX_V79: RegsInfo
+    TX_V80: RegsInfo
+    TX_V81: RegsInfo
+    TX_V82: RegsInfo
+    TX_V83: RegsInfo
+    TX_TCPRTMO: RegsInfo
+    TX_TCPCYCLE: RegsInfo
+    TX_TCPMBTMO: RegsInfo
+    TX_TCPKATMO: RegsInfo
+    TX_PACKCMDS: RegsInfo
+
+# Holding register size given in words (16 bits)
+holding_regs = HoldingRegs(
+    RX_PACKSTATUS=RegsInfo(TAG="RX_PACKSTATUS", ADDRESS=1, SIZE=1, TYPE=RegType.HOLDING_REGISTER),
+    RX_EX=RegsInfo("RX_EX", 2, 2, RegType.HOLDING_REGISTER),
+    RX_MST=RegsInfo("RX_MST", 4, 2, RegType.HOLDING_REGISTER),
+    RX_SASTAT=RegsInfo("RX_SASTAT", 6, 2, RegType.HOLDING_REGISTER),
+    RX_V20=RegsInfo("RX_V20", 8, 2, RegType.HOLDING_REGISTER),
+    RX_V50=RegsInfo("RX_V50", 10, 1, RegType.HOLDING_REGISTER),
+    RX_V71=RegsInfo("RX_V71", 11, 2, RegType.HOLDING_REGISTER),
+    RX_V74=RegsInfo("RX_V74", 13, 1, RegType.HOLDING_REGISTER),
+    RX_V75=RegsInfo("RX_V75", 14, 1, RegType.HOLDING_REGISTER),
+    RX_V76=RegsInfo("RX_V76", 15, 1, RegType.HOLDING_REGISTER),
+    RX_V77=RegsInfo("RX_V77", 16, 1, RegType.HOLDING_REGISTER),
+    RX_V78=RegsInfo("RX_V78", 17, 1, RegType.HOLDING_REGISTER),
+    RX_V79=RegsInfo("RX_V79", 18, 1, RegType.HOLDING_REGISTER),
+    RX_V80=RegsInfo("RX_V80", 19, 1, RegType.HOLDING_REGISTER),
+    RX_V81=RegsInfo("RX_V81", 20, 1, RegType.HOLDING_REGISTER),
+    RX_V82=RegsInfo("RX_V82", 21, 1, RegType.HOLDING_REGISTER),
+    RX_V83=RegsInfo("RX_V83", 22, 2, RegType.HOLDING_REGISTER),
+    RX_TCPRTMO=RegsInfo("RX_TCPRTMO", 24, 1, RegType.HOLDING_REGISTER),
+    RX_TCPCYCLE=RegsInfo("RX_TCPCYCLE", 25, 1, RegType.HOLDING_REGISTER),
+    RX_TCPMBTMO=RegsInfo("RX_TCPMBTMO", 26, 1, RegType.HOLDING_REGISTER),
+    RX_TCPKATMO=RegsInfo("RX_TCPKATMO", 27, 1, RegType.HOLDING_REGISTER),
+    TX_ALC=RegsInfo("TX_ALC", 28, 1, RegType.HOLDING_REGISTER),
+    RX_V90=RegsInfo("RX_V90", 29, 1, RegType.HOLDING_REGISTER),
+    RX_V92=RegsInfo("RX_V92", 30, 1, RegType.HOLDING_REGISTER),
+    RX_PACKOK=RegsInfo("RX_PACKOK", 31, 1, RegType.HOLDING_REGISTER),
+    TX_V20=RegsInfo("TX_V20", 50, 2, RegType.HOLDING_REGISTER),
+    TX_V71=RegsInfo("TX_V71", 52, 1, RegType.HOLDING_REGISTER),
+    TX_V74=RegsInfo("TX_V74", 53, 1, RegType.HOLDING_REGISTER),
+    TX_V75=RegsInfo("TX_V75", 54, 1, RegType.HOLDING_REGISTER),
+    TX_V76=RegsInfo("TX_V76", 55, 1, RegType.HOLDING_REGISTER),
+    TX_V77=RegsInfo("TX_V77", 56, 1, RegType.HOLDING_REGISTER),
+    TX_V78=RegsInfo("TX_V78", 57, 1, RegType.HOLDING_REGISTER),
+    TX_V79=RegsInfo("TX_V79", 58, 1, RegType.HOLDING_REGISTER),
+    TX_V80=RegsInfo("TX_V80", 59, 1, RegType.HOLDING_REGISTER),
+    TX_V81=RegsInfo("TX_V81", 60, 1, RegType.HOLDING_REGISTER),
+    TX_V82=RegsInfo("TX_V82", 61, 1, RegType.HOLDING_REGISTER),
+    TX_V83=RegsInfo("TX_V83", 62, 2, RegType.HOLDING_REGISTER),
+    TX_TCPRTMO=RegsInfo("TX_TCPRTMO", 64, 1, RegType.HOLDING_REGISTER),
+    TX_TCPCYCLE=RegsInfo("TX_TCPCYCLE", 65, 1, RegType.HOLDING_REGISTER),
+    TX_TCPMBTMO=RegsInfo("TX_TCPMBTMO", 66, 1, RegType.HOLDING_REGISTER),
+    TX_TCPKATMO=RegsInfo("TX_TCPKATMO", 67, 1, RegType.HOLDING_REGISTER),
+    TX_PACKCMDS=RegsInfo("TX_PACKCMDS", 68, 1, RegType.HOLDING_REGISTER)
+)
+
+
+
+
 
 class CoilsRegs(NamedTuple):
     RX_ALM: RegsInfo

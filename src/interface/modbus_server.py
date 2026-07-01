@@ -1,7 +1,7 @@
 from pyModbusTCP.server import ModbusServer as mbServer
 from pyModbusTCP.server import DataBank
 from src.core.config import Config
-from src.utils.modbus_regs import dig_inputs_regs, coils_regs, RegsInfo, RegType, CLP_Owned, TwosComplementReg, param_vars, DB_size
+from src.utils.modbus_regs import dig_inputs_regs, coils_regs, RegsInfo, RegType, CLP_Owned, TwosComplementReg, param_vars, DB_size, holding_regs
 from src.utils.constants import CommandTimeout, TimeoutState, TimeDelays
 from src.interface.modbus_data_bank import MB_DataBank
 
@@ -290,54 +290,7 @@ class IAGModbusServer(mbServer):
                                 current_reg_val = self._conv_reg_to_value(reg, self.data_bank)
                                 self.db_shadow.set_coils(reg.ADDRESS, self._conv_num_bits(current_reg_val, reg.SIZE))
                     self._stop_reading_data()
-                            
-                        
-
-                # if self._start_reading_data():          # Informa o CLP que o python está lendo dos registradores
-                #     for reg in coils_regs:
-                #         if not self._compare_regs(reg):     # If false means that the register value was changed
-                #             self._check_clp_owned_coils(reg)               # Checks if any clp owned coil was changed 
-
-                #     # self.data_bank.set_discrete_inputs(dig_inputs_regs.TX_READING.ADDRESS, [False])
-                #     self._stop_reading_data()          # Informa o CLP que o python finalizou a leitura dos registradores
-
-                #     # If there is any coil that had its value changed
-                #     if self._changed_coils:   
-                #         self._write(self._changed_coils)   # Writes the changed coils to the CLP
-                #         self._changed_coils.clear()         # Clears the set of changed coils
-
-
-
-
-                # # Se o CLP não estiver escrevendo verifica quais coil tiveram seus valores alterados
-                # # e salva no registrador shadow
-                # if not self.data_bank.get_coils(coils_regs.RX_WRITTING.ADDRESS, 1)[0]:  
-
-                #     # ------------ PYTHON READING REGISTERS -------------
-                #     # Informa o CLP que o python está lendo dos registradores
-                #     self.data_bank.set_discrete_inputs(dig_inputs_regs.TX_READING.ADDRESS, [True])
-
-                #     # Compares every coil register from 'DB coil' and 'DB coil shadow'
-                #     # If 'DB coil' is different from 'DB coil shadow' some information was received
-                #     for reg in coils_regs:
-                #         if not self._compare_regs(reg):   # If false means that the register value was changed
-                #             if reg.SIZE == 1:
-                #                 print(f"Register {reg.TAG} old value {self.db_shadow.get_coils(reg.ADDRESS, reg.SIZE)} -> new value {self.data_bank.get_coils(reg.ADDRESS, reg.SIZE)}")
-                #             else:
-                #                 print(f"Register {reg.TAG} old value {self._conv_reg_to_value(reg, self.db_shadow)} -> new value {self._conv_reg_to_value(reg, self.data_bank)}")
-
-                #             self._operate(reg)  # Operates according to the changed coil
-
-                #             # Saves in the shadow register the update value
-                #             self.db_shadow.set_coils(reg.ADDRESS, self.data_bank.get_coils(reg.ADDRESS, reg.SIZE))  
-                    
-                #     # Informa o CLP que o python finalizou a leitura dos registradores
-                #     self.data_bank.set_discrete_inputs(dig_inputs_regs.TX_READING.ADDRESS, [False])
-                #     # ------------ PYTHON FINISHED READING REGISTERS -------------
-
-
-
-        
+                                    
 
         print("Stopping server")
         # self.timeout = None
