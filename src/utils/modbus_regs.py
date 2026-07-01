@@ -1,5 +1,5 @@
 from typing import NamedTuple
-from enum import Enum, IntEnum, StrEnum, auto
+from enum import Enum, IntEnum, StrEnum, IntFlag, auto
 
 class DB_size(IntEnum):
     COIL_FIRST_ADDRESS=1
@@ -114,8 +114,30 @@ holding_regs = HoldingRegs(
     TX_PACKCMDS=RegsInfo("TX_PACKCMDS", 68, 1, RegType.HOLDING_REGISTER)
 )
 
+class PackStatusFlags(IntFlag):
+    RX_ALM = 0x0001
+    RX_EO = 0x0002
+    RX_V15 = 0x0004
+    RX_V44 = 0x0008
+    RX_V46 = 0x0010
+    HANDSHAKE = 0x0020
 
+class PackCMDFlags(IntFlag):
+    TX_AX = 0x0001
+    TX_GS1 = 0x0002
+    TX_GS20 = 0x0004
+    TX_GS21 = 0x0008
+    TX_GS29 = 0x0010
+    TX_GS30 = 0x0020
+    TX_MOF = 0x0040
+    TX_MON = 0x0080
+    TX_PDB = 0x0100
+    TX_V42 = 0x0200
+    TX_SET = 0x0400
 
+class HoldingRegsMasks(NamedTuple):
+    PACK_STATUS_FLAGS: PackStatusFlags
+    PACK_CMD_FLAGS: PackCMDFlags
 
 
 class CoilsRegs(NamedTuple):

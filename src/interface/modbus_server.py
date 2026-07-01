@@ -298,11 +298,15 @@ class IAGModbusServer(mbServer):
 
 
     def _check_handshake(self):
+        """Checks if a handshake was received from the CLP and if a timeout occured"""
         # Mudei o handshake para ser feito pelo bit de reading, mas o handshake continua sendo 
         # atualizado da mesma forma que antes, somente o valor que vai para a função de timeout
         # que vai ser do bit de reading
-        temp1 = self.data_bank.get_coils(coils_regs.HANDSHAKE.ADDRESS, coils_regs.HANDSHAKE.SIZE)
-        temp2 = self.data_bank.get_coils(coils_regs.RX_READING.ADDRESS, coils_regs.RX_READING.SIZE)
+        packstatus = self.data_bank.get_holding_registers(holding_regs.RX_PACKSTATUS.ADDRESS, holding_regs.RX_PACKSTATUS.SIZE)
+        if packstatus:
+            handshake_val = 
+
+
         if temp1 and temp2:
             hs = temp1[0]
             new = temp2[0]
