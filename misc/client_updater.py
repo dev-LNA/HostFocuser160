@@ -70,8 +70,6 @@ class Updater(QRunnable):
                     received = self.signals.subscriber.recv_string()        # type: ignore # subscriber signal is of type "zmq.SyncSocket" and has a method "recv_string"
                     self.signals.message.emit(received)
                     self.data = json.loads(received)
-                    print(f"[ZMQ Client] Received: {self.data}")
-                    print(f"data type: {type(self.data)}")
                     try:
                         # self.signals.message.emit(str(data["position"]))
                         self.signals.position.emit(round(self.data["position"]))
