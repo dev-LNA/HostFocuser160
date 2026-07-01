@@ -633,7 +633,7 @@ border-radius: 10px;</string>
     <property name="title">
      <string>Options</string>
     </property>
-    <addaction name="actionSettings"/>
+    <addaction name="actionAbout"/>
    </widget>
    <widget class="QMenu" name="menuTests">
     <property name="title">
@@ -645,7 +645,7 @@ border-radius: 10px;</string>
    <addaction name="menuTests"/>
   </widget>
   <widget class="QStatusBar" name="statusbar"/>
-  <action name="actionSettings">
+  <action name="actionAbout">
    <property name="text">
     <string>Settings...</string>
    </property>

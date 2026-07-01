@@ -1,4 +1,5 @@
 from PyQt6.QtGui import QAction, QIcon
+from PyQt6.QtCore import QPropertyAnimation
 from PyQt6.QtWidgets import (
     QWidget, 
     QMessageBox, 
@@ -16,7 +17,12 @@ from PyQt6.QtWidgets import (
     QFrame,
     QSlider,
     QStackedWidget,
-    QRadioButton)
+    QRadioButton,
+    QSpinBox,
+    QDoubleSpinBox,
+    QListWidget,
+    QCheckBox,
+    QMenuBar)
 
 
 
@@ -29,6 +35,8 @@ class UiWidgets(QWidget):
         if window_name == "main":
         # === Definitions for main window components === #
         
+            self.menuBar: QMenuBar = window.menuBar()
+            self.statusBar: QStatusBar = window.statusBar()
 
             self.pageSelect = window.findChild(QStackedWidget, 'pageSelect')
             self.pageSelect: QStackedWidget = self.pageSelect
@@ -53,6 +61,8 @@ class UiWidgets(QWidget):
 
 
         # Buttons
+            self.lblMotor = window.findChild(QLabel, 'lblMotor')
+            self.lblMotor: QLabel = self.lblMotor
 
             self.lblTitle = window.findChild(QLabel, 'lblTitle')
             self.lblTitle: QLabel = self.lblTitle
@@ -69,11 +79,15 @@ class UiWidgets(QWidget):
             self.menuOptions = window.findChild(QMenu, 'menuOptions')
             self.menuOptions: QMenu = self.menuOptions
 
+        # Actions
             self.actionHide = window.findChild(QAction, 'actionHide')
             self.actionHide: QAction = self.actionHide
 
-            self.actionSettings = window.findChild(QAction, 'actionSettings')
-            self.actionSettings: QAction = self.actionSettings
+            self.actionAbout = window.findChild(QAction, 'actionAbout')
+            self.actionAbout: QAction = self.actionAbout
+
+            self.actionEngineering = window.findChild(QAction, 'actionEngineering')
+            self.actionEngineering: QAction = self.actionEngineering
 
             self.actionShow_toolbar = window.findChild(QAction, 'actionShow_toolbar')
             self.actionShow_toolbar: QAction = self.actionShow_toolbar
@@ -96,6 +110,15 @@ class UiWidgets(QWidget):
 
             self.ledMotor = window.findChild(QLabel, 'ledMotor')
             self.ledMotor: QLabel = self.ledMotor
+
+            self.ledAlarm = window.findChild(QLabel, 'ledAlarm')
+            self.ledAlarm: QLabel = self.ledAlarm
+
+            self.ledFocusIn = window.findChild(QLabel, 'ledFocusIn')
+            self.ledFocusIn: QLabel = self.ledFocusIn
+
+            self.ledFocusOut = window.findChild(QLabel, 'ledFocusOut')
+            self.ledFocusOut: QLabel = self.ledFocusOut
 
             self.conBarServerRouter = window.findChild(QProgressBar, 'conBarServerRouter')
             self.conBarServerRouter: QProgressBar = self.conBarServerRouter
@@ -123,6 +146,9 @@ class UiWidgets(QWidget):
 
             self.lblComSpeed = window.findChild(QLabel, 'lblComSpeed')
             self.lblComSpeed: QLabel = self.lblComSpeed
+
+            self.lblSpeed = window.findChild(QLabel, 'lblSpeed')
+            self.lblSpeed: QLabel = self.lblSpeed
 
     # Command info group box
 
@@ -173,8 +199,8 @@ class UiWidgets(QWidget):
             self.ledLimMax = window.findChild(QLabel, 'ledLimMax')
             self.ledLimMax: QLabel = self.ledLimMax
 
-            self.lblEncoder_val = window.findChild(QLabel, 'lblEncoder_val')
-            self.lblEncoder_val: QLabel = self.lblEncoder_val
+            self.ledProcessing = window.findChild(QLabel, 'ledProcessing')
+            self.ledProcessing: QLabel = self.ledProcessing
 
             self.lblPosition_val = window.findChild(QLabel, 'lblPosition_val')
             self.lblPosition_val: QLabel = self.lblPosition_val
@@ -185,9 +211,28 @@ class UiWidgets(QWidget):
             self.posSlider = window.findChild(QSlider, 'posSlider')
             self.posSlider: QSlider = self.posSlider
 
+
+
         elif window_name == "settings":
             # === Definitions for settings window components === #
             
+
+            self.statusBar: QStatusBar = window.statusBar()
+            
+            self.gbMotorParameters:QGroupBox = window.findChild(QGroupBox, 'gbMotorParameters')
+            # self.gbMotorParameters: QGroupBox = self.gbMotorParameters
+
+            self.gbZMQ = window.findChild(QGroupBox, 'gbZMQ')
+            self.gbZMQ: QGroupBox = self.gbZMQ
+
+            self.gbNetwork = window.findChild(QGroupBox, 'gbNetwork')
+            self.gbNetwork: QGroupBox = self.gbNetwork
+
+            self.gbRetrieveParameters: QGroupBox = window.findChild(QGroupBox, 'gbRetrieveParameters')
+
+            self.gbServerParams: QGroupBox = window.findChild(QGroupBox, 'gbServerParams')
+
+
             # Buttons
             self.btnEngineering = window.findChild(QPushButton, 'btnEngineering')
             self.btnEngineering: QPushButton = self.btnEngineering
@@ -200,6 +245,9 @@ class UiWidgets(QWidget):
             
             self.btnBackup = window.findChild(QPushButton, 'btnBackup')
             self.btnBackup: QPushButton = self.btnBackup
+            
+            self.btnReadMotor = window.findChild(QPushButton, 'btnReadMotor')
+            self.btnReadMotor: QPushButton = self.btnReadMotor
 
 
             # Labels
@@ -212,27 +260,72 @@ class UiWidgets(QWidget):
             self.lblFocuser = window.findChild(QLabel, 'lblFocuser')
             self.lblFocuser: QLabel = self.lblFocuser
 
-            # Text boxes
+            self.lblAccessLvl:QLabel = window.findChild(QLabel, 'lblAccessLvl')
+
+        # Text boxes
+        
             self.txtMotorIP = window.findChild(QLineEdit, 'txtMotorIP')
             self.txtMotorIP: QLineEdit = self.txtMotorIP
 
-            self.txtBackComp = window.findChild(QLineEdit, 'txtBackComp')
-            self.txtBackComp: QLineEdit = self.txtBackComp
+            self.txtSocketIP = window.findChild(QLineEdit, 'txtSocketIP')
+            self.txtSocketIP: QLineEdit = self.txtSocketIP
 
-            self.txtMaxPos = window.findChild(QLineEdit, 'txtMaxPos')
-            self.txtMaxPos: QLineEdit = self.txtMaxPos
+            self.spinPortPub = window.findChild(QSpinBox, 'spinPortPub')
+            self.spinPortPub: QSpinBox = self.spinPortPub
 
-            self.txtPark = window.findChild(QLineEdit, 'txtPark')
-            self.txtPark: QLineEdit = self.txtPark
+            self.spinPortRep = window.findChild(QSpinBox, 'spinPortRep')
+            self.spinPortRep: QSpinBox = self.spinPortRep
 
-            self.txtMaxSpeed = window.findChild(QLineEdit, 'txtMaxSpeed')
-            self.txtMaxSpeed: QLineEdit = self.txtMaxSpeed
+            self.txtSubMask = window.findChild(QLineEdit, 'txtSubMask')
+            self.txtSubMask: QLineEdit = self.txtSubMask
 
-            self.txtNormalSpeed = window.findChild(QLineEdit, 'txtNormalSpeed')
-            self.txtNormalSpeed: QLineEdit = self.txtNormalSpeed
+            self.txtGatewayIP = window.findChild(QLineEdit, 'txtGatewayIP')
+            self.txtGatewayIP: QLineEdit = self.txtGatewayIP
 
-            self.txtLowSpeed = window.findChild(QLineEdit, 'txtLowSpeed')
-            self.txtLowSpeed: QLineEdit = self.txtLowSpeed
+        #Spin Boxes
+
+            self.spinPortPub = window.findChild(QSpinBox, 'spinPortPub')
+            self.spinPortPub: QSpinBox = self.spinPortPub
+
+            self.spinPortRep = window.findChild(QSpinBox, 'spinPortRep')
+            self.spinPortRep: QSpinBox = self.spinPortRep
+
+            self.spinBacklash = window.findChild(QSpinBox, 'spinBacklash')
+            self.spinBacklash: QSpinBox = self.spinBacklash
+
+            self.spinMaxPos = window.findChild(QSpinBox, 'spinMaxPos')
+            self.spinMaxPos: QSpinBox = self.spinMaxPos
+
+            self.spinParkPos = window.findChild(QSpinBox, 'spinParkPos')
+            self.spinParkPos: QSpinBox = self.spinParkPos
+
+            self.spinMaxSpeed = window.findChild(QSpinBox, 'spinMaxSpeed')
+            self.spinMaxSpeed: QSpinBox = self.spinMaxSpeed
+
+            self.spinNormalSpeed = window.findChild(QSpinBox, 'spinNormalSpeed')
+            self.spinNormalSpeed: QSpinBox = self.spinNormalSpeed
+
+            self.spinLowSpeed = window.findChild(QSpinBox, 'spinLowSpeed')
+            self.spinLowSpeed: QSpinBox = self.spinLowSpeed
+
+            self.spinMaxStep = window.findChild(QSpinBox, 'spinMaxStep')
+            self.spinMaxStep: QSpinBox = self.spinMaxStep
+
+            self.spinAcceleration = window.findChild(QDoubleSpinBox, 'spinAcceleration')
+            self.spinAcceleration: QDoubleSpinBox = self.spinAcceleration
+
+            self.spinDeceleration = window.findChild(QDoubleSpinBox, 'spinDeceleration')
+            self.spinDeceleration: QDoubleSpinBox = self.spinDeceleration
+
+            self.spinIdleCurrent = window.findChild(QDoubleSpinBox, 'spinIdleCurrent')
+            self.spinIdleCurrent: QDoubleSpinBox = self.spinIdleCurrent
+
+            self.spinRunCurrent = window.findChild(QDoubleSpinBox, 'spinRunCurrent')
+            self.spinRunCurrent: QDoubleSpinBox = self.spinRunCurrent
+
+            self.spinAccCurrent = window.findChild(QDoubleSpinBox, 'spinAccCurrent')
+            self.spinAccCurrent: QDoubleSpinBox = self.spinAccCurrent
+
 
         # Frame send command
 
@@ -247,6 +340,11 @@ class UiWidgets(QWidget):
 
             self.btnSendCommand = window.findChild(QPushButton, 'btnSendCommand')
             self.btnSendCommand: QPushButton = self.btnSendCommand
+
+        # Check boxes
+
+            self.cbAutoStartup: QCheckBox = window.findChild(QCheckBox, 'cbAutoStartup')
+
 
 
 

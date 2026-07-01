@@ -27,10 +27,10 @@
 ; - V13 USED TO INDICATE THAT A STOP WAS ISSUED DURING HOMING SO THAT PARKING IS NOT EXECUTED
 ; - #TODO: V77 -> Normal speed
 ; - #TODO: V78 -> corrente idle
-; - #TODO: V79 -> desaceleração
-; - #TODO: V80 -> aceleração
+; - #TODO: V79 -> desaceleraÃ§Ã£o
+; - #TODO: V80 -> aceleraÃ§Ã£o
 ; - #TODO: V81 -> corrente running
-; - #TODO: V82 -> corrente aceleração
+; - #TODO: V82 -> corrente aceleraÃ§Ã£o
 ; - #TODO: V83 -> park position
 ;
 ; INSTRUCTIONS
@@ -312,7 +312,7 @@ SUB 21	; FOCUSIN
 	XV10							; Move (forward)
 	WAITX	; #TODO: Trocar isso pelo while V8>0 para poder checar o stall
 	EO = 0						; Disable motor driver
-;	HSPD = 214400			; Return velocity to defalt value	#TODO: Remover atribuições de HSPD para não desconfigurar
+;	HSPD = 214400			; Return velocity to defalt value	#TODO: Remover atribuiÃ§Ãµes de HSPD para nÃ£o desconfigurar
 	V42 = 0						; Clear stop command
 	V46 = 0			 			; Set end SUB code
 ENDSUB 
@@ -503,9 +503,9 @@ ENDSUB
 SUB 31	; ERROR HANDLING
 ;=======================
 	; Bit 12 of POL register (Jump to line 0 on error) must be cleared
-	;SR1 = 0						;* Stops program 1
+	SR1 = 0						;* Stops program 1
 	ECLEARX			 			;* Clear error flag
-	;SR1 = 1						;* Restarts program 1
+	SR1 = 1						;* Restarts program 1
 ENDSUB
 ;
 END

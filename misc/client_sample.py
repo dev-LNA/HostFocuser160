@@ -1,8 +1,10 @@
 from PyQt6 import QtWidgets, uic
 from PyQt6.QtCore import pyqtSignal, QThreadPool, QEvent, QObject
-from PyQt6.QtWidgets import QPushButton, QLineEdit, QProgressBar, QTextEdit, QLabel, QStackedWidget
+from PyQt6.QtWidgets import QPushButton, QLineEdit, QProgressBar, QTextEdit, QLabel, QStackedWidget, QSpinBox, QSlider, QDoubleSpinBox, QWidget
 
 from src.core.config import Config
+from src.utils.constants import constants
+from src.utils.constants import ServerJsonKeys as SJson
 
 from misc.client_updater import Updater
 from misc.client_sender import ReqSender
@@ -14,11 +16,18 @@ import os
 import socket
 
 def resource_path(relative_path):
-    """ Get absolute path to resource, works for dev and for PyInstaller """
-    base_path = getattr(sys, '_MEIPASS', os.path.dirname(os.path.abspath(__file__)))
-    return os.path.join(base_path, relative_path)
+    """ Retorna o caminho absoluto para o recurso, compatível com PyInstaller """
+    if hasattr(sys, '_MEIPASS'):
+        # No executável, sys._MEIPASS é a raiz da pasta temporária
+        base_path = getattr(sys, '_MEIPASS', os.path.dirname(sys.executable))
+    else:
+        # No desenvolvimento, a base é a pasta raiz do projeto (onde está o main4.py)
+        # Como este arquivo está em misc, pegamos o pai dele
+        base_path = os.path.abspath(os.path.join(os.path.dirname(__file__), "../"))
 
-main_ui_path = resource_path('../assets/ui/client.ui')
+    return os.path.normpath(os.path.join(base_path, relative_path))
+
+main_ui_path = resource_path('assets/ui/client.ui')
 
 TEST_SETUP = True
 
@@ -30,9 +39,9 @@ class ClientSimulator(QtWidgets.QMainWindow):
     _client_transaction_ID = 0
     _client_name = "Simulator"
 
-    def __init__(self, clientID: int=None, clientName: str=None):
+    def __init__(self, clientID: int | None=None, clientName: str | None=None):
         super(ClientSimulator, self).__init__()
-        uic.loadUi(main_ui_path, self)
+        uic.loadUi(main_ui_path, self) # type: ignore
 
         if not self._check_config():
             return
@@ -48,8 +57,8 @@ class ClientSimulator(QtWidgets.QMainWindow):
     # Associate UI variables to allow intellisense with PyQt Widgets
         self.btnMove = self.findChild(QtWidgets.QPushButton, 'btnMove')
         self.btnMove: QPushButton = self.btnMove
-        self.btnConnect = self.findChild(QtWidgets.QPushButton, 'btnConnect')
-        self.btnConnect: QPushButton = self.btnConnect
+        # self.btnConnect = self.findChild(QtWidgets.QPushButton, 'btnConnect')
+        # self.btnConnect: QPushButton = self.btnConnect
         self.btnHalt = self.findChild(QtWidgets.QPushButton, 'btnHalt')
         self.btnHalt: QPushButton = self.btnHalt
         self.btnHome = self.findChild(QtWidgets.QPushButton, 'btnHome')
@@ -67,6 +76,8 @@ class ClientSimulator(QtWidgets.QMainWindow):
         self.BarFocuser: QProgressBar = self.BarFocuser
         self.txtStatus = self.findChild(QtWidgets.QTextEdit, 'txtStatus')
         self.txtStatus: QTextEdit = self.txtStatus
+
+        self.lblResponse: QLabel = self.findChild(QLabel, 'lblResponse')
 
         self.statConn_2 = self.findChild(QtWidgets.QLabel, 'statConn_2')     #TODO: Verificar pq não consigo colocar sem o "_2" no designer
         self.statConn_2: QLabel = self.statConn_2
@@ -97,12 +108,38 @@ class ClientSimulator(QtWidgets.QMainWindow):
         self.pageSelect: QStackedWidget = self.pageSelect
 
         self.stsBar = self.findChild(QtWidgets.QStatusBar, 'stsBar')
-        self.stsBar: QStackedWidget = self.stsBar
+        self.stsBar: QtWidgets.QStatusBar = self.stsBar
+
+        sb = self.statusBar()
+        if sb is not None:
+            self.status_bar: QtWidgets.QStatusBar = sb
+
+        self.sbMovePos: QDoubleSpinBox = self.findChild(QDoubleSpinBox, "sbMovePos")
+
+        self.ledFocusIn: QLabel = self.findChild(QLabel, "ledFocusIn")
+        self.ledFocusIn.installEventFilter(self)
+
+        self.ledFocusOut: QLabel = self.findChild(QLabel, "ledFocusOut")
+        self.ledFocusOut.installEventFilter(self)
+
+
+        self.sbSpeed: QDoubleSpinBox = self.findChild(QDoubleSpinBox, 'sbSpeed')
+        self.sliderSpeed: QSlider = self.findChild(QSlider, 'sliderSpeed')
+
+        self.sliderSpeed.valueChanged.connect(lambda val: self.sbSpeed.setValue(val * 0.1))
+        self.sbSpeed.setValue(self.sliderSpeed.value() * 0.1)
+
+        self.statInit: QLabel = self.findChild(QLabel, 'statInit')
+
+        self.statAlarm: QLabel = self.findChild(QLabel, 'statAlarm')
+
+        self.lblFocusPos: QLabel = self.findChild(QLabel, 'lblFocusPos')
+
         
     # Configure Widgets and Widgets Actions
         self.btnMove.clicked.connect(self._move_to)
         self.btnMove.setStatusTip("Set focus position")
-        self.btnConnect.clicked.connect(self._connect)
+        # self.btnConnect.clicked.connect(self._connect)
         self.btnHalt.clicked.connect(self._halt)
         self.btnHome.clicked.connect(self._home)
         self.btnUp.clicked.connect(self._move_out)
@@ -111,8 +148,10 @@ class ClientSimulator(QtWidgets.QMainWindow):
         self.btnUpdateStatus.clicked.connect(self._get_status)
         self.btnHome_Park.clicked.connect(self._home_park)
 
-        self.BarFocuser.setStyleSheet("QProgressBar::chunk { background-color: rgb(26, 26, 26) } QProgressBar { color: indianred; }")
+        # self.BarFocuser.setStyleSheet("QProgressBar::chunk { background-color: rgb(26, 26, 26) } QProgressBar { color: indianred; }")
         self.BarFocuser.setTextDirection(QProgressBar.Direction.BottomToTop) 
+        self.BarFocuser.setMaximum(25100)
+        self.BarFocuser.setMinimum(-500)
                             
         self.txtClientIp.setText(_get_private_ip())                      # Considers the Ip of the current machine
         self.txtClientIp.returnPressed.connect(self._clientIpDefined)    # Configures event of return key press
@@ -131,6 +170,9 @@ class ClientSimulator(QtWidgets.QMainWindow):
         self.statMov_2.installEventFilter(self)
         self.statBusy_2.installEventFilter(self)
         self.statInit_2.installEventFilter(self)
+        self.BarFocuser.installEventFilter(self)
+        self.statInit.installEventFilter(self)
+        self.statAlarm.installEventFilter(self)
 
         # self.context = zmq.Context()       
         self.context = None
@@ -211,8 +253,9 @@ class ClientSimulator(QtWidgets.QMainWindow):
             self.threadpool = QThreadPool()                                                  # Defines threadpool
             self._updater = Updater(poller=self.poller, subscriber=self.subscriber)          # Creates Updater thread
             self._updater.signals.message.connect(self.txtStatus.setText)                    # Updates status text box with updated message
-            self._updater.signals.position.connect(self.BarFocuser.setValue)                 # Updates bar value with position
-            self._updater.signals.clientID.connect(self.statBusy_2.setText)                  # Updates client Id
+            self._updater.signals.position.connect(lambda val: self.BarFocuser.setValue(int(val)))                 # Updates bar value with position
+            self._updater.signals.position.connect(lambda val: self.lblFocusPos.setText(str(val).strip()) if val!=constants.INVALID_RESPONSE else self.lblFocusPos.setText('Invalid\nPosition'))
+            # self._updater.signals.clientID.connect(self.statBusy_2.setText)                  # Updates client Id
             self._updater.signals.lbl_clientId_style.connect(self.statBusy_2.setProperty)  # Updates style of client Id label according to status
             self._updater.signals.connected.connect(self._update_connect_status)
             self._updater.signals.lbl_conn_style.connect(self.statConn_2.setProperty)      #
@@ -220,10 +263,14 @@ class ClientSimulator(QtWidgets.QMainWindow):
             self._updater.signals.lbl_init_style.connect(self.statInit_2.setProperty)
             self._updater.signals.is_moving.connect(self._update_moving_status)
             self._updater.signals.lbl_mov_style.connect(self.statMov_2.setProperty)
+            self._updater.signals.focus_in_status.connect(self.ledFocusIn.setProperty)
+            self._updater.signals.focus_out_status.connect(self.ledFocusOut.setProperty)
+            self._updater.signals.alarm.connect(self.statAlarm.setProperty)
+            self._updater.signals.initialized.connect(self.statInit.setProperty)
             
             self._sender = ReqSender(req=self.req)
             self._sender.signals.timeout_error.connect(self._reset_client_context)
-            self._sender.signals.response.connect(self.txtStatus.setText)
+            self._sender.signals.response.connect(self.lblResponse.setText)
             self._sender.setAutoDelete(False)
 
             # Initial update
@@ -235,8 +282,9 @@ class ClientSimulator(QtWidgets.QMainWindow):
             self.lblMotorID.setText(data["device_ID"])
             self.lblMotorIP.setText(data["device_IP"])
             self.lblClientID.setText(str(self.client_ID))
+            self.sbMovePos.setValue(data[SJson.MAX_STEP])
             
-            self.statusBar().clearMessage()
+            self.status_bar.clearMessage()
             self.pageSelect.setCurrentIndex(1)
 
             self.threadpool.start(self._updater)    # Starts updater
@@ -245,7 +293,7 @@ class ClientSimulator(QtWidgets.QMainWindow):
 
         except Exception as e:
             print({str(e)})
-            self.statusBar().showMessage("Could not establish connection to server")
+            self.status_bar.showMessage("Could not establish connection to server")
 
     def _clientIpDefined(self):
         self.btnConnectClient.click()
@@ -260,44 +308,50 @@ class ClientSimulator(QtWidgets.QMainWindow):
             return False
 
     def _start_client(self):
-        self.txtStatus.setText("Connecting subscriber socket...")
-        self.subscriber = self.context.socket(zmq.SUB)
-        self.subscriber.connect(f"tcp://{self._connection_ip}:{Config.port_pub}")
-        topics_to_subscribe = ''
+        if self.context is not None:
+            self.txtStatus.setText("Connecting subscriber socket...")
+            self.subscriber = self.context.socket(zmq.SUB)
+            self.subscriber.connect(f"tcp://{self._connection_ip}:{Config.port_pub}")
+            topics_to_subscribe = ''
 
-        self.subscriber.setsockopt_string(zmq.SUBSCRIBE, topics_to_subscribe)
+            self.subscriber.setsockopt_string(zmq.SUBSCRIBE, topics_to_subscribe)
 
-        self.poller = zmq.Poller()
-        self.poller.register(self.subscriber, zmq.POLLIN)
+            self.poller = zmq.Poller()
+            self.poller.register(self.subscriber, zmq.POLLIN)
 
-        self.txtStatus.setText("Connecting requisition socket...")
-        self.req = self.context.socket(zmq.REQ)
-        self.req.connect(f"tcp://{self._connection_ip}:{Config.port_rep}")
-        self.txtStatus.clear()
+            self.txtStatus.setText("Connecting requisition socket...")
+            self.req = self.context.socket(zmq.REQ)
+            self.req.connect(f"tcp://{self._connection_ip}:{Config.port_rep}")
+            self.txtStatus.clear()
        
     def _reset_client_context(self):
         """ Resets client context to allow continuous communication in case of a timeout  """
         try:
-            self._clear_thread_updater()
-            self._clear_thread_sender()
-            self.context.destroy()
-            self._connect_to_server()
-            print(f"Communication reset success")
+            if self.context is not None:
+                self._clear_thread_updater()
+                self._clear_thread_sender()
+                self.context.destroy()
+                self._connect_to_server()
+                print(f"[ZMQ Client] Communication reset success")
         except:
-            print(f"Error establishing connection")
+            print(f"[ZMQ Client] Error establishing connection")
         
     
-    def _send_command(self, command: str, timeout: int=1500) -> str:
+    def _send_command(self, command: str, timeout: int=5000) -> str: #1500
         try:
-            self.transaction_ID += 1                                        #   Updates transaction ID
-            self._sender.send_request(self, command, timeout)               #   Sets message
-            self.threadpool.start(self._sender)                             #   Starts Sender thread    
-            return "OK"
+            if self._sender is not None:
+                self.transaction_ID += 1                                        #   Updates transaction ID
+                self._sender.send_request(self, command, timeout)               #   Sets message
+                self.threadpool.start(self._sender)                             #   Starts Sender thread    
+                return "OK"
+            else:
+                raise Exception("Sender thread is not initialized. Please connect to the server first.")
         except Exception as e:
-            return f"Error sending command to server -> {str(e)}"
+            return f"[ZMQ Client] Error sending command to server -> {str(e)}"
 
     def _connect(self):
-        self._send_command("CONNECT")
+        # self._send_command("CONNECT")
+        pass
         
 
     def _home(self):
@@ -307,7 +361,7 @@ class ClientSimulator(QtWidgets.QMainWindow):
         self._send_command("PARK")
 
     def _disconnect(self):
-        self._send_command("DISCONNECT")
+        # self._send_command("DISCONNECT")
         # If the updater thread is active it is necessary to safely close it
         self._clear_thread_updater()
         # If the sender thread is active it is necessary to safely close it
@@ -317,26 +371,38 @@ class ClientSimulator(QtWidgets.QMainWindow):
         self._send_command("HALT")
 
     def _move_to(self):
-        if not self.is_moving:
-            pos = self.txtMov.text()
-            self._send_command(f"MOVE={pos}")
+        # if not self.is_moving:
+        # pos = str(10 * self.sbMovePos.value())
+        pos = self.sbMovePos.text()
+        self._send_command(f"MOVE={pos}")
 
     def _move_in(self):
-        if not self.is_moving:
-            if TEST_SETUP:
-                self._send_command("FOCUSIN=10")   #TEST_VALUE -> ORIGINAL VALUE => FOCUSIN=200
+        # status = json.loads(self.txtStatus.toPlainText())
+        if self._updater is not None:
+            max_speed = int(self._updater.data[SJson.MAX_SPEED])  #  actually is the Normal speed configuration
+            if not self.is_moving:
+                if TEST_SETUP:
+                    self._send_command(f"FOCUSIN=" + f"{str(int(max_speed * self.sbSpeed.value() * 0.01))}")   #TEST_VALUE -> ORIGINAL VALUE => FOCUSIN=200
+                else:
+                    self._send_command(f"FOCUSIN=" + f"{str(int(max_speed * self.sbSpeed.value() * 0.01))}")
             else:
-                self._send_command("FOCUSIN=200")
+                self._send_command("HALT")
 
     def _move_out(self):
-        if not self.is_moving:
-            if TEST_SETUP:
-                self._send_command("FOCUSOUT=10")  #TEST_VALUE -> ORIGINAL VALUE => FOCUSOUT=200
+        # status = json.loads(self.txtStatus.toPlainText())
+        # max_speed = int(status['maxSpeed'])                 # actually is the Normal speed configuration
+        if self._updater is not None:
+            max_speed = int(self._updater.data[SJson.MAX_SPEED])  #  actually is the Normal speed configuration
+            if not self.is_moving:
+                if TEST_SETUP:
+                    self._send_command(f"FOCUSOUT="  + f"{str(int(max_speed * self.sbSpeed.value() * 0.01))}")  #TEST_VALUE -> ORIGINAL VALUE => FOCUSOUT=200
+                else:
+                    self._send_command(f"FOCUSOUT="  + f"{str(int(max_speed * self.sbSpeed.value() * 0.01))}")
             else:
-                self._send_command("FOCUSOUT=200")
+                self._send_command("HALT")
                 
     def _get_status(self):
-        if self._sender._send is False:                          # A new command is only sent if the last one was already sent
+        if self._sender and self._sender._send is False:                          # A new command is only sent if the last one was already sent
             self._send_command("STATUS")
 
             
@@ -365,20 +431,24 @@ class ClientSimulator(QtWidgets.QMainWindow):
         self.is_moving = status
 
 
-    def _update_gui_element(self, widget: QtWidgets):
-        """Updates the GUI element style after an event occured
-
+    def _update_gui_element(self, widget: QWidget):
+        """Updates the GUI element style after an event occured.
+        According to QT framework this functions must be executed to update visual elements when a property is changed.
+        Re-polish the style to apply CSS changes linked to this property
+        
         Parameters
         ----------
         widget : QtWidgets
             Widget to be updated
         """
-        widget.style().unpolish(widget)
-        widget.style().polish(widget)
+        w_style = widget.style()
+        if w_style:
+            w_style.unpolish(widget)
+            w_style.polish(widget)
         widget.update()
 
 
-    def eventFilter(self, obj: QObject, event: QEvent) -> bool:
+    def eventFilter(self, obj: QWidget, event: QEvent) -> bool:
         """Process events
 
         Parameters
@@ -412,7 +482,6 @@ class ClientSimulator(QtWidgets.QMainWindow):
         self.sig.emit(self.client_ID)
         event.accept()
 
-
 def _get_private_ip():
     """
     Gets the IP address of the PC running the program.
@@ -421,9 +490,12 @@ def _get_private_ip():
     with socket.socket(socket.AF_INET, socket.SOCK_DGRAM) as st:
         st.settimeout(0.0)
         try:
-            st.connect((Config.router_ip, 80))          # Opens a connections just to verify the socket
+            st.connect((Config.gateway_ip, 80))          # Opens a connections just to verify the socket
             ip = st.getsockname()[0]
         except socket.error:
             ip = '127.0.0.1'                            #TODO: Mostrar uma mensagem de erro?
         st.close()
     return ip
+
+
+

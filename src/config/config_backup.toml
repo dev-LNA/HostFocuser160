@@ -1,39 +1,49 @@
-title = "Focuser160MQ"
+title = "FocuserIAG"
 
 [General]
-name = "Focuser160"
+name = "IAG Focuser"
 version = "1.0.0"
-description = "Interface for Perkin-Elmer Focuser"
-startup = false
+date = "02/06/2026"
+description = "Interface for IAG Focuser"
+startup = true
 
 [Device]
 absolute = true
 device_name = "2ndMirror"
 deviceID = "3285e9af-8d1d-4f9d-b368-d129d8e9a24b"
-ip_160 = "192.168.0.250"
-ip_iag = "192.168.60.120"
-router_ip = "192.168.0.1"
-device_port = 5001
-encoder2microns = 42.2047244
-max_step = 50700
+device_ip = "0.0.0.0"
+device_port = 5005
 max_increment = 0
 tempcompavailable = false
 temp_comp = false
 speed_security = 215000
 speedFactor = 428
 step_size = 0
-device_ip = "192.168.0.250"
-backlash = 4
-pos_max = 50
-park = 15
-max_speed = 3000
-normal_speed = 3000
-low_speed = 1000
+backlash = 20
+max_pos = 2490
+park_pos = 1900
+normal_speed = 250
+low_speed = 42
+max_step = 9
+max_speed = 470
+acceleration = 69.0
+deceleration = 1398.0
+idle_current = 80.0
+run_current = 1993.0
+acc_current = 1996.900000000002
+cmd_timeout = 7
+encoder2microns = 0.1
+steps2encoder = 20
+microns2rps = 0.0025
 
 [Network]
-ip_address = "*"
-port_pub = 7001
-port_rep = 7002
+server_ip = "*"
+port_pub = 7003
+port_rep = 7004
+sub_mask = "255.255.255.0"
+gateway_ip = "200.131.64.254"
+pub_interval = 1
+write_timeout = 3
 
 [Logging]
 log_level = "INFO"

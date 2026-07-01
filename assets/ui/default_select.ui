@@ -6,15 +6,15 @@
    <rect>
     <x>0</x>
     <y>0</y>
-    <width>479</width>
-    <height>194</height>
+    <width>700</width>
+    <height>498</height>
    </rect>
   </property>
   <property name="windowTitle">
    <string>Form</string>
   </property>
-  <layout class="QGridLayout" name="gridLayout">
-   <item row="0" column="0" colspan="2">
+  <layout class="QGridLayout" name="gridLayout_2">
+   <item row="0" column="0" colspan="3">
     <layout class="QHBoxLayout" name="horizontalLayout">
      <item>
       <widget class="QLabel" name="lblInfo">
@@ -25,7 +25,7 @@
         </size>
        </property>
        <property name="text">
-        <string>Checked items will go back to its default value</string>
+        <string>Selected parameters will go to its default values</string>
        </property>
       </widget>
      </item>
@@ -36,131 +36,382 @@
        </property>
        <property name="sizeHint" stdset="0">
         <size>
-         <width>48</width>
+         <width>228</width>
+         <height>17</height>
+        </size>
+       </property>
+      </spacer>
+     </item>
+     <item>
+      <widget class="QLabel" name="label">
+       <property name="maximumSize">
+        <size>
+         <width>46</width>
+         <height>46</height>
+        </size>
+       </property>
+       <property name="text">
+        <string/>
+       </property>
+       <property name="pixmap">
+        <pixmap>../lna_logo.png</pixmap>
+       </property>
+       <property name="scaledContents">
+        <bool>true</bool>
+       </property>
+      </widget>
+     </item>
+    </layout>
+   </item>
+   <item row="1" column="0">
+    <layout class="QGridLayout" name="gridLayout_3">
+     <item row="0" column="0">
+      <widget class="QLabel" name="label_2">
+       <property name="text">
+        <string>Parameters:</string>
+       </property>
+      </widget>
+     </item>
+     <item row="0" column="1">
+      <spacer name="horizontalSpacer_3">
+       <property name="orientation">
+        <enum>Qt::Orientation::Horizontal</enum>
+       </property>
+       <property name="sizeHint" stdset="0">
+        <size>
+         <width>40</width>
          <height>20</height>
         </size>
        </property>
       </spacer>
      </item>
-    </layout>
-   </item>
-   <item row="1" column="0" colspan="2">
-    <layout class="QFormLayout" name="formLayout">
-     <property name="horizontalSpacing">
-      <number>41</number>
-     </property>
-     <item row="0" column="0">
-      <widget class="QCheckBox" name="cbIpAddress">
-       <property name="text">
-        <string>IP address</string>
-       </property>
-       <property name="checked">
+     <item row="1" column="0" colspan="2">
+      <widget class="QListWidget" name="listParameters">
+       <property name="dragEnabled">
         <bool>true</bool>
        </property>
-       <property name="TAG" stdset="0">
-        <string>MOTOR_IP</string>
+       <property name="dragDropMode">
+        <enum>QAbstractItemView::DragDropMode::DragOnly</enum>
+       </property>
+       <property name="alternatingRowColors">
+        <bool>true</bool>
+       </property>
+       <property name="selectionMode">
+        <enum>QAbstractItemView::SelectionMode::ExtendedSelection</enum>
+       </property>
+       <property name="layoutMode">
+        <enum>QListView::LayoutMode::SinglePass</enum>
+       </property>
+       <property name="spacing">
+        <number>1</number>
+       </property>
+       <property name="supportedDragActions">
+        <set>Qt::DropAction::CopyAction</set>
+       </property>
+       <item>
+        <property name="text">
+         <string>IP address</string>
+        </property>
+        <property name="statusTip">
+         <string>SERVER_IP</string>
+        </property>
+       </item>
+       <item>
+        <property name="text">
+         <string>Port PUB</string>
+        </property>
+        <property name="toolTip">
+         <string/>
+        </property>
+        <property name="statusTip">
+         <string>PORT_PUB</string>
+        </property>
+       </item>
+       <item>
+        <property name="text">
+         <string>Port REP</string>
+        </property>
+        <property name="toolTip">
+         <string/>
+        </property>
+        <property name="statusTip">
+         <string>PORT_REP</string>
+        </property>
+       </item>
+       <item>
+        <property name="text">
+         <string>Subnet Mask</string>
+        </property>
+        <property name="toolTip">
+         <string/>
+        </property>
+        <property name="statusTip">
+         <string>SUB_MASK</string>
+        </property>
+       </item>
+       <item>
+        <property name="text">
+         <string>Gateway IP</string>
+        </property>
+        <property name="toolTip">
+         <string/>
+        </property>
+        <property name="statusTip">
+         <string>GATEWAY_IP</string>
+        </property>
+       </item>
+       <item>
+        <property name="text">
+         <string>Auto Start</string>
+        </property>
+        <property name="statusTip">
+         <string>STARTUP</string>
+        </property>
+       </item>
+       <item>
+        <property name="text">
+         <string>Motor IP</string>
+        </property>
+        <property name="statusTip">
+         <string>MOTOR_IP</string>
+        </property>
+       </item>
+       <item>
+        <property name="text">
+         <string>Backlash</string>
+        </property>
+        <property name="statusTip">
+         <string>BACKLASH</string>
+        </property>
+       </item>
+       <item>
+        <property name="text">
+         <string>Max. Position</string>
+        </property>
+        <property name="statusTip">
+         <string>MAX_POS</string>
+        </property>
+       </item>
+       <item>
+        <property name="text">
+         <string>Park Position</string>
+        </property>
+        <property name="statusTip">
+         <string>PARK_POS</string>
+        </property>
+       </item>
+       <item>
+        <property name="text">
+         <string>Max Speed</string>
+        </property>
+        <property name="statusTip">
+         <string>MAX_SPEED</string>
+        </property>
+       </item>
+       <item>
+        <property name="text">
+         <string>Normal Speed</string>
+        </property>
+        <property name="statusTip">
+         <string>NORMAL_SPEED</string>
+        </property>
+       </item>
+       <item>
+        <property name="text">
+         <string>Low Speed</string>
+        </property>
+        <property name="statusTip">
+         <string>LOW_SPEED</string>
+        </property>
+       </item>
+       <item>
+        <property name="text">
+         <string>Acceleration</string>
+        </property>
+        <property name="statusTip">
+         <string>ACCELERATION</string>
+        </property>
+       </item>
+       <item>
+        <property name="text">
+         <string>Deceleration</string>
+        </property>
+        <property name="statusTip">
+         <string>DECELERATION</string>
+        </property>
+       </item>
+       <item>
+        <property name="text">
+         <string>Idle Current</string>
+        </property>
+        <property name="statusTip">
+         <string>IDLE_CURRENT</string>
+        </property>
+       </item>
+       <item>
+        <property name="text">
+         <string>Run Current</string>
+        </property>
+        <property name="statusTip">
+         <string>RUN_CURRENT</string>
+        </property>
+       </item>
+       <item>
+        <property name="text">
+         <string>Acceleration Current</string>
+        </property>
+        <property name="statusTip">
+         <string>ACC_CURRENT</string>
+        </property>
+       </item>
+      </widget>
+     </item>
+    </layout>
+   </item>
+   <item row="1" column="1">
+    <layout class="QVBoxLayout" name="verticalLayout">
+     <property name="spacing">
+      <number>20</number>
+     </property>
+     <item>
+      <spacer name="verticalSpacer">
+       <property name="orientation">
+        <enum>Qt::Orientation::Vertical</enum>
+       </property>
+       <property name="sizeHint" stdset="0">
+        <size>
+         <width>20</width>
+         <height>40</height>
+        </size>
+       </property>
+      </spacer>
+     </item>
+     <item>
+      <widget class="QToolButton" name="btnSelectParameters">
+       <property name="toolTip">
+        <string>Add parameters</string>
+       </property>
+       <property name="statusTip">
+        <string>Add selected parameters</string>
+       </property>
+       <property name="text">
+        <string/>
+       </property>
+       <property name="icon">
+        <iconset theme="QIcon::ThemeIcon::ListAdd"/>
+       </property>
+      </widget>
+     </item>
+     <item>
+      <widget class="QToolButton" name="btnAddAll">
+       <property name="text">
+        <string/>
+       </property>
+       <property name="icon">
+        <iconset theme="QIcon::ThemeIcon::MailForward"/>
+       </property>
+      </widget>
+     </item>
+     <item>
+      <spacer name="verticalSpacer_2">
+       <property name="orientation">
+        <enum>Qt::Orientation::Vertical</enum>
+       </property>
+       <property name="sizeHint" stdset="0">
+        <size>
+         <width>20</width>
+         <height>40</height>
+        </size>
+       </property>
+      </spacer>
+     </item>
+     <item>
+      <widget class="QToolButton" name="btnRemoveParameters">
+       <property name="toolTip">
+        <string>Remove Parameters</string>
+       </property>
+       <property name="statusTip">
+        <string>Remove from Selected Parameters</string>
+       </property>
+       <property name="text">
+        <string/>
+       </property>
+       <property name="icon">
+        <iconset theme="QIcon::ThemeIcon::EditDelete"/>
+       </property>
+      </widget>
+     </item>
+    </layout>
+   </item>
+   <item row="1" column="2">
+    <layout class="QGridLayout" name="gridLayout">
+     <item row="0" column="0">
+      <widget class="QLabel" name="label_3">
+       <property name="text">
+        <string>Selected Parameters:</string>
        </property>
       </widget>
      </item>
      <item row="0" column="1">
-      <widget class="QCheckBox" name="cbMaxSpeed">
-       <property name="text">
-        <string>Max. Speed</string>
+      <spacer name="horizontalSpacer_4">
+       <property name="orientation">
+        <enum>Qt::Orientation::Horizontal</enum>
        </property>
-       <property name="checked">
-        <bool>true</bool>
+       <property name="sizeHint" stdset="0">
+        <size>
+         <width>199</width>
+         <height>20</height>
+        </size>
        </property>
-       <property name="TAG" stdset="0">
-        <string>MAX_SPEED</string>
-       </property>
-      </widget>
+      </spacer>
      </item>
-     <item row="1" column="0">
-      <widget class="QCheckBox" name="cbBacklash">
-       <property name="text">
-        <string>Backlash</string>
+     <item row="1" column="0" colspan="2">
+      <widget class="QListWidget" name="listSelectedParameters">
+       <property name="dragDropMode">
+        <enum>QAbstractItemView::DragDropMode::DropOnly</enum>
        </property>
-       <property name="checked">
+       <property name="alternatingRowColors">
         <bool>true</bool>
        </property>
-       <property name="TAG" stdset="0">
-        <string>BACKLASH</string>
+       <property name="selectionMode">
+        <enum>QAbstractItemView::SelectionMode::ExtendedSelection</enum>
        </property>
-      </widget>
-     </item>
-     <item row="1" column="1">
-      <widget class="QCheckBox" name="cbNormalSpeed">
-       <property name="text">
-        <string>Normal Speed</string>
+       <property name="spacing">
+        <number>1</number>
        </property>
-       <property name="checked">
-        <bool>true</bool>
+       <property name="viewMode">
+        <enum>QListView::ViewMode::ListMode</enum>
        </property>
-       <property name="TAG" stdset="0">
-        <string>NORMAL_SPEED</string>
-       </property>
-      </widget>
-     </item>
-     <item row="2" column="0">
-      <widget class="QCheckBox" name="cbPosMax">
-       <property name="text">
-        <string>Pos. Max</string>
-       </property>
-       <property name="checked">
-        <bool>true</bool>
-       </property>
-       <property name="TAG" stdset="0">
-        <string>POS_MAX</string>
-       </property>
-      </widget>
-     </item>
-     <item row="2" column="1">
-      <widget class="QCheckBox" name="cbMinSpeed">
-       <property name="text">
-        <string>Low Speed</string>
-       </property>
-       <property name="checked">
-        <bool>true</bool>
-       </property>
-       <property name="TAG" stdset="0">
-        <string>LOW_SPEED</string>
-       </property>
-      </widget>
-     </item>
-     <item row="3" column="0">
-      <widget class="QCheckBox" name="cbPark">
-       <property name="text">
-        <string>Park</string>
-       </property>
-       <property name="checked">
-        <bool>true</bool>
-       </property>
-       <property name="TAG" stdset="0">
-        <string>PARK</string>
+       <property name="supportedDragActions">
+        <set>Qt::DropAction::CopyAction</set>
        </property>
       </widget>
      </item>
     </layout>
    </item>
-   <item row="2" column="0">
-    <spacer name="horizontalSpacer">
-     <property name="orientation">
-      <enum>Qt::Orientation::Horizontal</enum>
-     </property>
-     <property name="sizeHint" stdset="0">
-      <size>
-       <width>67</width>
-       <height>20</height>
-      </size>
-     </property>
-    </spacer>
-   </item>
-   <item row="2" column="1">
-    <widget class="QDialogButtonBox" name="buttonBox">
-     <property name="standardButtons">
-      <set>QDialogButtonBox::StandardButton::Cancel|QDialogButtonBox::StandardButton::Ok</set>
-     </property>
-    </widget>
+   <item row="2" column="0" colspan="3">
+    <layout class="QHBoxLayout" name="horizontalLayout_2">
+     <item>
+      <spacer name="horizontalSpacer">
+       <property name="orientation">
+        <enum>Qt::Orientation::Horizontal</enum>
+       </property>
+       <property name="sizeHint" stdset="0">
+        <size>
+         <width>67</width>
+         <height>20</height>
+        </size>
+       </property>
+      </spacer>
+     </item>
+     <item>
+      <widget class="QDialogButtonBox" name="buttonBox">
+       <property name="standardButtons">
+        <set>QDialogButtonBox::StandardButton::Cancel|QDialogButtonBox::StandardButton::Ok</set>
+       </property>
+      </widget>
+     </item>
+    </layout>
    </item>
   </layout>
  </widget>

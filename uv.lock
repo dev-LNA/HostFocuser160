@@ -107,8 +107,10 @@ name = "hostfocuser160"
 version = "0.1.0"
 source = { virtual = "." }
 dependencies = [
+    { name = "icmplib" },
     { name = "matplotlib" },
     { name = "numpy" },
+    { name = "pymodbustcp" },
     { name = "pyqt6" },
     { name = "pyqt6-sip" },
     { name = "pythonping" },
@@ -119,14 +121,25 @@ dependencies = [
 
 [package.metadata]
 requires-dist = [
+    { name = "icmplib", specifier = "==3.0.4" },
     { name = "matplotlib", specifier = ">=3.10.8" },
     { name = "numpy", specifier = ">=2.4.2" },
+    { name = "pymodbustcp", specifier = ">=0.3.0" },
     { name = "pyqt6", specifier = ">=6.10.2" },
     { name = "pyqt6-sip", specifier = ">=13.11.0" },
     { name = "pythonping", specifier = ">=1.1.4" },
     { name = "pyzmq", specifier = ">=27.1.0" },
     { name = "scipy", specifier = ">=1.17.0" },
     { name = "toml", specifier = ">=0.10.2" },
+]
+
+[[package]]
+name = "icmplib"
+version = "3.0.4"
+source = { registry = "https://pypi.org/simple" }
+sdist = { url = "https://files.pythonhosted.org/packages/6d/78/ca07444be85ec718d4a7617f43fdb5b4eaae40bc15a04a5c888b64f3e35f/icmplib-3.0.4.tar.gz", hash = "sha256:57868f2cdb011418c0e1d5586b16d1fabd206569fe9652654c27b6b2d6a316de", size = 26744, upload-time = "2023-10-10T17:05:12.902Z" }
+wheels = [
+    { url = "https://files.pythonhosted.org/packages/38/ab/a47a2fdcf930e986914c642242ce2823753d7b08fda485f52323132f1240/icmplib-3.0.4-py3-none-any.whl", hash = "sha256:336b75c6c23c5ce99ddec33f718fab09661f6ad698e35b6f1fc7cc0ecf809398", size = 30561, upload-time = "2023-10-10T17:05:10.092Z" },
 ]
 
 [[package]]
@@ -274,6 +287,15 @@ source = { registry = "https://pypi.org/simple" }
 sdist = { url = "https://files.pythonhosted.org/packages/1b/7d/92392ff7815c21062bea51aa7b87d45576f649f16458d78b7cf94b9ab2e6/pycparser-3.0.tar.gz", hash = "sha256:600f49d217304a5902ac3c37e1281c9fe94e4d0489de643a9504c5cdfdfc6b29", size = 103492, upload-time = "2026-01-21T14:26:51.89Z" }
 wheels = [
     { url = "https://files.pythonhosted.org/packages/0c/c3/44f3fbbfa403ea2a7c779186dc20772604442dde72947e7d01069cbe98e3/pycparser-3.0-py3-none-any.whl", hash = "sha256:b727414169a36b7d524c1c3e31839a521725078d7b2ff038656844266160a992", size = 48172, upload-time = "2026-01-21T14:26:50.693Z" },
+]
+
+[[package]]
+name = "pymodbustcp"
+version = "0.3.0"
+source = { registry = "https://pypi.org/simple" }
+sdist = { url = "https://files.pythonhosted.org/packages/9b/c6/d3f3842696607a09f6cf3c2a668c0e05731caf3013b118ecd75deddc548c/pyModbusTCP-0.3.0.tar.gz", hash = "sha256:893a4d88f6a63af21bd35b2b22061355e74005ea27fefc104e8f9bdb4ce81a04", size = 31478, upload-time = "2024-09-04T15:11:00.047Z" }
+wheels = [
+    { url = "https://files.pythonhosted.org/packages/6c/0f/343d4902b01989131aa7ef8a9aa253731c16814c789e49f5ff9b4bb66334/pyModbusTCP-0.3.0-py3-none-any.whl", hash = "sha256:8b0086fa7ed4bd1bf6956d56a0979937008c48091f052310ad8826647fe30180", size = 24898, upload-time = "2024-09-04T15:10:58.524Z" },
 ]
 
 [[package]]

@@ -50,3 +50,44 @@ Substitua <b>NOME_DO_COMANDO</b> pelo comando desejado e forneça parâmetros ad
 <b>temperature: DOUBLE</b> temperatura do dispositivo (futura implementação).\
 <b>timestamp: DOUBLE</b> Data/hora da resposta em formato de timestamp.\
 <b>position: DOUBLE</b> Posição atual do Focalizador em mícrons.
+
+
+## Utilização do código
+
+Após clonar o repositório seguir os seguintes passos:
+
+- Criar um venv, ativar e instalar os requisitos do projeto:
+
+```
+[unix/MacOs]
+python -m venv .venv prompt "HostFocuser"
+source .venv/bin/activate
+pip install -r requirements.txt
+
+[Windows]
+python -m venv .venv prompt "HostFocuser"
+.\.venv\Scripts\Activate.ps1
+pip install -r requirements.txt
+```
+
+
+- Caso seja desejado, gerar o instalador através do comando:
+
+```
+pyinstaller main.spec
+```
+
+Será criada uma pasta 'dist' com a seguinte estrutura:
+
+```
+dist
+├── logs
+├── src
+└── HostFocuser(.elf/.exe/.app)
+```
+
+Na pasta 'src' estão os arquivos de configuração do focalisador para ambos os telescópios.
+
+Na pasta 'logs' são armazenados os arquivos de log.
+
+'HostFocuser' é o executável, sendo o formato do arquivo dependente da máquina utilizada para a compilação.

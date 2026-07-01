@@ -7,5 +7,6 @@ logs
 .vscode
 .venv
 *.uxf
+*.zip
 TODO.md
-/misc/psw.cfg
+build.yml
