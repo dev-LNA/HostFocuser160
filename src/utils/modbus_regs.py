@@ -2,15 +2,15 @@ from typing import NamedTuple
 from enum import Enum, IntEnum, StrEnum, auto
 
 class DB_size(IntEnum):
-    COIL_FIRST_ADDRESS=1,
-    COIL_LAST_ADDRESS=668,
-    DI_FIRST_ADDRESS=761,
+    COIL_FIRST_ADDRESS=1
+    COIL_LAST_ADDRESS=668
+    DI_FIRST_ADDRESS=761
     DI_LAST_ADDRESS=1443
 
 class RegType(Enum):
-    COIL=0,
-    DISCRETE_INPUT=1,
-    INPUT_REGISTER=2,
+    COIL=0
+    DISCRETE_INPUT=1
+    INPUT_REGISTER=2
     HOLDING_REGISTER=3
 
 class RegsInfo(NamedTuple):

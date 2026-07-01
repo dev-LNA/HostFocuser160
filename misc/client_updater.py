@@ -5,8 +5,10 @@ import time
 
 class UpdaterSignals(QObject):
 
-    poller = pyqtSignal(object)         # Object "zmq.Poller"
-    subscriber = pyqtSignal(object)     # object "zmq.SyncSocket"
+    # poller = pyqtSignal(object)         # Object "zmq.Poller"
+    # subscriber = pyqtSignal(object)     # object "zmq.SyncSocket"
+    poller: zmq.Poller | None = None         # Object "zmq.Poller"
+    subscriber: zmq.SyncSocket | None = None     # object "zmq.SyncSocket"
 
     message = pyqtSignal(str)
     clientID = pyqtSignal(str)
@@ -32,8 +34,17 @@ class Updater(QRunnable):
         super().__init__()
 
         self.signals = UpdaterSignals()
-        self.signals.poller = kwargs.get("poller", 0)
-        self.signals.subscriber = kwargs.get("subscriber", 0)
+        if "poller" in kwargs:
+            self.signals.poller = kwargs["poller"]
+        else:
+            raise ValueError("poller argument is required")
+        if "subscriber" in kwargs:
+            self.signals.subscriber = kwargs["subscriber"]
+        else:
+            raise ValueError("subscriber argument is required")
+
+        # self.signals.poller = kwargs.get("poller", 0)
+        # self.signals.subscriber = kwargs.get("subscriber", 0)
 
         self._clientId = 0
         self._connected = False
@@ -45,20 +56,22 @@ class Updater(QRunnable):
         self.finished = False
         self.running = True
 
-        self.data = ''
+        self.data: dict = dict()
 
     @pyqtSlot()
     def run(self):
         try:
-            while self.running:
+            while self.running and self.signals.poller is not None and self.signals.subscriber is not None:
                 # print(self.running)
                 # print("programa rodando")
                 time.sleep(0.05)
-                self.socks = dict(self.signals.poller.poll(10))
+                self.socks = dict(self.signals.poller.poll(10))             
                 if self.socks.get(self.signals.subscriber) == zmq.POLLIN:
-                    received = self.signals.subscriber.recv_string()
+                    received = self.signals.subscriber.recv_string()        # type: ignore # subscriber signal is of type "zmq.SyncSocket" and has a method "recv_string"
                     self.signals.message.emit(received)
                     self.data = json.loads(received)
+                    print(f"[ZMQ Client] Received: {self.data}")
+                    print(f"data type: {type(self.data)}")
                     try:
                         # self.signals.message.emit(str(data["position"]))
                         self.signals.position.emit(round(self.data["position"]))

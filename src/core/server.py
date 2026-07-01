@@ -936,7 +936,7 @@ class Server(QObject):
                             self.logger.warning("Ended MANUAL MOVEMENT")
 
         except:
-            print('Invalid log info, log not updated')
+            self.logger.error('Invalid log info, log not updated')
 
     def _update_current_movement(self, val: bool):
         # print(self.sender().objectName())sender = self.sender()
@@ -967,6 +967,7 @@ class Server(QObject):
                 self.pub_control.thread = threading.Thread(target=self._run_pub, daemon=True)
                 self.pub_control.thread.start()
                 print("[+] Started publishing focuser status")
+                self.logger.info(f"Started publishing focuser status")
             else:
                 raise RuntimeError("Error starting publisher thread: Publisher not defined.")
         
@@ -979,6 +980,7 @@ class Server(QObject):
                 self.pub_control.stop_event.set()
                 self.pub_control.thread.join()
                 print("[-] Stopped publishing focuser status")
+                self.logger.info(f"Stopped publishing focuser status")
             else:
                 raise RuntimeError("Error stopping publisher thread. Publisher not defined")
 
@@ -992,9 +994,9 @@ class Server(QObject):
                     self._update_status()
                 if self.zmq_comm:
                     self.status[SJson.TIMESTAMP] = self.zmq_comm.pub(self.status).isoformat("T", timespec='seconds') 
-                    print(f"[+] Status publicado: {self.status[SJson.TIMESTAMP]}")
+                    # print(f"[+] Status publicado: {self.status[SJson.TIMESTAMP]}")
             except Exception as e:
-                print(f"Error during PUB: {str(e)}")
+                self.logger.error(f"Error during PUB: {str(e)}")
 
 
 

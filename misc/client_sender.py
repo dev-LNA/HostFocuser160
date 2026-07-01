@@ -6,7 +6,8 @@ import misc.client_sample
 
 class ReqSenderSignals(QObject):
 
-    req = pyqtSignal(object)         # Object "zmq.SyncSocket"
+    # req = pyqtSignal(object)         # Object "zmq.SyncSocket"
+    req: zmq.SyncSocket | None = None         # Object "zmq.SyncSocket"
     timeout_error = pyqtSignal(bool)
     response = pyqtSignal(str)
 
@@ -17,7 +18,11 @@ class ReqSender(QRunnable):
         super().__init__()
 
         self.signals = ReqSenderSignals()
-        self.signals.req = kwargs.get("req", 0)
+        if "req" in kwargs:
+            self.signals.req = kwargs["req"]
+        else:
+            raise ValueError("req argument is required")
+        # self.signals.req = kwargs.get("req", 0)
     
         self._clientId = ""
         self._clientTransactionId = 0
@@ -55,7 +60,7 @@ class ReqSender(QRunnable):
                 print(f"[ZMQ Client] cmd = {self._msg_json["action"]}")
                 # self.finished = True
 
-                self.signals.req.send_string(json.dumps(self._msg_json))
+                self.signals.req.send_string(json.dumps(self._msg_json))     # type: ignore # req signal is of type "zmq.SyncSocket" and has a method "send_string"
 
                 poller = zmq.Poller()
                 poller.register(self.signals.req, zmq.POLLIN)
@@ -63,7 +68,7 @@ class ReqSender(QRunnable):
                 socks = dict(poller.poll(self._timeout))  # Timeout in milliseconds
                 if socks.get(self.signals.req) == zmq.POLLIN:
                     try:
-                        self.signals.response.emit(self.signals.req.recv_string())      # Emits the response
+                        self.signals.response.emit(self.signals.req.recv_string())      # Emits the response    #type: ignore # req signal is of type "zmq.SyncSocket" and has a method "recv_string"
                     except Exception as e:
                         print(f"Error receiving response: {e}")                         #TODO: Adicionar um sinal de erro
                         self.finished = True
