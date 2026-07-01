@@ -11,7 +11,7 @@ def resource_path(relative_path):
     """ Retorna o caminho absoluto para o recurso, compatível com PyInstaller """
     if hasattr(sys, '_MEIPASS'):
         # No executável, sys._MEIPASS é a raiz da pasta temporária
-        base_path = sys._MEIPASS
+        base_path = getattr(sys, '_MEIPASS', os.path.dirname(sys.executable))
     else:
         # No desenvolvimento, a base é a pasta raiz do projeto (onde está o main4.py)
         # Como este arquivo está em misc, pegamos o pai dele
@@ -29,7 +29,7 @@ class LoadConfigForm(QDialog):
         super(LoadConfigForm, self).__init__()
 
         # Loads Ui file
-        uic.loadUi(path_to_ui, self)
+        uic.loadUi(path_to_ui, self)    # type: ignore
 
         # Creates UI intellisense
         self.cbIpAddress: QCheckBox = self.findChild(QCheckBox, 'cbIpAddress')
@@ -122,7 +122,8 @@ class LoadConfigForm(QDialog):
 
         for i in range(self.listSelectedParameters.count()):
             item = self.listSelectedParameters.item(i)
-            self.selected_items.append(item.statusTip())
+            if item is not None:
+                self.selected_items.append(item.statusTip())
         
         self._signal_selected_list.emit(self.selected_items)
 
@@ -142,8 +143,9 @@ class LoadConfigForm(QDialog):
 
         for item in selected_items:
             item_clone = item.clone()
-            self.listSelectedParameters.addItem(item_clone)
-            self._validate_selected_param(item_clone)
+            if item_clone is not None:
+                self.listSelectedParameters.addItem(item_clone)
+                self._validate_selected_param(item_clone)
 
 
     def _validate_selected_param(self, item: QListWidgetItem):
@@ -156,8 +158,11 @@ class LoadConfigForm(QDialog):
         items = self.listSelectedParameters.findItems(item.text(), Qt.MatchFlag.MatchExactly)
         # If more than one instance of the item is present on the list removes the last instance
         if len(items) > 1:
-            item = self.listSelectedParameters.takeItem(self.listSelectedParameters.row(item))
-            del item
+            temp = self.listSelectedParameters.takeItem(self.listSelectedParameters.row(item))
+            if temp is not None:
+                del temp
+                # item = self.listSelectedParameters.takeItem(self.listSelectedParameters.row(item))
+                # del item
 
     def _remove_all_parameters(self):
         self.listSelectedParameters.clear()
