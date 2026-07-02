@@ -20,6 +20,7 @@ class RegsInfo(NamedTuple):
     ADDRESS: int
     SIZE: int
     TYPE: RegType
+    DESCRIPTION: str = 'Undefined'
 
 
 class HoldingRegs(NamedTuple):
@@ -45,7 +46,7 @@ class HoldingRegs(NamedTuple):
     RX_TCPCYCLE: RegsInfo
     RX_TCPMBTMO: RegsInfo
     RX_TCPKATMO: RegsInfo
-    TX_ALC: RegsInfo
+    RX_ALC: RegsInfo
     RX_V90: RegsInfo
     RX_V92: RegsInfo
     RX_PACKOK: RegsInfo
@@ -70,51 +71,52 @@ class HoldingRegs(NamedTuple):
 
 # Holding register size given in words (16 bits)
 holding_regs = HoldingRegs(
-    RX_PACKSTATUS=RegsInfo(TAG="RX_PACKSTATUS", ADDRESS=1, SIZE=1, TYPE=RegType.HOLDING_REGISTER),
-    RX_EX=RegsInfo("RX_EX", 2, 2, RegType.HOLDING_REGISTER),
-    RX_MST=RegsInfo("RX_MST", 4, 2, RegType.HOLDING_REGISTER),
-    RX_SASTAT=RegsInfo("RX_SASTAT", 6, 2, RegType.HOLDING_REGISTER),
-    RX_V20=RegsInfo("RX_V20", 8, 2, RegType.HOLDING_REGISTER),
-    RX_V50=RegsInfo("RX_V50", 10, 1, RegType.HOLDING_REGISTER),
-    RX_V71=RegsInfo("RX_V71", 11, 2, RegType.HOLDING_REGISTER),
-    RX_V74=RegsInfo("RX_V74", 13, 1, RegType.HOLDING_REGISTER),
-    RX_V75=RegsInfo("RX_V75", 14, 1, RegType.HOLDING_REGISTER),
-    RX_V76=RegsInfo("RX_V76", 15, 1, RegType.HOLDING_REGISTER),
-    RX_V77=RegsInfo("RX_V77", 16, 1, RegType.HOLDING_REGISTER),
-    RX_V78=RegsInfo("RX_V78", 17, 1, RegType.HOLDING_REGISTER),
-    RX_V79=RegsInfo("RX_V79", 18, 1, RegType.HOLDING_REGISTER),
-    RX_V80=RegsInfo("RX_V80", 19, 1, RegType.HOLDING_REGISTER),
-    RX_V81=RegsInfo("RX_V81", 20, 1, RegType.HOLDING_REGISTER),
-    RX_V82=RegsInfo("RX_V82", 21, 1, RegType.HOLDING_REGISTER),
-    RX_V83=RegsInfo("RX_V83", 22, 2, RegType.HOLDING_REGISTER),
-    RX_TCPRTMO=RegsInfo("RX_TCPRTMO", 24, 1, RegType.HOLDING_REGISTER),
-    RX_TCPCYCLE=RegsInfo("RX_TCPCYCLE", 25, 1, RegType.HOLDING_REGISTER),
-    RX_TCPMBTMO=RegsInfo("RX_TCPMBTMO", 26, 1, RegType.HOLDING_REGISTER),
-    RX_TCPKATMO=RegsInfo("RX_TCPKATMO", 27, 1, RegType.HOLDING_REGISTER),
-    TX_ALC=RegsInfo("TX_ALC", 28, 1, RegType.HOLDING_REGISTER),
-    RX_V90=RegsInfo("RX_V90", 29, 1, RegType.HOLDING_REGISTER),
-    RX_V92=RegsInfo("RX_V92", 30, 1, RegType.HOLDING_REGISTER),
-    RX_PACKOK=RegsInfo("RX_PACKOK", 31, 1, RegType.HOLDING_REGISTER),
-    TX_V20=RegsInfo("TX_V20", 50, 2, RegType.HOLDING_REGISTER),
-    TX_V71=RegsInfo("TX_V71", 52, 1, RegType.HOLDING_REGISTER),
-    TX_V74=RegsInfo("TX_V74", 53, 1, RegType.HOLDING_REGISTER),
-    TX_V75=RegsInfo("TX_V75", 54, 1, RegType.HOLDING_REGISTER),
-    TX_V76=RegsInfo("TX_V76", 55, 1, RegType.HOLDING_REGISTER),
-    TX_V77=RegsInfo("TX_V77", 56, 1, RegType.HOLDING_REGISTER),
-    TX_V78=RegsInfo("TX_V78", 57, 1, RegType.HOLDING_REGISTER),
-    TX_V79=RegsInfo("TX_V79", 58, 1, RegType.HOLDING_REGISTER),
-    TX_V80=RegsInfo("TX_V80", 59, 1, RegType.HOLDING_REGISTER),
-    TX_V81=RegsInfo("TX_V81", 60, 1, RegType.HOLDING_REGISTER),
-    TX_V82=RegsInfo("TX_V82", 61, 1, RegType.HOLDING_REGISTER),
-    TX_V83=RegsInfo("TX_V83", 62, 2, RegType.HOLDING_REGISTER),
-    TX_TCPRTMO=RegsInfo("TX_TCPRTMO", 64, 1, RegType.HOLDING_REGISTER),
-    TX_TCPCYCLE=RegsInfo("TX_TCPCYCLE", 65, 1, RegType.HOLDING_REGISTER),
-    TX_TCPMBTMO=RegsInfo("TX_TCPMBTMO", 66, 1, RegType.HOLDING_REGISTER),
-    TX_TCPKATMO=RegsInfo("TX_TCPKATMO", 67, 1, RegType.HOLDING_REGISTER),
-    TX_PACKCMDS=RegsInfo("TX_PACKCMDS", 68, 1, RegType.HOLDING_REGISTER)
+    RX_PACKSTATUS=RegsInfo(TAG="RX_PACKSTATUS", ADDRESS=1, SIZE=1, TYPE=RegType.HOLDING_REGISTER, DESCRIPTION="PACKSTATUS"),
+    RX_EX=RegsInfo("RX_EX", 2, 2, RegType.HOLDING_REGISTER, "Encoder position"),
+    RX_MST=RegsInfo("RX_MST", 4, 2, RegType.HOLDING_REGISTER, "Motor Status"),
+    RX_SASTAT=RegsInfo("RX_SASTAT", 6, 2, RegType.HOLDING_REGISTER, "System Status"),
+    RX_V20=RegsInfo("RX_V20", 8, 1, RegType.HOLDING_REGISTER, "Move Position [CLP]"),
+    RX_V50=RegsInfo("RX_V50", 10, 1, RegType.HOLDING_REGISTER, "Mechanism ID"),
+    RX_V71=RegsInfo("RX_V71", 11, 1, RegType.HOLDING_REGISTER, "Max. Position [CLP]"),
+    RX_V74=RegsInfo("RX_V74", 13, 1, RegType.HOLDING_REGISTER, "Backlash [CLP]"),
+    RX_V75=RegsInfo("RX_V75", 14, 1, RegType.HOLDING_REGISTER, "Max. Speed [CLP]"),
+    RX_V76=RegsInfo("RX_V76", 15, 1, RegType.HOLDING_REGISTER, "Low Speed [CLP]"),
+    RX_V77=RegsInfo("RX_V77", 16, 1, RegType.HOLDING_REGISTER, "Normal Speed [CLP]"),
+    RX_V78=RegsInfo("RX_V78", 17, 1, RegType.HOLDING_REGISTER, "Idle Current [CLP]"),
+    RX_V79=RegsInfo("RX_V79", 18, 1, RegType.HOLDING_REGISTER, "Deceleration [CLP]"),
+    RX_V80=RegsInfo("RX_V80", 19, 1, RegType.HOLDING_REGISTER, "Accelleration [CLP]"),
+    RX_V81=RegsInfo("RX_V81", 20, 1, RegType.HOLDING_REGISTER, "Run Current [CLP]"),
+    RX_V82=RegsInfo("RX_V82", 21, 1, RegType.HOLDING_REGISTER, "Acc. Current [CLP]"),
+    RX_V83=RegsInfo("RX_V83", 22, 1, RegType.HOLDING_REGISTER, "Park Position [CLP]"),
+    RX_TCPRTMO=RegsInfo("RX_TCPRTMO", 24, 1, RegType.HOLDING_REGISTER, "TCPRTMO [CLP]"),
+    RX_TCPCYCLE=RegsInfo("RX_TCPCYCLE", 25, 1, RegType.HOLDING_REGISTER, "TCPCYCLE [CLP]"),
+    RX_TCPMBTMO=RegsInfo("RX_TCPMBTMO", 26, 1, RegType.HOLDING_REGISTER, "TCPMBTMO [CLP]"),
+    RX_TCPKATMO=RegsInfo("RX_TCPKATMO", 27, 1, RegType.HOLDING_REGISTER, "TCPKATMO [CLP]"),
+    RX_ALC=RegsInfo("RX_ALC", 28, 1, RegType.HOLDING_REGISTER, "Alarm Code"),
+    RX_V90=RegsInfo("RX_V90", 29, 1, RegType.HOLDING_REGISTER, "Motor Firmware Version"),
+    RX_V92=RegsInfo("RX_V92", 30, 1, RegType.HOLDING_REGISTER, "CLP Firmware Version"),
+    RX_PACKOK=RegsInfo("RX_PACKOK", 31, 1, RegType.HOLDING_REGISTER, "PACKOK"),
+    TX_V20=RegsInfo("TX_V20", 50, 1, RegType.HOLDING_REGISTER, DESCRIPTION="Move Position"),
+    TX_V71=RegsInfo("TX_V71", 52, 1, RegType.HOLDING_REGISTER, "Max. Position"),
+    TX_V74=RegsInfo("TX_V74", 53, 1, RegType.HOLDING_REGISTER, "Backlash"),
+    TX_V75=RegsInfo("TX_V75", 54, 1, RegType.HOLDING_REGISTER, "Max. Speed"),
+    TX_V76=RegsInfo("TX_V76", 55, 1, RegType.HOLDING_REGISTER, "Low Speed"),
+    TX_V77=RegsInfo("TX_V77", 56, 1, RegType.HOLDING_REGISTER, "Normal Speed"),
+    TX_V78=RegsInfo("TX_V78", 57, 1, RegType.HOLDING_REGISTER, "Idle Current"),
+    TX_V79=RegsInfo("TX_V79", 58, 1, RegType.HOLDING_REGISTER, "Deceleration"),
+    TX_V80=RegsInfo("TX_V80", 59, 1, RegType.HOLDING_REGISTER, "Accelleration"),
+    TX_V81=RegsInfo("TX_V81", 60, 1, RegType.HOLDING_REGISTER, "Run Current"),
+    TX_V82=RegsInfo("TX_V82", 61, 1, RegType.HOLDING_REGISTER, "Acc. Current"),
+    TX_V83=RegsInfo("TX_V83", 62, 1, RegType.HOLDING_REGISTER, "Park Position"),
+    TX_TCPRTMO=RegsInfo("TX_TCPRTMO", 64, 1, RegType.HOLDING_REGISTER, "TCPRTMO"),
+    TX_TCPCYCLE=RegsInfo("TX_TCPCYCLE", 65, 1, RegType.HOLDING_REGISTER, "TCPCYCLE"),
+    TX_TCPMBTMO=RegsInfo("TX_TCPMBTMO", 66, 1, RegType.HOLDING_REGISTER, "TCPMBTMO"),
+    TX_TCPKATMO=RegsInfo("TX_TCPKATMO", 67, 1, RegType.HOLDING_REGISTER, "TCPKATMO"),
+    TX_PACKCMDS=RegsInfo("TX_PACKCMDS", 68, 1, RegType.HOLDING_REGISTER, "PACKCMDS")
 )
 
 class PackStatusFlags(IntFlag):
+    NONE = 0x0000
     RX_ALM = 0x0001
     RX_EO = 0x0002
     RX_V15 = 0x0004
@@ -123,6 +125,7 @@ class PackStatusFlags(IntFlag):
     HANDSHAKE = 0x0020
 
 class PackCMDFlags(IntFlag):
+    NONE = 0x0000
     TX_AX = 0x0001
     TX_GS1 = 0x0002
     TX_GS20 = 0x0004
@@ -134,6 +137,8 @@ class PackCMDFlags(IntFlag):
     TX_PDB = 0x0100
     TX_V42 = 0x0200
     TX_SET = 0x0400
+    TX_RCLP = 0x0800
+    TX_GS5 = 0x1000
 
 class CoilsRegs(NamedTuple):
     RX_ALM: RegsInfo
@@ -357,60 +362,45 @@ class mirrorMapping(NamedTuple):
     RESPONSE: RegsInfo
 
 
-class CLP_Vars(NamedTuple):
+class CLPMirrors(dict):
     """Registers that are owned by the CLP and the 
     server must mirror so that the CLP can confirm
     the receive"""
 
-    RX_ALM: mirrorMapping
-    RX_EO: mirrorMapping
-    RX_V15: mirrorMapping
-    RX_V44: mirrorMapping
-    RX_V46: mirrorMapping
-    RX_EX: mirrorMapping
-    RX_MST: mirrorMapping
-    RX_SASTAT: mirrorMapping
-    RX_V50: mirrorMapping
-    OK: mirrorMapping
-    NOK: mirrorMapping
-    HANDSHAKE: mirrorMapping
-    RX_ALC: mirrorMapping
-    RX_V90: mirrorMapping
-    RX_V92: mirrorMapping
+    TX_V20: mirrorMapping
+    TX_V71: mirrorMapping
+    TX_V74: mirrorMapping
+    TX_V75: mirrorMapping
+    TX_V76: mirrorMapping
+    TX_V77: mirrorMapping
+    TX_V78: mirrorMapping
+    TX_V79: mirrorMapping
+    TX_V80: mirrorMapping
+    TX_V81: mirrorMapping
+    TX_V82: mirrorMapping
+    TX_V83: mirrorMapping
+    TX_TCPRTMO: mirrorMapping
+    TX_TCPCYCLE: mirrorMapping
+    TX_TCPMBTMO: mirrorMapping
+    TX_TCPKATMO: mirrorMapping
 
-# CLP_Owned = CLP_Vars(
-#     RX_ALM = mirrorMapping("RX_ALM", dig_inputs_regs.TX_ALM),
-#     RX_EO = mirrorMapping("RX_EO", dig_inputs_regs.TX_EO),
-#     RX_V15 = mirrorMapping("RX_V15", dig_inputs_regs.TX_V15),
-#     RX_V44 = mirrorMapping("RX_V44", dig_inputs_regs.TX_V44),
-#     RX_V46 = mirrorMapping("RX_V46", dig_inputs_regs.TX_V46),
-#     RX_EX = mirrorMapping("RX_EX", dig_inputs_regs.TX_EX),
-#     RX_MST = mirrorMapping("RX_MST", dig_inputs_regs.TX_MST),
-#     RX_SASTAT = mirrorMapping("RX_SASTAT", dig_inputs_regs.TX_SASTAT),
-#     RX_V50 = mirrorMapping("RX_V50", dig_inputs_regs.TX_V50),
-#     OK = mirrorMapping("OK", dig_inputs_regs.OK),
-#     NOK = mirrorMapping("NOK", dig_inputs_regs.NOK),
-#     HANDSHAKE = mirrorMapping("HANDSHAKE", dig_inputs_regs.HANDSHAKE),
-#     RX_ALC = mirrorMapping("RX_ALC", dig_inputs_regs.TX_ALC),
-#     RX_V90 = mirrorMapping("RX_V90", dig_inputs_regs.TX_V90),
-#     RX_V92 = mirrorMapping("RX_V92", dig_inputs_regs.TX_V92),
-# )
-CLP_Owned = CLP_Vars(
-    RX_ALM = mirrorMapping(coils_regs.RX_ALM, dig_inputs_regs.TX_ALM),
-    RX_EO = mirrorMapping(coils_regs.RX_EO, dig_inputs_regs.TX_EO),
-    RX_V15 = mirrorMapping(coils_regs.RX_V15, dig_inputs_regs.TX_V15),
-    RX_V44 = mirrorMapping(coils_regs.RX_V44, dig_inputs_regs.TX_V44),
-    RX_V46 = mirrorMapping(coils_regs.RX_V46, dig_inputs_regs.TX_V46),
-    RX_EX = mirrorMapping(coils_regs.RX_EX, dig_inputs_regs.TX_EX),
-    RX_MST = mirrorMapping(coils_regs.RX_MST, dig_inputs_regs.TX_MST),
-    RX_SASTAT = mirrorMapping(coils_regs.RX_SASTAT, dig_inputs_regs.TX_SASTAT),
-    RX_V50 = mirrorMapping(coils_regs.RX_V50, dig_inputs_regs.TX_V50),
-    OK = mirrorMapping(coils_regs.OK, dig_inputs_regs.OK),
-    NOK = mirrorMapping(coils_regs.NOK, dig_inputs_regs.NOK),
-    HANDSHAKE = mirrorMapping(coils_regs.HANDSHAKE, dig_inputs_regs.HANDSHAKE),
-    RX_ALC = mirrorMapping(coils_regs.RX_ALC, dig_inputs_regs.TX_ALC),
-    RX_V90 = mirrorMapping(coils_regs.RX_V90, dig_inputs_regs.TX_V90),
-    RX_V92 = mirrorMapping(coils_regs.RX_V92, dig_inputs_regs.TX_V92),
+CLP_Mirror = CLPMirrors(
+    TX_V20 = mirrorMapping(holding_regs.TX_V20, holding_regs.RX_V20),
+    TX_V71 = mirrorMapping(holding_regs.TX_V71, holding_regs.RX_V71),
+    TX_V74 = mirrorMapping(holding_regs.TX_V74, holding_regs.RX_V74),
+    TX_V75 = mirrorMapping(holding_regs.TX_V75, holding_regs.RX_V75),
+    TX_V76 = mirrorMapping(holding_regs.TX_V76, holding_regs.RX_V76),
+    TX_V77 = mirrorMapping(holding_regs.TX_V77, holding_regs.RX_V77),
+    TX_V78 = mirrorMapping(holding_regs.TX_V78, holding_regs.RX_V78),
+    TX_V79 = mirrorMapping(holding_regs.TX_V79, holding_regs.RX_V79),
+    TX_V80 = mirrorMapping(holding_regs.TX_V80, holding_regs.RX_V80),
+    TX_V81 = mirrorMapping(holding_regs.TX_V81, holding_regs.RX_V81),
+    TX_V82 = mirrorMapping(holding_regs.TX_V82, holding_regs.RX_V82),
+    TX_V83 = mirrorMapping(holding_regs.TX_V83, holding_regs.RX_V83),
+    TX_TCPRTMO = mirrorMapping(holding_regs.TX_TCPRTMO, holding_regs.RX_TCPRTMO),
+    TX_TCPCYCLE = mirrorMapping(holding_regs.TX_TCPCYCLE, holding_regs.RX_TCPCYCLE),
+    TX_TCPMBTMO = mirrorMapping(holding_regs.TX_TCPMBTMO, holding_regs.RX_TCPMBTMO),
+    TX_TCPKATMO = mirrorMapping(holding_regs.TX_TCPKATMO, holding_regs.RX_TCPKATMO),
 )
 
 class Param_Vars(NamedTuple):

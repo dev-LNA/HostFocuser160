@@ -27,6 +27,7 @@ import src.core.exceptions as AlpacaExceptions
 from src.utils.constants import constants, MotorModels, ReachStatus, MotorParamsIdx, ServerCommands, MotorValidCommands, FocuserHardwareStatus, FocuserSignalsNames, TimeDelays
 from src.utils.constants import ServerMessageValidation as SVal
 from src.utils.constants import ServerJsonKeys as SJson
+from src.utils.modbus_regs import PackCMDFlags, holding_regs, CLP_Mirror
 from src.utils.signals import PropertySignals, MultiSignal
 from src.utils.motor import Motor
 from src.interface.zmq_comm import zmqComm, PubControl
@@ -213,7 +214,7 @@ class Server(QObject):
 
 
             
-            self.test_var = 14.2
+            self.test_var = 20
 
 #region  ========== PROPERTIES ========== # 
 
@@ -337,71 +338,30 @@ class Server(QObject):
 
 #region ========== METHODS ========== # 
     def teste(self):
-        # self.motor._alarm = not self.motor._alarm
-        # self.motor.driver.sendCommand("POL=0")
-        # self.motor.driver.sendCommand("SR1=1")
+        # self.motor.driver.mb_server.send_command(PackCMDFlags.TX_GS21)
+        # self.motor.driver.param_max_pos(self.test_var)
 
-        # self.motor.set_param(MotorParamsIdx.BACKLASH, self.test_var)
-        # self.test_var += 2
+        # self.motor.driver.mb_server.write_param(holding_regs.TX_V20, self.test_var)
+        # print(self.test_var)
 
-        # self.motor.set_param(MotorParamsIdx.MOTOR_IP, "192.168.1.100")
-        # self.test_var += 112.3
-        # self.status[SJson.POSITION] = self.test_var
-        # self.motor.signals.position.emit(self.test_var)
+        # r = (holding_regs.TX_V71, holding_regs.TX_V20, holding_regs.TX_V74)
+        # v = (self.test_var, self.test_var + 15, self.test_var - 1)
+        r = tuple()
+        v = tuple()
+        temp = self.test_var
+        for key, reg in CLP_Mirror.items():
+            r += (reg.ORIGIN, )
+            v += (temp, )
+            temp+=1
+        try:
+            self.motor.driver.mb_server.write_param(r, v)
+        except Exception as e:
+            print(str(e))
+        self.test_var += 1152
+        if self.test_var > 65000:
+            self.test_var = 0
 
-        stat = 43011
-        msg = "Flags ativadas: "
-        if self.motor:
-            msg += self.motor.driver._extract_flags_info(stat, MotorProgramStatus)
-        # for flag in MotorProgramStatus:
-        #     if stat & flag:
-        #         stat = stat - flag
-        #         if stat > 0:
-        #             msg += f"{flag.name} & "
-        #         else:
-        #             msg += f"{flag.name}"
-
-        print(msg)
-
-
-
-        msg_error = ''
-        alc = 4548
-        # alc = MotorAlarmInfo(alc_int)
-
-
-
-        sastat_alarm_int = stat & motor_program_errors_mask
-        # sastat_alarm = MotorProgramStatus(sastat_alarm_int)
-
-        # if alc > 0:
-        #     msg_error += 'Alarms ALC: '
-        #     for error in MotorAlarmInfo:
-        #         if alc & error:
-        #             alc = alc - error
-        #             if alc > 0:
-        #                 msg_error += f"{error.name} & "
-        #             else:
-        #                 msg_error += f"{error.name}"
-
-        # if sastat_alarm_int > 0:
-        #     msg_error += f"\nAlarms SASTAT: "
-        #     for error in MotorProgramStatus:
-        #         if sastat_alarm_int & error:
-        #             sastat_alarm_int = sastat_alarm_int - error
-        #             if sastat_alarm_int > 0:
-        #                 msg_error += f"{error.name} & "
-        #             else:
-        #                 msg_error += f"{error.name}"
-        if self.motor:
-            if alc > 0:
-                msg_error += 'Alarms ALC: '
-                msg_error += self.motor.driver._extract_flags_info(alc, MotorAlarmInfo)
-            if sastat_alarm_int > 0:
-                msg_error += f"\nAlarms SASTAT: "
-                msg_error += self.motor.driver._extract_flags_info(sastat_alarm_int, MotorProgramStatus)
-
-        print(msg_error)
+        
 
     def _start_server(self):
         """Starts server communication

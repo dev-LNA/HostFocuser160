@@ -5,13 +5,14 @@ from src.utils.constants import CommandTimeout, TimeoutState, TimeDelays
 from src.interface.modbus_data_bank import MB_DataBank
 from src.utils.modbus_regs import (dig_inputs_regs, 
                                     coils_regs, RegsInfo, 
-                                    RegType, CLP_Owned, 
+                                    RegType, CLP_Mirror, 
                                     TwosComplementReg,
                                     param_vars,
                                     DB_size, 
                                     holding_regs,
                                     PackCMDFlags,
-                                    PackStatusFlags)
+                                    PackStatusFlags,
+                                    mirrorMapping)
 
 
 from PyQt6.QtCore import pyqtSignal, QObject
@@ -127,10 +128,6 @@ class IAGModbusServer(mbServer):
         # self.host = host
         # self.port = port
         
-        self.db_shadow = DataBank(coils_size=data_bank.coils_size, coils_default_value=data_bank.coils_default_value,               #|      
-                                d_inputs_size=data_bank.d_inputs_size, d_inputs_default_value=data_bank.d_inputs_default_value,     #|  Config value for the modbus data bank.
-                                h_regs_size=data_bank.h_regs_size, h_regs_default_value=data_bank.h_regs_default_value,             #|  
-                                i_regs_size=data_bank.i_regs_size, i_regs_default_value=data_bank.i_regs_default_value)  
 
         self.stop_server = False
         
@@ -157,125 +154,6 @@ class IAGModbusServer(mbServer):
             self._handshake = value
             
 
-    @property
-    def reading(self) -> bool:
-        """Returns if the ModbusServer is currently reading data from the CLP
-        Also locks the writting process while the ModbusServer is reading data to avoid writting data that is being read by the CLP"""
-        return self._reading
-    @reading.setter
-    def reading(self, value: bool):
-
-
-        if value == False:
-            self._reading = False
-            self.data_bank.set_discrete_inputs(dig_inputs_regs.TX_READING.ADDRESS, [False])  # Informs the CLP that the Driver is not reading data from the modbus coils
-            
-            # If the reading process is being set to false it is important to check if the lock
-            # was acquired by the reading process or by the writting process, if the lock was acquired by the reading process it must be released to
-            # allow the writting process to write data to the CLP
-            if self.RW_lock.locked() and not self.writting:
-                self.RW_lock.release()
-
-        elif value == True:
-            
-            # Cannot start reading if the writting process is locked to avoid reading data that is being writted to the CLP
-            if self.RW_lock.locked():
-                # guarantees that _reading is set to False if the writting process is locked
-                self._reading = False
-                self.data_bank.set_discrete_inputs(dig_inputs_regs.TX_READING.ADDRESS, [False])  # Informs the CLP that the Driver is not reading data from the mod
-                return            
-
-            else:
-                # # If the CLP writting process is not happening the reading mode can be set
-                # # waits up to 2 seconds the CLP writting
-                # t = time.time()
-                # t_over = False
-                # while self.CLP_writting:
-                #     if time.time() - t > 2:
-                #         t_over = True
-
-                # if t_over == False:
-                #     # Sets server reading mode
-                self._reading = True
-                self.data_bank.set_discrete_inputs(dig_inputs_regs.TX_READING.ADDRESS, [True])   # Informs the CLP that the Driver is reading some data from the modbus coils
-                self.RW_lock.acquire()
-
-            
-    @property
-    def writting(self) -> bool:
-        """Returns if the ModbusServer is currently writting data to the CLP
-        Also locks the reading process while the ModbusServer is writting data to avoid reading data that is being writted to the CLP"""
-        return self._writting
-    @writting.setter
-    def writting(self, value: bool):
-
-
-        if value == False:
-            self._writting = False
-            self.data_bank.set_discrete_inputs(dig_inputs_regs.TX_WRITTING.ADDRESS, [False])  # Informs the CLP that the Driver is not writting data to the modbus discrete inputs
-            
-            # If the writting process is being set to false it is important to check if the lock
-            # was acquired by the writting process or by the reading process, if the lock was acquired by the writting process it must be released to
-            # allow the reading process to read data from the CLP
-            if self.RW_lock.locked() and not self.reading:
-                self.RW_lock.release()
-
-        elif value == True:
-            
-            # Cannot start reading if the writting process is locked to avoid reading data that is being writted to the CLP
-            if self.RW_lock.locked():
-                # guarantees that _writting is set to False if the writting process is locked
-                self._writting = False
-                self.data_bank.set_discrete_inputs(dig_inputs_regs.TX_WRITTING.ADDRESS, [False])  # Informs the CLP that the Driver is not writting data to the modbus discrete inputs
-                return            
-
-            else:
-                # If the CLP reading process is not happening the weritting mode can be set
-                # waits up to 2 seconds the CLP reading
-                t = time.time()
-                t_over = False
-                while self.CLP_reading:
-                    if time.time() - t > 2:
-                        t_over = True
-                if t_over == False:
-                    # sets server writting mode
-
-                    self._writting = True
-                    self.data_bank.set_discrete_inputs(dig_inputs_regs.TX_WRITTING.ADDRESS, [True])   # Informs the CLP that the Driver is writting some data to the modbus discrete inputs
-                    self.RW_lock.acquire()
-
-    @property
-    def CLP_writting(self) -> bool | None:
-        """Returns if the CLP is writting data to the ModbusServer by checking 
-        the status of the 'RX_WRITTING' coil register that is set by the CLP when it is writting data"""
-        val = self.data_bank.get_coils(coils_regs.RX_WRITTING.ADDRESS, coils_regs.RX_WRITTING.SIZE)
-        if val:
-            return val[0]
-    
-    @property
-    def CLP_reading(self) -> bool | None:
-        """Returns if the CLP is reading data from the ModbusServer by checking 
-        the status of the 'RX_READING' coil register that is set by the CLP when it is reading data"""
-        val = self.data_bank.get_coils(coils_regs.RX_READING.ADDRESS, coils_regs.RX_READING.SIZE)
-        if val:
-            return val[0]
-
-    @property
-    def CLP_OK(self) -> bool | None:
-        """Returns the status of the CLP OK coil register"""
-        val = self.data_bank.get_coils(coils_regs.OK.ADDRESS, coils_regs.OK.SIZE)
-        if val:
-            return val[0]
-        # return self.db_shadow.get_coils(coils_regs.OK.ADDRESS, coils_regs.OK.SIZE)[0]
-
-    @property
-    def CLP_NOK(self) -> bool| None:
-        """Returns the status of the CLP NOK coil register"""
-        val = self.data_bank.get_coils(coils_regs.NOK.ADDRESS, coils_regs.NOK.SIZE)
-        if val:
-            return val[0]
-        # return self.db_shadow.get_coils(coils_regs.NOK.ADDRESS, coils_regs.NOK.SIZE)[0]
-
     def run(self):
         """Loop that operates the modbus server"""
         while not self.stop_server:
@@ -284,7 +162,7 @@ class IAGModbusServer(mbServer):
             # Checks if a HANDSHAKE was received and if a timeout occured
             self._check_handshake()
 
-            self._mirror_clp_owned_coils()
+            # self._mirror_clp_owned_coils()
 
             # To be operational the handshake must be valid
             if self.handshake: #and self._params_initialized:
@@ -302,13 +180,10 @@ class IAGModbusServer(mbServer):
                 # if not self.CLP_writting:
                 # self._mirror_clp_owned_coils()
 
-                if not self.CLP_writting:
-                    if self._start_reading_data():
-                        for reg in coils_regs:
-                            if not self._compare_regs(reg):
-                                current_reg_val = self._conv_reg_to_value(reg, self.data_bank)
-                                self.db_shadow.set_coils(reg.ADDRESS, self._conv_num_bits(current_reg_val, reg.SIZE))
-                    self._stop_reading_data()
+                # for reg in coils_regs:
+                #     if not self._compare_regs(reg):
+                #         current_reg_val = self._conv_reg_to_value(reg, self.data_bank)
+                pass
                                     
 
         print("Stopping server")
@@ -318,9 +193,6 @@ class IAGModbusServer(mbServer):
 
     def _check_handshake(self):
         """Checks if a handshake was received from the CLP and if a timeout occured"""
-        # Mudei o handshake para ser feito pelo bit de reading, mas o handshake continua sendo 
-        # atualizado da mesma forma que antes, somente o valor que vai para a função de timeout
-        # que vai ser do bit de reading
         packstatus = self.data_bank.get_holding_registers(holding_regs.RX_PACKSTATUS.ADDRESS, holding_regs.RX_PACKSTATUS.SIZE)
         if packstatus:
             handshake_val = bool(packstatus[0] & PackStatusFlags.HANDSHAKE)
@@ -334,90 +206,24 @@ class IAGModbusServer(mbServer):
 
 
     def _mirror_clp_owned_coils(self):
-        for reg in CLP_Owned:
-            current_reg_value = self.data_bank.get_coils(reg.ORIGIN.ADDRESS, reg.ORIGIN.SIZE)
-            # self.data_bank.set_discrete_inputs(reg.RESPONSE.ADDRESS, current_reg_value)
-            if current_reg_value:
-                match reg.ORIGIN.SIZE:
-                    case 32:
-                        # current_reg_value.reverse()
-                        self.data_bank.set_discrete_inputs(reg.RESPONSE.ADDRESS, current_reg_value[16:])     #|  If the register is 32 bits the higher bits must be saved to the first 16 bits of the address   
-                        self.data_bank.set_discrete_inputs(reg.RESPONSE.ADDRESS+16, current_reg_value[:16]) 
-                    case _:            
-                        self.data_bank.set_discrete_inputs(reg.RESPONSE.ADDRESS, current_reg_value)
+        pass
+        # for reg in CLP_Mirror:
+        #     current_reg_value = self.data_bank.get_coils(reg.ORIGIN.ADDRESS, reg.ORIGIN.SIZE)
+        #     # self.data_bank.set_discrete_inputs(reg.RESPONSE.ADDRESS, current_reg_value)
+        #     if current_reg_value:
+        #         match reg.ORIGIN.SIZE:
+        #             case 32:
+        #                 # current_reg_value.reverse()
+        #                 self.data_bank.set_discrete_inputs(reg.RESPONSE.ADDRESS, current_reg_value[16:])     #|  If the register is 32 bits the higher bits must be saved to the first 16 bits of the address   
+        #                 self.data_bank.set_discrete_inputs(reg.RESPONSE.ADDRESS+16, current_reg_value[:16]) 
+        #             case _:            
+        #                 self.data_bank.set_discrete_inputs(reg.RESPONSE.ADDRESS, current_reg_value)
 
-
-
-    def _check_clp_owned_coils(self, reg: RegsInfo):
-
-        # If the register is owned by the CLP, the python must mirror the value to the CLP response register
-        # so that the CLP can verify that the information was received by the python
-        for clp_owned_reg in CLP_Owned:
-            if reg.TAG == clp_owned_reg.ORIGIN:
-
-                print("**********************************************************")
-                bit_list = self.data_bank.get_coils(reg.ADDRESS, reg.SIZE)
-                if bit_list:
-                    bit_string = "".join([str(int(b)) for b in bit_list])
-                    print(f"Register {reg.TAG} received value {bit_string}")
-                    print("**********************************************************")
-
-                    a = self._conv_reg_to_value(reg, self.data_bank)
-                    b = self._conv_reg_to_value(reg, self.db_shadow)
-                    print("--------------------------------------------------------------------")
-                    print(f"Comparing register {reg.TAG} -> DB value: {a} | Shadow value: {b}")
-
-                    resp_reg = clp_owned_reg.RESPONSE
-                    num = self._conv_reg_to_value(reg, self.data_bank)
-
-                    self._changed_coils.add( (resp_reg, num) )   # Adds the changed register to the set of changed coils
-
-                    if not self.CLP_writting:    
-                        self.db_shadow.set_coils(reg.ADDRESS, self.data_bank.get_coils(reg.ADDRESS, reg.SIZE))   # Saves the updated value in the shadow register
-
-       
-    def wait_confirmation(self, reg: RegsInfo) -> bool:
-
-        for resp_reg in coils_regs:
-            if resp_reg.TAG[1:] == reg.TAG[1:]:
-                print(f"Enviado comando para DI {reg.TAG} e a resposta será dada pela coil {resp_reg.TAG}")
-                break
-            else:
-                resp_reg = None
-
-        if resp_reg is None:
-            print(f"Não foi encontrado registrador de resposta para DI {reg.TAG}")
-        
-        # while self.data_bank.get_coils(resp_reg.ADDRESS, resp_reg.SIZE) != self.data_bank.get_discrete_inputs(reg.ADDRESS, reg.SIZE):
-        #     print(f"Waiting confirmation for register {reg.TAG}")
-        #     time.sleep(0.5)
-
-
-        return True
-
-    def _compare_regs(self, reg: RegsInfo) -> bool:
-        """Compares the register value from the Data Bank and 
-        the Shadow Data Bank, if the register is equal returns true.
-
-        :param reg: Register to be compared
-        :type reg: RegsInfo
-        :return: True if registers are equal / False if registers are different
-        :rtype: bool
-        """
-
-        # For registers with more than 1 bit the comparison is realized based on the converted value
-        if reg.SIZE == 1:
-            return self.data_bank.get_coils(reg.ADDRESS, reg.SIZE) == self.db_shadow.get_coils(reg.ADDRESS, reg.SIZE)   
-        
-        return self._conv_reg_to_value(reg, self.data_bank) == self._conv_reg_to_value(reg, self.db_shadow)
-        
 
     def _conv_reg_to_value(self, reg: RegsInfo, db: DataBank) -> int:
 
 
         if reg.TYPE is RegType.COIL:
-
-
 
             bits = db.get_coils(reg.ADDRESS, reg.SIZE)
             if bits:
@@ -474,40 +280,43 @@ class IAGModbusServer(mbServer):
     # def _conv_bits_num(self, )
 
 
-    def send_command(self, register: RegsInfo) -> str:
-        """Sends a command to the CLP by setting the corresponding coil register, then it starts a timer to wait for the CLP response. 
-        If the CLP sets the OK coil to True before the timeout limit, the command is considered successful and the function returns True, otherwise it returns False.
+    def send_command(self, command: PackCMDFlags) -> str:
+        """
+        Sends a command to the CLP by setting the corresponding bit in PACKCMDS register, then it starts a timer to wait for the CLP response.
+        If the CLP sets the OK bit in PACKOK register before the timeout limit, the command is considered successful and the function returns "OK", otherwise it returns "NOK".
 
         Args:
-            register (RegsInfo): Register that represents the command to be sent, it must be a discrete input register that represents a command (ex: 'TX_GS21')"""
+            command (PackCMDFlags): Command to be sent, it must be a flag from the PackCMDFlags enum (ex: PackCMDFlags.TX_GS21)"""
 
-        print(f"[*] Sending command {register.TAG.upper()} to CLP")
-        # self._start_writting_data()
-        resp = self._write({(register, True)})   # Writes the command to the CLP
-        self._stop_writting_data()
-        if resp == "OK":
-            # If the command was successfully sent to the CLP, the Driver will wait for the CLP response
-            print(f"Command {register.TAG.upper()} sent, waiting confirmation...")
+        print(f"[*] Sending command {str(command.name).upper()} to CLP")
 
-            # Tries to wait for the CLP response until the timeout limit is reached, if the CLP sets the OK coil to True
-            #  before the timeout limit, the command is considered successful and the function returns "OK", otherwise it returns "NOK".
-            # If the timeout limit is reached without receiving any response from the CLP, the handling function for command timeout is
-            #  called and the function returns "NOK"
-            cmd_timer = time.time()
-            while (time.time() - cmd_timer) < Config.cmd_timeout:
-                time.sleep(TimeDelays.WAIT_CLP_RESPONSE)                 # When no time is applied the program has a peak of cpu usage when waiting 
-                if self.CLP_OK:
-                    self._handle_command_OK(register)
-                    return "OK"
-                elif self.CLP_NOK:
-                    self._handle_command_NOK(register)
-                    return "NOK"
+        self.data_bank.set_holding_registers(holding_regs.TX_PACKCMDS.ADDRESS, [command.value])   # Writes the command to the CLP
+
+
+        # resp = self._write({(register, True)})   # Writes the command to the CLP
+        # if resp == "OK":
+        #     # If the command was successfully sent to the CLP, the Driver will wait for the CLP response
+        #     print(f"Command {register.TAG.upper()} sent, waiting confirmation...")
+
+        #     # Tries to wait for the CLP response until the timeout limit is reached, if the CLP sets the OK coil to True
+        #     #  before the timeout limit, the command is considered successful and the function returns "OK", otherwise it returns "NOK".
+        #     # If the timeout limit is reached without receiving any response from the CLP, the handling function for command timeout is
+        #     #  called and the function returns "NOK"
+        #     cmd_timer = time.time()
+        #     while (time.time() - cmd_timer) < Config.cmd_timeout:
+        #         time.sleep(TimeDelays.WAIT_CLP_RESPONSE)                 # When no time is applied the program has a peak of cpu usage when waiting 
+        #         if self.CLP_OK:
+        #             self._handle_command_OK(register)
+        #             return "OK"
+        #         elif self.CLP_NOK:
+        #             self._handle_command_NOK(register)
+        #             return "NOK"
             
-            self._handle_command_timeout(register)
-            return "NOK"
+        #     self._handle_command_timeout(register)
+        #     return "NOK"
 
-        else:
-            return "NOK"
+        # else:
+        #     return "NOK"
 
 
     def _handle_command_timeout(self, register: RegsInfo):
@@ -534,129 +343,189 @@ class IAGModbusServer(mbServer):
 
 
     def write_param(self, reg: RegsInfo | tuple[RegsInfo, ...], value: int | bool | tuple[int, ...] | tuple[bool, ...] | tuple[str, ...]) -> str | None:
-        
+        """
+        Writes a parameter to the CLP by setting the corresponding value to the parameter holding register.
+        Writting sequence:
+            - Server writes parameter(s) value(s) to the corresponding holding register(s);
+            - Server waits for the CLP to mirror the parameter(s) to its mirror holding register to guarantee that the 
+                value was correctly received by the CLP;
+            - If the value is mirrored correctly the function sends the command flag 'TX_SET' to 
+                the CLP to inform that the parameter was successfully sent and mirrored;
+            - Server waits for the CLP to respond with 'RX_SET_OK', if the CLP responds with 'RX_SET_OK' the 
+                server must clear 'TX_SET' and the function returns "OK", otherwise it returns "NOK".
+        """
+
         params = set()
         if (type(reg) is tuple and type(value) is not tuple) or (type(reg) is not tuple and type(value) is tuple):
             raise ValueError(f"[Writting parameter] Both 'reg' and 'value' must be tuples when writting multiple parameters")
 
         if type(reg) is tuple and type(value) is tuple:
             for r, v in zip(reg, value):
-                if r.TYPE != RegType.DISCRETE_INPUT:
+                if r.TYPE != RegType.HOLDING_REGISTER:
                     raise ValueError(f"Cannot write to register {r.TAG} because it is not a discrete input register.")
                 params.add( (r, v) )
         elif type(reg) is RegsInfo:
-            if reg.TYPE != RegType.DISCRETE_INPUT:
+            if reg.TYPE != RegType.HOLDING_REGISTER:
                 raise ValueError(f"Cannot write to register {reg.TAG} because it is not a discrete input register.")
             params.add( (reg, value) )
-
-
 
 
         # self._write({(reg, value)})   # Writes the command to the CLP
         # self._start_writting_data()
         self._write(params)   # Writes the command to the CLP
-        self._stop_writting_data()
-    
-        self.mb_comm.task_progress.emit(0)  # Just to update the progress bar in the GUI, it does not represent the actual writting progress
-        progress = 0
+
         time.sleep(TimeDelays.WAIT_CLP_PROCESS)  #0.2   # Time for CLP to process information
 
-        for tries in range(2):
-            # # self._start_writting_data()
-            # Sends a parameter request command to the CLP to inform that the Driver will write a parameter to the CLP
-            resp = self.send_command(dig_inputs_regs.TX_PR)   
-            # self._stop_writting_data()
+        mirror_check:bool = False
+        t_start = time.time()
+        while not mirror_check:
+            count = 0
+            msg = 'Failed to confirm parameters: '
+            print('-' * 50)
+            for param in params:
+                r:RegsInfo = param[0]
+                v = param[1]
+                mirror_reg:mirrorMapping = CLP_Mirror[r.TAG]
+                resp = self.data_bank.get_holding_registers(mirror_reg.RESPONSE.ADDRESS, mirror_reg.RESPONSE.SIZE)
+                if resp:
+                    if (r.SIZE==1):                # If register has only one word than no conversion is needed
+                        resp = resp[0]
+                        print(f"Param: {r.DESCRIPTION} | Sent: {v} | Received: {resp}")
+                    else:
+                    # If the register has more than one word, the value must sent as [LSW, MSW]
+                    # considering LSW the first register in the mapping address and MSW the last register in the mapping address
+                        lsw = resp[0]
+                        msw = resp[1]
+                        resp = 0
+                        resp += lsw
+                        resp += (msw << 16) & 0xFFF000 
+                        print(f"Param: {r.DESCRIPTION} | Sent: {v} | Received: {resp}")
 
-            if resp == "OK":
+                    if v == resp:
+                        count +=1
+                    else:
+                        msg += r.DESCRIPTION + ' | '
 
-                try:
+                    
+            if count == len(params):
+                mirror_check = True
+            else:
+                if time.time() - t_start > 3:
+                    if msg != 'Failed to confirm parameters: ':
+                        msg = msg[:-3]
+                    raise TimeoutError(msg)
+        
+        print('-' * 50)
 
-                    print(f"Parameter request operation confirmed by CLP")
-                    # Must confirm that the CLP mirrored the parameters values correctly
+        # Setting SET
+        val = self.data_bank.get_holding_registers(holding_regs.TX_PACKCMDS.ADDRESS, 1)
+        if val:
+            val = val[0] | PackCMDFlags.TX_SET
+            self.data_bank.set_holding_registers(holding_regs.TX_PACKCMDS.ADDRESS, [val])
+        
+        # Checking for SET OK
+        ok: bool = False
+        t_start = time.time()
+        while time.time() - t_start < 1 and not ok:
+            val = self.data_bank.get_holding_registers(holding_regs.RX_PACKOK.ADDRESS, 1)
+            if val:
+                ok = bool(val[0] & PackCMDFlags.TX_SET)
+        
+        # Must clear SET 
+        val = self.data_bank.get_holding_registers(holding_regs.TX_PACKCMDS.ADDRESS, 1)
+        if val:
+            val = val[0] & (not PackCMDFlags.TX_SET)
+            self.data_bank.set_holding_registers(holding_regs.TX_PACKCMDS.ADDRESS, [val])
 
-                    if self._start_reading_data():  # Informs CLP that the Driver is reading some data from the modbus coils
+        if ok:
+            print("*** OK")
+            return "OK"
+        else:
+            print("--- NOK")
+            return "NOK"
 
-                        p_dict = param_vars._asdict()
-                        for p in params:
-                            # if p[0].TAG in p_dict:
-                            time.sleep(TimeDelays.WAIT_CLP_MIRROR)     # Time for CLP to mirror the value to the response register
-                            progress += 1    
-                            self.mb_comm.task_progress.emit(int((progress / len(params)) * 100))  # Just to update the progress bar in the GUI, it does not represent the actual writting progress   
+
+
+
     
-                            if p[0] in p_dict:
-                                
-                                print(f"Waiting for CLP to mirror the value of parameter {p[0].TAG} to the response register {p_dict[p[0].TAG].RESPONSE.TAG}...")
+        # self.mb_comm.task_progress.emit(0)  # Just to update the progress bar in the GUI, it does not represent the actual writting progress
+        # progress = 0
+        # time.sleep(TimeDelays.WAIT_CLP_PROCESS)  #0.2   # Time for CLP to process information
 
-                                t = time.time()
-                                t_over = False
-                                mirrored = False
-                                while mirrored == False and t_over == False:
-                                    print(f"COIL mirrored: {self._conv_reg_to_value(p_dict[p[0].TAG].RESPONSE, self.data_bank)}")
-                                    print(f"DI SENT: {self._conv_reg_to_value(p[0], self.data_bank)}")    
+        # for tries in range(2):
+        #     # # self._start_writting_data()
+        #     # Sends a parameter request command to the CLP to inform that the Driver will write a parameter to the CLP
+        #     # resp = self.send_command(dig_inputs_regs.TX_PR)   
+        #     # self._stop_writting_data()
 
-                                    mirrored = self.data_bank.get_coils(p_dict[p[0].TAG].RESPONSE.ADDRESS, p_dict[p[0].TAG].RESPONSE.SIZE) == self.data_bank.get_discrete_inputs(p[0].ADDRESS, p[0].SIZE)
-                                    if mirrored:
-                                        print(f"[+] Parameter {p[0].TAG} updated with value {value} by CLP")
-                                    else:
-                                        # self._stop_reading_data()
+        #     resp = "OK"  # For now the command is not being sent to the CLP, so it is assumed that the command was successful
+        #     if resp == "OK":
 
-                                        # self.send_command(dig_inputs_regs.TX_PR)
+        #         try:
 
-                                        # self._start_reading_data()
+        #             print(f"Parameter request operation confirmed by CLP")
+        #             # Must confirm that the CLP mirrored the parameters values correctly
 
-                                        time.sleep(TimeDelays.WAIT_CLP_MIRROR)
-                                        if time.time() - t > 3:
-                                            t_over = True
-                                        
-                                            print(f"[-] Could not update parameter {p[0].TAG}, timeout checking mirror value")
-                                            # print(f"Sent value {self.data_bank.get_discrete_inputs(p[0].ADDRESS, p[0].SIZE)[0]} ======> Mirror Coil Value  {self.data_bank.get_coils(p_dict[p[0].TAG].RESPONSE.ADDRESS, p_dict[p[0].TAG].RESPONSE.SIZE)[0]}")
-                                            raise TimeoutError(f"[§]Timeout while updating paramater {p[0].TAG}")
+
+        #             p_dict = param_vars._asdict()
+        #             for p in params:
+        #                 # if p[0].TAG in p_dict:
+        #                 time.sleep(TimeDelays.WAIT_CLP_MIRROR)     # Time for CLP to mirror the value to the response register
+        #                 progress += 1    
+        #                 self.mb_comm.task_progress.emit(int((progress / len(params)) * 100))  # Just to update the progress bar in the GUI, it does not represent the actual writting progress   
+
+        #                 if p[0] in p_dict:
+                            
+        #                     print(f"Waiting for CLP to mirror the value of parameter {p[0].TAG} to the response register {p_dict[p[0].TAG].RESPONSE.TAG}...")
+
+        #                     t = time.time()
+        #                     t_over = False
+        #                     mirrored = False
+        #                     while mirrored == False and t_over == False:
+        #                         print(f"COIL mirrored: {self._conv_reg_to_value(p_dict[p[0].TAG].RESPONSE, self.data_bank)}")
+        #                         print(f"DI SENT: {self._conv_reg_to_value(p[0], self.data_bank)}")    
+
+        #                         mirrored = self.data_bank.get_coils(p_dict[p[0].TAG].RESPONSE.ADDRESS, p_dict[p[0].TAG].RESPONSE.SIZE) == self.data_bank.get_discrete_inputs(p[0].ADDRESS, p[0].SIZE)
+        #                         if mirrored:
+        #                             print(f"[+] Parameter {p[0].TAG} updated with value {value} by CLP")
+        #                         else:
+        #                             # self._stop_reading_data()
+
+        #                             # self.send_command(dig_inputs_regs.TX_PR)
+
+        #                             # self._start_reading_data()
+
+        #                             time.sleep(TimeDelays.WAIT_CLP_MIRROR)
+        #                             if time.time() - t > 3:
+        #                                 t_over = True
+                                    
+        #                                 print(f"[-] Could not update parameter {p[0].TAG}, timeout checking mirror value")
+        #                                 # print(f"Sent value {self.data_bank.get_discrete_inputs(p[0].ADDRESS, p[0].SIZE)[0]} ======> Mirror Coil Value  {self.data_bank.get_coils(p_dict[p[0].TAG].RESPONSE.ADDRESS, p_dict[p[0].TAG].RESPONSE.SIZE)[0]}")
+        #                                 raise TimeoutError(f"[§]Timeout while updating paramater {p[0].TAG}")
        
 
-                    self._stop_reading_data() # Informs CLP that the Driver finished reading data from the modbus coils
-                    return "OK"
+        #             return "OK"
                 
-                except Exception as e:
-                    print(e)
-                    self._stop_reading_data() # Informs CLP that the Driver finished reading data from the modbus coils
-                    return "NOK"
+        #         except Exception as e:
+        #             print(e)
+        #             return "NOK"
                     
 
-            elif resp == "NOK":
-                print(f"CLP responded with NOK for parameter request operation. Retrying...")
-                time.sleep(0.2)
+        #     elif resp == "NOK":
+        #         print(f"CLP responded with NOK for parameter request operation. Retrying...")
+        #         time.sleep(0.2)
         
-        print(f"Failed to write parameter after {tries} tries. CLP did not confirm the operation.")
-        return "NOK"
+        # print(f"Failed to write parameter after {tries} tries. CLP did not confirm the operation.")
+        # return "NOK"
         
 
 
     def _write(self, reg_list: set[tuple[RegsInfo, int | bool]]) -> str:
-            """ Writes a value to a discrete input 
-            The writting process to a digital input must always follow the same process:
-            - First it must be checked if the CLP is reading data, the Driver will try 5 times to 
-            wait for the CLP to finish its reading.
-            - Once the CLP ends its previous reading the Driver will set its WRITTING register to 
-            inform the CLP that the Driver is writting some data to the modbus discrete inputs
-            - When the Driver ends the writting the WRITTING register must be cleared"""
+            """ Writes a value to a holding register"""
+
             try:
-                # The application can only write new data if the CLP is not reading
                 # A configurable timeout is implemented to avoid infinite loops
                 t = time.time()
-                write_timeout = False
-                # while self.data_bank.get_coils(coils_regs.RX_READING.ADDRESS, coils_regs.RX_READING.SIZE)[0]:
-                print("Waiting for CLP to finish reading before writting...")
-                while self.CLP_reading:
-                    time.sleep(TimeDelays.WAIT_CLP_PROCESS)
-                    if time.time() - t > Config.write_timeout:
-                        # write_timeout = True
-                        raise TimeoutError(f"Timeout trying to write parameter(s) to CLP. CLP was reading for more than {Config.write_timeout} seconds")
-
-                # If the CLP is not reading, the writting process can start
-                # if not write_timeout:            
-                    # self.data_bank.set_discrete_inputs(dig_inputs_regs.TX_WRITTING.ADDRESS, [True]) # Informs CLP that the Driver is writting some data to the modbus discrete inputs
-                # # self._start_writting_data()  # Informs CLP that the Driver is writting some data to the modbus discrete inputs
-
 
                 self.mb_comm.task_progress.emit(0)  # Just to update the progress bar in the GUI, it does not represent the actual writting progress
                 progress = 0
@@ -664,44 +533,22 @@ class IAGModbusServer(mbServer):
 
                 # Repeats the writting process for every register in the 'reg_list'
                 for reg, value in reg_list:
-                    # When the register size is 1 the value must be 0, 1 or boolean
-                    if (reg.SIZE==1 and not ( ( (value==0) or (value==1) or type(value) is bool ) )):
-                        raise ValueError(f"Cannot write {value} to {reg.TYPE.name}:{reg.ADDRESS}. This Register supports only {reg.SIZE} bit(s).")
-                    
-                    # When a boolean was sent to a register that has more bits
-                    if ( type(value) is bool ) and ( reg.SIZE != 1):
-                        raise ValueError(f"Cannot write a boolean to {reg.TYPE.name}:{reg.ADDRESS}. This Register has {reg.SIZE} bits")
-
                     # time.sleep(0.1)
                     progress += 1
                     self.mb_comm.task_progress.emit(int((progress / len_reg_list) * 100))  # Update the progress bar in the GUI
 
                     # print(f"Trying to write value {value} to {reg.TAG} -> {time.time() - t} seconds [{write_timeout}]")
-                    if reg.TYPE is RegType.DISCRETE_INPUT:
+                    if reg.TYPE is RegType.HOLDING_REGISTER:
 
                         # time.sleep(0.2)
-                        if (type(value) is bool) or (reg.SIZE==1 and ( (value==0) or (value==1) ) ):                # If the value is a bool or the register has only one bit than no conversion is needed
-                            self.data_bank.set_discrete_inputs(reg.ADDRESS, [value])
-                        else:                                                                                       #| If the register has multiple bits than the value must be converted
-                            num_bits = self._conv_num_bits(value, reg.SIZE)                                         #| The conversion already considers negative values as two's complement
-                            if reg.SIZE == 8:                                                                       
-                                self.data_bank.set_discrete_inputs(reg.ADDRESS, num_bits)          # If the register is only 8 bits the value is saved directly to the register
-                            else:               
-
-
-                                # self.data_bank.set_discrete_inputs(reg.ADDRESS, num_bits) 
-
-
-                                self.data_bank.set_discrete_inputs(reg.ADDRESS, num_bits[16:])     #|  If the register is 32 bits the higher bits must be saved to the first 16 bits of the address   
-                                self.data_bank.set_discrete_inputs(reg.ADDRESS+16, num_bits[:16])  #| and the lower bits must be saved to next 16 bits
-                                # self.data_bank.set_discrete_inputs(reg.ADDRESS, num_bits[:16])     #|  If the register is 32 bits the higher bits must be saved to the first 16 bits of the address   
-                                # self.data_bank.set_discrete_inputs(reg.ADDRESS+16, num_bits[16:])  #| and the lower bits must be saved to next 16 bits
-
-                
-
-                
-                # self.data_bank.set_discrete_inputs(dig_inputs_regs.TX_WRITTING.ADDRESS, [False])  # Informs CLP that the Driver finished writting and there is a valid data ready for reading
-                # self._stop_writting_data()  # Informs CLP that the Driver finished writting
+                        if (reg.SIZE==1):                # If register has only one word than no conversion is needed
+                            self.data_bank.set_holding_registers(reg.ADDRESS, [value])
+                        else:
+                        # If the register has more than one word, the value must sent as [LSW, MSW]
+                        # considering LSW the first register in the mapping address and MSW the last register in the mapping address
+                            lsw = value & 0x0000FFFF
+                            msw = (value & 0xFFFF0000) >> 16
+                            self.data_bank.set_holding_registers(reg.ADDRESS, [lsw, msw])
 
                 self.mb_comm.task_progress.emit(0)  # Just to update the progress bar in the GUI, it does not represent the actual writting progress
                 # self.wait_confirmation(reg)
@@ -711,41 +558,8 @@ class IAGModbusServer(mbServer):
                 # print(f'Failed to write registers due to timeout. CLP is reading for more than {Config.write_timeout} seconds.')
                 # raise RuntimeError(f'Failed to send {value} to register {reg.TAG} after {tries} tries')
                 self.mb_comm.task_progress.emit(0)  # Just to update the progress bar in the GUI, it does not represent the actual writting progress
-                self._stop_writting_data()  # Just to be sure that it stops writting
                 return "NOK"
             
 
-    def _start_reading_data(self) -> bool:
-        """Sets the reading status of the ModbusServer and returns if the status was changed or not. 
-        If the writting process is locked the reading status cannot be set to True to avoid reading data that is being writted to the CLP,
-          in this case the function returns False and the reading status is not changed."""
-        self.reading = True
-        # if self._reading:
-        #     print(f"Started reading data from CLP [{datetime.now().strftime('%H:%M:%S')}]")
-        return self._reading
     
-    def _stop_reading_data(self) -> bool:
-        """Sets the reading status of the ModbusServer to False and returns if the status was changed or not. 
-        The reading status can be set to False even if the writting process is locked because setting the reading status to False does not cause any risk of reading data that is being writted by the CLP."""
-        self.reading = False
-        # if self._reading == False:
-        #     print(f"Stopped reading data from CLP [{datetime.now().strftime('%H:%M:%S')}]")
-        return self._reading
-    
-    def _start_writting_data(self) -> bool:
-        """Sets the writting status of the ModbusServer and returns if the status was changed or not. 
-        If the reading process is locked the writting status cannot be set to True to avoid writting data that is being read by the CLP,
-          in this case the function returns False and the writting status is not changed."""
-        self.writting = True
-        # if self._writting:
-        #     print(f"Started writting data to CLP [{datetime.now().strftime('%H:%M:%S')}]")
-        return self._writting
-    
-    def _stop_writting_data(self) -> bool:
-        """Sets the writting status of the ModbusServer to False and returns if the status was changed or not. 
-        The writting status can be set to False even if the reading process is locked because setting the writting status to False does not cause any risk of writting data that is being read by the CLP."""
-        self.writting = False
-        # if self._writting == False:
-        #     print(f"Stopped writting data to CLP [{datetime.now().strftime('%H:%M:%S')}]")
-        return self._writting
 
