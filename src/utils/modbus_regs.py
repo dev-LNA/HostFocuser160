@@ -135,11 +135,6 @@ class PackCMDFlags(IntFlag):
     TX_V42 = 0x0200
     TX_SET = 0x0400
 
-class HoldingRegsMasks(NamedTuple):
-    PACK_STATUS_FLAGS: PackStatusFlags
-    PACK_CMD_FLAGS: PackCMDFlags
-
-
 class CoilsRegs(NamedTuple):
     RX_ALM: RegsInfo
     RX_EO: RegsInfo

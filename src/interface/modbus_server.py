@@ -1,9 +1,17 @@
 from pyModbusTCP.server import ModbusServer as mbServer
 from pyModbusTCP.server import DataBank
 from src.core.config import Config
-from src.utils.modbus_regs import dig_inputs_regs, coils_regs, RegsInfo, RegType, CLP_Owned, TwosComplementReg, param_vars, DB_size, holding_regs
 from src.utils.constants import CommandTimeout, TimeoutState, TimeDelays
 from src.interface.modbus_data_bank import MB_DataBank
+from src.utils.modbus_regs import (dig_inputs_regs, 
+                                    coils_regs, RegsInfo, 
+                                    RegType, CLP_Owned, 
+                                    TwosComplementReg,
+                                    param_vars,
+                                    DB_size, 
+                                    holding_regs,
+                                    PackCMDFlags,
+                                    PackStatusFlags)
 
 
 from PyQt6.QtCore import pyqtSignal, QObject
@@ -103,6 +111,7 @@ class IAGModbusServer(mbServer):
     _writting = False
     RW_lock = Lock()
     _params_initialized: bool = False
+    _handshake: bool = False
     def __init__(self, data_bank: MB_DataBank, host: str='0.0.0.0', port: int=5005, no_block: bool=False, ipv6: bool=False, device_id=None,
                  timeout_callback_function = None):
         super().__init__(host=host, port=port, no_block=no_block, ipv6=ipv6, data_bank=data_bank, device_id=device_id)
@@ -124,7 +133,7 @@ class IAGModbusServer(mbServer):
                                 i_regs_size=data_bank.i_regs_size, i_regs_default_value=data_bank.i_regs_default_value)  
 
         self.stop_server = False
-        self.handshake = False
+        
         self.running = False
 
         self.timeout = TimeoutCheck(timeout_callback_function)
@@ -137,6 +146,16 @@ class IAGModbusServer(mbServer):
             
         self._changed_coils: set[tuple[RegsInfo, int | bool]] = set()   # A set to keep track of the coils that had their value changed
 
+
+    @property
+    def handshake(self) -> bool:
+        """Returns if the ModbusServer received a handshake from the CLP"""
+        return self._handshake
+    @handshake.setter
+    def handshake(self, value: bool):
+        if value != self._handshake:
+            self._handshake = value
+            
 
     @property
     def reading(self) -> bool:
@@ -304,22 +323,15 @@ class IAGModbusServer(mbServer):
         # que vai ser do bit de reading
         packstatus = self.data_bank.get_holding_registers(holding_regs.RX_PACKSTATUS.ADDRESS, holding_regs.RX_PACKSTATUS.SIZE)
         if packstatus:
-            handshake_val = 
-
-
-        if temp1 and temp2:
-            hs = temp1[0]
-            new = temp2[0]
-
-
-            # Checks if the time between handshakes has passed the timeout limit (False indicates that there is NO timeout)
-            if self.timeout.check_timeout(new) == TimeoutState.NO_TIMEOUT:    
+            handshake_val = bool(packstatus[0] & PackStatusFlags.HANDSHAKE)
+            
+            if self.timeout.check_timeout(handshake_val) == TimeoutState.NO_TIMEOUT:
                 self.handshake = True
-                self.data_bank.set_discrete_inputs(dig_inputs_regs.TX_SVON.ADDRESS, [True])   # Informs the CLP that the Driver is active and ready to operate
+                self.data_bank.set_discrete_inputs(dig_inputs_regs.TX_SVON.ADDRESS, [True])
 
-            # Saves the new handshake value in the shadow register and mirror it to the CLP
-            self.db_shadow.set_coils(coils_regs.HANDSHAKE.ADDRESS, [hs]) 
-            self.data_bank.set_discrete_inputs(dig_inputs_regs.HANDSHAKE.ADDRESS, [hs])
+            self.data_bank.set_coils(coils_regs.HANDSHAKE.ADDRESS, [handshake_val])   
+            self.data_bank.set_discrete_inputs(dig_inputs_regs.HANDSHAKE.ADDRESS, [handshake_val])
+
 
     def _mirror_clp_owned_coils(self):
         for reg in CLP_Owned:
