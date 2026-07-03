@@ -14,7 +14,7 @@ from threading import Lock, Thread, Timer
 from src.core.config import Config
 from src.core.exceptions import DriverException
 from src.utils.constants import constants, MotorStatusFlags, MotorParamsIdx, MotorAlarmInfo, motor_program_errors_mask, motor_alc_errors_mask, Conversion, TimeDelays
-from src.utils.modbus_regs import RegsInfo, RegType, coils_regs, dig_inputs_regs, DB_size, CLP_Mirror, TwosComplementReg, param_vars, holding_regs, PackCMDFlags
+from src.utils.modbus_regs import RegsInfo, RegType, coils_regs, dig_inputs_regs, DB_size, CLP_Mirror, TwosComplementReg, param_vars, holding_regs, PackCMDFlags, PackStatusFlags
 
 from enum import IntFlag
 from typing import TYPE_CHECKING
@@ -83,8 +83,6 @@ class DriverAMP(Driver):
 
                     self.mb_server.running = True
                     _con = True
-                    self.mb_server.data_bank.set_discrete_inputs(dig_inputs_regs.TX_WRITTING.ADDRESS, [False])  #| TX_WAIT e TX_BUSY must be
-                    self.mb_server.data_bank.set_discrete_inputs(dig_inputs_regs.TX_READING.ADDRESS, [False])   #| initialized as False
 
                 print("Modbus server started")
                 return "OK"
@@ -98,8 +96,7 @@ class DriverAMP(Driver):
         try:
             if self.mb_server:
                 print("Closing modbus server...")
-                self.mb_server.data_bank.set_discrete_inputs(dig_inputs_regs.TX_SVON.ADDRESS, [False])   # Informs the CLP that the Driver is not active anymore
-                time.sleep(0.2)  # Delay to ensure the CLP reads the change in the SVON register before the server is closed
+                # time.sleep(0.2)  # Delay 
                 self.mb_server.stop_server = True
                 self.mb_run_thread.join()
                 self.mb_server.stop()
@@ -181,10 +178,10 @@ class DriverAMP(Driver):
 
     def _check_normal_speed(self, moving:bool):
         if moving and self.mb_server:
-            val = self.mb_server._conv_reg_to_value(dig_inputs_regs.TX_V77, self.mb_server.data_bank)
+            val = self.mb_server.data_bank.get_holding_registers(holding_regs.TX_V77.ADDRESS, holding_regs.TX_V77.SIZE)
             if val != Config.normal_speed:
                 print('**********Setting normal speed back to original value**********')
-                self.mb_server.write_param(dig_inputs_regs.TX_V77, Config.normal_speed)
+                self.mb_server.write_param(holding_regs.TX_V77, Config.normal_speed)
     
     def conv_position_show(self, encoder_pos: int | None = None, type: str = "int") -> int | float | None:
         """Reads motor encoder position and converts to microns
@@ -236,18 +233,20 @@ class DriverAMP(Driver):
         returns it as an integer"""
         if self.mb_server:
             # response = self.mb_server._conv_reg_to_value(coils_regs.RX_EX, self.mb_server.db_shadow)
+            response = self.mb_server.data_bank.get_holding_registers(holding_regs.RX_EX.ADDRESS, holding_regs.RX_EX.SIZE)
+            if response:
+                encoder_val = (response[1] << 16) | response[0]
+                return encoder_val
             # return response
-            pass
+            # pass
 
     def read_homing(self) -> bool | None:
         """Precisa ser implementada pelo driver"""
         if self.mb_server:
-            # val = self.mb_server.db_shadow.get_coils(coils_regs.RX_V15.ADDRESS, coils_regs.RX_V15.SIZE)
-            # if val:
-            #     return val[0]
-            # else:
-            #     return None
-            pass
+            val = self.mb_server.data_bank.get_holding_registers(holding_regs.RX_PACKSTATUS.ADDRESS, holding_regs.RX_PACKSTATUS.SIZE)
+            if val:
+                return bool(val[0] & PackStatusFlags.RX_V15)
+
 
     
     def read_parking(self) -> bool:
@@ -258,19 +257,18 @@ class DriverAMP(Driver):
     def read_initialized(self) -> bool | None:
         """Precisa ser implementada pelo driver"""
         if self.mb_server:
-            # val = self.mb_server.db_shadow.get_coils(coils_regs.RX_V44.ADDRESS, coils_regs.RX_V44.SIZE)
-            # if val:
-            #     return val[0]
-            # else:
-            #     return None
-            pass
+            val = self.mb_server.data_bank.get_holding_registers(holding_regs.RX_PACKSTATUS.ADDRESS, holding_regs.RX_PACKSTATUS.SIZE)
+            if val:
+                return bool(val[0] & PackStatusFlags.RX_V44)
 
     
     def read_status(self) -> int | None:
         """Precisa ser implementada pelo driver"""
         if self.mb_server:
             # return self.mb_server._conv_reg_to_value(coils_regs.RX_MST, self.mb_server.db_shadow)
-            pass
+            mst = self.mb_server.data_bank.get_holding_registers(holding_regs.RX_MST.ADDRESS, holding_regs.RX_MST.SIZE)
+            if mst:
+                return ( mst[1] << 16) | mst[0]
 
         # return MotorStatusFlags.ENABLED  #TODO: Implementar a leitura do status do motor, e retornar os flags correspondentes
 
@@ -279,24 +277,9 @@ class DriverAMP(Driver):
 
     
     def param_IP(self, value: str | None = None, converted:bool = False) -> str | None:
-        """When no value is provided, returns the current IP value from the configuration.
-        When a value is provided, writes the new IP value to the CLP"""
-
-        if value is None:
-            return Config.device_ip
-        
-        ip_a = value.split(".")[0]
-        ip_b = value.split(".")[1]
-        ip_c = value.split(".")[2]
-        ip_d = value.split(".")[3]
-
-        ip_param_regs = (dig_inputs_regs.TX_IP_A, dig_inputs_regs.TX_IP_B, dig_inputs_regs.TX_IP_C, dig_inputs_regs.TX_IP_D)
-        ip_values = (ip_a, ip_b, ip_c, ip_d)
-        
-        if self.mb_server:
-            return self.mb_server.write_param(ip_param_regs, ip_values)
-
-        # return self.mb_server.write_param(dig_inputs_regs.TX_V70, value)
+        """[DEPRECATED]
+        IP value cannot be changed by the server anymore"""
+        pass
 
     def _convert_pos(self, pos: int | float) -> float:
         """Converts position in microns to steps, since the CLP receives position values in steps."""
@@ -321,7 +304,7 @@ class DriverAMP(Driver):
         value = int(value / Config.steps_2_encoder)
 
         if self.mb_server:  
-            return self.mb_server.write_param(dig_inputs_regs.TX_V74, value)
+            return self.mb_server.write_param(holding_regs.TX_V74, value)
 
 
         
@@ -397,7 +380,7 @@ class DriverAMP(Driver):
         print('_*' * 50)
         
         if self.mb_server:
-            return self.mb_server.write_param(dig_inputs_regs.TX_V83, value)
+            return self.mb_server.write_param(holding_regs.TX_V83, value)
 
     def _convert_speed(self, speed: int | float) -> int:
         return int(speed * Config.microns_2_rps * 240)
@@ -417,7 +400,7 @@ class DriverAMP(Driver):
         value = int(value * Config.microns_2_rps * 240)
 
         if self.mb_server:
-            return self.mb_server.write_param(dig_inputs_regs.TX_V75, value)
+            return self.mb_server.write_param(holding_regs.TX_V75, value)
 
     
     def param_normal_speed(self, value: int | None = None, converted:bool = False) -> str | None:
@@ -435,7 +418,7 @@ class DriverAMP(Driver):
         value = int(value * Config.microns_2_rps * 240)
 
         if self.mb_server:
-            return self.mb_server.write_param(dig_inputs_regs.TX_V77, value)
+            return self.mb_server.write_param(holding_regs.TX_V77, value)
 
     
     def param_low_speed(self, value: int | None = None, converted:bool = False) -> str | None:
@@ -453,16 +436,16 @@ class DriverAMP(Driver):
         value = int(value * Config.microns_2_rps * 240)
 
         if self.mb_server:
-            return self.mb_server.write_param(dig_inputs_regs.TX_V76, value)
+            return self.mb_server.write_param(holding_regs.TX_V76, value)
 
     
     def param_max_step(self, value: int | None = None) -> str | None:
         """deprecated - use param_max_pos instead"""
         if value is None:
-            return str(Config.max_step)
+            return str(Config.max_pos)
         
         if self.mb_server:
-            return self.mb_server.write_param(dig_inputs_regs.TX_V79, value)
+            return self.mb_server.write_param(holding_regs.TX_V79, value)
 
     def _convert_acceleration(self, acc: int | float) -> int:
         return int(acc * Config.microns_2_rps * 6)
@@ -483,7 +466,7 @@ class DriverAMP(Driver):
         value = int( value * Config.microns_2_rps * 6 )     # Acceleration can be float but must be converted to int to send to CLP
 
         if self.mb_server:
-            return self.mb_server.write_param(dig_inputs_regs.TX_V80, value)
+            return self.mb_server.write_param(holding_regs.TX_V80, value)
 
     
     def param_deceleration(self, value: int | float | None = None, converted:bool = False) -> str | None:
@@ -502,7 +485,7 @@ class DriverAMP(Driver):
         value = int( value * Config.microns_2_rps * 6 )     # Deceleration can be float but must be converted to int to send to CLP
 
         if self.mb_server:
-            return self.mb_server.write_param(dig_inputs_regs.TX_V79, value)
+            return self.mb_server.write_param(holding_regs.TX_V79, value)
 
     def _convert_current(self, current: int | float) -> int:
         return int(current * 0.1)
@@ -522,7 +505,7 @@ class DriverAMP(Driver):
         value  = int(value * 0.1)     # Current can be float but must be converted to int to send to CLP
         
         if self.mb_server:
-            return self.mb_server.write_param(dig_inputs_regs.TX_V78, value)
+            return self.mb_server.write_param(holding_regs.TX_V78, value)
 
     
     def param_run_current(self, value: int | float | None = None, converted:bool = False) -> str | None:
@@ -540,7 +523,7 @@ class DriverAMP(Driver):
         value = int(value * 0.1)
 
         if self.mb_server:
-            return self.mb_server.write_param(dig_inputs_regs.TX_V81, value)
+            return self.mb_server.write_param(holding_regs.TX_V81, value)
 
     
     def param_acc_current(self, value: int | float | None = None, converted:bool = False) -> str | None:
@@ -558,43 +541,47 @@ class DriverAMP(Driver):
         value = int(value * 0.1)         # Current can be float but must be converted to int to send to CLP
         
         if self.mb_server:
-            return self.mb_server.write_param(dig_inputs_regs.TX_V82, value)
+            return self.mb_server.write_param(holding_regs.TX_V82, value)
 
     
     def read_firmware_version(self) -> str | None:
         """Precisa ser implementada pelo driver"""
         if self.mb_server:
-            # return str(self.mb_server._conv_reg_to_value(coils_regs.RX_V90, self.mb_server.db_shadow))
-            pass
+            val = self.mb_server.data_bank.get_holding_registers(holding_regs.RX_V90.ADDRESS, holding_regs.RX_V90.SIZE)
+            if val:
+                return str(val[0])
 
     
     def read_alarm_status(self) -> bool | None:
         """Precisa ser implementada pelo driver"""
         if self.mb_server:
-            # val = self.mb_server.db_shadow.get_coils(coils_regs.RX_ALM.ADDRESS, coils_regs.RX_ALM.SIZE)
-            # if val: 
-            #     return val[0]     
-            pass
+            val = self.mb_server.data_bank.get_holding_registers(holding_regs.RX_PACKSTATUS.ADDRESS, holding_regs.RX_PACKSTATUS.SIZE)
+            if val:
+                return bool(val[0] & PackStatusFlags.RX_ALM)
+
     
     def parse_alarm_info(self) -> str | None:
         """Precisa ser implementada pelo driver"""
         if self.mb_server:
             # motor_alarm_int = self.mb_server._conv_reg_to_value(coils_regs.RX_ALC, self.mb_server.db_shadow) & motor_alc_errors_mask
-            # self.read_firmware_status()  # Update the SASTAT value
-            # sastat_alarm_int = self.motor.SASTAT & motor_program_errors_mask
+            motor_alarm_int = self.mb_server.data_bank.get_holding_registers(holding_regs.RX_ALC.ADDRESS, holding_regs.RX_ALC.SIZE)
+            if motor_alarm_int:
+                motor_alarm_int = motor_alarm_int[0] & motor_alc_errors_mask
+            
+                self.read_firmware_status()  # Update the SASTAT value
+                sastat_alarm_int = self.motor.SASTAT & motor_program_errors_mask
 
-            # alarm_info = ''
-            # if motor_alarm_int > 0:
-            #     alarm_info = "Alarm details ALC bits: "
-            #     alarm_info += self._extract_flags_info(motor_alarm_int, MotorAlarmInfo)
-            # if sastat_alarm_int > 0:
-            #     if alarm_info != '':
-            #         alarm_info += ' | '
-            #     alarm_info += "Alarm details SASTAT bits: "
-            #     alarm_info += self._extract_flags_info(sastat_alarm_int, MotorProgramStatus)
+                alarm_info = ''
+                if motor_alarm_int > 0:
+                    alarm_info = "Alarm details ALC bits: "
+                    alarm_info += self._extract_flags_info(motor_alarm_int, MotorAlarmInfo)
+                if sastat_alarm_int > 0:
+                    if alarm_info != '':
+                        alarm_info += ' | '
+                    alarm_info += "Alarm details SASTAT bits: "
+                    alarm_info += self._extract_flags_info(sastat_alarm_int, MotorProgramStatus)
 
-            # return alarm_info
-            pass
+                return alarm_info
 
     def _extract_flags_info(self, input:int, flags_type: type[MotorAlarmInfo] | type[MotorProgramStatus], separator: str = "&") -> str:
         """Extracts the name of the flags that are activated in a given object, the object
@@ -629,9 +616,12 @@ class DriverAMP(Driver):
         msg = ''
         if self.mb_server:
             # self.motor.SASTAT = self.mb_server._conv_reg_to_value(coils_regs.RX_SASTAT, self.mb_server.db_shadow)
+            temp = self.mb_server.data_bank.get_holding_registers(holding_regs.RX_SASTAT.ADDRESS, holding_regs.RX_SASTAT.SIZE)
+            if temp:
+                self.motor.SASTAT = (temp[1] << 16) | temp[0]
 
-            sastat = self.motor.SASTAT      # Uses an internal variable that can be changed
-            # print(f"SASTAT = {sastat}")
+            # Uses an internal variable that can be changed without affecting the real sastat value
+            sastat = self.motor.SASTAT     
             
             self.focus_out_status = ( sastat & MotorProgramStatus.RUN_FOCUS_OUT ) != 0
 
@@ -722,6 +712,7 @@ class DriverAMP(Driver):
     
     def sendCommand(self, command: str) -> str:
         """Precisa ser implementada pelo driver"""
+        #  In the AMP motor the send command method is implemented by  the modbus server
         ...
     
     def move_to(self, pos_str: str) -> str | None:
@@ -743,10 +734,9 @@ class DriverAMP(Driver):
 
             print(f'Steps to microns: {   -((round(self._convert_pos(command_position)) * Config.steps_2_encoder * Config.enc_2_microns) - (Config.max_pos * Conversion.POSITION_COMMAND)) / Conversion.POSITION_COMMAND}')
 
-            if self.mb_server.write_param(dig_inputs_regs.TX_V20, round(self._convert_pos(command_position) + 1)) == "OK":
+            if self.mb_server.write_param(holding_regs.TX_V20, round(self._convert_pos(command_position) + 1)) == "OK":
                 time.sleep(TimeDelays.WAIT_PARAM)   # Delay to ensure the position value is written to the CLP before sending the command to start the movement
-                # return self.mb_server.send_command(dig_inputs_regs.TX_GS29)
-                pass
+                return self.mb_server.send_command(PackCMDFlags.TX_GS29)
             else:
                 return "NOK"
 
@@ -760,15 +750,13 @@ class DriverAMP(Driver):
 
                 command_speed = self._convert_speed(speed_int)
 
-                if self.mb_server.write_param(dig_inputs_regs.TX_V77, command_speed) == "OK":
+                if self.mb_server.write_param(holding_regs.TX_V77, command_speed) == "OK":
                     time.sleep(TimeDelays.WAIT_PARAM)
-                    # return self.mb_server.send_command(dig_inputs_regs.TX_GS21)
-                    pass
+                    return self.mb_server.send_command(PackCMDFlags.TX_GS21)
                 else:
                     return "NOK"
             else:
-                # return self.mb_server.send_command(dig_inputs_regs.TX_GS21)
-                pass
+                return self.mb_server.send_command(PackCMDFlags.TX_GS21)
     
     def focus_out(self, speed: str | int = Config.normal_speed) -> str | None:
         """Precisa ser implementada pelo driver""" 
@@ -780,7 +768,7 @@ class DriverAMP(Driver):
 
                 command_speed = self._convert_speed(speed_int)
 
-                if self.mb_server.write_param(dig_inputs_regs.TX_V77, command_speed) == "OK":
+                if self.mb_server.write_param(holding_regs.TX_V77, command_speed) == "OK":
                     time.sleep(TimeDelays.WAIT_PARAM)
                     return self.mb_server.send_command(PackCMDFlags.TX_GS20)
                 else:
@@ -830,12 +818,12 @@ class DriverAMP(Driver):
         # self.motor.signals.progress.string.emit(0)
         if self.mb_server:
             for param_idx in MotorParamsIdx:
-                    if param_idx != MotorParamsIdx.MOTOR_IP and param_idx != MotorParamsIdx.MAX_STEP:
-                        params += (self.motor.parameters[param_idx].REGISTER,)
-                        
-                        values += (int(self.param_methods[param_idx](converted=True)), )   # Mounts tuple with parameters values 
+                    # if param_idx != MotorParamsIdx.MOTOR_IP and param_idx != MotorParamsIdx.MAX_STEP:
+                    params += (self.motor.parameters[param_idx].REGISTER,)
+                    
+                    values += (int(self.param_methods[param_idx](converted=True)), )   # Mounts tuple with parameters values 
 
-                        print(f'{self.motor.parameters[param_idx].REGISTER} - {int(self.param_methods[param_idx](converted=True))}')
+                    print(f'{self.motor.parameters[param_idx].REGISTER} - {int(self.param_methods[param_idx](converted=True))}')
                         
             self.mb_server.write_param(params, values)
 

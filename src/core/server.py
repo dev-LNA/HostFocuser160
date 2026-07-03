@@ -142,7 +142,7 @@ class Server(QObject):
             SJson.CMD_ACTION : "",
             "PARAMETER": ""
         }
-
+        
         self.pub_control =PubControl(pub_interval=Config.pub_interval,
                                 stop_event=threading.Event(),
                                 thread=None)
@@ -169,7 +169,7 @@ class Server(QObject):
                 SJson.INITIALIZED: False,       # Homing finalized
                 SJson.IS_MOVING: False,          # Executing a function inside the motor
                 SJson.MAX_SPEED: Config.normal_speed,
-                SJson.MAX_STEP: Config.max_step,
+                SJson.MAX_STEP: Config.max_pos,
                 SJson.POSITION: 0,
                 SJson.TEMP_COMP: Config.temp_comp,
                 SJson.TEMP_COMP_AVAIABLE: Config.tempcompavailable,
@@ -196,7 +196,7 @@ class Server(QObject):
                 SJson.INITIALIZED: False,       # Homing finalized
                 SJson.IS_MOVING: False,          # Executing a function inside the motor
                 SJson.MAX_SPEED: Config.max_speed,
-                SJson.MAX_STEP: Config.max_step,
+                SJson.MAX_STEP: Config.max_pos,
                 SJson.POSITION: 0,
                 SJson.TEMP_COMP: Config.temp_comp,
                 SJson.TEMP_COMP_AVAIABLE: Config.tempcompavailable,
@@ -345,14 +345,23 @@ class Server(QObject):
         # print(self.test_var)
 
         # r = (holding_regs.TX_V71, holding_regs.TX_V20, holding_regs.TX_V74)
-        # v = (self.test_var, self.test_var + 15, self.test_var - 1)
+        # v = (24850, 12)
+
+        # try:
+        #     self.motor.driver.mb_server.write_param(r, v)
+        # except Exception as e:
+        #     print(str(e))    
+
+
+
         r = tuple()
         v = tuple()
         temp = self.test_var
         for key, reg in CLP_Mirror.items():
-            r += (reg.ORIGIN, )
-            v += (temp, )
-            temp+=1
+            if (key != 'TX_TCPRTMO') and (key != 'TX_TCPCYCLE') and (key != 'TX_TCPMBTMO') and (key != 'TX_TCPKATMO'):
+                r += (reg.ORIGIN, )
+                v += (temp, )
+                temp+=1
         try:
             self.motor.driver.mb_server.write_param(r, v)
         except Exception as e:
@@ -360,6 +369,16 @@ class Server(QObject):
         self.test_var += 1152
         if self.test_var > 65000:
             self.test_var = 0
+
+        time.sleep(1)
+
+
+
+        for cmd in PackCMDFlags:
+            if cmd != PackCMDFlags.NONE:
+                # time.sleep(1)
+                resp = self.motor.driver.mb_server.send_command(cmd)
+                print(f"[+] Command response: {resp}")
 
         
 
@@ -524,7 +543,7 @@ class Server(QObject):
                 self._update_status()
                 self.motor.signals.progress.value.emit(False) 
                 self.signals.status_message.emit("")                   
-                self.status[SJson.DEVICE_IP] = self.motor.get_param(MotorParamsIdx.MOTOR_IP)
+                self.status[SJson.DEVICE_IP] = Config.device_ip
                 self.status[SJson.DEVICE_ID] = self.motor.ID
                 self.status[SJson.DEVICE_FIRMWARE_VERSION] = self.motor.firmware_version
 
@@ -595,7 +614,7 @@ class Server(QObject):
                 time.sleep(0.05)            # Just for better visualization of ui update
                 if param in MotorParamsIdx:
                     self.motor.get_param(param)
-            self.status[SJson.DEVICE_IP] = self.motor.parameters[MotorParamsIdx.MOTOR_IP].VALUE
+            self.status[SJson.DEVICE_IP] = Config.device_ip
             self.status[SJson.MAX_SPEED] = int(self.motor.parameters[MotorParamsIdx.NORMAL_SPEED].VALUE)     # The movements configured by tcs use the normal speed
             self.status[SJson.MAX_STEP] = int(self.motor.parameters[MotorParamsIdx.MAX_POS].VALUE)
 
@@ -923,6 +942,7 @@ class Server(QObject):
             raise RuntimeError("Publisher already running")
         elif self.zmq_comm:
             if self.zmq_comm.publisher:
+                self.pub_control.pub_interval = Config.pub_interval
                 self.pub_control.stop_event.clear()
                 self.pub_control.thread = threading.Thread(target=self._run_pub, daemon=True)
                 self.pub_control.thread.start()

@@ -24,7 +24,6 @@ max_pos = 2490
 park_pos = 1900
 normal_speed = 250
 low_speed = 42
-max_step = 9
 max_speed = 470
 acceleration = 69.0
 deceleration = 1398.0

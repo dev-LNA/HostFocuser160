@@ -56,6 +56,9 @@ class TimeDelays(float, Enum):
     WAIT_CLP_RESPONSE = 0.2 # 0.2     # Time waiting for OK/NOK from CLP
     WAIT_CLP_PROCESS = 0.2  # 0.2      # Time for CLP to process information   
     WAIT_CLP_MIRROR = 0.2   #0.1       # Time for CLP to mirror the value to the response register
+    TIMEOUT_PARAM = 3.0                 # Timeout waiting for CLP to mirror parameters
+    TIMEOUT_SET = 1.0                   # Timeout waiting for SET OK from CLP after sending a SET
+    TIMEOUT_CMD = 3.0                   # Timeout waiting for CLP to respond to commands
 
 class FocuserSignalsNames(StrEnum):
     LIM_SWITCH_MIN = auto()
@@ -127,14 +130,14 @@ class MotorModels(StrEnum):
 
 # The MotorParamIdx first value must be a continuation from ServerParamsIdx
 class MotorParamsIdx(Enum):     
-    MOTOR_IP=6
-    BACKLASH=auto()
+    # MOTOR_IP=6
+    BACKLASH=7
     MAX_POS=auto()
     PARK_POS=auto()
     MAX_SPEED=auto()
     NORMAL_SPEED=auto()
     LOW_SPEED=auto()
-    MAX_STEP=auto()     # deprecated - use max_pos
+    # MAX_STEP=auto()     # deprecated - use max_pos
     ACCELERATION=auto()
     DECELERATION=auto()
     IDLE_CURRENT=auto()

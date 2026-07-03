@@ -199,25 +199,10 @@ class IAGModbusServer(mbServer):
             
             if self.timeout.check_timeout(handshake_val) == TimeoutState.NO_TIMEOUT:
                 self.handshake = True
-                self.data_bank.set_discrete_inputs(dig_inputs_regs.TX_SVON.ADDRESS, [True])
-
-            self.data_bank.set_coils(coils_regs.HANDSHAKE.ADDRESS, [handshake_val])   
-            self.data_bank.set_discrete_inputs(dig_inputs_regs.HANDSHAKE.ADDRESS, [handshake_val])
 
 
     def _mirror_clp_owned_coils(self):
         pass
-        # for reg in CLP_Mirror:
-        #     current_reg_value = self.data_bank.get_coils(reg.ORIGIN.ADDRESS, reg.ORIGIN.SIZE)
-        #     # self.data_bank.set_discrete_inputs(reg.RESPONSE.ADDRESS, current_reg_value)
-        #     if current_reg_value:
-        #         match reg.ORIGIN.SIZE:
-        #             case 32:
-        #                 # current_reg_value.reverse()
-        #                 self.data_bank.set_discrete_inputs(reg.RESPONSE.ADDRESS, current_reg_value[16:])     #|  If the register is 32 bits the higher bits must be saved to the first 16 bits of the address   
-        #                 self.data_bank.set_discrete_inputs(reg.RESPONSE.ADDRESS+16, current_reg_value[:16]) 
-        #             case _:            
-        #                 self.data_bank.set_discrete_inputs(reg.RESPONSE.ADDRESS, current_reg_value)
 
 
     def _conv_reg_to_value(self, reg: RegsInfo, db: DataBank) -> int:
@@ -280,43 +265,35 @@ class IAGModbusServer(mbServer):
     # def _conv_bits_num(self, )
 
 
-    def send_command(self, command: PackCMDFlags) -> str:
+    def send_command(self, command_flag: PackCMDFlags) -> str:
         """
         Sends a command to the CLP by setting the corresponding bit in PACKCMDS register, then it starts a timer to wait for the CLP response.
         If the CLP sets the OK bit in PACKOK register before the timeout limit, the command is considered successful and the function returns "OK", otherwise it returns "NOK".
 
+        Only one command can be set at a time.
+        The command must be cleared regardless if the CLP returns OK or a timeout occurs.
+
         Args:
             command (PackCMDFlags): Command to be sent, it must be a flag from the PackCMDFlags enum (ex: PackCMDFlags.TX_GS21)"""
 
-        print(f"[*] Sending command {str(command.name).upper()} to CLP")
+        print(f"[*] Sending command {str(command_flag.name).upper()} to CLP")
 
-        self.data_bank.set_holding_registers(holding_regs.TX_PACKCMDS.ADDRESS, [command.value])   # Writes the command to the CLP
+        self.data_bank.set_holding_registers(holding_regs.TX_PACKCMDS.ADDRESS, [command_flag.value])   # Writes the command to the CLP
 
+        start_time = time.time()
+        cmd_ok:bool = False
+        while ( time.time() - start_time < TimeDelays.TIMEOUT_CMD ) and not cmd_ok:
+            temp = self.data_bank.get_holding_registers(holding_regs.RX_PACKOK.ADDRESS, 1)
+            if temp:
+                cmd_ok = bool(temp[0] & command_flag)
 
-        # resp = self._write({(register, True)})   # Writes the command to the CLP
-        # if resp == "OK":
-        #     # If the command was successfully sent to the CLP, the Driver will wait for the CLP response
-        #     print(f"Command {register.TAG.upper()} sent, waiting confirmation...")
+        
+        self.data_bank.set_holding_registers(holding_regs.TX_PACKCMDS.ADDRESS, [0])   # Writes the command to the CLP
 
-        #     # Tries to wait for the CLP response until the timeout limit is reached, if the CLP sets the OK coil to True
-        #     #  before the timeout limit, the command is considered successful and the function returns "OK", otherwise it returns "NOK".
-        #     # If the timeout limit is reached without receiving any response from the CLP, the handling function for command timeout is
-        #     #  called and the function returns "NOK"
-        #     cmd_timer = time.time()
-        #     while (time.time() - cmd_timer) < Config.cmd_timeout:
-        #         time.sleep(TimeDelays.WAIT_CLP_RESPONSE)                 # When no time is applied the program has a peak of cpu usage when waiting 
-        #         if self.CLP_OK:
-        #             self._handle_command_OK(register)
-        #             return "OK"
-        #         elif self.CLP_NOK:
-        #             self._handle_command_NOK(register)
-        #             return "NOK"
-            
-        #     self._handle_command_timeout(register)
-        #     return "NOK"
-
-        # else:
-        #     return "NOK"
+        if cmd_ok:
+            return "OK"
+        else:
+            return "NOK"
 
 
     def _handle_command_timeout(self, register: RegsInfo):
@@ -329,17 +306,9 @@ class IAGModbusServer(mbServer):
 
     def _handle_command_NOK(self, register: RegsInfo):
         print(f"CLP returned\033[31m NOK\033[0m for command: {register.TAG}")
-        # # self._start_writting_data()
-        self.data_bank.set_discrete_inputs(register.ADDRESS, [False])   # Clears the command discrete input to allow sending new commands to the CLP
-        # self._stop_writting_data()
-        # self.data_bank.set_discrete_inputs(dig_inputs_regs.NOK.ADDRESS, [True])   # Sets the NOK discrete input to indicate unsuccessful command execution
 
     def _handle_command_OK(self, register: RegsInfo):
         print(f"CLP returned\033[32m OK\033[0m for command: {register.TAG}")
-        # # self._start_writting_data()
-        self.data_bank.set_discrete_inputs(register.ADDRESS, [False])   # Clears the command discrete input to allow sending new commands to the CLP
-        # self._stop_writting_data()
-        # self.data_bank.set_discrete_inputs(dig_inputs_regs.OK.ADDRESS, [True])   # Sets the OK discrete input to indicate successful command execution
 
 
     def write_param(self, reg: RegsInfo | tuple[RegsInfo, ...], value: int | bool | tuple[int, ...] | tuple[bool, ...] | tuple[str, ...]) -> str | None:
@@ -410,7 +379,7 @@ class IAGModbusServer(mbServer):
             if count == len(params):
                 mirror_check = True
             else:
-                if time.time() - t_start > 3:
+                if time.time() - t_start > TimeDelays.TIMEOUT_PARAM:
                     if msg != 'Failed to confirm parameters: ':
                         msg = msg[:-3]
                     raise TimeoutError(msg)
@@ -426,7 +395,7 @@ class IAGModbusServer(mbServer):
         # Checking for SET OK
         ok: bool = False
         t_start = time.time()
-        while time.time() - t_start < 1 and not ok:
+        while ( time.time() - t_start < TimeDelays.TIMEOUT_SET ) and not ok:
             val = self.data_bank.get_holding_registers(holding_regs.RX_PACKOK.ADDRESS, 1)
             if val:
                 ok = bool(val[0] & PackCMDFlags.TX_SET)
@@ -442,82 +411,7 @@ class IAGModbusServer(mbServer):
             return "OK"
         else:
             print("--- NOK")
-            return "NOK"
-
-
-
-
-    
-        # self.mb_comm.task_progress.emit(0)  # Just to update the progress bar in the GUI, it does not represent the actual writting progress
-        # progress = 0
-        # time.sleep(TimeDelays.WAIT_CLP_PROCESS)  #0.2   # Time for CLP to process information
-
-        # for tries in range(2):
-        #     # # self._start_writting_data()
-        #     # Sends a parameter request command to the CLP to inform that the Driver will write a parameter to the CLP
-        #     # resp = self.send_command(dig_inputs_regs.TX_PR)   
-        #     # self._stop_writting_data()
-
-        #     resp = "OK"  # For now the command is not being sent to the CLP, so it is assumed that the command was successful
-        #     if resp == "OK":
-
-        #         try:
-
-        #             print(f"Parameter request operation confirmed by CLP")
-        #             # Must confirm that the CLP mirrored the parameters values correctly
-
-
-        #             p_dict = param_vars._asdict()
-        #             for p in params:
-        #                 # if p[0].TAG in p_dict:
-        #                 time.sleep(TimeDelays.WAIT_CLP_MIRROR)     # Time for CLP to mirror the value to the response register
-        #                 progress += 1    
-        #                 self.mb_comm.task_progress.emit(int((progress / len(params)) * 100))  # Just to update the progress bar in the GUI, it does not represent the actual writting progress   
-
-        #                 if p[0] in p_dict:
-                            
-        #                     print(f"Waiting for CLP to mirror the value of parameter {p[0].TAG} to the response register {p_dict[p[0].TAG].RESPONSE.TAG}...")
-
-        #                     t = time.time()
-        #                     t_over = False
-        #                     mirrored = False
-        #                     while mirrored == False and t_over == False:
-        #                         print(f"COIL mirrored: {self._conv_reg_to_value(p_dict[p[0].TAG].RESPONSE, self.data_bank)}")
-        #                         print(f"DI SENT: {self._conv_reg_to_value(p[0], self.data_bank)}")    
-
-        #                         mirrored = self.data_bank.get_coils(p_dict[p[0].TAG].RESPONSE.ADDRESS, p_dict[p[0].TAG].RESPONSE.SIZE) == self.data_bank.get_discrete_inputs(p[0].ADDRESS, p[0].SIZE)
-        #                         if mirrored:
-        #                             print(f"[+] Parameter {p[0].TAG} updated with value {value} by CLP")
-        #                         else:
-        #                             # self._stop_reading_data()
-
-        #                             # self.send_command(dig_inputs_regs.TX_PR)
-
-        #                             # self._start_reading_data()
-
-        #                             time.sleep(TimeDelays.WAIT_CLP_MIRROR)
-        #                             if time.time() - t > 3:
-        #                                 t_over = True
-                                    
-        #                                 print(f"[-] Could not update parameter {p[0].TAG}, timeout checking mirror value")
-        #                                 # print(f"Sent value {self.data_bank.get_discrete_inputs(p[0].ADDRESS, p[0].SIZE)[0]} ======> Mirror Coil Value  {self.data_bank.get_coils(p_dict[p[0].TAG].RESPONSE.ADDRESS, p_dict[p[0].TAG].RESPONSE.SIZE)[0]}")
-        #                                 raise TimeoutError(f"[§]Timeout while updating paramater {p[0].TAG}")
-       
-
-        #             return "OK"
-                
-        #         except Exception as e:
-        #             print(e)
-        #             return "NOK"
-                    
-
-        #     elif resp == "NOK":
-        #         print(f"CLP responded with NOK for parameter request operation. Retrying...")
-        #         time.sleep(0.2)
-        
-        # print(f"Failed to write parameter after {tries} tries. CLP did not confirm the operation.")
-        # return "NOK"
-        
+            return "NOK"        
 
 
     def _write(self, reg_list: set[tuple[RegsInfo, int | bool]]) -> str:

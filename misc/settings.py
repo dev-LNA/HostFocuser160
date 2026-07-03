@@ -140,14 +140,14 @@ class ConfigurableSettings(NamedTuple):
     SUB_MASK: SettingsAttributes[QLineEdit]
     GATEWAY_IP: SettingsAttributes[QLineEdit]
     STARTUP : SettingsAttributes[QCheckBox]
-    MOTOR_IP: SettingsAttributes[QLineEdit]
+    # MOTOR_IP: SettingsAttributes[QLineEdit]
     BACKLASH: SettingsAttributes[QSpinBox]
     MAX_POS: SettingsAttributes[QSpinBox]
     PARK_POS: SettingsAttributes[QSpinBox]
     MAX_SPEED: SettingsAttributes[QSpinBox]
     NORMAL_SPEED: SettingsAttributes[QSpinBox]
     LOW_SPEED: SettingsAttributes[QSpinBox]
-    MAX_STEP: SettingsAttributes[QSpinBox]
+    # MAX_STEP: SettingsAttributes[QSpinBox]
     ACCELERATION: SettingsAttributes[QDoubleSpinBox]
     DECELERATION: SettingsAttributes[QDoubleSpinBox]
     IDLE_CURRENT: SettingsAttributes[QDoubleSpinBox]
@@ -250,14 +250,14 @@ class SettingsWindow(QMainWindow):
                     GATEWAY_IP = SettingsAttributes(ServerParamsIdx.GATEWAY_IP, 'Gateway IP Address', self.ui_elements.txtGatewayIP, '0', str),
                     STARTUP= SettingsAttributes(ServerParamsIdx.STARTUP, 'Auto Startup', self.ui_elements.cbAutoStartup, False, bool ),
                 # Motor parameters
-                    MOTOR_IP = SettingsAttributes(MotorParamsIdx.MOTOR_IP, 'Motor IP Address' , self.ui_elements.txtMotorIP, '0', str),
+                    # MOTOR_IP = SettingsAttributes(MotorParamsIdx.MOTOR_IP, 'Motor IP Address' , self.ui_elements.txtMotorIP, '0', str),
                     BACKLASH = SettingsAttributes(MotorParamsIdx.BACKLASH, 'Backlash', self.ui_elements.spinBacklash, 0, int),
                     MAX_POS = SettingsAttributes(MotorParamsIdx.MAX_POS, 'Maximum Mirror Position', self.ui_elements.spinMaxPos, 0, int),
                     PARK_POS = SettingsAttributes(MotorParamsIdx.PARK_POS, 'Park Mirror Position', self.ui_elements.spinParkPos, 0, int),
                     MAX_SPEED = SettingsAttributes(MotorParamsIdx.MAX_SPEED, 'Maximum Motor Speed', self.ui_elements.spinMaxSpeed, 0, int),
                     NORMAL_SPEED = SettingsAttributes(MotorParamsIdx.NORMAL_SPEED, 'Normal Motor Speed', self.ui_elements.spinNormalSpeed, 0, int),
                     LOW_SPEED = SettingsAttributes(MotorParamsIdx.LOW_SPEED, 'Low Motor Speed', self.ui_elements.spinLowSpeed, 0, int),
-                    MAX_STEP = SettingsAttributes(MotorParamsIdx.MAX_STEP, 'Max Step (Deprecated)', self.ui_elements.spinMaxStep, 0, int),
+                    # MAX_STEP = SettingsAttributes(MotorParamsIdx.MAX_STEP, 'Max Step (Deprecated)', self.ui_elements.spinMaxStep, 0, int),
                     ACCELERATION = SettingsAttributes(MotorParamsIdx.ACCELERATION, 'Acceleration Rate', self.ui_elements.spinAcceleration, 0, float),
                     DECELERATION = SettingsAttributes(MotorParamsIdx.DECELERATION, 'Deceleration Rate', self.ui_elements.spinDeceleration, 0, float),
                     IDLE_CURRENT = SettingsAttributes(MotorParamsIdx.IDLE_CURRENT, 'Motor Idle Current', self.ui_elements.spinIdleCurrent, 0, float),
@@ -500,8 +500,8 @@ class SettingsWindow(QMainWindow):
                     else:
                         config['Network'][k.name.lower()] = self._changed_settings[k]
 
-                elif k == MotorParamsIdx.MOTOR_IP:
-                    Config.device_ip = config['Device']['device_ip']
+                # elif k == MotorParamsIdx.MOTOR_IP:
+                #     Config.device_ip = config['Device']['device_ip']
 
                 else:
                     if isinstance(self._changed_settings[k], int):
