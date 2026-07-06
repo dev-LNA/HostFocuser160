@@ -47,14 +47,12 @@ class Driver(ABC):
         self.current_state = InternalState()
 
         self.param_methods = {
-            # MotorParamsIdx.MOTOR_IP : self.param_IP,
             MotorParamsIdx.BACKLASH : self.param_backlash,
             MotorParamsIdx.MAX_POS : self.param_max_pos,
             MotorParamsIdx.PARK_POS : self.param_park_pos,
             MotorParamsIdx.MAX_SPEED : self.param_max_speed,
             MotorParamsIdx.NORMAL_SPEED : self.param_normal_speed,
             MotorParamsIdx.LOW_SPEED : self.param_low_speed,
-            # MotorParamsIdx.MAX_STEP : self.param_max_step,
             MotorParamsIdx.ACCELERATION : self.param_acceleration,
             MotorParamsIdx.DECELERATION : self.param_deceleration,
             MotorParamsIdx.IDLE_CURRENT : self.param_idle_current,
@@ -152,11 +150,6 @@ class Driver(ABC):
     def set_position(self, value: int) -> str:
         """Precisa ser implementada pelo driver"""
     ...
-
-    # @abstractmethod
-    # def param_IP(self, value: str | None = None, converted:bool = False) -> str | None:
-    #     """Precisa ser implementada pelo driver"""
-    # ...
 
     @abstractmethod
     def param_backlash(self, value: int | float | None = None, converted:bool = False) -> str | None:

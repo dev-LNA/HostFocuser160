@@ -811,23 +811,30 @@ class DriverAMP(Driver):
 
         
     def _update_all_parameters(self):
-        params = tuple()
-        values = tuple()
+        # params = tuple()
+        # values = tuple()
 
-        # self.motor.signals.progress.value.emit(True)
-        # self.motor.signals.progress.string.emit(0)
+        # if self.mb_server:
+        #     for param_idx in MotorParamsIdx:
+        #             # if param_idx != MotorParamsIdx.MOTOR_IP and param_idx != MotorParamsIdx.MAX_STEP:
+        #             params += (self.motor.parameters[param_idx].REGISTER,)
+                    
+        #             values += (int(self.param_methods[param_idx](converted=True)), )   # Mounts tuple with parameters values 
+
+        #             print(f'{self.motor.parameters[param_idx].REGISTER} - {int(self.param_methods[param_idx](converted=True))}')
+                        
+        #     self.mb_server.write_param(params, values)
+        resp: str = ""
+        p = 0
         if self.mb_server:
             for param_idx in MotorParamsIdx:
-                    # if param_idx != MotorParamsIdx.MOTOR_IP and param_idx != MotorParamsIdx.MAX_STEP:
-                    params += (self.motor.parameters[param_idx].REGISTER,)
-                    
-                    values += (int(self.param_methods[param_idx](converted=True)), )   # Mounts tuple with parameters values 
-
-                    print(f'{self.motor.parameters[param_idx].REGISTER} - {int(self.param_methods[param_idx](converted=True))}')
-                        
-            self.mb_server.write_param(params, values)
-
-        # self.motor.signals.progress.value.emit(False)
-        # self.motor.signals.progress.string.emit(0)
+                p += 1
+                self.motor.signals.progress.string.emit(int(p/len(MotorParamsIdx)*100))
+                # time.sleep(0.05)            # Just for better visualization of ui update
+                resp = self.param_methods[param_idx]()
+                val = float(resp)
+                print(f'{param_idx}, {val}')
+                self.param_methods[param_idx](value=val)
+                print(f'{self.motor.parameters[param_idx]} - {int(self.param_methods[param_idx](converted=True))}')
 
                     

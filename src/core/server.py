@@ -541,6 +541,7 @@ class Server(QObject):
                 self.signals.status_message.emit("Updating parameters...")          
                 self.motor._update_motor_params()
                 self._update_status()
+                self.motor.signals.progress.string.emit(0)
                 self.motor.signals.progress.value.emit(False) 
                 self.signals.status_message.emit("")                   
                 self.status[SJson.DEVICE_IP] = Config.device_ip

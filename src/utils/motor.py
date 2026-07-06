@@ -59,19 +59,17 @@ class Motor():
         self._firmware_version: str = ''
 
         self.parameters = {
-            # MotorParamsIdx.MOTOR_IP : MotorParameter(MotorParamsIdx.MOTOR_IP, "MOTOR_IP", dig_inputs_regs.TX_IP_A, 0),        # DEPRECATED
-            MotorParamsIdx.BACKLASH : MotorParameter(MotorParamsIdx.BACKLASH, "BACKLASH", holding_regs.TX_V74, 0),
-            MotorParamsIdx.MAX_POS : MotorParameter(MotorParamsIdx.MAX_POS, "MAX_POS", holding_regs.TX_V71, 0),
-            MotorParamsIdx.PARK_POS : MotorParameter(MotorParamsIdx.PARK_POS, "PARK_POS", holding_regs.TX_V83, 0),
-            MotorParamsIdx.MAX_SPEED : MotorParameter(MotorParamsIdx.MAX_SPEED, "MAX_SPEED", holding_regs.TX_V75, 0),
-            MotorParamsIdx.NORMAL_SPEED : MotorParameter(MotorParamsIdx.NORMAL_SPEED, "NORMAL_SPEED", holding_regs.TX_V77, 0),
-            MotorParamsIdx.LOW_SPEED : MotorParameter(MotorParamsIdx.LOW_SPEED, "LOW_SPEED", holding_regs.TX_V76, 0),
-            # MotorParamsIdx.MAX_STEP : MotorParameter(MotorParamsIdx.MAX_STEP, "MAX_STEP", holding_regs.TX_DUMMY, 0),
-            MotorParamsIdx.ACCELERATION : MotorParameter(MotorParamsIdx.ACCELERATION, "ACCELERATION", holding_regs.TX_V80, 0),
-            MotorParamsIdx.DECELERATION : MotorParameter(MotorParamsIdx.DECELERATION, "DECELERATION", holding_regs.TX_V79, 0),
-            MotorParamsIdx.IDLE_CURRENT : MotorParameter(MotorParamsIdx.IDLE_CURRENT, "IDLE_CURRENT", holding_regs.TX_V78, 0),
-            MotorParamsIdx.RUN_CURRENT : MotorParameter(MotorParamsIdx.RUN_CURRENT, "RUN_CURRENT", holding_regs.TX_V81, 0),
-            MotorParamsIdx.ACC_CURRENT : MotorParameter(MotorParamsIdx.ACC_CURRENT, "ACC_CURRENT", holding_regs.TX_V82, 0),
+            MotorParamsIdx.BACKLASH : MotorParameter(MotorParamsIdx.BACKLASH, "BACKLASH", 0),
+            MotorParamsIdx.MAX_POS : MotorParameter(MotorParamsIdx.MAX_POS, "MAX_POS", 0),
+            MotorParamsIdx.PARK_POS : MotorParameter(MotorParamsIdx.PARK_POS, "PARK_POS", 0),
+            MotorParamsIdx.MAX_SPEED : MotorParameter(MotorParamsIdx.MAX_SPEED, "MAX_SPEED", 0),
+            MotorParamsIdx.NORMAL_SPEED : MotorParameter(MotorParamsIdx.NORMAL_SPEED, "NORMAL_SPEED", 0),
+            MotorParamsIdx.LOW_SPEED : MotorParameter(MotorParamsIdx.LOW_SPEED, "LOW_SPEED", 0),
+            MotorParamsIdx.ACCELERATION : MotorParameter(MotorParamsIdx.ACCELERATION, "ACCELERATION", 0),
+            MotorParamsIdx.DECELERATION : MotorParameter(MotorParamsIdx.DECELERATION, "DECELERATION", 0),
+            MotorParamsIdx.IDLE_CURRENT : MotorParameter(MotorParamsIdx.IDLE_CURRENT, "IDLE_CURRENT", 0),
+            MotorParamsIdx.RUN_CURRENT : MotorParameter(MotorParamsIdx.RUN_CURRENT, "RUN_CURRENT", 0),
+            MotorParamsIdx.ACC_CURRENT : MotorParameter(MotorParamsIdx.ACC_CURRENT, "ACC_CURRENT", 0),
         }
 
         self._connected: bool = False

@@ -421,7 +421,7 @@ class IAGModbusServer(mbServer):
                 # A configurable timeout is implemented to avoid infinite loops
                 t = time.time()
 
-                self.mb_comm.task_progress.emit(0)  # Just to update the progress bar in the GUI, it does not represent the actual writting progress
+                # self.mb_comm.task_progress.emit(0)  # Just to update the progress bar in the GUI, it does not represent the actual writting progress
                 progress = 0
                 len_reg_list = len(reg_list)
 
@@ -429,7 +429,7 @@ class IAGModbusServer(mbServer):
                 for reg, value in reg_list:
                     # time.sleep(0.1)
                     progress += 1
-                    self.mb_comm.task_progress.emit(int((progress / len_reg_list) * 100))  # Update the progress bar in the GUI
+                    # self.mb_comm.task_progress.emit(int((progress / len_reg_list) * 100))  # Update the progress bar in the GUI
 
                     # print(f"Trying to write value {value} to {reg.TAG} -> {time.time() - t} seconds [{write_timeout}]")
                     if reg.TYPE is RegType.HOLDING_REGISTER:
@@ -444,14 +444,14 @@ class IAGModbusServer(mbServer):
                             msw = (value & 0xFFFF0000) >> 16
                             self.data_bank.set_holding_registers(reg.ADDRESS, [lsw, msw])
 
-                self.mb_comm.task_progress.emit(0)  # Just to update the progress bar in the GUI, it does not represent the actual writting progress
+                # self.mb_comm.task_progress.emit(0)  # Just to update the progress bar in the GUI, it does not represent the actual writting progress
                 # self.wait_confirmation(reg)
                 return "OK"
             except Exception as e:
             # else:
                 # print(f'Failed to write registers due to timeout. CLP is reading for more than {Config.write_timeout} seconds.')
                 # raise RuntimeError(f'Failed to send {value} to register {reg.TAG} after {tries} tries')
-                self.mb_comm.task_progress.emit(0)  # Just to update the progress bar in the GUI, it does not represent the actual writting progress
+                # self.mb_comm.task_progress.emit(0)  # Just to update the progress bar in the GUI, it does not represent the actual writting progress
                 return "NOK"
             
 

@@ -130,14 +130,12 @@ class MotorModels(StrEnum):
 
 # The MotorParamIdx first value must be a continuation from ServerParamsIdx
 class MotorParamsIdx(Enum):     
-    # MOTOR_IP=6
     BACKLASH=7
     MAX_POS=auto()
     PARK_POS=auto()
     MAX_SPEED=auto()
     NORMAL_SPEED=auto()
     LOW_SPEED=auto()
-    # MAX_STEP=auto()     # deprecated - use max_pos
     ACCELERATION=auto()
     DECELERATION=auto()
     IDLE_CURRENT=auto()
@@ -148,7 +146,7 @@ class MotorParamsIdx(Enum):
 class MotorParameter():
     IDX: MotorParamsIdx
     NAME: str
-    REGISTER: RegsInfo
+    # REGISTER: RegsInfo
     VALUE: int | bool | str |float
 
 class ReachStatus(StrEnum):
