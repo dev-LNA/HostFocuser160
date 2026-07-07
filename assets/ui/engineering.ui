@@ -474,8 +474,11 @@ margin: 1px 0px 1px 0px
            <property name="statusTip">
             <string>Motor IP</string>
            </property>
+           <property name="autoFillBackground">
+            <bool>false</bool>
+           </property>
            <property name="styleSheet">
-            <string notr="true"/>
+            <string notr="true">background-color:rgba(0,0,0,0)</string>
            </property>
            <property name="inputMask">
             <string>000.000.000.000</string>
@@ -484,7 +487,7 @@ margin: 1px 0px 1px 0px
             <string>777.777.777.777</string>
            </property>
            <property name="frame">
-            <bool>true</bool>
+            <bool>false</bool>
            </property>
            <property name="echoMode">
             <enum>QLineEdit::EchoMode::Normal</enum>
@@ -494,6 +497,9 @@ margin: 1px 0px 1px 0px
            </property>
            <property name="alignment">
             <set>Qt::AlignmentFlag::AlignCenter</set>
+           </property>
+           <property name="readOnly">
+            <bool>true</bool>
            </property>
            <property name="change" stdset="0">
             <bool>false</bool>
@@ -1361,8 +1367,11 @@ margin: 1px 0px 1px 0px
            </item>
            <item>
             <widget class="QCheckBox" name="cbAutoStartup">
+             <property name="statusTip">
+              <string/>
+             </property>
              <property name="text">
-              <string>Auto Startup</string>
+              <string>Auto Server Startup</string>
              </property>
             </widget>
            </item>
@@ -1416,7 +1425,7 @@ margin: 1px 0px 1px 0px
                <string>Gateway IP</string>
               </property>
               <property name="styleSheet">
-               <string notr="true"/>
+               <string notr="true">background-color:rgba(0,0,0,0)</string>
               </property>
               <property name="inputMask">
                <string>000.000.000.000</string>
@@ -1425,7 +1434,7 @@ margin: 1px 0px 1px 0px
                <string>777.777.777.777</string>
               </property>
               <property name="frame">
-               <bool>true</bool>
+               <bool>false</bool>
               </property>
               <property name="echoMode">
                <enum>QLineEdit::EchoMode::Normal</enum>
@@ -1435,6 +1444,9 @@ margin: 1px 0px 1px 0px
               </property>
               <property name="alignment">
                <set>Qt::AlignmentFlag::AlignCenter</set>
+              </property>
+              <property name="readOnly">
+               <bool>true</bool>
               </property>
               <property name="change" stdset="0">
                <bool>false</bool>
@@ -1484,7 +1496,7 @@ margin: 1px 0px 1px 0px
                <string>CLP Subnet Mask</string>
               </property>
               <property name="styleSheet">
-               <string notr="true"/>
+               <string notr="true">background-color:rgba(0,0,0,0)</string>
               </property>
               <property name="inputMask">
                <string>000.000.000.000</string>
@@ -1493,7 +1505,7 @@ margin: 1px 0px 1px 0px
                <string>777.777.777.777</string>
               </property>
               <property name="frame">
-               <bool>true</bool>
+               <bool>false</bool>
               </property>
               <property name="echoMode">
                <enum>QLineEdit::EchoMode::Normal</enum>
@@ -1503,6 +1515,9 @@ margin: 1px 0px 1px 0px
               </property>
               <property name="alignment">
                <set>Qt::AlignmentFlag::AlignCenter</set>
+              </property>
+              <property name="readOnly">
+               <bool>true</bool>
               </property>
               <property name="change" stdset="0">
                <bool>false</bool>
@@ -2144,7 +2159,7 @@ margin: 1px 0px 1px 0px
      <x>0</x>
      <y>0</y>
      <width>937</width>
-     <height>30</height>
+     <height>23</height>
     </rect>
    </property>
    <property name="defaultUp">

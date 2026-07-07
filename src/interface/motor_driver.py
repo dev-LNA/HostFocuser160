@@ -47,6 +47,7 @@ class Driver(ABC):
         self.current_state = InternalState()
 
         self.param_methods = {
+            MotorParamsIdx.MOTOR_IP : self.param_IP,
             MotorParamsIdx.BACKLASH : self.param_backlash,
             MotorParamsIdx.MAX_POS : self.param_max_pos,
             MotorParamsIdx.PARK_POS : self.param_park_pos,
@@ -148,6 +149,11 @@ class Driver(ABC):
 
     @abstractmethod
     def set_position(self, value: int) -> str:
+        """Precisa ser implementada pelo driver"""
+    ...
+
+    @abstractmethod
+    def param_IP(self, value: int | float | None = None, converted:bool = False) -> str | None:
         """Precisa ser implementada pelo driver"""
     ...
 

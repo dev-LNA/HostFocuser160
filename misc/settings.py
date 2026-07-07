@@ -140,7 +140,7 @@ class ConfigurableSettings(NamedTuple):
     SUB_MASK: SettingsAttributes[QLineEdit]
     GATEWAY_IP: SettingsAttributes[QLineEdit]
     STARTUP : SettingsAttributes[QCheckBox]
-    # MOTOR_IP: SettingsAttributes[QLineEdit]
+    MOTOR_IP: SettingsAttributes[QLineEdit]
     BACKLASH: SettingsAttributes[QSpinBox]
     MAX_POS: SettingsAttributes[QSpinBox]
     PARK_POS: SettingsAttributes[QSpinBox]
@@ -250,7 +250,7 @@ class SettingsWindow(QMainWindow):
                     GATEWAY_IP = SettingsAttributes(ServerParamsIdx.GATEWAY_IP, 'Gateway IP Address', self.ui_elements.txtGatewayIP, '0', str),
                     STARTUP= SettingsAttributes(ServerParamsIdx.STARTUP, 'Auto Startup', self.ui_elements.cbAutoStartup, False, bool ),
                 # Motor parameters
-                    # MOTOR_IP = SettingsAttributes(MotorParamsIdx.MOTOR_IP, 'Motor IP Address' , self.ui_elements.txtMotorIP, '0', str),
+                    MOTOR_IP = SettingsAttributes(MotorParamsIdx.MOTOR_IP, 'Motor IP Address' , self.ui_elements.txtMotorIP, '0', str),
                     BACKLASH = SettingsAttributes(MotorParamsIdx.BACKLASH, 'Backlash', self.ui_elements.spinBacklash, 0, int),
                     MAX_POS = SettingsAttributes(MotorParamsIdx.MAX_POS, 'Maximum Mirror Position', self.ui_elements.spinMaxPos, 0, int),
                     PARK_POS = SettingsAttributes(MotorParamsIdx.PARK_POS, 'Park Mirror Position', self.ui_elements.spinParkPos, 0, int),

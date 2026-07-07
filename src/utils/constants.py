@@ -129,8 +129,9 @@ class MotorModels(StrEnum):
     AMP_MOTOR = 'AMP'
 
 # The MotorParamIdx first value must be a continuation from ServerParamsIdx
-class MotorParamsIdx(Enum):     
-    BACKLASH=7
+class MotorParamsIdx(Enum):   
+    MOTOR_IP=6  
+    BACKLASH=auto()
     MAX_POS=auto()
     PARK_POS=auto()
     MAX_SPEED=auto()

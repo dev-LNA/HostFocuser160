@@ -59,6 +59,7 @@ class Motor():
         self._firmware_version: str = ''
 
         self.parameters = {
+            MotorParamsIdx.MOTOR_IP : MotorParameter(MotorParamsIdx.MOTOR_IP, "MOTOR_IP", ""),
             MotorParamsIdx.BACKLASH : MotorParameter(MotorParamsIdx.BACKLASH, "BACKLASH", 0),
             MotorParamsIdx.MAX_POS : MotorParameter(MotorParamsIdx.MAX_POS, "MAX_POS", 0),
             MotorParamsIdx.PARK_POS : MotorParameter(MotorParamsIdx.PARK_POS, "PARK_POS", 0),

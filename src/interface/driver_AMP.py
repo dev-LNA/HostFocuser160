@@ -279,7 +279,10 @@ class DriverAMP(Driver):
     def param_IP(self, value: str | None = None, converted:bool = False) -> str | None:
         """[DEPRECATED]
         IP value cannot be changed by the server anymore"""
-        pass
+        if value is None:
+            if self.mb_server and self.mb_server.data_bank and isinstance(self.mb_server.data_bank, MB_DataBank) and self.mb_server.data_bank.client_info:
+                    return self.mb_server.data_bank.client_info.address
+
 
     def _convert_pos(self, pos: int | float) -> float:
         """Converts position in microns to steps, since the CLP receives position values in steps."""
@@ -832,9 +835,13 @@ class DriverAMP(Driver):
                 self.motor.signals.progress.string.emit(int(p/len(MotorParamsIdx)*100))
                 # time.sleep(0.05)            # Just for better visualization of ui update
                 resp = self.param_methods[param_idx]()
-                val = float(resp)
+                try:
+                    val = float(resp)
+                    print(f'{self.motor.parameters[param_idx]} - {int(self.param_methods[param_idx](converted=True))}')
+                except:
+                    val = resp
                 print(f'{param_idx}, {val}')
                 self.param_methods[param_idx](value=val)
-                print(f'{self.motor.parameters[param_idx]} - {int(self.param_methods[param_idx](converted=True))}')
+                
 
                     
