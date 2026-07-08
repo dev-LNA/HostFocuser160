@@ -50,6 +50,7 @@ class HoldingRegs(NamedTuple):
     RX_V90: RegsInfo
     RX_V92: RegsInfo
     RX_PACKOK: RegsInfo
+    RX_PACKRST: RegsInfo
 # == REGISTROS DO SERVIDOR == #
     TX_V20: RegsInfo
     TX_V71: RegsInfo
@@ -68,6 +69,7 @@ class HoldingRegs(NamedTuple):
     TX_TCPMBTMO: RegsInfo
     TX_TCPKATMO: RegsInfo
     TX_PACKCMDS: RegsInfo
+    TX_PACKRST: RegsInfo
 
 # Holding register size given in words (16 bits)
 holding_regs = HoldingRegs(
@@ -96,6 +98,7 @@ holding_regs = HoldingRegs(
     RX_V90=RegsInfo("RX_V90", 29, 1, RegType.HOLDING_REGISTER, "Motor Firmware Version"),
     RX_V92=RegsInfo("RX_V92", 30, 1, RegType.HOLDING_REGISTER, "CLP Firmware Version"),
     RX_PACKOK=RegsInfo("RX_PACKOK", 31, 1, RegType.HOLDING_REGISTER, "PACKOK"),
+    RX_PACKRST=RegsInfo("RX_PACKRST", 32, 1, RegType.HOLDING_REGISTER, "PACKRST [CLP]"),
     TX_V20=RegsInfo("TX_V20", 50, 1, RegType.HOLDING_REGISTER, DESCRIPTION="Move Position"),
     TX_V71=RegsInfo("TX_V71", 52, 1, RegType.HOLDING_REGISTER, "Max. Position"),
     TX_V74=RegsInfo("TX_V74", 53, 1, RegType.HOLDING_REGISTER, "Backlash"),
@@ -112,7 +115,8 @@ holding_regs = HoldingRegs(
     TX_TCPCYCLE=RegsInfo("TX_TCPCYCLE", 65, 1, RegType.HOLDING_REGISTER, "TCPCYCLE"),
     TX_TCPMBTMO=RegsInfo("TX_TCPMBTMO", 66, 1, RegType.HOLDING_REGISTER, "TCPMBTMO"),
     TX_TCPKATMO=RegsInfo("TX_TCPKATMO", 67, 1, RegType.HOLDING_REGISTER, "TCPKATMO"),
-    TX_PACKCMDS=RegsInfo("TX_PACKCMDS", 68, 1, RegType.HOLDING_REGISTER, "PACKCMDS")
+    TX_PACKCMDS=RegsInfo("TX_PACKCMDS", 68, 1, RegType.HOLDING_REGISTER, "PACKCMDS"),
+    TX_PACKRST=RegsInfo("TX_PACKRST", 69, 1, RegType.HOLDING_REGISTER, "PACKRST")
 )
 
 class PackStatusFlags(IntFlag):
@@ -139,6 +143,12 @@ class PackCMDFlags(IntFlag):
     TX_SET = 0x0400
     TX_RCLP = 0x0800
     TX_GS5 = 0x1000
+
+class PackRSTFlags(IntFlag):
+    NONE = 0x0000
+    CLP = 0x0001
+    MOTOR = 0x0002
+
 
 class CoilsRegs(NamedTuple):
     RX_ALM: RegsInfo
@@ -379,10 +389,11 @@ class CLPMirrors(dict):
     TX_V81: mirrorMapping
     TX_V82: mirrorMapping
     TX_V83: mirrorMapping
-    TX_TCPRTMO: mirrorMapping
-    TX_TCPCYCLE: mirrorMapping
-    TX_TCPMBTMO: mirrorMapping
-    TX_TCPKATMO: mirrorMapping
+    # TX_TCPRTMO: mirrorMapping
+    # TX_TCPCYCLE: mirrorMapping
+    # TX_TCPMBTMO: mirrorMapping
+    # TX_TCPKATMO: mirrorMapping
+    TX_PACKRST: mirrorMapping
 
 CLP_Mirror = CLPMirrors(
     TX_V20 = mirrorMapping(holding_regs.TX_V20, holding_regs.RX_V20),
@@ -397,10 +408,11 @@ CLP_Mirror = CLPMirrors(
     TX_V81 = mirrorMapping(holding_regs.TX_V81, holding_regs.RX_V81),
     TX_V82 = mirrorMapping(holding_regs.TX_V82, holding_regs.RX_V82),
     TX_V83 = mirrorMapping(holding_regs.TX_V83, holding_regs.RX_V83),
-    TX_TCPRTMO = mirrorMapping(holding_regs.TX_TCPRTMO, holding_regs.RX_TCPRTMO),
-    TX_TCPCYCLE = mirrorMapping(holding_regs.TX_TCPCYCLE, holding_regs.RX_TCPCYCLE),
-    TX_TCPMBTMO = mirrorMapping(holding_regs.TX_TCPMBTMO, holding_regs.RX_TCPMBTMO),
-    TX_TCPKATMO = mirrorMapping(holding_regs.TX_TCPKATMO, holding_regs.RX_TCPKATMO),
+    # TX_TCPRTMO = mirrorMapping(holding_regs.TX_TCPRTMO, holding_regs.RX_TCPRTMO),
+    # TX_TCPCYCLE = mirrorMapping(holding_regs.TX_TCPCYCLE, holding_regs.RX_TCPCYCLE),
+    # TX_TCPMBTMO = mirrorMapping(holding_regs.TX_TCPMBTMO, holding_regs.RX_TCPMBTMO),
+    # TX_TCPKATMO = mirrorMapping(holding_regs.TX_TCPKATMO, holding_regs.RX_TCPKATMO),
+    TX_PACKRST = mirrorMapping(holding_regs.TX_PACKRST, holding_regs.RX_PACKRST),
 )
 
 class Param_Vars(NamedTuple):

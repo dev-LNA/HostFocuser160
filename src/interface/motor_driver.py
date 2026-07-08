@@ -46,8 +46,12 @@ class Driver(ABC):
 
         self.current_state = InternalState()
 
-        self.param_methods = {
+        self.param_methods = { 
             MotorParamsIdx.MOTOR_IP : self.param_IP,
+            # MotorParamsIdx.MOTOR_TCP_RTMO : self.param_tcp_rtmo,
+            # MotorParamsIdx.MOTOR_TCP_CYCLE : self.param_tcp_cycle,
+            # MotorParamsIdx.MOTOR_TCP_MBTMO : self.param_tcp_mbtmo,
+            # MotorParamsIdx.MOTOR_TCP_KATMO : self.param_tcp_katmo,
             MotorParamsIdx.BACKLASH : self.param_backlash,
             MotorParamsIdx.MAX_POS : self.param_max_pos,
             MotorParamsIdx.PARK_POS : self.param_park_pos,
@@ -58,7 +62,10 @@ class Driver(ABC):
             MotorParamsIdx.DECELERATION : self.param_deceleration,
             MotorParamsIdx.IDLE_CURRENT : self.param_idle_current,
             MotorParamsIdx.RUN_CURRENT : self.param_run_current,
-            MotorParamsIdx.ACC_CURRENT : self.param_acc_current
+            MotorParamsIdx.ACC_CURRENT : self.param_acc_current,
+            MotorParamsIdx.CLP_AUTO_RESTART : self.param_clp_auto_restart,
+            MotorParamsIdx.MOTOR_AUTO_RESTART : self.param_motor_auto_restart,
+
         }
 
         self.command_methods = {
@@ -214,6 +221,36 @@ class Driver(ABC):
 
     @abstractmethod
     def param_acc_current(self, value: int | float | None = None, converted:bool = False) -> str | None:
+        """Precisa ser implementada pelo driver"""
+    ...
+
+    @abstractmethod
+    def param_clp_auto_restart(self, value: bool | None = None, converted:bool = False) -> str | None:
+        """Precisa ser implementada pelo driver"""
+    ...
+
+    @abstractmethod
+    def param_motor_auto_restart(self, value: bool | None = None, converted:bool = False) -> str | None:
+        """Precisa ser implementada pelo driver"""
+    ...
+
+    @abstractmethod
+    def param_tcp_rtmo(self, value: int | None = None, converted:bool = False) -> str | None:
+        """Precisa ser implementada pelo driver"""
+    ...
+
+    @abstractmethod
+    def param_tcp_cycle(self, value: int | None = None, converted:bool = False) -> str | None:
+        """Precisa ser implementada pelo driver"""
+    ...
+
+    @abstractmethod
+    def param_tcp_mbtmo(self, value: int | None = None, converted:bool = False) -> str | None:
+        """Precisa ser implementada pelo driver"""
+    ...
+
+    @abstractmethod
+    def param_tcp_katmo(self, value: int | None = None, converted:bool = False) -> str | None:
         """Precisa ser implementada pelo driver"""
     ...
 

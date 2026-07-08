@@ -162,6 +162,8 @@ class Config:
     enc_2_microns: float = float(get_toml('Device', 'encoder2microns'))
     steps_2_encoder: float = float(get_toml('Device', 'steps2encoder'))
     microns_2_rps: float = float(get_toml('Device', 'microns2rps'))
+    clp_auto_restart: bool = bool(get_toml('Device', 'clp_auto_restart'))
+    motor_auto_restart: bool = bool(get_toml('Device', 'motor_auto_restart'))
     # ---------------
     # Logging Section
     # ---------------
@@ -222,6 +224,8 @@ def update_config():
     Config.enc_2_microns = float(get_toml('Device', 'encoder2microns'))
     Config.steps_2_encoder = float(get_toml('Device', 'steps2encoder'))
     Config.microns_2_rps = float(get_toml('Device', 'microns2rps'))
+    Config.clp_auto_restart = bool(get_toml('Device', 'clp_auto_restart'))
+    Config.motor_auto_restart = bool(get_toml('Device', 'motor_auto_restart'))
     # ---------------
     # Logging Section
     # ---------------

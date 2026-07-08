@@ -344,6 +344,8 @@ class UiWidgets(QWidget):
         # Check boxes
 
             self.cbAutoStartup: QCheckBox = window.findChild(QCheckBox, 'cbAutoStartup')
+            self.cbCLPAutoRestart: QCheckBox = window.findChild(QCheckBox, 'cbCLPAutoRestart')
+            self.cbMotorAutoRestart: QCheckBox = window.findChild(QCheckBox, 'cbMotorAutoRestart')
 
 
 

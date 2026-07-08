@@ -1343,63 +1343,136 @@ margin: 1px 0px 1px 0px
         <property name="title">
          <string>Server Parameters</string>
         </property>
-        <layout class="QGridLayout" name="gridLayout_5">
-         <property name="verticalSpacing">
-          <number>6</number>
+        <layout class="QVBoxLayout" name="verticalLayout_5">
+         <property name="spacing">
+          <number>0</number>
          </property>
-         <item row="0" column="0">
-          <layout class="QHBoxLayout" name="horizontalLayout_9">
+         <item>
+          <layout class="QVBoxLayout" name="verticalLayout_3">
+           <property name="spacing">
+            <number>2</number>
+           </property>
            <item>
-            <spacer name="horizontalSpacer_12">
-             <property name="orientation">
-              <enum>Qt::Orientation::Horizontal</enum>
-             </property>
-             <property name="sizeType">
-              <enum>QSizePolicy::Policy::Maximum</enum>
-             </property>
-             <property name="sizeHint" stdset="0">
-              <size>
-               <width>10</width>
-               <height>20</height>
-              </size>
-             </property>
-            </spacer>
+            <layout class="QHBoxLayout" name="horizontalLayout_9">
+             <item>
+              <spacer name="horizontalSpacer_12">
+               <property name="orientation">
+                <enum>Qt::Orientation::Horizontal</enum>
+               </property>
+               <property name="sizeType">
+                <enum>QSizePolicy::Policy::Maximum</enum>
+               </property>
+               <property name="sizeHint" stdset="0">
+                <size>
+                 <width>10</width>
+                 <height>20</height>
+                </size>
+               </property>
+              </spacer>
+             </item>
+             <item>
+              <widget class="QCheckBox" name="cbAutoStartup">
+               <property name="statusTip">
+                <string/>
+               </property>
+               <property name="text">
+                <string>Auto Server Startup</string>
+               </property>
+              </widget>
+             </item>
+            </layout>
            </item>
            <item>
-            <widget class="QCheckBox" name="cbAutoStartup">
-             <property name="statusTip">
-              <string/>
-             </property>
-             <property name="text">
-              <string>Auto Server Startup</string>
-             </property>
-            </widget>
+            <layout class="QHBoxLayout" name="horizontalLayout_11">
+             <item>
+              <spacer name="horizontalSpacer_14">
+               <property name="orientation">
+                <enum>Qt::Orientation::Horizontal</enum>
+               </property>
+               <property name="sizeType">
+                <enum>QSizePolicy::Policy::Maximum</enum>
+               </property>
+               <property name="sizeHint" stdset="0">
+                <size>
+                 <width>10</width>
+                 <height>20</height>
+                </size>
+               </property>
+              </spacer>
+             </item>
+             <item>
+              <widget class="QCheckBox" name="cbCLPAutoRestart">
+               <property name="statusTip">
+                <string/>
+               </property>
+               <property name="text">
+                <string>CLP Auto Restart</string>
+               </property>
+              </widget>
+             </item>
+            </layout>
+           </item>
+           <item>
+            <layout class="QHBoxLayout" name="horizontalLayout_12">
+             <item>
+              <spacer name="horizontalSpacer_15">
+               <property name="orientation">
+                <enum>Qt::Orientation::Horizontal</enum>
+               </property>
+               <property name="sizeType">
+                <enum>QSizePolicy::Policy::Maximum</enum>
+               </property>
+               <property name="sizeHint" stdset="0">
+                <size>
+                 <width>10</width>
+                 <height>20</height>
+                </size>
+               </property>
+              </spacer>
+             </item>
+             <item>
+              <widget class="QCheckBox" name="cbMotorAutoRestart">
+               <property name="statusTip">
+                <string/>
+               </property>
+               <property name="text">
+                <string>Motor Auto Restart</string>
+               </property>
+              </widget>
+             </item>
+            </layout>
            </item>
           </layout>
          </item>
-         <item row="1" column="0">
+         <item>
           <widget class="QGroupBox" name="gbNetwork">
            <property name="enabled">
             <bool>false</bool>
            </property>
            <property name="minimumSize">
             <size>
-             <width>243</width>
-             <height>97</height>
+             <width>231</width>
+             <height>78</height>
             </size>
            </property>
            <property name="maximumSize">
             <size>
-             <width>243</width>
-             <height>113</height>
+             <width>239</width>
+             <height>82</height>
             </size>
            </property>
            <property name="title">
             <string>Network</string>
            </property>
            <layout class="QGridLayout" name="gridLayout_3">
-            <property name="verticalSpacing">
+            <property name="topMargin">
              <number>6</number>
+            </property>
+            <property name="bottomMargin">
+             <number>0</number>
+            </property>
+            <property name="verticalSpacing">
+             <number>0</number>
             </property>
             <item row="1" column="1">
              <widget class="QLineEdit" name="txtGatewayIP">
@@ -1546,7 +1619,7 @@ margin: 1px 0px 1px 0px
            </layout>
           </widget>
          </item>
-         <item row="2" column="0">
+         <item>
           <widget class="QGroupBox" name="gbZMQ">
            <property name="enabled">
             <bool>false</bool>
@@ -1554,7 +1627,7 @@ margin: 1px 0px 1px 0px
            <property name="minimumSize">
             <size>
              <width>243</width>
-             <height>129</height>
+             <height>116</height>
             </size>
            </property>
            <property name="maximumSize">
@@ -1917,13 +1990,25 @@ margin: 1px 0px 1px 0px
         <property name="sizeHint" stdset="0">
          <size>
           <width>20</width>
-          <height>18</height>
+          <height>24</height>
          </size>
         </property>
        </spacer>
       </item>
       <item row="1" column="3">
        <widget class="QGroupBox" name="gbRetrieveParameters">
+        <property name="minimumSize">
+         <size>
+          <width>0</width>
+          <height>130</height>
+         </size>
+        </property>
+        <property name="maximumSize">
+         <size>
+          <width>16777215</width>
+          <height>150</height>
+         </size>
+        </property>
         <property name="title">
          <string>Retrieve Parameters</string>
         </property>

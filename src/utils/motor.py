@@ -71,6 +71,8 @@ class Motor():
             MotorParamsIdx.IDLE_CURRENT : MotorParameter(MotorParamsIdx.IDLE_CURRENT, "IDLE_CURRENT", 0),
             MotorParamsIdx.RUN_CURRENT : MotorParameter(MotorParamsIdx.RUN_CURRENT, "RUN_CURRENT", 0),
             MotorParamsIdx.ACC_CURRENT : MotorParameter(MotorParamsIdx.ACC_CURRENT, "ACC_CURRENT", 0),
+            MotorParamsIdx.CLP_AUTO_RESTART : MotorParameter(MotorParamsIdx.CLP_AUTO_RESTART, "CLP_AUTO_RESTART", False),
+            MotorParamsIdx.MOTOR_AUTO_RESTART : MotorParameter(MotorParamsIdx.MOTOR_AUTO_RESTART, "MOTOR_AUTO_RESTART", False),
         }
 
         self._connected: bool = False

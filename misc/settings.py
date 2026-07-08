@@ -153,6 +153,8 @@ class ConfigurableSettings(NamedTuple):
     IDLE_CURRENT: SettingsAttributes[QDoubleSpinBox]
     RUN_CURRENT: SettingsAttributes[QDoubleSpinBox]
     ACC_CURRENT: SettingsAttributes[QDoubleSpinBox]
+    CLP_AUTO_RESTART: SettingsAttributes[QCheckBox]
+    MOTOR_AUTO_RESTART: SettingsAttributes[QCheckBox]
 
 
 class SettingsWindowSignals(QObject):
@@ -263,6 +265,8 @@ class SettingsWindow(QMainWindow):
                     IDLE_CURRENT = SettingsAttributes(MotorParamsIdx.IDLE_CURRENT, 'Motor Idle Current', self.ui_elements.spinIdleCurrent, 0, float),
                     RUN_CURRENT = SettingsAttributes(MotorParamsIdx.RUN_CURRENT, 'Motor Running Current', self.ui_elements.spinRunCurrent, 0, float),
                     ACC_CURRENT = SettingsAttributes(MotorParamsIdx.ACC_CURRENT, 'Motor Acceleration Current', self.ui_elements.spinAccCurrent, 0, float),
+                    CLP_AUTO_RESTART = SettingsAttributes(MotorParamsIdx.CLP_AUTO_RESTART, 'CLP Auto Restart', self.ui_elements.cbCLPAutoRestart, False, bool),
+                    MOTOR_AUTO_RESTART = SettingsAttributes(MotorParamsIdx.MOTOR_AUTO_RESTART, 'Motor Auto Restart', self.ui_elements.cbMotorAutoRestart, False, bool)
                 )
 
 
@@ -504,7 +508,16 @@ class SettingsWindow(QMainWindow):
                 #     Config.device_ip = config['Device']['device_ip']
 
                 else:
-                    if isinstance(self._changed_settings[k], int):
+                    # if isinstance(self._changed_settings[k], int):
+                    #     print(f"***PARAMETER {k} IS AN INT")
+                    #     config['Device'][k.name.lower()] = int(self._changed_settings[k])
+                    # elif isinstance(self._changed_settings[k], bool):
+                    #     print(f"***PARAMETER {k} IS A BOOL")
+                    #     config['Device'][k.name.lower()] = bool(self._changed_settings[k])
+                    # else:
+                    #     print(f"***PARAMETER {k} IS NOT A BOOL")
+                    #     config['Device'][k.name.lower()] = self._changed_settings[k]
+                    if type(self._changed_settings[k]) is int:
                         config['Device'][k.name.lower()] = int(self._changed_settings[k])
                     else:
                         config['Device'][k.name.lower()] = self._changed_settings[k]

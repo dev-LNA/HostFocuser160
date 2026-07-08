@@ -14,7 +14,7 @@ from threading import Lock, Thread, Timer
 from src.core.config import Config
 from src.core.exceptions import DriverException
 from src.utils.constants import constants, MotorStatusFlags, MotorParamsIdx, MotorAlarmInfo, motor_program_errors_mask, motor_alc_errors_mask, Conversion, TimeDelays
-from src.utils.modbus_regs import RegsInfo, RegType, coils_regs, dig_inputs_regs, DB_size, CLP_Mirror, TwosComplementReg, param_vars, holding_regs, PackCMDFlags, PackStatusFlags
+from src.utils.modbus_regs import RegsInfo, RegType, coils_regs, dig_inputs_regs, DB_size, CLP_Mirror, TwosComplementReg, param_vars, holding_regs, PackCMDFlags, PackStatusFlags, PackRSTFlags
 
 from enum import IntFlag
 from typing import TYPE_CHECKING
@@ -546,7 +546,70 @@ class DriverAMP(Driver):
         if self.mb_server:
             return self.mb_server.write_param(holding_regs.TX_V82, value)
 
+    def param_tcp_rtmo(self, value: int | None = None, converted:bool = False) -> str | None:
+        """Precisa ser implementada pelo driver"""
+        if value is None:
+            return None
+
+        if self.mb_server:
+            return self.mb_server.write_param(holding_regs.TX_TCPRTMO, 30)
+
+    def param_tcp_cycle(self, value: int | None = None, converted:bool = False) -> str | None:
+        """Precisa ser implementada pelo driver"""
+        if value is None:
+            return None
+
+        if self.mb_server:
+            return self.mb_server.write_param(holding_regs.TX_TCPCYCLE, 5)
+
+    def param_tcp_mbtmo(self, value: int | None = None, converted:bool = False) -> str | None:
+        """Precisa ser implementada pelo driver"""
+        if value is None:
+            return None
+
+        if self.mb_server:
+            return self.mb_server.write_param(holding_regs.TX_TCPMBTMO, 1000)
+
+    def param_tcp_katmo(self, value: int | None = None, converted:bool = False) -> str | None:
+        """Precisa ser implementada pelo driver"""
+        if value is None:
+            return None
+
+        if self.mb_server:
+            return self.mb_server.write_param(holding_regs.TX_TCPKATMO, 30)
+            
+    def param_clp_auto_restart(self, value: bool | None = None, converted:bool = False) -> bool | str | None:
+        """Precisa ser implementada pelo driver"""
+        if value is None:
+            return Config.clp_auto_restart
+        
+        if self.mb_server and self.mb_server.data_bank:
+            reg_val = self.mb_server.data_bank.get_holding_registers(holding_regs.TX_PACKRST.ADDRESS, holding_regs.TX_PACKRST.SIZE)
+            print(f"PARAM CLP AUTO RESTART GET PACKRST: {reg_val}")
+            if reg_val and value:
+                val = reg_val[0] | PackRSTFlags.CLP 
+            elif reg_val and not value:
+                val = reg_val[0] & (~PackRSTFlags.CLP)
+            print(f"PARAM CLP AUTO RESTART WRITE PACKRST: {val}")
+            return self.mb_server.write_param(holding_regs.TX_PACKRST, val)
+
+    def param_motor_auto_restart(self, value: bool | None = None, converted:bool = False) -> bool | str | None:
+        """Precisa ser implementada pelo driver"""
+        if value is None:
+            return Config.motor_auto_restart
     
+        if self.mb_server and self.mb_server.data_bank:
+            reg_val = self.mb_server.data_bank.get_holding_registers(holding_regs.TX_PACKRST.ADDRESS, holding_regs.TX_PACKRST.SIZE)
+            print(f"PARAM MOTOR AUTO RESTART GET PACKRST: {reg_val}")
+            if reg_val and value:
+                val = reg_val[0] | PackRSTFlags.MOTOR 
+            elif reg_val and not value:
+                val = reg_val[0] &  (~PackRSTFlags.MOTOR)
+            else:
+                return None
+            print(f"PARAM MOTOR AUTO RESTART WRITE PACKRST: {val}")
+            return self.mb_server.write_param(holding_regs.TX_PACKRST, val)
+
     def read_firmware_version(self) -> str | None:
         """Precisa ser implementada pelo driver"""
         if self.mb_server:

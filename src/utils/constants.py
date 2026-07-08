@@ -130,7 +130,11 @@ class MotorModels(StrEnum):
 
 # The MotorParamIdx first value must be a continuation from ServerParamsIdx
 class MotorParamsIdx(Enum):   
-    MOTOR_IP=6  
+    MOTOR_IP=len(ServerParamsIdx)
+    # MOTOR_TCP_RTMO=auto()
+    # MOTOR_TCP_CYCLE=auto()
+    # MOTOR_TCP_MBTMO=auto()
+    # MOTOR_TCP_KATMO=auto()
     BACKLASH=auto()
     MAX_POS=auto()
     PARK_POS=auto()
@@ -142,6 +146,9 @@ class MotorParamsIdx(Enum):
     IDLE_CURRENT=auto()
     RUN_CURRENT=auto()
     ACC_CURRENT=auto()
+    CLP_AUTO_RESTART=auto()
+    MOTOR_AUTO_RESTART=auto()
+
 
 @dataclass
 class MotorParameter():

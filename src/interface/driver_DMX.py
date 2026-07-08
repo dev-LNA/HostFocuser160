@@ -357,7 +357,17 @@ class DriverDMX(Driver):
             return "OK"
         else:
             return "0"
-            
+        
+
+    def param_clp_auto_restart(self, value: bool | None = None, converted:bool = False) -> str | None:
+        """Precisa ser implementada pelo driver"""
+    ...
+
+
+    def param_motor_auto_restart(self, value: bool | None = None, converted:bool = False) -> str | None:
+        """Precisa ser implementada pelo driver"""
+    ...
+
     def read_firmware_version(self) -> str:
         V1 = self._write("V90")    # Version number
         V2 = self._write("V91")    # Update number

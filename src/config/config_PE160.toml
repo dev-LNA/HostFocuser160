@@ -34,6 +34,8 @@ cmd_timeout = 5
 encoder2microns = 42.2047244
 steps2encoder = 20
 microns2rps = 0.0025
+clp_auto_restart = false
+motor_auto_restart = false
 
 [Network]
 server_ip = "*"

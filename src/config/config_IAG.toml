@@ -34,13 +34,15 @@ cmd_timeout = 7
 encoder2microns = 0.1
 steps2encoder = 20
 microns2rps = 0.0025
+clp_auto_restart = false
+motor_auto_restart = false
 
 [Network]
 server_ip = "*"
 port_pub = 7003
 port_rep = 7004
 sub_mask = "255.255.255.0"
-gateway_ip = "200.131.64.254"
+gateway_ip = "192.168.0.1"
 pub_interval = 1.0
 write_timeout = 3
 startup = 0
