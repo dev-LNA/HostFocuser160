@@ -1532,6 +1532,9 @@ margin: 1px 0px 1px 0px
                <property name="text">
                 <string>Auto Server Startup</string>
                </property>
+               <property name="change" stdset="0">
+                <bool>true</bool>
+               </property>
               </widget>
              </item>
             </layout>
@@ -1562,6 +1565,9 @@ margin: 1px 0px 1px 0px
                <property name="text">
                 <string>CLP Auto Restart</string>
                </property>
+               <property name="change" stdset="0">
+                <bool>false</bool>
+               </property>
               </widget>
              </item>
             </layout>
@@ -1591,6 +1597,9 @@ margin: 1px 0px 1px 0px
                </property>
                <property name="text">
                 <string>Motor Auto Restart</string>
+               </property>
+               <property name="change" stdset="0">
+                <bool>false</bool>
                </property>
               </widget>
              </item>

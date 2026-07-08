@@ -1,8 +1,9 @@
 title = "FocuserIAG"
 
 [General]
-name = "FocuserIAG"
-version = "1.0.0"
+name = "IAG Focuser"
+version = "1.1.0"
+date = "02/06/2026"
 description = "Interface for IAG Focuser"
 startup = false
 
@@ -11,7 +12,7 @@ absolute = true
 device_name = "2ndMirror"
 deviceID = "3285e9af-8d1d-4f9d-b368-d129d8e9a24b"
 device_ip = "0.0.0.0"
-device_port = 5005
+device_port = 502
 max_increment = 0
 tempcompavailable = false
 temp_comp = false
@@ -19,29 +20,36 @@ speed_security = 215000
 speedFactor = 428
 step_size = 0
 backlash = 20
-max_pos = 25110
-park_pos = 12600
-normal_speed = 220
+max_pos = 25000
+park_pos = 24000
+normal_speed = 300
 low_speed = 42
-max_speed = 417
-acceleration = 334
-deceleration = 1400
+max_speed = 500
+acceleration = 334.0
+deceleration = 2000.0
 idle_current = 80.0
-run_current = 1200
-acc_current = 2000
+run_current = 1200.0
+acc_current = 2000.0
 cmd_timeout = 7
 encoder2microns = 0.1
 steps2encoder = 20
 microns2rps = 0.0025
+clp_auto_restart = false
+motor_auto_restart = false
+tcp_retransmission_timeout = 30
+tcp_com_cycle_timeout = 5
+tcp_modbus_timeout = 1000
+tcp_keep_alive_timeout = 30
 
 [Network]
 server_ip = "*"
 port_pub = 7003
 port_rep = 7004
 sub_mask = "255.255.255.0"
-gateway_ip = "200.131.64.254"
-pub_interval = 1
+gateway_ip = "192.168.0.1"
+pub_interval = 1.0
 write_timeout = 3
+startup = 0
 
 [Logging]
 log_level = "INFO"

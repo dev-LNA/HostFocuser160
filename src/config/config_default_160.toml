@@ -1,8 +1,9 @@
-title = "Focuser160MQ"
+title = "FocuserPE160"
 
 [General]
-name = "Focuser160"
+name = "PE 160 Focuser"
 version = "1.0.0"
+date = "02/06/2026"
 description = "Interface for Perkin-Elmer Focuser"
 startup = false
 
@@ -10,29 +11,46 @@ startup = false
 absolute = true
 device_name = "2ndMirror"
 deviceID = "3285e9af-8d1d-4f9d-b368-d129d8e9a24b"
-ip_160 = "192.168.0.250"
-ip_iag = "192.168.60.120"
-router_ip = "192.168.0.1"
+device_ip = "192.168.0.250"
 device_port = 5001
-encoder2microns = 42.2047244
 max_increment = 0
 tempcompavailable = false
 temp_comp = false
 speed_security = 215000
 speedFactor = 428
 step_size = 0
-device_ip = "192.168.0.250"
 backlash = 4
 max_pos = 50
 park_pos = 20
-normal_speed = 3500
+normal_speed = 10000
 low_speed = 1000
-max_speed = 3500
+max_speed = 10000
+acceleration = 9
+deceleration = 8
+idle_current = 14
+run_current = 19
+acc_current = 41
+cmd_timeout = 5
+encoder2microns = 42.2047244
+steps2encoder = 20
+microns2rps = 0.0025
+clp_auto_restart = false
+motor_auto_restart = false
+tcp_retransmission_timeout = 30
+tcp_com_cycle_timeout = 5
+tcp_modbus_timeout = 1000
+tcp_keep_alive_timeout = 30
 
 [Network]
-ip_address = "*"
-port_pub = 7001
-port_rep = 7002
+server_ip = "*"
+port_pub = 7003
+port_rep = 7004
+sub_mask = "255.255.255.0"
+gateway_ip = "192.168.0.1"
+pub_port = 7003
+rep_port = 7004
+pub_interval = 1
+write_timeout = 3
 
 [Logging]
 log_level = "INFO"

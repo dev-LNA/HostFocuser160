@@ -7,7 +7,7 @@
     <x>0</x>
     <y>0</y>
     <width>700</width>
-    <height>498</height>
+    <height>521</height>
    </rect>
   </property>
   <property name="windowTitle">
@@ -140,40 +140,10 @@
        </item>
        <item>
         <property name="text">
-         <string>Subnet Mask</string>
-        </property>
-        <property name="toolTip">
-         <string/>
-        </property>
-        <property name="statusTip">
-         <string>SUB_MASK</string>
-        </property>
-       </item>
-       <item>
-        <property name="text">
-         <string>Gateway IP</string>
-        </property>
-        <property name="toolTip">
-         <string/>
-        </property>
-        <property name="statusTip">
-         <string>GATEWAY_IP</string>
-        </property>
-       </item>
-       <item>
-        <property name="text">
          <string>Auto Start</string>
         </property>
         <property name="statusTip">
          <string>STARTUP</string>
-        </property>
-       </item>
-       <item>
-        <property name="text">
-         <string>Motor IP</string>
-        </property>
-        <property name="statusTip">
-         <string>MOTOR_IP</string>
         </property>
        </item>
        <item>
@@ -262,6 +232,38 @@
         </property>
         <property name="statusTip">
          <string>ACC_CURRENT</string>
+        </property>
+       </item>
+       <item>
+        <property name="text">
+         <string>TCP Packet Retransmission Timeout</string>
+        </property>
+        <property name="statusTip">
+         <string>TCP_RETRANSMISSION_TIMEOUT</string>
+        </property>
+       </item>
+       <item>
+        <property name="text">
+         <string>Communication Cycle Time</string>
+        </property>
+        <property name="statusTip">
+         <string>TCP_COM_CYCLE_TIMEOUT</string>
+        </property>
+       </item>
+       <item>
+        <property name="text">
+         <string>Modbus Timeout</string>
+        </property>
+        <property name="statusTip">
+         <string>TCP_MODBUS_TIMEOUT</string>
+        </property>
+       </item>
+       <item>
+        <property name="text">
+         <string>TCP Keep Alive Timeout</string>
+        </property>
+        <property name="statusTip">
+         <string>TCP_KEEP_ALIVE_TIMEOUT</string>
         </property>
        </item>
       </widget>

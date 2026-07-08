@@ -781,25 +781,31 @@ class SettingsWindow(QMainWindow):
 
             # if isinstance(param.OBJ, QLineEdit):
             if param.TYPE is str:
-                text = param.OBJ.text().replace(".", "")    # Remove dots from masked IPs
-                if text == "":
-                    param.OBJ.setStyleSheet("""
-                        QLineEdit {border: 1px solid rgb(255,0,0);
-                                    background-color: rgba(255,0,0, 20); 
-                        border-radius:3}
-                    """
-                    )
-                else:
-                    param.OBJ.setStyleSheet("""none""")
+                if param.OBJ.property("change") is not None:
+                    text = param.OBJ.text().replace(".", "")    # Remove dots from masked IPs
+                    if text == "":
+                        param.OBJ.setStyleSheet("""
+                            QLineEdit {border: 1px solid rgb(255,0,0);
+                                        background-color: rgba(255,0,0, 20); 
+                            border-radius:3}
+                        """
+                        )
+                    else:
+                        param.OBJ.setStyleSheet("""none""")
 
-
-                if param.OBJ.text() != param.VALUE:
-                    param.OBJ.setProperty("change", True)
-                else:
-                    param.OBJ.setProperty("change", False)
+                    if param.OBJ.text() != param.VALUE:
+                        param.OBJ.setProperty("change", True)
+                    else:
+                        param.OBJ.setProperty("change", False)
 
             elif isinstance(param.OBJ, QSpinBox) or isinstance(param.OBJ, QDoubleSpinBox):
                 if param.OBJ.value() != param.VALUE:
+                    param.OBJ.setProperty("change", True)
+                else:
+                    param.OBJ.setProperty("change", False)
+            
+            elif isinstance(param.OBJ, QCheckBox):
+                if param.OBJ.isChecked() != param.VALUE:
                     param.OBJ.setProperty("change", True)
                 else:
                     param.OBJ.setProperty("change", False)
