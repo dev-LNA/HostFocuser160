@@ -699,6 +699,12 @@ class DriverAMP(Driver):
 
             self.park_status = (sastat & MotorProgramStatus.RUN_PARK) != 0
             
+            if sastat & MotorProgramStatus.NO_INIT:
+                sastat -= MotorProgramStatus.NO_INIT
+                msg += "Motor firmware not initialized"
+                if sastat > 0:
+                    msg += ' / '
+
             if sastat & MotorProgramStatus.READY:
                 sastat -= MotorProgramStatus.READY
                 msg += "Idle"
@@ -775,8 +781,8 @@ class DriverAMP(Driver):
             # if not flag_status:
             #     msg = "Running"
 
-            return "Idle" #TESTE
-            # return msg
+            # return "Idle" #TESTE
+            return msg
 
             
     

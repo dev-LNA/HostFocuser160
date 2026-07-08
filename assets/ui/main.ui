@@ -783,7 +783,7 @@ border-right: none;
                <widget class="QLabel" name="lblClientName_val">
                 <property name="minimumSize">
                  <size>
-                  <width>100</width>
+                  <width>181</width>
                   <height>22</height>
                  </size>
                 </property>
@@ -3544,7 +3544,7 @@ border-right: none;
                  <widget class="QLabel" name="lblHome">
                   <property name="minimumSize">
                    <size>
-                    <width>57</width>
+                    <width>66</width>
                     <height>20</height>
                    </size>
                   </property>
@@ -3567,7 +3567,7 @@ border-right: none;
                    <number>0</number>
                   </property>
                   <property name="text">
-                   <string>Home:</string>
+                   <string>Initialized:</string>
                   </property>
                   <property name="alignment">
                    <set>Qt::AlignmentFlag::AlignLeading|Qt::AlignmentFlag::AlignLeft|Qt::AlignmentFlag::AlignTop</set>
@@ -3802,7 +3802,7 @@ border-right: none;
                  <widget class="QLabel" name="lblFocusIn">
                   <property name="minimumSize">
                    <size>
-                    <width>57</width>
+                    <width>66</width>
                     <height>20</height>
                    </size>
                   </property>
