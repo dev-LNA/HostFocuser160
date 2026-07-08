@@ -164,6 +164,11 @@ class Config:
     microns_2_rps: float = float(get_toml('Device', 'microns2rps'))
     clp_auto_restart: bool = bool(get_toml('Device', 'clp_auto_restart'))
     motor_auto_restart: bool = bool(get_toml('Device', 'motor_auto_restart'))
+    tcp_retransmission_timeout: int = int(get_toml('Device', 'tcp_retransmission_timeout'))
+    tcp_com_cycle_timeout: int = int(get_toml('Device', 'tcp_com_cycle_timeout'))
+    tcp_modbus_timeout: int = int(get_toml('Device', 'tcp_modbus_timeout'))
+    tcp_keep_alive_timeout: int = int(get_toml('Device', 'tcp_keep_alive_timeout'))
+
     # ---------------
     # Logging Section
     # ---------------
@@ -226,6 +231,10 @@ def update_config():
     Config.microns_2_rps = float(get_toml('Device', 'microns2rps'))
     Config.clp_auto_restart = bool(get_toml('Device', 'clp_auto_restart'))
     Config.motor_auto_restart = bool(get_toml('Device', 'motor_auto_restart'))
+    Config.tcp_retransmission_timeout = int(get_toml('Device', 'tcp_retransmission_timeout'))
+    Config.tcp_com_cycle_timeout = int(get_toml('Device', 'tcp_com_cycle_timeout'))
+    Config.tcp_modbus_timeout = int(get_toml('Device', 'tcp_modbus_timeout'))
+    Config.tcp_keep_alive_timeout = int(get_toml('Device', 'tcp_keep_alive_timeout'))
     # ---------------
     # Logging Section
     # ---------------

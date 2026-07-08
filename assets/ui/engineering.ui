@@ -438,22 +438,139 @@ margin: 1px 0px 1px 0px
          <property name="horizontalSpacing">
           <number>11</number>
          </property>
-         <item row="0" column="0">
-          <widget class="QLabel" name="lblMotoIP">
+         <item row="5" column="4">
+          <widget class="QLabel" name="label">
+           <property name="statusTip">
+            <string>TCP Packet Retransmission Time-out</string>
+           </property>
+           <property name="text">
+            <string>TCP Timeout:</string>
+           </property>
+          </widget>
+         </item>
+         <item row="7" column="0">
+          <widget class="QLabel" name="lblAcceleration">
            <property name="minimumSize">
             <size>
-             <width>0</width>
-             <height>0</height>
+             <width>84</width>
+             <height>22</height>
             </size>
            </property>
            <property name="maximumSize">
             <size>
-             <width>16777215</width>
+             <width>80</width>
              <height>22</height>
             </size>
            </property>
            <property name="text">
-            <string>IP:</string>
+            <string>Acceleration:</string>
+           </property>
+          </widget>
+         </item>
+         <item row="2" column="5">
+          <widget class="QDoubleSpinBox" name="spinRunCurrent">
+           <property name="minimumSize">
+            <size>
+             <width>76</width>
+             <height>22</height>
+            </size>
+           </property>
+           <property name="maximumSize">
+            <size>
+             <width>76</width>
+             <height>22</height>
+            </size>
+           </property>
+           <property name="focusPolicy">
+            <enum>Qt::FocusPolicy::WheelFocus</enum>
+           </property>
+           <property name="statusTip">
+            <string>Motor Run Current</string>
+           </property>
+           <property name="frame">
+            <bool>true</bool>
+           </property>
+           <property name="alignment">
+            <set>Qt::AlignmentFlag::AlignCenter</set>
+           </property>
+           <property name="buttonSymbols">
+            <enum>QAbstractSpinBox::ButtonSymbols::NoButtons</enum>
+           </property>
+           <property name="accelerated">
+            <bool>true</bool>
+           </property>
+           <property name="showGroupSeparator" stdset="0">
+            <bool>false</bool>
+           </property>
+           <property name="suffix">
+            <string> mA</string>
+           </property>
+           <property name="decimals">
+            <number>1</number>
+           </property>
+           <property name="minimum">
+            <double>1000.000000000000000</double>
+           </property>
+           <property name="maximum">
+            <double>2000.000000000000000</double>
+           </property>
+           <property name="change" stdset="0">
+            <bool>false</bool>
+           </property>
+          </widget>
+         </item>
+         <item row="2" column="4">
+          <widget class="QLabel" name="lblRunCurrent">
+           <property name="minimumSize">
+            <size>
+             <width>80</width>
+             <height>22</height>
+            </size>
+           </property>
+           <property name="maximumSize">
+            <size>
+             <width>80</width>
+             <height>22</height>
+            </size>
+           </property>
+           <property name="text">
+            <string>Run Current:</string>
+           </property>
+          </widget>
+         </item>
+         <item row="0" column="3" rowspan="9">
+          <widget class="Line" name="line">
+           <property name="orientation">
+            <enum>Qt::Orientation::Vertical</enum>
+           </property>
+          </widget>
+         </item>
+         <item row="1" column="4">
+          <widget class="QLabel" name="lblIdleCurrent">
+           <property name="minimumSize">
+            <size>
+             <width>80</width>
+             <height>22</height>
+            </size>
+           </property>
+           <property name="maximumSize">
+            <size>
+             <width>80</width>
+             <height>22</height>
+            </size>
+           </property>
+           <property name="text">
+            <string>Idle Current:</string>
+           </property>
+          </widget>
+         </item>
+         <item row="6" column="4">
+          <widget class="QLabel" name="label_2">
+           <property name="statusTip">
+            <string>Comm Cycle Time </string>
+           </property>
+           <property name="text">
+            <string>Com. Cycle:</string>
            </property>
           </widget>
          </item>
@@ -501,33 +618,39 @@ margin: 1px 0px 1px 0px
            <property name="readOnly">
             <bool>true</bool>
            </property>
-           <property name="change" stdset="0">
-            <bool>false</bool>
-           </property>
           </widget>
          </item>
-         <item row="0" column="3" rowspan="8">
-          <widget class="Line" name="line">
-           <property name="orientation">
-            <enum>Qt::Orientation::Vertical</enum>
+         <item row="0" column="0">
+          <widget class="QLabel" name="lblMotoIP">
+           <property name="minimumSize">
+            <size>
+             <width>0</width>
+             <height>0</height>
+            </size>
            </property>
-          </widget>
-         </item>
-         <item row="1" column="0">
-          <widget class="QLabel" name="lblBackComp">
            <property name="maximumSize">
             <size>
-             <width>60</width>
+             <width>16777215</width>
              <height>22</height>
             </size>
            </property>
            <property name="text">
-            <string>Backlash:</string>
+            <string>IP:</string>
            </property>
           </widget>
          </item>
-         <item row="1" column="2">
-          <widget class="QSpinBox" name="spinBacklash">
+         <item row="8" column="4">
+          <widget class="QLabel" name="label_4">
+           <property name="statusTip">
+            <string>TCP Connection Keep Alive Time-out </string>
+           </property>
+           <property name="text">
+            <string>KA Timeout:</string>
+           </property>
+          </widget>
+         </item>
+         <item row="3" column="2">
+          <widget class="QSpinBox" name="spinParkPos">
            <property name="minimumSize">
             <size>
              <width>72</width>
@@ -543,11 +666,8 @@ margin: 1px 0px 1px 0px
            <property name="focusPolicy">
             <enum>Qt::FocusPolicy::WheelFocus</enum>
            </property>
-           <property name="toolTip">
-            <string/>
-           </property>
            <property name="statusTip">
-            <string>Motor Backlash Compensation</string>
+            <string>Motor Park Position</string>
            </property>
            <property name="styleSheet">
             <string notr="true"/>
@@ -570,49 +690,14 @@ margin: 1px 0px 1px 0px
            <property name="suffix">
             <string> µm</string>
            </property>
-           <property name="prefix">
-            <string/>
-           </property>
            <property name="maximum">
-            <number>300</number>
+            <number>25100</number>
            </property>
            <property name="stepType">
             <enum>QAbstractSpinBox::StepType::AdaptiveDecimalStepType</enum>
            </property>
            <property name="change" stdset="0">
             <bool>false</bool>
-           </property>
-          </widget>
-         </item>
-         <item row="1" column="4">
-          <widget class="QLabel" name="lblAcceleration">
-           <property name="minimumSize">
-            <size>
-             <width>84</width>
-             <height>22</height>
-            </size>
-           </property>
-           <property name="maximumSize">
-            <size>
-             <width>80</width>
-             <height>22</height>
-            </size>
-           </property>
-           <property name="text">
-            <string>Acceleration:</string>
-           </property>
-          </widget>
-         </item>
-         <item row="2" column="0" colspan="2">
-          <widget class="QLabel" name="lblMaxPos">
-           <property name="maximumSize">
-            <size>
-             <width>100</width>
-             <height>22</height>
-            </size>
-           </property>
-           <property name="text">
-            <string>Position Max.:</string>
            </property>
           </widget>
          </item>
@@ -677,350 +762,7 @@ margin: 1px 0px 1px 0px
            </property>
           </widget>
          </item>
-         <item row="2" column="4">
-          <widget class="QLabel" name="lblDeceleration">
-           <property name="minimumSize">
-            <size>
-             <width>84</width>
-             <height>22</height>
-            </size>
-           </property>
-           <property name="maximumSize">
-            <size>
-             <width>80</width>
-             <height>22</height>
-            </size>
-           </property>
-           <property name="text">
-            <string>Deceleration:</string>
-           </property>
-          </widget>
-         </item>
-         <item row="3" column="0">
-          <widget class="QLabel" name="lblParkPos">
-           <property name="maximumSize">
-            <size>
-             <width>16777215</width>
-             <height>22</height>
-            </size>
-           </property>
-           <property name="text">
-            <string>Park: </string>
-           </property>
-          </widget>
-         </item>
-         <item row="3" column="2">
-          <widget class="QSpinBox" name="spinParkPos">
-           <property name="minimumSize">
-            <size>
-             <width>72</width>
-             <height>22</height>
-            </size>
-           </property>
-           <property name="maximumSize">
-            <size>
-             <width>72</width>
-             <height>22</height>
-            </size>
-           </property>
-           <property name="focusPolicy">
-            <enum>Qt::FocusPolicy::WheelFocus</enum>
-           </property>
-           <property name="statusTip">
-            <string>Motor Park Position</string>
-           </property>
-           <property name="styleSheet">
-            <string notr="true"/>
-           </property>
-           <property name="frame">
-            <bool>true</bool>
-           </property>
-           <property name="alignment">
-            <set>Qt::AlignmentFlag::AlignCenter</set>
-           </property>
-           <property name="buttonSymbols">
-            <enum>QAbstractSpinBox::ButtonSymbols::NoButtons</enum>
-           </property>
-           <property name="accelerated">
-            <bool>true</bool>
-           </property>
-           <property name="showGroupSeparator" stdset="0">
-            <bool>false</bool>
-           </property>
-           <property name="suffix">
-            <string> µm</string>
-           </property>
-           <property name="maximum">
-            <number>25100</number>
-           </property>
-           <property name="stepType">
-            <enum>QAbstractSpinBox::StepType::AdaptiveDecimalStepType</enum>
-           </property>
-           <property name="change" stdset="0">
-            <bool>false</bool>
-           </property>
-          </widget>
-         </item>
-         <item row="3" column="4">
-          <widget class="QLabel" name="lblIdleCurrent">
-           <property name="minimumSize">
-            <size>
-             <width>80</width>
-             <height>22</height>
-            </size>
-           </property>
-           <property name="maximumSize">
-            <size>
-             <width>80</width>
-             <height>22</height>
-            </size>
-           </property>
-           <property name="text">
-            <string>Idle Current:</string>
-           </property>
-          </widget>
-         </item>
-         <item row="4" column="0">
-          <widget class="QLabel" name="lblMaxSpeed">
-           <property name="maximumSize">
-            <size>
-             <width>100</width>
-             <height>16777215</height>
-            </size>
-           </property>
-           <property name="text">
-            <string>High Speed:</string>
-           </property>
-          </widget>
-         </item>
-         <item row="4" column="2">
-          <widget class="QSpinBox" name="spinMaxSpeed">
-           <property name="minimumSize">
-            <size>
-             <width>72</width>
-             <height>22</height>
-            </size>
-           </property>
-           <property name="maximumSize">
-            <size>
-             <width>72</width>
-             <height>22</height>
-            </size>
-           </property>
-           <property name="focusPolicy">
-            <enum>Qt::FocusPolicy::WheelFocus</enum>
-           </property>
-           <property name="statusTip">
-            <string>Motor Maximum Speed</string>
-           </property>
-           <property name="frame">
-            <bool>true</bool>
-           </property>
-           <property name="alignment">
-            <set>Qt::AlignmentFlag::AlignCenter</set>
-           </property>
-           <property name="buttonSymbols">
-            <enum>QAbstractSpinBox::ButtonSymbols::NoButtons</enum>
-           </property>
-           <property name="accelerated">
-            <bool>true</bool>
-           </property>
-           <property name="showGroupSeparator" stdset="0">
-            <bool>false</bool>
-           </property>
-           <property name="suffix">
-            <string> µ/s</string>
-           </property>
-           <property name="minimum">
-            <number>2</number>
-           </property>
-           <property name="maximum">
-            <number>750</number>
-           </property>
-           <property name="stepType">
-            <enum>QAbstractSpinBox::StepType::AdaptiveDecimalStepType</enum>
-           </property>
-           <property name="change" stdset="0">
-            <bool>false</bool>
-           </property>
-          </widget>
-         </item>
-         <item row="4" column="4">
-          <widget class="QLabel" name="lblRunCurrent">
-           <property name="minimumSize">
-            <size>
-             <width>80</width>
-             <height>22</height>
-            </size>
-           </property>
-           <property name="maximumSize">
-            <size>
-             <width>80</width>
-             <height>22</height>
-            </size>
-           </property>
-           <property name="text">
-            <string>Run Current:</string>
-           </property>
-          </widget>
-         </item>
-         <item row="5" column="0" colspan="2">
-          <widget class="QLabel" name="lblNormSpeed">
-           <property name="maximumSize">
-            <size>
-             <width>100</width>
-             <height>16777215</height>
-            </size>
-           </property>
-           <property name="text">
-            <string>Normal Speed:</string>
-           </property>
-          </widget>
-         </item>
-         <item row="5" column="2">
-          <widget class="QSpinBox" name="spinNormalSpeed">
-           <property name="minimumSize">
-            <size>
-             <width>72</width>
-             <height>22</height>
-            </size>
-           </property>
-           <property name="maximumSize">
-            <size>
-             <width>72</width>
-             <height>22</height>
-            </size>
-           </property>
-           <property name="focusPolicy">
-            <enum>Qt::FocusPolicy::WheelFocus</enum>
-           </property>
-           <property name="statusTip">
-            <string>Motor Normal Speed</string>
-           </property>
-           <property name="frame">
-            <bool>true</bool>
-           </property>
-           <property name="alignment">
-            <set>Qt::AlignmentFlag::AlignCenter</set>
-           </property>
-           <property name="buttonSymbols">
-            <enum>QAbstractSpinBox::ButtonSymbols::NoButtons</enum>
-           </property>
-           <property name="accelerated">
-            <bool>true</bool>
-           </property>
-           <property name="showGroupSeparator" stdset="0">
-            <bool>false</bool>
-           </property>
-           <property name="suffix">
-            <string> µ/s</string>
-           </property>
-           <property name="minimum">
-            <number>2</number>
-           </property>
-           <property name="maximum">
-            <number>500</number>
-           </property>
-           <property name="stepType">
-            <enum>QAbstractSpinBox::StepType::AdaptiveDecimalStepType</enum>
-           </property>
-           <property name="change" stdset="0">
-            <bool>false</bool>
-           </property>
-          </widget>
-         </item>
-         <item row="5" column="4">
-          <widget class="QLabel" name="lblAccCurrent">
-           <property name="minimumSize">
-            <size>
-             <width>80</width>
-             <height>22</height>
-            </size>
-           </property>
-           <property name="maximumSize">
-            <size>
-             <width>80</width>
-             <height>22</height>
-            </size>
-           </property>
-           <property name="text">
-            <string>Acc. Current:</string>
-           </property>
-          </widget>
-         </item>
-         <item row="6" column="0">
-          <widget class="QLabel" name="lblLowSpeed">
-           <property name="maximumSize">
-            <size>
-             <width>71</width>
-             <height>16777215</height>
-            </size>
-           </property>
-           <property name="text">
-            <string>Low Speed:</string>
-           </property>
-          </widget>
-         </item>
-         <item row="7" column="0">
-          <widget class="QLabel" name="lblMaxStep">
-           <property name="maximumSize">
-            <size>
-             <width>62</width>
-             <height>16777215</height>
-            </size>
-           </property>
-           <property name="text">
-            <string>Max Step:</string>
-           </property>
-          </widget>
-         </item>
          <item row="7" column="2">
-          <widget class="QSpinBox" name="spinMaxStep">
-           <property name="minimumSize">
-            <size>
-             <width>72</width>
-             <height>22</height>
-            </size>
-           </property>
-           <property name="maximumSize">
-            <size>
-             <width>72</width>
-             <height>22</height>
-            </size>
-           </property>
-           <property name="focusPolicy">
-            <enum>Qt::FocusPolicy::WheelFocus</enum>
-           </property>
-           <property name="statusTip">
-            <string>Motor Max Step</string>
-           </property>
-           <property name="frame">
-            <bool>true</bool>
-           </property>
-           <property name="alignment">
-            <set>Qt::AlignmentFlag::AlignCenter</set>
-           </property>
-           <property name="buttonSymbols">
-            <enum>QAbstractSpinBox::ButtonSymbols::NoButtons</enum>
-           </property>
-           <property name="accelerated">
-            <bool>true</bool>
-           </property>
-           <property name="showGroupSeparator" stdset="0">
-            <bool>false</bool>
-           </property>
-           <property name="maximum">
-            <number>99999</number>
-           </property>
-           <property name="stepType">
-            <enum>QAbstractSpinBox::StepType::AdaptiveDecimalStepType</enum>
-           </property>
-           <property name="change" stdset="0">
-            <bool>false</bool>
-           </property>
-          </widget>
-         </item>
-         <item row="1" column="5">
           <widget class="QDoubleSpinBox" name="spinAcceleration">
            <property name="minimumSize">
             <size>
@@ -1072,160 +814,7 @@ margin: 1px 0px 1px 0px
            </property>
           </widget>
          </item>
-         <item row="2" column="5">
-          <widget class="QDoubleSpinBox" name="spinDeceleration">
-           <property name="minimumSize">
-            <size>
-             <width>76</width>
-             <height>22</height>
-            </size>
-           </property>
-           <property name="maximumSize">
-            <size>
-             <width>76</width>
-             <height>22</height>
-            </size>
-           </property>
-           <property name="focusPolicy">
-            <enum>Qt::FocusPolicy::WheelFocus</enum>
-           </property>
-           <property name="statusTip">
-            <string>Motor Deceleration Rate</string>
-           </property>
-           <property name="frame">
-            <bool>true</bool>
-           </property>
-           <property name="alignment">
-            <set>Qt::AlignmentFlag::AlignCenter</set>
-           </property>
-           <property name="buttonSymbols">
-            <enum>QAbstractSpinBox::ButtonSymbols::NoButtons</enum>
-           </property>
-           <property name="accelerated">
-            <bool>true</bool>
-           </property>
-           <property name="showGroupSeparator" stdset="0">
-            <bool>false</bool>
-           </property>
-           <property name="suffix">
-            <string> µ/s²</string>
-           </property>
-           <property name="decimals">
-            <number>1</number>
-           </property>
-           <property name="minimum">
-            <double>66.700000000000003</double>
-           </property>
-           <property name="maximum">
-            <double>2666.699999999999818</double>
-           </property>
-           <property name="change" stdset="0">
-            <bool>false</bool>
-           </property>
-          </widget>
-         </item>
          <item row="3" column="5">
-          <widget class="QDoubleSpinBox" name="spinIdleCurrent">
-           <property name="minimumSize">
-            <size>
-             <width>76</width>
-             <height>22</height>
-            </size>
-           </property>
-           <property name="maximumSize">
-            <size>
-             <width>76</width>
-             <height>22</height>
-            </size>
-           </property>
-           <property name="focusPolicy">
-            <enum>Qt::FocusPolicy::WheelFocus</enum>
-           </property>
-           <property name="statusTip">
-            <string>Motor Idle Current</string>
-           </property>
-           <property name="frame">
-            <bool>true</bool>
-           </property>
-           <property name="alignment">
-            <set>Qt::AlignmentFlag::AlignCenter</set>
-           </property>
-           <property name="buttonSymbols">
-            <enum>QAbstractSpinBox::ButtonSymbols::NoButtons</enum>
-           </property>
-           <property name="accelerated">
-            <bool>true</bool>
-           </property>
-           <property name="showGroupSeparator" stdset="0">
-            <bool>false</bool>
-           </property>
-           <property name="suffix">
-            <string> mA</string>
-           </property>
-           <property name="decimals">
-            <number>1</number>
-           </property>
-           <property name="maximum">
-            <double>3000.000000000000000</double>
-           </property>
-           <property name="change" stdset="0">
-            <bool>false</bool>
-           </property>
-          </widget>
-         </item>
-         <item row="4" column="5">
-          <widget class="QDoubleSpinBox" name="spinRunCurrent">
-           <property name="minimumSize">
-            <size>
-             <width>76</width>
-             <height>22</height>
-            </size>
-           </property>
-           <property name="maximumSize">
-            <size>
-             <width>76</width>
-             <height>22</height>
-            </size>
-           </property>
-           <property name="focusPolicy">
-            <enum>Qt::FocusPolicy::WheelFocus</enum>
-           </property>
-           <property name="statusTip">
-            <string>Motor Run Current</string>
-           </property>
-           <property name="frame">
-            <bool>true</bool>
-           </property>
-           <property name="alignment">
-            <set>Qt::AlignmentFlag::AlignCenter</set>
-           </property>
-           <property name="buttonSymbols">
-            <enum>QAbstractSpinBox::ButtonSymbols::NoButtons</enum>
-           </property>
-           <property name="accelerated">
-            <bool>true</bool>
-           </property>
-           <property name="showGroupSeparator" stdset="0">
-            <bool>false</bool>
-           </property>
-           <property name="suffix">
-            <string> mA</string>
-           </property>
-           <property name="decimals">
-            <number>1</number>
-           </property>
-           <property name="minimum">
-            <double>1000.000000000000000</double>
-           </property>
-           <property name="maximum">
-            <double>2000.000000000000000</double>
-           </property>
-           <property name="change" stdset="0">
-            <bool>false</bool>
-           </property>
-          </widget>
-         </item>
-         <item row="5" column="5">
           <widget class="QDoubleSpinBox" name="spinAccCurrent">
            <property name="minimumSize">
             <size>
@@ -1283,6 +872,98 @@ margin: 1px 0px 1px 0px
            </property>
           </widget>
          </item>
+         <item row="5" column="0" colspan="2">
+          <widget class="QLabel" name="lblNormSpeed">
+           <property name="maximumSize">
+            <size>
+             <width>100</width>
+             <height>16777215</height>
+            </size>
+           </property>
+           <property name="text">
+            <string>Normal Speed:</string>
+           </property>
+          </widget>
+         </item>
+         <item row="7" column="4">
+          <widget class="QLabel" name="label_3">
+           <property name="statusTip">
+            <string>MODBUS Time-out </string>
+           </property>
+           <property name="text">
+            <string>MB Timeout:</string>
+           </property>
+          </widget>
+         </item>
+         <item row="2" column="0" colspan="2">
+          <widget class="QLabel" name="lblMaxPos">
+           <property name="maximumSize">
+            <size>
+             <width>100</width>
+             <height>22</height>
+            </size>
+           </property>
+           <property name="text">
+            <string>Position Max.:</string>
+           </property>
+          </widget>
+         </item>
+         <item row="5" column="5">
+          <widget class="QSpinBox" name="spinTCPTimeout">
+           <property name="minimumSize">
+            <size>
+             <width>76</width>
+             <height>22</height>
+            </size>
+           </property>
+           <property name="maximumSize">
+            <size>
+             <width>76</width>
+             <height>22</height>
+            </size>
+           </property>
+           <property name="statusTip">
+            <string>TCP Packet Retransmission Time-out</string>
+           </property>
+           <property name="alignment">
+            <set>Qt::AlignmentFlag::AlignCenter</set>
+           </property>
+           <property name="buttonSymbols">
+            <enum>QAbstractSpinBox::ButtonSymbols::NoButtons</enum>
+           </property>
+           <property name="accelerated">
+            <bool>true</bool>
+           </property>
+           <property name="suffix">
+            <string> ms</string>
+           </property>
+           <property name="minimum">
+            <number>20</number>
+           </property>
+           <property name="maximum">
+            <number>3000</number>
+           </property>
+           <property name="stepType">
+            <enum>QAbstractSpinBox::StepType::AdaptiveDecimalStepType</enum>
+           </property>
+           <property name="change" stdset="0">
+            <bool>false</bool>
+           </property>
+          </widget>
+         </item>
+         <item row="3" column="0">
+          <widget class="QLabel" name="lblParkPos">
+           <property name="maximumSize">
+            <size>
+             <width>16777215</width>
+             <height>22</height>
+            </size>
+           </property>
+           <property name="text">
+            <string>Park: </string>
+           </property>
+          </widget>
+         </item>
          <item row="6" column="2">
           <widget class="QSpinBox" name="spinLowSpeed">
            <property name="minimumSize">
@@ -1326,6 +1007,479 @@ margin: 1px 0px 1px 0px
            </property>
            <property name="maximum">
             <number>167</number>
+           </property>
+           <property name="change" stdset="0">
+            <bool>false</bool>
+           </property>
+          </widget>
+         </item>
+         <item row="5" column="2">
+          <widget class="QSpinBox" name="spinNormalSpeed">
+           <property name="minimumSize">
+            <size>
+             <width>72</width>
+             <height>22</height>
+            </size>
+           </property>
+           <property name="maximumSize">
+            <size>
+             <width>72</width>
+             <height>22</height>
+            </size>
+           </property>
+           <property name="focusPolicy">
+            <enum>Qt::FocusPolicy::WheelFocus</enum>
+           </property>
+           <property name="statusTip">
+            <string>Motor Normal Speed</string>
+           </property>
+           <property name="frame">
+            <bool>true</bool>
+           </property>
+           <property name="alignment">
+            <set>Qt::AlignmentFlag::AlignCenter</set>
+           </property>
+           <property name="buttonSymbols">
+            <enum>QAbstractSpinBox::ButtonSymbols::NoButtons</enum>
+           </property>
+           <property name="accelerated">
+            <bool>true</bool>
+           </property>
+           <property name="showGroupSeparator" stdset="0">
+            <bool>false</bool>
+           </property>
+           <property name="suffix">
+            <string> µ/s</string>
+           </property>
+           <property name="minimum">
+            <number>2</number>
+           </property>
+           <property name="maximum">
+            <number>500</number>
+           </property>
+           <property name="stepType">
+            <enum>QAbstractSpinBox::StepType::AdaptiveDecimalStepType</enum>
+           </property>
+           <property name="change" stdset="0">
+            <bool>false</bool>
+           </property>
+          </widget>
+         </item>
+         <item row="6" column="0">
+          <widget class="QLabel" name="lblLowSpeed">
+           <property name="maximumSize">
+            <size>
+             <width>71</width>
+             <height>16777215</height>
+            </size>
+           </property>
+           <property name="text">
+            <string>Low Speed:</string>
+           </property>
+          </widget>
+         </item>
+         <item row="4" column="0">
+          <widget class="QLabel" name="lblMaxSpeed">
+           <property name="maximumSize">
+            <size>
+             <width>100</width>
+             <height>16777215</height>
+            </size>
+           </property>
+           <property name="text">
+            <string>High Speed:</string>
+           </property>
+          </widget>
+         </item>
+         <item row="3" column="4">
+          <widget class="QLabel" name="lblAccCurrent">
+           <property name="minimumSize">
+            <size>
+             <width>80</width>
+             <height>22</height>
+            </size>
+           </property>
+           <property name="maximumSize">
+            <size>
+             <width>80</width>
+             <height>22</height>
+            </size>
+           </property>
+           <property name="text">
+            <string>Acc. Current:</string>
+           </property>
+          </widget>
+         </item>
+         <item row="4" column="4" colspan="2">
+          <widget class="Line" name="line_3">
+           <property name="orientation">
+            <enum>Qt::Orientation::Horizontal</enum>
+           </property>
+          </widget>
+         </item>
+         <item row="4" column="2">
+          <widget class="QSpinBox" name="spinMaxSpeed">
+           <property name="minimumSize">
+            <size>
+             <width>72</width>
+             <height>22</height>
+            </size>
+           </property>
+           <property name="maximumSize">
+            <size>
+             <width>72</width>
+             <height>22</height>
+            </size>
+           </property>
+           <property name="focusPolicy">
+            <enum>Qt::FocusPolicy::WheelFocus</enum>
+           </property>
+           <property name="statusTip">
+            <string>Motor Maximum Speed</string>
+           </property>
+           <property name="frame">
+            <bool>true</bool>
+           </property>
+           <property name="alignment">
+            <set>Qt::AlignmentFlag::AlignCenter</set>
+           </property>
+           <property name="buttonSymbols">
+            <enum>QAbstractSpinBox::ButtonSymbols::NoButtons</enum>
+           </property>
+           <property name="accelerated">
+            <bool>true</bool>
+           </property>
+           <property name="showGroupSeparator" stdset="0">
+            <bool>false</bool>
+           </property>
+           <property name="suffix">
+            <string> µ/s</string>
+           </property>
+           <property name="minimum">
+            <number>2</number>
+           </property>
+           <property name="maximum">
+            <number>750</number>
+           </property>
+           <property name="stepType">
+            <enum>QAbstractSpinBox::StepType::AdaptiveDecimalStepType</enum>
+           </property>
+           <property name="change" stdset="0">
+            <bool>false</bool>
+           </property>
+          </widget>
+         </item>
+         <item row="8" column="2">
+          <widget class="QDoubleSpinBox" name="spinDeceleration">
+           <property name="minimumSize">
+            <size>
+             <width>76</width>
+             <height>22</height>
+            </size>
+           </property>
+           <property name="maximumSize">
+            <size>
+             <width>76</width>
+             <height>22</height>
+            </size>
+           </property>
+           <property name="focusPolicy">
+            <enum>Qt::FocusPolicy::WheelFocus</enum>
+           </property>
+           <property name="statusTip">
+            <string>Motor Deceleration Rate</string>
+           </property>
+           <property name="frame">
+            <bool>true</bool>
+           </property>
+           <property name="alignment">
+            <set>Qt::AlignmentFlag::AlignCenter</set>
+           </property>
+           <property name="buttonSymbols">
+            <enum>QAbstractSpinBox::ButtonSymbols::NoButtons</enum>
+           </property>
+           <property name="accelerated">
+            <bool>true</bool>
+           </property>
+           <property name="showGroupSeparator" stdset="0">
+            <bool>false</bool>
+           </property>
+           <property name="suffix">
+            <string> µ/s²</string>
+           </property>
+           <property name="decimals">
+            <number>1</number>
+           </property>
+           <property name="minimum">
+            <double>66.700000000000003</double>
+           </property>
+           <property name="maximum">
+            <double>2666.699999999999818</double>
+           </property>
+           <property name="change" stdset="0">
+            <bool>false</bool>
+           </property>
+          </widget>
+         </item>
+         <item row="8" column="0">
+          <widget class="QLabel" name="lblDeceleration">
+           <property name="minimumSize">
+            <size>
+             <width>84</width>
+             <height>22</height>
+            </size>
+           </property>
+           <property name="maximumSize">
+            <size>
+             <width>80</width>
+             <height>22</height>
+            </size>
+           </property>
+           <property name="text">
+            <string>Deceleration:</string>
+           </property>
+          </widget>
+         </item>
+         <item row="1" column="0">
+          <widget class="QLabel" name="lblBackComp">
+           <property name="maximumSize">
+            <size>
+             <width>60</width>
+             <height>22</height>
+            </size>
+           </property>
+           <property name="text">
+            <string>Backlash:</string>
+           </property>
+          </widget>
+         </item>
+         <item row="1" column="5">
+          <widget class="QDoubleSpinBox" name="spinIdleCurrent">
+           <property name="minimumSize">
+            <size>
+             <width>76</width>
+             <height>22</height>
+            </size>
+           </property>
+           <property name="maximumSize">
+            <size>
+             <width>76</width>
+             <height>22</height>
+            </size>
+           </property>
+           <property name="focusPolicy">
+            <enum>Qt::FocusPolicy::WheelFocus</enum>
+           </property>
+           <property name="statusTip">
+            <string>Motor Idle Current</string>
+           </property>
+           <property name="frame">
+            <bool>true</bool>
+           </property>
+           <property name="alignment">
+            <set>Qt::AlignmentFlag::AlignCenter</set>
+           </property>
+           <property name="buttonSymbols">
+            <enum>QAbstractSpinBox::ButtonSymbols::NoButtons</enum>
+           </property>
+           <property name="accelerated">
+            <bool>true</bool>
+           </property>
+           <property name="showGroupSeparator" stdset="0">
+            <bool>false</bool>
+           </property>
+           <property name="suffix">
+            <string> mA</string>
+           </property>
+           <property name="decimals">
+            <number>1</number>
+           </property>
+           <property name="maximum">
+            <double>3000.000000000000000</double>
+           </property>
+           <property name="change" stdset="0">
+            <bool>false</bool>
+           </property>
+          </widget>
+         </item>
+         <item row="1" column="2">
+          <widget class="QSpinBox" name="spinBacklash">
+           <property name="minimumSize">
+            <size>
+             <width>72</width>
+             <height>22</height>
+            </size>
+           </property>
+           <property name="maximumSize">
+            <size>
+             <width>72</width>
+             <height>22</height>
+            </size>
+           </property>
+           <property name="focusPolicy">
+            <enum>Qt::FocusPolicy::WheelFocus</enum>
+           </property>
+           <property name="toolTip">
+            <string/>
+           </property>
+           <property name="statusTip">
+            <string>Motor Backlash Compensation</string>
+           </property>
+           <property name="styleSheet">
+            <string notr="true"/>
+           </property>
+           <property name="frame">
+            <bool>true</bool>
+           </property>
+           <property name="alignment">
+            <set>Qt::AlignmentFlag::AlignCenter</set>
+           </property>
+           <property name="buttonSymbols">
+            <enum>QAbstractSpinBox::ButtonSymbols::NoButtons</enum>
+           </property>
+           <property name="accelerated">
+            <bool>true</bool>
+           </property>
+           <property name="showGroupSeparator" stdset="0">
+            <bool>false</bool>
+           </property>
+           <property name="suffix">
+            <string> µm</string>
+           </property>
+           <property name="prefix">
+            <string/>
+           </property>
+           <property name="maximum">
+            <number>300</number>
+           </property>
+           <property name="stepType">
+            <enum>QAbstractSpinBox::StepType::AdaptiveDecimalStepType</enum>
+           </property>
+           <property name="change" stdset="0">
+            <bool>false</bool>
+           </property>
+          </widget>
+         </item>
+         <item row="6" column="5">
+          <widget class="QSpinBox" name="spinComCycle">
+           <property name="minimumSize">
+            <size>
+             <width>76</width>
+             <height>22</height>
+            </size>
+           </property>
+           <property name="maximumSize">
+            <size>
+             <width>76</width>
+             <height>22</height>
+            </size>
+           </property>
+           <property name="statusTip">
+            <string>Comm Cycle Time </string>
+           </property>
+           <property name="alignment">
+            <set>Qt::AlignmentFlag::AlignCenter</set>
+           </property>
+           <property name="buttonSymbols">
+            <enum>QAbstractSpinBox::ButtonSymbols::NoButtons</enum>
+           </property>
+           <property name="accelerated">
+            <bool>true</bool>
+           </property>
+           <property name="suffix">
+            <string> ms</string>
+           </property>
+           <property name="minimum">
+            <number>1</number>
+           </property>
+           <property name="maximum">
+            <number>600</number>
+           </property>
+           <property name="stepType">
+            <enum>QAbstractSpinBox::StepType::AdaptiveDecimalStepType</enum>
+           </property>
+           <property name="change" stdset="0">
+            <bool>false</bool>
+           </property>
+          </widget>
+         </item>
+         <item row="7" column="5">
+          <widget class="QSpinBox" name="spinMBTimeout">
+           <property name="minimumSize">
+            <size>
+             <width>76</width>
+             <height>22</height>
+            </size>
+           </property>
+           <property name="maximumSize">
+            <size>
+             <width>76</width>
+             <height>22</height>
+            </size>
+           </property>
+           <property name="statusTip">
+            <string>MODBUS Time-out </string>
+           </property>
+           <property name="alignment">
+            <set>Qt::AlignmentFlag::AlignCenter</set>
+           </property>
+           <property name="buttonSymbols">
+            <enum>QAbstractSpinBox::ButtonSymbols::NoButtons</enum>
+           </property>
+           <property name="accelerated">
+            <bool>true</bool>
+           </property>
+           <property name="suffix">
+            <string> ms</string>
+           </property>
+           <property name="minimum">
+            <number>100</number>
+           </property>
+           <property name="maximum">
+            <number>5000</number>
+           </property>
+           <property name="stepType">
+            <enum>QAbstractSpinBox::StepType::AdaptiveDecimalStepType</enum>
+           </property>
+           <property name="change" stdset="0">
+            <bool>false</bool>
+           </property>
+          </widget>
+         </item>
+         <item row="8" column="5">
+          <widget class="QSpinBox" name="spinKeepAliveTimeout">
+           <property name="minimumSize">
+            <size>
+             <width>76</width>
+             <height>22</height>
+            </size>
+           </property>
+           <property name="maximumSize">
+            <size>
+             <width>76</width>
+             <height>22</height>
+            </size>
+           </property>
+           <property name="statusTip">
+            <string>TCP Connection Keep Alive Time-out </string>
+           </property>
+           <property name="alignment">
+            <set>Qt::AlignmentFlag::AlignCenter</set>
+           </property>
+           <property name="buttonSymbols">
+            <enum>QAbstractSpinBox::ButtonSymbols::NoButtons</enum>
+           </property>
+           <property name="accelerated">
+            <bool>true</bool>
+           </property>
+           <property name="suffix">
+            <string> s</string>
+           </property>
+           <property name="minimum">
+            <number>1</number>
+           </property>
+           <property name="maximum">
+            <number>32767</number>
            </property>
            <property name="change" stdset="0">
             <bool>false</bool>
@@ -1521,9 +1675,6 @@ margin: 1px 0px 1px 0px
               <property name="readOnly">
                <bool>true</bool>
               </property>
-              <property name="change" stdset="0">
-               <bool>false</bool>
-              </property>
              </widget>
             </item>
             <item row="0" column="0">
@@ -1591,9 +1742,6 @@ margin: 1px 0px 1px 0px
               </property>
               <property name="readOnly">
                <bool>true</bool>
-              </property>
-              <property name="change" stdset="0">
-               <bool>false</bool>
               </property>
              </widget>
             </item>
@@ -2266,12 +2414,6 @@ margin: 1px 0px 1px 0px
   <tabstop>spinParkPos</tabstop>
   <tabstop>spinMaxSpeed</tabstop>
   <tabstop>spinNormalSpeed</tabstop>
-  <tabstop>spinMaxStep</tabstop>
-  <tabstop>spinAcceleration</tabstop>
-  <tabstop>spinDeceleration</tabstop>
-  <tabstop>spinIdleCurrent</tabstop>
-  <tabstop>spinRunCurrent</tabstop>
-  <tabstop>spinAccCurrent</tabstop>
   <tabstop>spinLowSpeed</tabstop>
   <tabstop>btnReadMotor</tabstop>
   <tabstop>btnDefault</tabstop>

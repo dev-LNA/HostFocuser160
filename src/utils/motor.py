@@ -60,6 +60,10 @@ class Motor():
 
         self.parameters = {
             MotorParamsIdx.MOTOR_IP : MotorParameter(MotorParamsIdx.MOTOR_IP, "MOTOR_IP", ""),
+            MotorParamsIdx.TCP_RETRANSMISSION_TIMEOUT : MotorParameter(MotorParamsIdx.TCP_RETRANSMISSION_TIMEOUT, "TCP_RETRANSMISSION_TIMEOUT", 0),
+            MotorParamsIdx.TCP_COM_CYCLE_TIMEOUT : MotorParameter(MotorParamsIdx.TCP_COM_CYCLE_TIMEOUT, "TCP_COM_CYCLE_TIMEOUT", 0),
+            MotorParamsIdx.TCP_MODBUS_TIMEOUT : MotorParameter(MotorParamsIdx.TCP_MODBUS_TIMEOUT, "TCP_MODBUS_TIMEOUT", 0),
+            MotorParamsIdx.TCP_KEEP_ALIVE_TIMEOUT : MotorParameter(MotorParamsIdx.TCP_KEEP_ALIVE_TIMEOUT, "TCP_KEEP_ALIVE_TIMEOUT", 0),
             MotorParamsIdx.BACKLASH : MotorParameter(MotorParamsIdx.BACKLASH, "BACKLASH", 0),
             MotorParamsIdx.MAX_POS : MotorParameter(MotorParamsIdx.MAX_POS, "MAX_POS", 0),
             MotorParamsIdx.PARK_POS : MotorParameter(MotorParamsIdx.PARK_POS, "PARK_POS", 0),

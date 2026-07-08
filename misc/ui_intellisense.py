@@ -22,21 +22,26 @@ from PyQt6.QtWidgets import (
     QDoubleSpinBox,
     QListWidget,
     QCheckBox,
-    QMenuBar)
+    QMenuBar,
+    QMainWindow)
 
 
 
 
 
 class UiWidgets(QWidget):
-    def __init__(self, window, window_name: str):
+    def __init__(self, window: QMainWindow, window_name: str):
 
 
         if window_name == "main":
         # === Definitions for main window components === #
         
-            self.menuBar: QMenuBar = window.menuBar()
-            self.statusBar: QStatusBar = window.statusBar()
+            temp_item = window.menuBar()
+            if temp_item:
+                self.menuBar: QMenuBar = temp_item
+            temp_item = window.statusBar()
+            if temp_item:
+                self.statusBar: QStatusBar = temp_item
 
             self.pageSelect = window.findChild(QStackedWidget, 'pageSelect')
             self.pageSelect: QStackedWidget = self.pageSelect
@@ -216,8 +221,9 @@ class UiWidgets(QWidget):
         elif window_name == "settings":
             # === Definitions for settings window components === #
             
-
-            self.statusBar: QStatusBar = window.statusBar()
+            temp_item = window.statusBar()
+            if temp_item:
+                self.statusBar: QStatusBar = temp_item
             
             self.gbMotorParameters:QGroupBox = window.findChild(QGroupBox, 'gbMotorParameters')
             # self.gbMotorParameters: QGroupBox = self.gbMotorParameters
@@ -310,6 +316,14 @@ class UiWidgets(QWidget):
 
             self.spinMaxStep = window.findChild(QSpinBox, 'spinMaxStep')
             self.spinMaxStep: QSpinBox = self.spinMaxStep
+
+            self.spinTCPTimeout: QSpinBox = window.findChild(QSpinBox, 'spinTCPTimeout')
+
+            self.spinComCycle: QSpinBox = window.findChild(QSpinBox, 'spinComCycle')
+
+            self.spinMBTimeout: QSpinBox = window.findChild(QSpinBox, 'spinMBTimeout')
+
+            self.spinKeepAliveTimeout: QSpinBox = window.findChild(QSpinBox, 'spinKeepAliveTimeout')
 
             self.spinAcceleration = window.findChild(QDoubleSpinBox, 'spinAcceleration')
             self.spinAcceleration: QDoubleSpinBox = self.spinAcceleration

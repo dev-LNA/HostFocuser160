@@ -64,10 +64,10 @@ class HoldingRegs(NamedTuple):
     TX_V81: RegsInfo
     TX_V82: RegsInfo
     TX_V83: RegsInfo
-    TX_TCPRTMO: RegsInfo
-    TX_TCPCYCLE: RegsInfo
-    TX_TCPMBTMO: RegsInfo
-    TX_TCPKATMO: RegsInfo
+    TX_TCPRTMO: RegsInfo    # TCP Packet Retransmission Time-out (CR22) [ms] 
+    TX_TCPCYCLE: RegsInfo   # Comm Cycle Time (CR17) [ms] 
+    TX_TCPMBTMO: RegsInfo   # MODBUS Time-out (CR114) [ms]
+    TX_TCPKATMO: RegsInfo   # TCP Connection Keep Alive Time-out (CR112) [s] 
     TX_PACKCMDS: RegsInfo
     TX_PACKRST: RegsInfo
 
@@ -389,10 +389,10 @@ class CLPMirrors(dict):
     TX_V81: mirrorMapping
     TX_V82: mirrorMapping
     TX_V83: mirrorMapping
-    # TX_TCPRTMO: mirrorMapping
-    # TX_TCPCYCLE: mirrorMapping
-    # TX_TCPMBTMO: mirrorMapping
-    # TX_TCPKATMO: mirrorMapping
+    TX_TCPRTMO: mirrorMapping
+    TX_TCPCYCLE: mirrorMapping
+    TX_TCPMBTMO: mirrorMapping
+    TX_TCPKATMO: mirrorMapping
     TX_PACKRST: mirrorMapping
 
 CLP_Mirror = CLPMirrors(
@@ -408,10 +408,10 @@ CLP_Mirror = CLPMirrors(
     TX_V81 = mirrorMapping(holding_regs.TX_V81, holding_regs.RX_V81),
     TX_V82 = mirrorMapping(holding_regs.TX_V82, holding_regs.RX_V82),
     TX_V83 = mirrorMapping(holding_regs.TX_V83, holding_regs.RX_V83),
-    # TX_TCPRTMO = mirrorMapping(holding_regs.TX_TCPRTMO, holding_regs.RX_TCPRTMO),
-    # TX_TCPCYCLE = mirrorMapping(holding_regs.TX_TCPCYCLE, holding_regs.RX_TCPCYCLE),
-    # TX_TCPMBTMO = mirrorMapping(holding_regs.TX_TCPMBTMO, holding_regs.RX_TCPMBTMO),
-    # TX_TCPKATMO = mirrorMapping(holding_regs.TX_TCPKATMO, holding_regs.RX_TCPKATMO),
+    TX_TCPRTMO = mirrorMapping(holding_regs.TX_TCPRTMO, holding_regs.RX_TCPRTMO),
+    TX_TCPCYCLE = mirrorMapping(holding_regs.TX_TCPCYCLE, holding_regs.RX_TCPCYCLE),
+    TX_TCPMBTMO = mirrorMapping(holding_regs.TX_TCPMBTMO, holding_regs.RX_TCPMBTMO),
+    TX_TCPKATMO = mirrorMapping(holding_regs.TX_TCPKATMO, holding_regs.RX_TCPKATMO),
     TX_PACKRST = mirrorMapping(holding_regs.TX_PACKRST, holding_regs.RX_PACKRST),
 )
 

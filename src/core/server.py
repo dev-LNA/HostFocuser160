@@ -354,31 +354,37 @@ class Server(QObject):
 
 
 
-        r = tuple()
-        v = tuple()
-        temp = self.test_var
-        for key, reg in CLP_Mirror.items():
-            if (key != 'TX_TCPRTMO') and (key != 'TX_TCPCYCLE') and (key != 'TX_TCPMBTMO') and (key != 'TX_TCPKATMO'):
-                r += (reg.ORIGIN, )
-                v += (temp, )
-                temp+=1
-        try:
-            self.motor.driver.mb_server.write_param(r, v)
-        except Exception as e:
-            print(str(e))
-        self.test_var += 1152
-        if self.test_var > 65000:
-            self.test_var = 0
+        # r = tuple()
+        # v = tuple()
+        # temp = self.test_var
+        # for key, reg in CLP_Mirror.items():
+        #     if (key != 'TX_TCPRTMO') and (key != 'TX_TCPCYCLE') and (key != 'TX_TCPMBTMO') and (key != 'TX_TCPKATMO'):
+        #         r += (reg.ORIGIN, )
+        #         v += (temp, )
+        #         temp+=1
+        # try:
+        #     self.motor.driver.mb_server.write_param(r, v)
+        # except Exception as e:
+        #     print(str(e))
+        # self.test_var += 1152
+        # if self.test_var > 65000:
+        #     self.test_var = 0
 
-        time.sleep(1)
+        # time.sleep(1)
 
 
 
-        for cmd in PackCMDFlags:
-            if cmd != PackCMDFlags.NONE:
-                # time.sleep(1)
-                resp = self.motor.driver.mb_server.send_command(cmd)
-                print(f"[+] Command response: {resp}")
+        # for cmd in PackCMDFlags:
+        #     if cmd != PackCMDFlags.NONE:
+        #         # time.sleep(1)
+        #         resp = self.motor.driver.mb_server.send_command(cmd)
+        #         print(f"[+] Command response: {resp}")
+
+        self.motor.driver.mb_server.write_param(holding_regs.TX_TCPRTMO, self.test_var)
+        self.motor.driver.mb_server.write_param(holding_regs.TX_TCPCYCLE, self.test_var)
+        self.motor.driver.mb_server.write_param(holding_regs.TX_TCPMBTMO, self.test_var)
+        self.motor.driver.mb_server.write_param(holding_regs.TX_TCPKATMO, self.test_var)
+        self.test_var += 1
 
         
 

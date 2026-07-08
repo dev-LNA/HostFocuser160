@@ -36,6 +36,10 @@ steps2encoder = 20
 microns2rps = 0.0025
 clp_auto_restart = false
 motor_auto_restart = false
+tcp_retransmission_timeout = 30
+tcp_com_cycle_timeout = 5
+tcp_modbus_timeout = 1000
+tcp_keep_alive_timeout = 30
 
 [Network]
 server_ip = "*"

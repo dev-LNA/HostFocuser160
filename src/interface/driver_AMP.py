@@ -546,37 +546,41 @@ class DriverAMP(Driver):
         if self.mb_server:
             return self.mb_server.write_param(holding_regs.TX_V82, value)
 
-    def param_tcp_rtmo(self, value: int | None = None, converted:bool = False) -> str | None:
+    def param_tcp_rtmo(self, value: int | float | None = None, converted:bool = False) -> str | None:
         """Precisa ser implementada pelo driver"""
         if value is None:
-            return None
+            return str(Config.tcp_retransmission_timeout)
 
+        value = int(value)
         if self.mb_server:
-            return self.mb_server.write_param(holding_regs.TX_TCPRTMO, 30)
+            return self.mb_server.write_param(holding_regs.TX_TCPRTMO, value)
 
-    def param_tcp_cycle(self, value: int | None = None, converted:bool = False) -> str | None:
+    def param_tcp_cycle(self, value: int | float | None = None, converted:bool = False) -> str | None:
         """Precisa ser implementada pelo driver"""
         if value is None:
-            return None
+            return str(Config.tcp_com_cycle_timeout)
 
+        value = int(value)
         if self.mb_server:
-            return self.mb_server.write_param(holding_regs.TX_TCPCYCLE, 5)
+            return self.mb_server.write_param(holding_regs.TX_TCPCYCLE, value)
 
     def param_tcp_mbtmo(self, value: int | None = None, converted:bool = False) -> str | None:
         """Precisa ser implementada pelo driver"""
         if value is None:
-            return None
+            return str(Config.tcp_modbus_timeout)
 
+        value = int(value)
         if self.mb_server:
-            return self.mb_server.write_param(holding_regs.TX_TCPMBTMO, 1000)
+            return self.mb_server.write_param(holding_regs.TX_TCPMBTMO, value)
 
     def param_tcp_katmo(self, value: int | None = None, converted:bool = False) -> str | None:
         """Precisa ser implementada pelo driver"""
         if value is None:
-            return None
+            return str(Config.tcp_keep_alive_timeout)
 
+        value = int(value)
         if self.mb_server:
-            return self.mb_server.write_param(holding_regs.TX_TCPKATMO, 30)
+            return self.mb_server.write_param(holding_regs.TX_TCPKATMO, value)
             
     def param_clp_auto_restart(self, value: bool | None = None, converted:bool = False) -> bool | str | None:
         """Precisa ser implementada pelo driver"""

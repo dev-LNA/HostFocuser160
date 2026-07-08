@@ -48,10 +48,10 @@ class Driver(ABC):
 
         self.param_methods = { 
             MotorParamsIdx.MOTOR_IP : self.param_IP,
-            # MotorParamsIdx.MOTOR_TCP_RTMO : self.param_tcp_rtmo,
-            # MotorParamsIdx.MOTOR_TCP_CYCLE : self.param_tcp_cycle,
-            # MotorParamsIdx.MOTOR_TCP_MBTMO : self.param_tcp_mbtmo,
-            # MotorParamsIdx.MOTOR_TCP_KATMO : self.param_tcp_katmo,
+            MotorParamsIdx.TCP_RETRANSMISSION_TIMEOUT : self.param_tcp_rtmo,
+            MotorParamsIdx.TCP_COM_CYCLE_TIMEOUT : self.param_tcp_cycle,
+            MotorParamsIdx.TCP_MODBUS_TIMEOUT : self.param_tcp_mbtmo,
+            MotorParamsIdx.TCP_KEEP_ALIVE_TIMEOUT : self.param_tcp_katmo,
             MotorParamsIdx.BACKLASH : self.param_backlash,
             MotorParamsIdx.MAX_POS : self.param_max_pos,
             MotorParamsIdx.PARK_POS : self.param_park_pos,
@@ -235,22 +235,22 @@ class Driver(ABC):
     ...
 
     @abstractmethod
-    def param_tcp_rtmo(self, value: int | None = None, converted:bool = False) -> str | None:
+    def param_tcp_rtmo(self, value: int | float | None = None, converted:bool = False) -> str | None:
         """Precisa ser implementada pelo driver"""
     ...
 
     @abstractmethod
-    def param_tcp_cycle(self, value: int | None = None, converted:bool = False) -> str | None:
+    def param_tcp_cycle(self, value: int | float | None = None, converted:bool = False) -> str | None:
         """Precisa ser implementada pelo driver"""
     ...
 
     @abstractmethod
-    def param_tcp_mbtmo(self, value: int | None = None, converted:bool = False) -> str | None:
+    def param_tcp_mbtmo(self, value: int | float | None = None, converted:bool = False) -> str | None:
         """Precisa ser implementada pelo driver"""
     ...
 
     @abstractmethod
-    def param_tcp_katmo(self, value: int | None = None, converted:bool = False) -> str | None:
+    def param_tcp_katmo(self, value: int | float | None = None, converted:bool = False) -> str | None:
         """Precisa ser implementada pelo driver"""
     ...
 

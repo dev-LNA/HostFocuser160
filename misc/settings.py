@@ -141,6 +141,10 @@ class ConfigurableSettings(NamedTuple):
     GATEWAY_IP: SettingsAttributes[QLineEdit]
     STARTUP : SettingsAttributes[QCheckBox]
     MOTOR_IP: SettingsAttributes[QLineEdit]
+    TCP_RETRANSMISSION_TIMEOUT: SettingsAttributes[QSpinBox]
+    TCP_COM_CYCLE_TIMEOUT: SettingsAttributes[QSpinBox]
+    TCP_MODBUS_TIMEOUT: SettingsAttributes[QSpinBox]
+    TCP_KEEP_ALIVE_TIMEOUT: SettingsAttributes[QSpinBox]
     BACKLASH: SettingsAttributes[QSpinBox]
     MAX_POS: SettingsAttributes[QSpinBox]
     PARK_POS: SettingsAttributes[QSpinBox]
@@ -253,13 +257,16 @@ class SettingsWindow(QMainWindow):
                     STARTUP= SettingsAttributes(ServerParamsIdx.STARTUP, 'Auto Startup', self.ui_elements.cbAutoStartup, False, bool ),
                 # Motor parameters
                     MOTOR_IP = SettingsAttributes(MotorParamsIdx.MOTOR_IP, 'Motor IP Address' , self.ui_elements.txtMotorIP, '0', str),
+                    TCP_RETRANSMISSION_TIMEOUT = SettingsAttributes(MotorParamsIdx.TCP_RETRANSMISSION_TIMEOUT, 'TCP Packet Retransmission Time-out', self.ui_elements.spinTCPTimeout, 0, int),
+                    TCP_COM_CYCLE_TIMEOUT = SettingsAttributes(MotorParamsIdx.TCP_COM_CYCLE_TIMEOUT, 'Comm Cycle Time', self.ui_elements.spinComCycle, 0, int),
+                    TCP_MODBUS_TIMEOUT = SettingsAttributes(MotorParamsIdx.TCP_MODBUS_TIMEOUT, 'MODBUS Time-out', self.ui_elements.spinMBTimeout, 0, int),
+                    TCP_KEEP_ALIVE_TIMEOUT = SettingsAttributes(MotorParamsIdx.TCP_KEEP_ALIVE_TIMEOUT, 'TCP Connection Keep Alive Time-out ', self.ui_elements.spinKeepAliveTimeout, 0, int),
                     BACKLASH = SettingsAttributes(MotorParamsIdx.BACKLASH, 'Backlash', self.ui_elements.spinBacklash, 0, int),
                     MAX_POS = SettingsAttributes(MotorParamsIdx.MAX_POS, 'Maximum Mirror Position', self.ui_elements.spinMaxPos, 0, int),
                     PARK_POS = SettingsAttributes(MotorParamsIdx.PARK_POS, 'Park Mirror Position', self.ui_elements.spinParkPos, 0, int),
                     MAX_SPEED = SettingsAttributes(MotorParamsIdx.MAX_SPEED, 'Maximum Motor Speed', self.ui_elements.spinMaxSpeed, 0, int),
                     NORMAL_SPEED = SettingsAttributes(MotorParamsIdx.NORMAL_SPEED, 'Normal Motor Speed', self.ui_elements.spinNormalSpeed, 0, int),
                     LOW_SPEED = SettingsAttributes(MotorParamsIdx.LOW_SPEED, 'Low Motor Speed', self.ui_elements.spinLowSpeed, 0, int),
-                    # MAX_STEP = SettingsAttributes(MotorParamsIdx.MAX_STEP, 'Max Step (Deprecated)', self.ui_elements.spinMaxStep, 0, int),
                     ACCELERATION = SettingsAttributes(MotorParamsIdx.ACCELERATION, 'Acceleration Rate', self.ui_elements.spinAcceleration, 0, float),
                     DECELERATION = SettingsAttributes(MotorParamsIdx.DECELERATION, 'Deceleration Rate', self.ui_elements.spinDeceleration, 0, float),
                     IDLE_CURRENT = SettingsAttributes(MotorParamsIdx.IDLE_CURRENT, 'Motor Idle Current', self.ui_elements.spinIdleCurrent, 0, float),
