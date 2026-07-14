@@ -155,17 +155,45 @@ class zmqComm(CommProtocol):
             return f'Failed to unregister ZMQ poller: {str(e)}'
         
     def reply(self, msg: str):
-        """Replies to the client
+        """Replies to the client safely without blocking the polling loop.
 
         Parameters
         ----------
         msg : str
             Response message to be sent to the client
         """
-        if self.replier:
-            self.replier.send_string(msg)
-        else:
+        if not self.replier:
             raise RuntimeError("Error ZMQ reply: Replier not defined")
+            
+        try:
+            # zmq.DONTWAIT ensures that if the client vanished, 
+            # the function returns instantly instead of freezing your loop.
+            self.replier.send_string(msg, flags=zmq.DONTWAIT)
+            
+        except zmq.Again:
+            # This exception happens if the message cannot be sent immediately
+            print("Warning ZMQ reply: Client disconnected or buffer full. Dropping message.")
+            
+        except zmq.ZMQError as e:
+            # Catches strict State Machine Violations (e.g., sending without receiving)
+            print(f"Error ZMQ reply: State violation or socket error: {e}")
+
+
+        # """Replies to the client
+
+        # Parameters
+        # ----------
+        # msg : str
+        #     Response message to be sent to the client
+        # """
+        # if self.replier:
+        #     self.replier.send_string(msg)
+        # else:
+        #     raise RuntimeError("Error ZMQ reply: Replier not defined")
+
+
+
+
 
     # def start_publisher(self):
     #     "Starts timed publisher execution"
