@@ -236,6 +236,10 @@ class DriverAMP(Driver):
             response = self.mb_server.data_bank.get_holding_registers(holding_regs.RX_EX.ADDRESS, holding_regs.RX_EX.SIZE)
             if response:
                 encoder_val = (response[1] << 16) | response[0]
+                # The encoder val is in two's complement so conversion is needed if bigger than 2^31
+                # to show negativa numbers
+                if encoder_val > 2147483648:
+                    encoder_val = encoder_val - 2147483648
                 return encoder_val
             # return response
             # pass

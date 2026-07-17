@@ -104,14 +104,14 @@ class Updater(QRunnable):
                             if self._homing is False:
                                 self.signals.lbl_init_style.emit("statusLed", "OFF")
                             else:                                
-                                self.signals.lbl_init_style.emit("statusLed", "OK")
+                                self.signals.lbl_init_style.emit("statusLed", "WAIT")
                         if self.data["isMoving"] != self._isMoving:
                             self._isMoving = self.data["isMoving"]
                             self.signals.is_moving.emit(self._isMoving)
                             if self._isMoving is False:
                                 self.signals.lbl_mov_style.emit("statusLed", "OFF")
                             else:                                
-                                self.signals.lbl_mov_style.emit("statusLed", "OK")
+                                self.signals.lbl_mov_style.emit("statusLed", "WAIT")
                         if self.data["alarm"] != self._alarm:
                             self._alarm = self.data["alarm"]
                             if self._alarm is False:
