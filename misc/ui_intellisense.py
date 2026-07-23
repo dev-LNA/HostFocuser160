@@ -340,20 +340,10 @@ class UiWidgets(QWidget):
             self.spinAccCurrent = window.findChild(QDoubleSpinBox, 'spinAccCurrent')
             self.spinAccCurrent: QDoubleSpinBox = self.spinAccCurrent
 
+            self.spinStepOffset: QSpinBox = window.findChild(QSpinBox, 'spinStepOffset')
 
-        # Frame send command
+            self.spinPUBInterval: QDoubleSpinBox = window.findChild(QDoubleSpinBox, 'spinPUBInterval')
 
-            self.frameCommand = window.findChild(QFrame, 'frameCommand')
-            self.frameCommand: QFrame = self.frameCommand
-
-            self.txtCommand = window.findChild(QLineEdit, 'txtCommand')
-            self.txtCommand: QLineEdit = self.txtCommand
-
-            self.lblResponse_Val = window.findChild(QLabel, 'lblResponse_Val')
-            self.lblResponse_Val: QLabel = self.lblResponse_Val
-
-            self.btnSendCommand = window.findChild(QPushButton, 'btnSendCommand')
-            self.btnSendCommand: QPushButton = self.btnSendCommand
 
         # Check boxes
 

@@ -137,9 +137,11 @@ class ConfigurableSettings(NamedTuple):
     SERVER_IP : SettingsAttributes[QLineEdit]
     PORT_PUB: SettingsAttributes[QSpinBox]
     PORT_REP: SettingsAttributes[QSpinBox]
+    PUB_INTERVAL: SettingsAttributes[QDoubleSpinBox]
     SUB_MASK: SettingsAttributes[QLineEdit]
     GATEWAY_IP: SettingsAttributes[QLineEdit]
     STARTUP : SettingsAttributes[QCheckBox]
+    STEP_OFFSET : SettingsAttributes[QSpinBox]
     MOTOR_IP: SettingsAttributes[QLineEdit]
     TCP_RETRANSMISSION_TIMEOUT: SettingsAttributes[QSpinBox]
     TCP_COM_CYCLE_TIMEOUT: SettingsAttributes[QSpinBox]
@@ -221,9 +223,6 @@ class SettingsWindow(QMainWindow):
         self.ui_elements.btnBackup.clicked.connect(self._load_config_values)            # Connects default settings button
         self.ui_elements.btnReadMotor.clicked.connect(self._update_settings)            # Connects read motor settings button
         
-        
-        self.ui_elements.frameCommand.setVisible(False)                                 # Send commands frame begins not visible
-        self.signals.engineering_mode.connect(self.ui_elements.frameCommand.setVisible) # The commands frame is only visible when in engineering mode
 
         self.ui_elements.gbRetrieveParameters.setVisible(False)
         self.signals.engineering_mode.connect(self.ui_elements.gbRetrieveParameters.setVisible)
@@ -237,24 +236,19 @@ class SettingsWindow(QMainWindow):
         # self.ui_elements.btnReadMotor.setVisible(False)                                    # Defaul configurations button begins not visible
         # self.signals.engineering_mode.connect(self.ui_elements.btnReadMotor.setVisible)    # The default configurations button is only visible in engineering mode
 
-        self.ui_elements.btnSendCommand.clicked.connect(self._send_test_command)
-        self.ui_elements.txtCommand.returnPressed.connect(self._send_test_command)
-        self.ui_elements.txtCommand.textChanged.connect(self._command_changed)
-
         self.ui_elements.lblServerVer_val.setText(Config.server_version)
         self.ui_elements.lblAccessLvl.setText("Access level: " + self._logged_user)
-        
-
-        self.signals.command_response.connect(self.ui_elements.lblResponse_Val.setText)
 
         self._config_settings = ConfigurableSettings(
                 # Server parameters
                     SERVER_IP = SettingsAttributes(ServerParamsIdx.SERVER_IP, 'Server IP Address', self.ui_elements.txtSocketIP, '0', str),
                     PORT_PUB = SettingsAttributes(ServerParamsIdx.PORT_PUB, 'ZMQ PUB Port', self.ui_elements.spinPortPub, 0, int),
                     PORT_REP = SettingsAttributes(ServerParamsIdx.PORT_REP, 'ZMQ REP Port', self.ui_elements.spinPortRep, 0, int),
+                    PUB_INTERVAL= SettingsAttributes(ServerParamsIdx.PUB_INTERVAL, 'Server publications interval', self.ui_elements.spinPUBInterval, 0, int),
                     SUB_MASK = SettingsAttributes(ServerParamsIdx.SUB_MASK, 'Subnet Mask', self.ui_elements.txtSubMask, '0', str),
                     GATEWAY_IP = SettingsAttributes(ServerParamsIdx.GATEWAY_IP, 'Gateway IP Address', self.ui_elements.txtGatewayIP, '0', str),
                     STARTUP= SettingsAttributes(ServerParamsIdx.STARTUP, 'Auto Startup', self.ui_elements.cbAutoStartup, False, bool ),
+                    STEP_OFFSET = SettingsAttributes(ServerParamsIdx.STEP_OFFSET, 'Motor step offset', self.ui_elements.spinStepOffset, 0, int),
                 # Motor parameters
                     MOTOR_IP = SettingsAttributes(MotorParamsIdx.MOTOR_IP, 'Motor IP Address' , self.ui_elements.txtMotorIP, '0', str),
                     TCP_RETRANSMISSION_TIMEOUT = SettingsAttributes(MotorParamsIdx.TCP_RETRANSMISSION_TIMEOUT, 'TCP Packet Retransmission Time-out', self.ui_elements.spinTCPTimeout, 0, int),
@@ -362,6 +356,8 @@ class SettingsWindow(QMainWindow):
         self._config_settings.SERVER_IP.OBJ.setText(Config.ip_address)
         self._config_settings.PORT_PUB.OBJ.setValue(Config.port_pub)
         self._config_settings.PORT_REP.OBJ.setValue(Config.port_rep)
+        self._config_settings.PUB_INTERVAL.OBJ.setValue(Config.pub_interval)
+        self._config_settings.STEP_OFFSET.OBJ.setValue(Config.step_offset)
         self._config_settings.SUB_MASK.OBJ.setText(Config.sub_mask)
         self._config_settings.GATEWAY_IP.OBJ.setText(Config.gateway_ip)
         self._config_settings.STARTUP.OBJ.setChecked(Config.startup)
@@ -453,20 +449,6 @@ class SettingsWindow(QMainWindow):
             else:
                 # self._settings_changed = False
                 print(f"{key} value NOT changed")
-
-    def _command_changed(self):
-        """Guarantees that the text in the command QLineEdit
-          will allways be uppercase""" # TODO: Deve ter outro jeito de fazer isso
-        self.ui_elements.txtCommand.setText(self.ui_elements.txtCommand.text().upper())
-   
-    def _send_test_command(self):
-        """Sends the command written in text box and 
-        emits the motor response"""
-        if self.engineering_mode and self.ui_elements.txtCommand.text():   # The button is not supposed to be visible when not in engineering mode, this is just a safeguard
-            try:
-                self.signals.command_response.emit(self.motor.driver.sendCommand(self.ui_elements.txtCommand.text()))
-            except Exception as e:
-                print(e)
             
     def _create_backup_config(self, backup_file_path: str = config_file_backup):
         """Creates a backup file of the current motor configurations
@@ -507,7 +489,10 @@ class SettingsWindow(QMainWindow):
                     if isinstance(self._changed_settings[k], bool):
                         config['General'][k.name.lower()] = self._changed_settings[k]
                     if isinstance(self._changed_settings[k], int):
-                        config['Network'][k.name.lower()] = int(self._changed_settings[k])
+                        if k == ServerParamsIdx.STEP_OFFSET:
+                            config['Device'][k.name.lower()] = self._changed_settings[k]    # Although Step_offset is related to the motor it is a server configuration
+                        else:
+                            config['Network'][k.name.lower()] = int(self._changed_settings[k])
                     else:
                         config['Network'][k.name.lower()] = self._changed_settings[k]
 

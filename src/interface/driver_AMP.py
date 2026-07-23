@@ -381,7 +381,7 @@ class DriverAMP(Driver):
         value = value / Config.enc_2_microns
         value = int(value / Config.steps_2_encoder)
 
-        value = value + 1       # Adjust in steps
+        value = value + Config.step_offset       # Adjust in steps
 
         print(f"SEND PARK MOTOR: {value}")
         print('_*' * 50)
@@ -814,7 +814,7 @@ class DriverAMP(Driver):
 
             print(f'Steps to microns: {   -((round(self._convert_pos(command_position)) * Config.steps_2_encoder * Config.enc_2_microns) - (Config.max_pos * Conversion.POSITION_COMMAND)) / Conversion.POSITION_COMMAND}')
 
-            if self.mb_server.write_param(holding_regs.TX_V20, round(self._convert_pos(command_position) + 1)) == "OK":
+            if self.mb_server.write_param(holding_regs.TX_V20, round(self._convert_pos(command_position) + Config.step_offset)) == "OK":
                 time.sleep(TimeDelays.WAIT_PARAM)   # Delay to ensure the position value is written to the CLP before sending the command to start the movement
                 return self.mb_server.send_command(PackCMDFlags.TX_GS29)
             else:

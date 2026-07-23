@@ -133,12 +133,12 @@ class IAGModbusServer(mbServer):
         
         self.running = False
 
-        self.timeout = TimeoutCheck(timeout_callback_function)
+        self.timeout = TimeoutCheck(timeout_callback_function, timeout=Config.handshake_timeout)
         self.mb_comm = MB_Server_Communicator()
 
         self.command_timeout = CommandTimeout(
             command='',
-            timer=Timer(Config.write_timeout, self._handle_command_timeout)
+            timer=Timer(Config.handshake_timeout, self._handle_command_timeout)
         )
             
         self._changed_coils: set[tuple[RegsInfo, int | bool]] = set()   # A set to keep track of the coils that had their value changed

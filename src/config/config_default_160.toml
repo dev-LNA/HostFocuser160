@@ -50,7 +50,7 @@ gateway_ip = "192.168.0.1"
 pub_port = 7003
 rep_port = 7004
 pub_interval = 1
-write_timeout = 3
+handshake_timeout = 5
 
 [Logging]
 log_level = "INFO"

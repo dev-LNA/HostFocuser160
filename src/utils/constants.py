@@ -115,11 +115,13 @@ class ServerJsonKeys(StrEnum):
 
 class ServerParamsIdx(Enum):
     SERVER_IP=0
-    PORT_PUB=1
-    PORT_REP=2
-    SUB_MASK=3
-    GATEWAY_IP=4
-    STARTUP=5
+    PORT_PUB=auto()
+    PORT_REP=auto()
+    PUB_INTERVAL=auto()
+    SUB_MASK=auto()
+    GATEWAY_IP=auto()
+    STARTUP=auto()
+    STEP_OFFSET=auto()
 
 #endregion
 

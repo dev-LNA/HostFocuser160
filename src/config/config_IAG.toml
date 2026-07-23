@@ -30,6 +30,7 @@ deceleration = 2000.0
 idle_current = 80.0
 run_current = 1200.0
 acc_current = 2000.0
+step_offset = 1
 cmd_timeout = 7
 encoder2microns = 0.1
 steps2encoder = 20
@@ -46,9 +47,9 @@ server_ip = "*"
 port_pub = 7003
 port_rep = 7004
 sub_mask = "255.255.255.0"
-gateway_ip = "192.168.0.1"
-pub_interval = 1.0
-write_timeout = 3
+gateway_ip = "200.131.64.254"
+pub_interval = 0.2
+handshake_timeout = 5
 startup = 0
 
 [Logging]

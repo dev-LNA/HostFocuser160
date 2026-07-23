@@ -131,7 +131,7 @@ class Config:
     sub_mask: str = str(get_toml('Network', 'sub_mask'))
     gateway_ip: str = str(get_toml('Network', 'gateway_ip'))
     pub_interval: float = float(get_toml('Network', 'pub_interval'))
-    write_timeout: int = int(get_toml('Network', 'write_timeout'))
+    handshake_timeout: int = int(get_toml('Network', 'handshake_timeout'))
     # --------------
     # Device Section
     # --------------
@@ -158,6 +158,7 @@ class Config:
     idle_current: float = float(get_toml('Device', 'idle_current'))
     run_current: float = float(get_toml('Device', 'run_current'))
     acc_current: float = float(get_toml('Device', 'acc_current'))
+    step_offset: int = int(get_toml('Device', 'step_offset'))
     cmd_timeout: int = int(get_toml('Device', 'cmd_timeout'))
     enc_2_microns: float = float(get_toml('Device', 'encoder2microns'))
     steps_2_encoder: float = float(get_toml('Device', 'steps2encoder'))
@@ -198,7 +199,7 @@ def update_config():
     Config.sub_mask = str(get_toml('Network', 'sub_mask'))
     Config.gateway_ip = str(get_toml('Network', 'gateway_ip'))
     Config.pub_interval = float(get_toml('Network', 'pub_interval'))
-    Config.write_timeout = int(get_toml('Network', 'write_timeout'))
+    Config.handshake_timeout = int(get_toml('Network', 'handshake_timeout'))
     # --------------
     # Device Section
     # --------------
@@ -225,6 +226,7 @@ def update_config():
     Config.idle_current = float(get_toml('Device', 'idle_current'))
     Config.run_current = float(get_toml('Device', 'run_current'))
     Config.acc_current = float(get_toml('Device', 'acc_current'))
+    Config.step_offset = int(get_toml('Device', 'step_offset'))
     Config.cmd_timeout = int(get_toml('Device', 'cmd_timeout'))
     Config.enc_2_microns = float(get_toml('Device', 'encoder2microns'))
     Config.steps_2_encoder = float(get_toml('Device', 'steps2encoder'))
