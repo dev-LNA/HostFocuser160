@@ -467,7 +467,7 @@ class Server(QObject):
                 self.motor.driver.driver_comm.run_focus_out.status.connect(self._update_current_movement)
                 self.motor.driver.driver_comm.run_park.status.connect(self._update_current_movement)
                 self.motor.signals.initialized.status.connect(self._update_current_movement)
-                self.motor.signals.moving.status.connect(lambda val: self.logger.warning("FOCUSER MOVING") if val else self.logger.warning(f"FOCUSER STOPPED at {self.motor.position}"))    # type: ignore # Lambda function will run when called 
+                self.motor.signals.moving.status.connect(self._check_motor_stop_position)    # type: ignore # Lambda function will run when called 
 
                 self.motor.signals.error_msg.connect(lambda msg: self.logger.error(f'{msg}'))
 
@@ -988,6 +988,15 @@ class Server(QObject):
                 self.logger.error(f"Error during PUB: {str(e)}")
 
 
+
+    def _check_motor_stop_position(self, moving_status: bool):
+        # lambda val: self.logger.warning("FOCUSER MOVING") if val else self.logger.warning(f"FOCUSER STOPPED at {self.motor.position}")
+        if moving_status == True:
+            self.logger.warning("FOCUSER MOVING")
+        else:
+            time.sleep(1)   # Waits to guarantee correct position reading
+            if self.motor:
+                self.logger.warning(f"FOCUSER STOPPED at {self.motor.position}")
 
 
 #endregion
