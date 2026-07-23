@@ -995,7 +995,7 @@ class Server(QObject):
             self.logger.warning("FOCUSER MOVING")
         else:
             time.sleep(1)   # Waits to guarantee correct position reading
-            if self.motor:
+            if self.motor and self.motor.signals.moving.status == False:
                 self.logger.warning(f"FOCUSER STOPPED at {self.motor.position}")
 
 
