@@ -1,6 +1,6 @@
 from PyQt6 import uic
 from PyQt6.QtWidgets import QMainWindow, QLabel
-from PyQt6.QtCore import pyqtSignal, QSize
+from PyQt6.QtCore import pyqtSignal, QSize, Qt
 from PyQt6.QtGui import QPixmap
 
 from misc.login_form import LoginForm
@@ -38,6 +38,7 @@ class ServerInfoWindow(QMainWindow):
     def __init__(self):
             super().__init__()
 
+            self.setAttribute(Qt.WidgetAttribute.WA_DeleteOnClose)
 
             uic.loadUi(path_to_ui, self) # type: ignore
 

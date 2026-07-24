@@ -1,5 +1,5 @@
 from PyQt6 import QtWidgets, uic
-from PyQt6.QtCore import pyqtSignal, QThreadPool, QEvent, QObject
+from PyQt6.QtCore import pyqtSignal, QThreadPool, QEvent, QObject, Qt
 from PyQt6.QtWidgets import QPushButton, QLineEdit, QProgressBar, QTextEdit, QLabel, QStackedWidget, QSpinBox, QSlider, QDoubleSpinBox, QWidget
 
 from src.core.config import Config
@@ -45,6 +45,8 @@ class ClientSimulator(QtWidgets.QMainWindow):
 
         if not self._check_config():
             return
+
+        self.setAttribute(Qt.WidgetAttribute.WA_DeleteOnClose)
 
         self._updater = None
         self._sender = None

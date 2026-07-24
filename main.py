@@ -463,6 +463,7 @@ class FocuserOPD (QMainWindow):
     def _closed_log_box(self):
         """Guarantees that the action is unchecked if the Log Box is closed by pressing the X button"""
         self.ui_elements.actionShow_Log.setChecked(False)                   # Unchecks logBox action when the logBox is closed
+        self.log_box.close()
 
     # def _read_log_file(self, file_path):
     #     """Open LOG file and read its content"""
@@ -494,7 +495,10 @@ class FocuserOPD (QMainWindow):
         for index, client in enumerate(self.clients):               # Enumerates all clients in the pool
             if msg == client.client_ID:                                 # Selects the client that was closed according to the ID sent by the signal 'msg'
                 removed = self.clients.pop(index)                       # Removes the closed client from the pool
+                removed.sig.disconnect(self._simulator_closed)
+                removed.close()
                 print(f"Cliente {removed.client_ID} encerrado")         # Prints the client that was removed
+                removed.destroy(True)
 
         print(self.clients)                                         # Prints the list of clients
 
@@ -508,6 +512,8 @@ class FocuserOPD (QMainWindow):
     def _server_info_closed(self, msg: bool):
         if (msg is True) and self._server_info_window:
                 self._server_info_window.window_closed.disconnect(self._server_info_closed)
+                self._server_info_window.close()
+                self._server_info_window.destroy(True)
                 self._server_info_window = None
 
     def _open_settings(self):
@@ -558,6 +564,8 @@ class FocuserOPD (QMainWindow):
         if (msg is True) and self._settings_window:                         # If the settings window was closed
             self._settings_window.signals.window_closed.disconnect(self._settings_closed)                          
             self._settings_window.signals.changed_settings.disconnect(self._parse_changed_settings)  
+            self._settings_window.close()
+            self._settings_window.destroy(True)
             self._settings_window = None            # Reassign the settings window to allow a new instantiation
             print("Configurações fechadas")
 

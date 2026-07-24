@@ -2,7 +2,7 @@ from ast import Attribute
 
 from PyQt6 import uic, QtWidgets
 from PyQt6.QtWidgets import QMainWindow, QLineEdit, QProgressBar, QDialog, QMessageBox, QSpinBox, QDoubleSpinBox, QCheckBox,QWidget
-from PyQt6.QtCore import QThread, pyqtSignal, QObject, QSize
+from PyQt6.QtCore import QThread, pyqtSignal, QObject, QSize, Qt
 from PyQt6.QtGui import QFontMetrics, QKeyEvent
 # from src.core.exceptions import NotImplementedException
 from misc.load_bar import LoadBar
@@ -186,6 +186,8 @@ class SettingsWindow(QMainWindow):
 
         if type(motor.driver).__base__ is not Driver:
             raise RuntimeError("Driver must be of Driver class")
+
+        self.setAttribute(Qt.WidgetAttribute.WA_DeleteOnClose)
         
         self.motor = motor
         self.logger = logger
