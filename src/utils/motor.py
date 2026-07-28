@@ -361,7 +361,7 @@ class Motor():
                     if(motor_status & MotorStatusFlags.LIM_MIN):
                             self.signals.lim_min.emit(True, "statusLed", "NOK")
                     else:
-                        if self._position < 0:
+                        if self._position < 0 and self.initialized:
                             self.signals.lim_min.emit(False, "statusLed", "WAIT")
                         else:
                             self.signals.lim_min.emit(False, "statusLed", "OFF")
@@ -379,7 +379,7 @@ class Motor():
                     if(motor_status & MotorStatusFlags.LIM_MAX):
                             self.signals.lim_min.emit(True, "statusLed", "NOK")
                     else:
-                        if self._position < 0:
+                        if self._position < 0 and self.initialized:
                             self.signals.lim_min.emit(False, "statusLed", "WAIT")
                         else:
                             self.signals.lim_min.emit(False, "statusLed", "OFF")

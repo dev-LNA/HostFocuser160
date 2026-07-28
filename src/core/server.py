@@ -540,6 +540,7 @@ class Server(QObject):
                 self.signals.status_message.emit("Configuring motor...")         
                 self.motor.signals.progress.value.emit(True)
                 self.motor.signals.progress.string.emit(0)
+                self.motor.position                             # updates position
                 self.motor.update_status()
                 self._get_motor_params()
                 
