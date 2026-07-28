@@ -212,6 +212,8 @@ class Motor():
                 # self.signals.homing.emit(self._homing)
                 if self._homing:
                     self.signals.initialized.emit(False, "statusLed", "WAIT")
+                elif self._initialized:
+                    self.signals.initialized.emit(True, "statusLed", "OK")
             return self._homing
         except Exception as e:
             # self.disconnect()

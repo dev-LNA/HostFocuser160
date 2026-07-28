@@ -115,6 +115,7 @@ class Server(QObject):
         self._driver_timeout = False
         self._log_creation_day: int = 0
         self._flag_ping_error_message: bool = False
+        self._flag_ping_connection_refused: bool = False
 
         # Variables for status request
         self._client_id = 0 # '0' 
@@ -516,9 +517,14 @@ class Server(QObject):
                         self.signals.status_message.emit(f"Connection succesfull after {_try+1} tries")                 # Emits signals for GUI update
                         self.driver_timeout = False
                         self._flag_ping_error_message = False
+                        self._flag_ping_connection_refused = False
                         break                   # Exits for loop
         except Exception as e:
-            if not self._flag_ping_error_message:
+            if not self._flag_ping_connection_refused and isinstance(e, ConnectionRefusedError):
+                self.logger.error(f"{str(e)}")
+                self._flag_ping_connection_refused = True
+
+            elif not self._flag_ping_error_message:
                 self.logger.error(f'{str(e)}') 
                 self._flag_ping_error_message = True
 

@@ -130,6 +130,7 @@ class Config:
     port_rep: int = int(get_toml('Network', 'port_rep'))
     sub_mask: str = str(get_toml('Network', 'sub_mask'))
     gateway_ip: str = str(get_toml('Network', 'gateway_ip'))
+    clp_ip: str = str(get_toml('Network', 'clp_ip'))
     pub_interval: float = float(get_toml('Network', 'pub_interval'))
     handshake_timeout: int = int(get_toml('Network', 'handshake_timeout'))
     # --------------
@@ -198,6 +199,7 @@ def update_config():
     Config.port_rep = int(get_toml('Network', 'port_rep'))
     Config.sub_mask = str(get_toml('Network', 'sub_mask'))
     Config.gateway_ip = str(get_toml('Network', 'gateway_ip'))
+    Config.clp_ip = str(get_toml('Network', 'clp_ip'))
     Config.pub_interval = float(get_toml('Network', 'pub_interval'))
     Config.handshake_timeout = int(get_toml('Network', 'handshake_timeout'))
     # --------------

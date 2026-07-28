@@ -129,7 +129,7 @@ class DriverAMP(Driver):
                 dataBank_config = MB_DataBank(coils_size=DB_size.COIL_LAST_ADDRESS+1, coils_default_value=False,                #|      
                                 d_inputs_size=DB_size.DI_LAST_ADDRESS+1, d_inputs_default_value=False,                          #|  Config value for the modbus data bank.
                                 h_regs_size=holding_regs_size, h_regs_default_value=0,                                          #|  
-                                i_regs_size=0, i_regs_default_value=0)                                                          #|
+                                i_regs_size=0, i_regs_default_value=0, allowed_ip=Config.clp_ip)                                                          #|
                 self.mb_server = IAGModbusServer(data_bank=dataBank_config, host=Config.device_ip, port=Config.device_port ,no_block=True,
                                                  timeout_callback_function=self._reset_communication)
 
@@ -145,13 +145,14 @@ class DriverAMP(Driver):
                 while self.mb_server.handshake is False and retries < max_retries:
                     time.sleep(TimeDelays.RETRY_TIMEOUT)             # Delay between retries #TODO: colocar isso no arquivo de configuração config_IAG.toml
                     retries += 1
-
                 # If the max retries was reached and the handshake was not made, closes the dummy server and 
                 # raises an exception to inform that the handshake was not successful, and the motor is not reachable.
                 if retries >= max_retries:
                     print("Max retries reached. Modbus server handshake failed.")
                     # self.logger.error("Max retries reached. Modbus server handshake failed.")
-
+                    if isinstance(self.mb_server.data_bank, MB_DataBank) and self.mb_server.data_bank.ping_allowed == False:
+                        raise ConnectionRefusedError(f"Modbus server connection to IP '{self.mb_server.data_bank.client_info.address}' is not allowed")
+                    
                     raise RuntimeError("Error pinging modbus server: Max retries reached. Modbus server handshake failed.")
 
                 # If the handshake was successful, continues without raising an exception

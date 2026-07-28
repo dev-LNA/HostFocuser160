@@ -48,6 +48,7 @@ port_pub = 7003
 port_rep = 7004
 sub_mask = "255.255.255.0"
 gateway_ip = "200.131.64.254"
+clp_ip = "192.168.0.130"
 pub_interval = 0.5
 handshake_timeout = 7
 startup = 0
