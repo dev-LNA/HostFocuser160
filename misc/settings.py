@@ -493,6 +493,8 @@ class SettingsWindow(QMainWindow):
                     if isinstance(self._changed_settings[k], int):
                         if k == ServerParamsIdx.STEP_OFFSET:
                             config['Device'][k.name.lower()] = self._changed_settings[k]    # Although Step_offset is related to the motor it is a server configuration
+                        elif k == ServerParamsIdx.STARTUP:
+                            config['General'][k.name.lower()] = self._changed_settings[k]   # Startup config is at 'General' section
                         else:
                             config['Network'][k.name.lower()] = int(self._changed_settings[k])
                     else:
@@ -554,9 +556,11 @@ class SettingsWindow(QMainWindow):
                         # elif Config.name == "FocuserIAG":
                         #     config = get_toml('Device', 'ip_iag', cfg_file)
                     elif isinstance(param.NAME, ServerParamsIdx):
-                        # The server parameters are saved in Network section
+                        # The server parameters are saved in Network section except for 'startup' and 'step_offset'
                         if param.NAME == ServerParamsIdx.STARTUP:
                             config = get_toml('General', param.NAME.name.lower(), cfg_file)
+                        elif param.NAME == ServerParamsIdx.STEP_OFFSET:
+                            config = get_toml('Device', param.NAME.name.lower(), cfg_file)
                         else:
                             config = get_toml('Network', param.NAME.name.lower(), cfg_file)
                     else:
