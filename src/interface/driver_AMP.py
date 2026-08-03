@@ -182,7 +182,7 @@ class DriverAMP(Driver):
             val = self.mb_server.data_bank.get_holding_registers(holding_regs.TX_V77.ADDRESS, holding_regs.TX_V77.SIZE)
             if val != Config.normal_speed:
                 print('**********Setting normal speed back to original value**********')
-                self.mb_server.write_param(holding_regs.TX_V77, Config.normal_speed)
+                self.mb_server.write_param(holding_regs.TX_V77, self._convert_speed(Config.normal_speed))
     
     def conv_position_show(self, encoder_pos: int | None = None, type: str = "int") -> int | float | None:
         """Reads motor encoder position and converts to microns
@@ -831,14 +831,14 @@ class DriverAMP(Driver):
                     speed_int = 5
 
                 command_speed = self._convert_speed(speed_int)
-
-                if self.mb_server.write_param(holding_regs.TX_V77, command_speed) == "OK":
-                    time.sleep(TimeDelays.WAIT_PARAM)
-                    return self.mb_server.send_command(PackCMDFlags.TX_GS21)
-                else:
-                    return "NOK"
             else:
+                command_speed = self._convert_speed(Config.normal_speed)
+
+            if self.mb_server.write_param(holding_regs.TX_V77, command_speed) == "OK":
+                time.sleep(TimeDelays.WAIT_PARAM)
                 return self.mb_server.send_command(PackCMDFlags.TX_GS21)
+            else:
+                return "NOK"
     
     def focus_out(self, speed: str | int = Config.normal_speed) -> str | None:
         """Precisa ser implementada pelo driver""" 
@@ -850,13 +850,14 @@ class DriverAMP(Driver):
 
                 command_speed = self._convert_speed(speed_int)
 
-                if self.mb_server.write_param(holding_regs.TX_V77, command_speed) == "OK":
-                    time.sleep(TimeDelays.WAIT_PARAM)
-                    return self.mb_server.send_command(PackCMDFlags.TX_GS20)
-                else:
-                    return "NOK"
             else:
+                command_speed = self._convert_speed(Config.normal_speed)
+
+            if self.mb_server.write_param(holding_regs.TX_V77, command_speed) == "OK":
+                time.sleep(TimeDelays.WAIT_PARAM)
                 return self.mb_server.send_command(PackCMDFlags.TX_GS20)
+            else:
+                return "NOK"
     
     def halt(self) -> str | None:
         """Precisa ser implementada pelo driver""" 

@@ -176,7 +176,7 @@ class Server(QObject):
                 SJson.TEMP_COMP_AVAIABLE: Config.tempcompavailable,
                 SJson.TEMPERATURE: 0,
                 SJson.TIMESTAMP: datetime.isoformat(datetime.now(UTC).replace(tzinfo=None), timespec='milliseconds'),
-                SJson.VERSION: "1.0.0",            #TODO: Pegar a versão do arquivo config.toml
+                SJson.VERSION: Config.server_version,
             }
         else:
             self.status = {
@@ -203,7 +203,7 @@ class Server(QObject):
                 SJson.TEMP_COMP_AVAIABLE: Config.tempcompavailable,
                 SJson.TEMPERATURE: 0,
                 SJson.TIMESTAMP: datetime.isoformat(datetime.now(UTC).replace(tzinfo=None), timespec='milliseconds'),
-                SJson.VERSION: "1.0.0",            #TODO: Pegar a versão do arquivo config.toml
+                SJson.VERSION: Config.server_version,
                 SJson.PARKING: False,               # Executing Parking
                 SJson.DEVICE_IP: "127.0.0.1",       # Motor IP
                 SJson.DEVICE_ID: "",                # Motor ID
