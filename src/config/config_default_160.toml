@@ -52,7 +52,6 @@ pub_port = 7003
 rep_port = 7004
 pub_interval = 1
 handshake_timeout = 5
-startup = 0
 
 [Logging]
 log_level = "INFO"

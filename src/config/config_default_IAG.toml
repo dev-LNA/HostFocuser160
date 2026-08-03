@@ -51,7 +51,6 @@ gateway_ip = "200.131.64.254"
 clp_ip = "192.168.0.130"
 pub_interval = 0.5
 handshake_timeout = 7
-startup = 0
 
 [Logging]
 log_level = "INFO"

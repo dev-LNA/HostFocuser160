@@ -654,6 +654,7 @@ class Server(QObject):
         """
         self.stop_loop = False
         self._client_id = 0
+        self.status[SJson.VERSION] = Config.server_version  
         self._start_server()
 
         while not self.motor_reachable and self._stop_loop == False:
