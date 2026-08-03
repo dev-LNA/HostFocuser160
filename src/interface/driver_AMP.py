@@ -828,7 +828,7 @@ class DriverAMP(Driver):
             speed_int = int(speed)
             if speed_int != Config.normal_speed:
                 if speed_int <= 0:
-                    speed_int = 5
+                    speed_int = 1
 
                 command_speed = self._convert_speed(speed_int)
             else:
@@ -846,7 +846,7 @@ class DriverAMP(Driver):
             speed_int = int(speed)
             if speed_int != Config.normal_speed:
                 if speed_int <= 0:
-                    speed_int = 5
+                    speed_int = 1
 
                 command_speed = self._convert_speed(speed_int)
 
