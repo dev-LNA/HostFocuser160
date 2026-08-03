@@ -693,13 +693,17 @@ class FocuserOPD (QMainWindow):
 
 if __name__ == "__main__":
 
-    logger = init_logging()                     # Configures and initializes the logger
+    try:
+        logger = init_logging()                     # Configures and initializes the logger
 
-    app = QtWidgets.QApplication([])            # Instantiates QApplication
+        app = QtWidgets.QApplication([])            # Instantiates QApplication
 
-    main_window1 = FocuserOPD()                 # Instantiates main window
-    main_window1.show()                         # Shows main window    
-    
-    logger.info("Focuser was started")
-    
-    sys.exit(app.exec())                        # Executes and waits for end of execution
+        main_window1 = FocuserOPD()                 # Instantiates main window
+        main_window1.show()                         # Shows main window    
+        
+        logger.info("Focuser was started")
+        
+        sys.exit(app.exec())                        # Executes and waits for end of execution
+
+    except Exception as error:
+        logger.error(f"Program closed due to untreated exception: {error}")
