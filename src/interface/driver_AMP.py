@@ -827,7 +827,7 @@ class DriverAMP(Driver):
         if self.mb_server:
             speed_int = int(speed)
             if speed_int != Config.normal_speed:
-                if speed_int <= 0:
+                if speed_int <= 2:
                     speed_int = 2
 
                 command_speed = self._convert_speed(speed_int)
@@ -845,7 +845,7 @@ class DriverAMP(Driver):
         if self.mb_server:
             speed_int = int(speed)
             if speed_int != Config.normal_speed:
-                if speed_int <= 0:
+                if speed_int <= 2:
                     speed_int = 2
 
                 command_speed = self._convert_speed(speed_int)
