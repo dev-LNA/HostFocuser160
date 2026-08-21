@@ -5,7 +5,7 @@ name = "PE 160 Focuser"
 version = "1.0.0"
 date = "02/06/2026"
 description = "Interface for Perkin-Elmer Focuser"
-startup = false
+startup = true
 
 [Device]
 absolute = true
@@ -16,20 +16,21 @@ device_port = 5001
 max_increment = 0
 tempcompavailable = false
 temp_comp = false
-speed_security = 215000
-speedFactor = 428
+speed_security = 3000
+speedFactor = 1
 step_size = 0
 backlash = 4
-max_pos = 50
-park_pos = 20
-normal_speed = 10000
+max_pos = 55
+park_pos = 30
+normal_speed = 3000
 low_speed = 1000
-max_speed = 10000
+max_speed = 3000
 acceleration = 9
 deceleration = 8
 idle_current = 14
 run_current = 19
 acc_current = 41
+step_offset = 0
 cmd_timeout = 5
 encoder2microns = 42.2047244
 steps2encoder = 20
@@ -50,7 +51,7 @@ gateway_ip = "192.168.0.1"
 clp_ip = "127.0.0.1"
 pub_port = 7003
 rep_port = 7004
-pub_interval = 1
+pub_interval = 0.2
 handshake_timeout = 5
 
 [Logging]

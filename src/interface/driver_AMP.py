@@ -210,7 +210,7 @@ class DriverAMP(Driver):
         return None
     
     def set_position(self, position: int):
-        """ DEPRECATED
+        """ #DEPRECATED
         Moves the motor to a specific position in microns
 
         :param position: Target position in microns
@@ -283,7 +283,7 @@ class DriverAMP(Driver):
 
     
     def param_IP(self, value: str | None = None, converted:bool = False) -> str | None:
-        """[DEPRECATED]
+        """#DEPRECATED
         IP value cannot be changed by the server anymore"""
         if value is None:
             if self.mb_server and self.mb_server.data_bank and isinstance(self.mb_server.data_bank, MB_DataBank) and self.mb_server.data_bank.client_info:

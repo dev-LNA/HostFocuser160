@@ -401,8 +401,9 @@ class Motor():
                 # The error checking will set 'motor.alarm_info' and publish the 'ERROR' signal to the Json
                 self.alarm = self.driver.read_alarm_status()                # Reads the alarm status (ALM modbus bit)
 
-                # Checks all error bits (return empty string if no errors)
-                self.alarm_info = self.driver.parse_alarm_info()
+                if self.alarm:
+                    # Checks all error bits (return empty string if no errors)
+                    self.alarm_info = self.driver.parse_alarm_info()
 
 
                 return self._status

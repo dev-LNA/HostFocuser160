@@ -37,6 +37,7 @@ import socket
 
 from src.utils.constants import MotorProgramStatus, motor_program_errors_mask, MotorAlarmInfo  #TODO: remover apos teste
 
+import logging 
 # from src.interface.dmx_eth import FocuserDriver as Focuser
 # from src.interface.focuser_driver import FocuserDriver as Focuser
 
@@ -314,7 +315,7 @@ class Server(QObject):
             self._driver_timeout = value
             self.status[SJson.TIMEOUT] = value
             if value:
-                self.logger.warning("CLP communication timeout")
+                logging.warning("Motor communication timeout")
                 self.motor_reachable = ReachStatus.WAITING
             
     @property
@@ -398,7 +399,7 @@ class Server(QObject):
         REP port is used to reply to clients commands."""
         # Checks if the server communication was already started
         if self.zmq_comm:
-            self.logger.info(f'Trying to start the server but the server is already running')
+            logging.info(f'Trying to start the server but the server is already running')
             return
         
         # Instantiates the server ZMQ communication according to the Config file
@@ -411,12 +412,12 @@ class Server(QObject):
         try:
             self.server_online = self.zmq_comm.connect()
             self.start_publisher()
-            self.logger.info(f"Publisher binded to {self.zmq_comm.ip_address}:{self.zmq_comm.port_pub}")
-            self.logger.info(f"REP binded to {self.zmq_comm.ip_address}:{self.zmq_comm.port_rep}")
-            self.logger.info(f'Server started')
+            logging.info(f"Publisher binded to {self.zmq_comm.ip_address}:{self.zmq_comm.port_pub}")
+            logging.info(f"REP binded to {self.zmq_comm.ip_address}:{self.zmq_comm.port_rep}")
+            logging.info(f'Server started')
         except Exception as e:
             self.server_online = False
-            self.logger.error(e)
+            logging.error(e)
 
     def disconnect(self):
         """Disconnects motor and stops server communication
@@ -426,20 +427,20 @@ class Server(QObject):
         before the server communication is closed."""
         if self.server_online and self.zmq_comm and self.motor:
             try:
-                self.logger.info(f'Disconnecting motor')
+                logging.info(f'Disconnecting motor')
                 self.motor.disconnect()
                 self.status[SJson.CONNECTED] = self.motor.connected
                 # self.zmq_comm.pub(self.status)
-                self.logger.info(f'Disconnecting Server')
+                logging.info(f'Disconnecting Server')
                 self.stop_publisher()
                 self.server_online = self.zmq_comm.disconnect()
                 self.zmq_comm = None
-                self.logger.info(f'Server disconnected')
+                logging.info(f'Server disconnected')
             except Exception as e:
                 print(e)
-                self.logger.error(e)
+                logging.error(e)
         else:
-            self.logger.debug("Could not disconnect motor. Server not online or ZMQ object don't exist.")
+            logging.debug("Could not disconnect motor. Server not online or ZMQ object don't exist.")
 
     def stop_poll(self):
         """Stops the ZMQ poller"""
@@ -458,7 +459,7 @@ class Server(QObject):
                 self.motor = Motor(motor_model) 
                 
                 self.motor.driver.driver_comm.timeout.connect(lambda value: setattr(self, 'driver_timeout', value))
-                self.motor.signals.alarm.status.connect(lambda val: self.logger.error(f'{self.motor._alarm_info}') if val == True else ... )     # type: ignore # Lambda function will run when called 
+                self.motor.signals.alarm.status.connect(lambda val: logging.error(f'{self.motor._alarm_info}') if val == True else ... )     # type: ignore # Lambda function will run when called 
 
                 self.motor.signals.lim_max.status.connect(self._log_update)
                 self.motor.signals.lim_min.status.connect(self._log_update)
@@ -470,7 +471,7 @@ class Server(QObject):
                 self.motor.signals.initialized.status.connect(self._update_current_movement)
                 self.motor.signals.moving.status.connect(self._check_motor_stop_position)    # type: ignore # Lambda function will run when called 
 
-                self.motor.signals.error_msg.connect(lambda msg: self.logger.error(f'{msg}'))
+                self.motor.signals.error_msg.connect(lambda msg: logging.error(f'{msg}'))
 
 
         except Exception as e:
@@ -498,7 +499,7 @@ class Server(QObject):
         except Exception as e:
             if not self._flag_ping_error_message:
                 self._flag_ping_error_message = True
-                self.logger.error(f'{str(e)}') 
+                logging.error(f'{str(e)}') 
 
     def _reach_motor(self):
         try:
@@ -521,11 +522,11 @@ class Server(QObject):
                         break                   # Exits for loop
         except Exception as e:
             if not self._flag_ping_connection_refused and isinstance(e, ConnectionRefusedError):
-                self.logger.error(f"{str(e)}")
+                logging.error(f"{str(e)}")
                 self._flag_ping_connection_refused = True
 
             elif not self._flag_ping_error_message:
-                self.logger.error(f'{str(e)}') 
+                logging.error(f'{str(e)}') 
                 self._flag_ping_error_message = True
 
     def _link_device(self):
@@ -577,9 +578,9 @@ class Server(QObject):
                     self.signals.backlash.emit(-(int(self.motor.get_param(MotorParamsIdx.BACKLASH))))            # A small gap at the end to account the distance to the lim+ us
 
 
-                self.logger.info(f'Motor Reached and connected.')
+                logging.info(f'Motor Reached and connected.')
         except Exception as e:
-            self.logger.error(f'{str(e)}')  
+            logging.error(f'{str(e)}')  
   
         # if self._reaching_device_thread:
         #     self._reaching_device_thread = None
@@ -608,10 +609,10 @@ class Server(QObject):
             if self.motor.alarm_info:
                 if self.motor.alarm_info != self.status[SJson.ERROR]:
                     self.status[SJson.ERROR] = self.motor.alarm_info
-                    self.logger.error(self.status[SJson.ERROR])
+                    logging.error(self.status[SJson.ERROR])
             else:
                 if self.status[SJson.ERROR] != "":
-                    self.logger.info("Previous errors resolved")
+                    logging.info("Previous errors resolved")
                 self.status[SJson.ERROR] = ""
             
             # self.update_lock.release()
@@ -686,7 +687,7 @@ class Server(QObject):
                 if self.motor.connected and self.zmq_comm and self.zmq_comm.poller and self.zmq_comm.replier:
                     
                     
-                    socks = dict(self.zmq_comm.poller.poll(50))  # poll(50)                                                                           # Polls the information from the ZMQ to receive commands from the client
+                    socks = dict(self.zmq_comm.poller.poll(10))  # poll(50)                                                                           # Polls the information from the ZMQ to receive commands from the client
                     if socks.get(self.zmq_comm.replier) == zmq.POLLIN:                                                                       # If the socket is configured as Pollin   #TODO: Necessário?
                         
                         received_client_msg = self.zmq_comm.replier.recv_string()
@@ -746,7 +747,7 @@ class Server(QObject):
                     # else:
                     #     self._link_device()
                         
-                
+                print(round(time.time()-t0, 3))
                 self.signals.connection_speed.emit(f"{round(time.time()-t0, 3)}")
 
             except Exception as e:
@@ -885,7 +886,8 @@ class Server(QObject):
         """Verifies if the motor ended the execution of the
         last command and resets the command information"""
         # print(self.status)
-        time.sleep(TimeDelays.WAIT_PARAM) # Time to allow CLP to update internal variables in IAG controller
+        if self.motor and self.motor.model == MotorModels.AMP_MOTOR:
+            time.sleep(TimeDelays.WAIT_PARAM) # Time to allow CLP to update internal variables in IAG controller
         if self.motor and self.motor.firmware_status == 'Idle' and \
             self.status[SJson.CMD][SJson.CMD_CLIENT_ID] != 0:   
 
@@ -984,11 +986,11 @@ class Server(QObject):
     def _run_pub(self):
         """ Method that will run in a thread to publish the status
         in a configurable interval."""
-        while not self.pub_control.stop_event.wait(timeout=self.pub_control.pub_interval) and self.motor:
+        while not self.pub_control.stop_event.wait(timeout=self.pub_control.pub_interval-0.00017223) and self.motor:
             try:
-
-                if self.motor.connected:
-                    self._update_status()
+                
+                # if self.motor.connected:
+                #     self._update_status()
                 if self.zmq_comm:
                     self.status[SJson.TIMESTAMP] = self.zmq_comm.pub(self.status).isoformat("T", timespec='seconds') 
                     # print(f"[+] Status publicado: {self.status[SJson.TIMESTAMP]}")

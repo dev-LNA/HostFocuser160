@@ -6,8 +6,9 @@ import time
 import socket
 
 from contextlib import closing
-from src.utils.constants import constants, MotorStatusFlags, MotorAlarmInfo
+from src.utils.constants import constants, MotorStatusFlags, MotorAlarmInfo, MotorParamsIdx, TimeDelays
 
+import logging
 
 class DriverDMX(Driver):
 
@@ -15,6 +16,12 @@ class DriverDMX(Driver):
         super().__init__(model)
         self.socket = None
         self._lock = Lock()
+
+        self.time_count = time.time()
+        self.com_total_time: float = 0.0
+        self.sent_commands: int = 0
+        self.com_speed: float = 0.0
+        self.bits_trasmitted: int = 0
 
     @property
     def focus_out_status(self) -> bool:
@@ -53,27 +60,25 @@ class DriverDMX(Driver):
             str: Result of the operation (OK / NOK)
         """
         retries = 0
-        connected_successfully = False
 
-        while retries < max_retries and not connected_successfully:         #TODO: Se o while não checar o "max_retries" isso pode ser checado dentro da exception, finalizando se passar da quantidade de retries
+        while retries < max_retries: 
             try:
                 self.socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-                self.socket.settimeout(.6)
+                self.socket.settimeout(0.5)
                 self.socket.connect((Config.device_ip, Config.device_port)  )      
                 time.sleep(delay)
-                connected_successfully = True
                 self.driver_comm.status.emit(True)
+                return "OK"
             except Exception as e:
-                # self.logger.error(f'Connection attempt {retries + 1} failed: {e}')
+                logging.warning(f'Connection attempt {retries + 1} failed: {e}')
                 retries += 1                    
                 time.sleep(delay)
                 print(e)
             
-        if not connected_successfully:   
-            raise ConnectionError(f'Failed to connecto to the motor: {str(e)}')       
-            # return "NOK"
-        else:
-            return "OK"
+        
+        logging.error(f"Failed to connect to the focuser motor after {retries} tries")
+        return "NOK"
+        
 
     def disconnect_motor(self) -> str:
         try:
@@ -82,36 +87,64 @@ class DriverDMX(Driver):
                 self.socket.close()
                 self.socket = None
                 self.driver_comm.status.emit(False)
-            return "OK"
+                self.driver_comm.timeout.emit(True)
+                self.motor.connected = False
+                return "OK"
+            else:
+                logging.warning(f"Cannot disconnect motor: Socket not open")
+                return "NOK"
         except Exception as e:
+            logging.error(f"Error disconnectig from motor: {e}")
             raise RuntimeError(f'Cannot disconnect -> {e}') 
     #self._lock.release()
     
     def ping_motor(self) -> str:
         with closing(socket.socket(socket.AF_INET, socket.SOCK_STREAM)) as sock:
+            retries = 0
+            max_retries = 5
             sock.settimeout(1)
-            result = sock.connect_ex((Config.device_ip, Config.device_port))
+            while retries < max_retries:
+                result = sock.connect_ex((Config.device_ip, Config.device_port))
+                if result == 0:
+                    self.motor.signals.moving.status.connect(self._check_normal_speed)
+                    return "OK"
+                time.sleep(TimeDelays.RETRY_TIMEOUT)
 
-            if result == 0:
-                return "OK"
-            else:
-                return "NOK"
+            return "NOK"                
         
 
-    def conv_position_show(self, encoder_pos: int = None) -> int:
+    def _check_normal_speed(self, moving:bool):
+        """In the DMX motor the normal speed is equal to the high speed.
+        When a movement starts the program checks is the speed was
+        changed and sets it back to normal.
+
+        :param moving: If the motor is moving
+        :type moving: bool
+        """
+        if moving and self.socket:
+            val = self.param_max_speed()
+            if val != Config.normal_speed:
+                print('**********Setting normal speed back to original value**********')
+                self.param_max_speed(Config.normal_speed)
+
+    
+    def conv_position_show(self, encoder_pos: int | None = None, type: str = "int") -> int | float:
         """Reads motor encoder position and converts to microns
 
-        :raises ValueError: If the reading is not valid
-        :return: _description_
-        :rtype: int | Exception
+        :return: Motor position in microns
+        :rtype: int | float
         """
         if encoder_pos is None:
             encoder_pos = self.read_encoder()
-        pos = int(round(encoder_pos/Config.enc_2_microns))
-        return pos
+        pos = round(encoder_pos/Config.enc_2_microns)
+        if type == "int":
+            return int(pos)
+        else:
+            return pos
         
     def set_position(self, position: int) -> str:
-        """Moves the motor to a specific position in microns
+        """ #DEPRECATED
+        Moves the motor to a specific position in microns
 
         :param position: Target position in microns
         :type position: int
@@ -139,7 +172,8 @@ class DriverDMX(Driver):
     
     def read_homing(self) -> bool:  
         x = self._write("V15")
-        if "1" in x:
+        # if "1" in x:
+        if x == "1":
             return True                     
         else:                                       
             return False
@@ -148,7 +182,8 @@ class DriverDMX(Driver):
     def read_parking(self) -> bool:
         # self._lock.acquire()
         x = self._write("V16")
-        if "1" in x:
+        # if "1" in x:
+        if x == "1":
             return True                     
         else:                                       
             return False
@@ -233,38 +268,61 @@ class DriverDMX(Driver):
         else:
             return self._write("IP")
    
-    def param_backlash(self, value = None) -> str:
+    def param_backlash(self, value: int | float | None = None, converted:bool = False) -> str | None:
         if value:
-            value = str(int(value) * Config.enc_2_microns)    # Converts to encoder value
-            resp = self._write(f"V74={value}")
+            value = int(value * Config.enc_2_microns)    # Converts to encoder value
+            val_str = str(value)
+            resp = self._write(f"V74={val_str}")
             if resp == "NOK":
                 return f'[Device] Failed to configure new BACKLASH'
             else: 
                 return "OK"
         else:
-            resp = self._write("V74")
+            # resp = self._write("V74")
+            resp = str(Config.backlash)
             if self.is_convertible_to_int(resp):
                 resp = int(resp)
                 return f"{round(resp / Config.enc_2_microns, 0):.0f}"  # Converts to microns
-            else:
-                return f'[Device] Failed to configure new BACKLASH'
+            # else:
+            #     return f'[Device] Failed to configure new BACKLASH'
 
 
-    def param_max_pos(self, value = None) -> str:
+    def param_max_pos(self, value: int | float | None = None, converted:bool = False) -> str | None:
         if value:
-            pos = str(int(value) * Config.enc_2_microns)    # Converts to encoder value
-            resp = self._write(f"V71={pos}")
+            pos = int(value * Config.enc_2_microns)    # Converts to encoder value
+            pos_str = str(pos)
+            resp = self._write(f"V71={pos_str}")
             if resp == "NOK":
                 return f'[Device] Failed to configure new MAX_POS'
             else: 
                 return "OK"
         else:
-            resp = self._write("V71")
+            # resp = self._write("V71")
+            resp = str(Config.max_pos)
             if self.is_convertible_to_int(resp):
-                pos = int(resp) / Config.enc_2_microns
+                # pos = int(resp) / Config.enc_2_microns    # When read from motor the value is in encoder position
+                pos = int(resp)                             # When read from config file the value is in microns
                 return f"{pos:.0f}"
-    
-    def param_max_speed(self, value = None) -> str:
+            # return "NOK"
+        
+    def param_park_pos(self, value: int | float | None = None, converted:bool = False) -> str | None:
+        if value:
+            pos = int(value * Config.enc_2_microns)
+            pos_str = str(pos)
+            resp = self._write(f"V83={pos_str}")
+            return resp
+        else:
+            print("Reading park pos value")
+            # resp = self._write("V83")
+            resp = str(Config.park_pos)
+            if self.is_convertible_to_int(resp):
+                # pos = int(resp) / Config.enc_2_microns    # When read from motor the value is in encoder position
+                pos = int(resp)                             # When read from config file the value is in microns
+                return f"{pos:.0f}"
+            # else: 
+            #     return "NOK"
+            
+    def param_max_speed(self, value: int | None = None, converted:bool = False) -> str | None:
         if value:
             resp = self._write(f"V75={value}")             # Flash memory position used to retain the high speed configuration after reboot
             if resp != "NOK":
@@ -274,19 +332,21 @@ class DriverDMX(Driver):
             # If this point is reached an error occured
             return f'[Device] Failed to configure new MAX_SPEED'
         else:
-            resp = self._write("HSPD")
+            # resp = self._write("HSPD")
+            resp = str(Config.max_speed)
             if self.is_convertible_to_int(resp):
                 return resp
-            else:
-                return "NOK"
+            # else:
+            #     return "NOK"
     
-    def param_normal_speed(self, value = None) -> str: # DMX firmware do not implement a 'Normal speed'
+    def param_normal_speed(self, value: int | None = None, converted:bool = False) -> str | None:
+    # DMX firmware do not implement a 'Normal speed'
         if value:
             return self.param_max_speed(value)
         else:
             return self.param_max_speed()
     
-    def param_low_speed(self, value = None):
+    def param_low_speed(self, value: int | None = None, converted:bool = False) -> str | None:
         if value:
             resp = self._write(f"V76={value}")             # Flash memory position used to retain the low speed configuration after reboot
             if resp != "NOK":
@@ -296,25 +356,12 @@ class DriverDMX(Driver):
             # If this point is reached an error occured
             return f'[Device] Failed to configure new LOW_SPEED'
         else:
-            resp = self._write("LSPD")
+            # resp = self._write("LSPD")
+            resp = str(Config.low_speed)
             if self.is_convertible_to_int(resp):
                 return resp
-            else:
-                return "NOK"
-    
-    def param_park_pos(self, value = None) -> str:
-        if value:
-            pos = str(int(value) * Config.enc_2_microns)
-            resp = self._write(f"V83={pos}")
-            return resp
-        else:
-            print("Reading park pos value")
-            resp = self._write("V83")
-            if self.is_convertible_to_int(resp):
-                pos = int(resp) / Config.enc_2_microns
-                return f"{pos:.0f}"
-            else: 
-                return "NOK"
+            # else:
+            #     return "NOK"
             
     def param_max_step(self, value = None) -> str:
         #TODO: Implementar
@@ -357,7 +404,25 @@ class DriverDMX(Driver):
             return "OK"
         else:
             return "0"
-        
+
+    
+    def param_tcp_rtmo(self, value: int | float | None = None, converted:bool = False) -> str | None:
+        """Precisa ser implementada pelo driver"""
+    ...
+
+    
+    def param_tcp_cycle(self, value: int | float | None = None, converted:bool = False) -> str | None:
+        """Precisa ser implementada pelo driver"""
+    ...
+
+    
+    def param_tcp_mbtmo(self, value: int | float | None = None, converted:bool = False) -> str | None:
+        """Precisa ser implementada pelo driver"""
+    ...
+
+    
+    def param_tcp_katmo(self, value: int | float | None = None, converted:bool = False) -> str | None:
+        """Precisa ser implementada pelo driver"""
 
     def param_clp_auto_restart(self, value: bool | None = None, converted:bool = False) -> str | None:
         """Precisa ser implementada pelo driver"""
@@ -368,14 +433,14 @@ class DriverDMX(Driver):
         """Precisa ser implementada pelo driver"""
     ...
 
-    def read_firmware_version(self) -> str:
+    def read_firmware_version(self) -> str | None:
         V1 = self._write("V90")    # Version number
         V2 = self._write("V91")    # Update number
         V3 = self._write("V92")    # Bug fix number
         if (V1 != "NOK") and (V2 != "NOK") and (V3 != "NOK"):
             return f"{V1}.{V2}.{V3}"
-        else: 
-            return "NOK"
+        # else: 
+        #     return "NOK"
 
     def read_firmware_status(self) -> str:
         resp = self._write("SASTAT")
@@ -397,57 +462,68 @@ class DriverDMX(Driver):
         return self._write(command)
     
 
-    def move_to(self, pos: int) -> str:
-        print(f"Sending move to command to position {pos}...")
+    # def move_to(self, pos: int) -> str:
+    def move_to(self, pos_str: str) -> str | None:
+        # print(f"Sending move to command to position {pos_str}...")
+        pos = int(pos_str)
         pos_conv = int(round((Config.enc_2_microns * pos), 0)) 
         resp = self._write(f"V20={pos_conv}")
         if resp == "OK":            
             resp = self._write(f"GS29")
             if resp == "OK":
                 return resp
-        raise RuntimeError(f'[Motor] Error moving motor to target position {pos}')
+        # raise RuntimeError(f'[Motor] Error moving motor to target position {pos}')
+        return "NOK"
         
              
 
-    def focus_in(self, speed: int) -> str:
-        print(f"Sending focus in command with speed {speed}...")
-        self._set_speed(speed)
+    # def focus_in(self, speed: int) -> str:
+    def focus_in(self, speed: str | int = Config.normal_speed) -> str | None:
+        # print(f"Sending focus in command with speed {speed}...")
+        self._set_speed(int(speed))
         resp = self._write('GS21')
         if resp == "OK":
             return resp
-        raise RuntimeError(f'[Motor] Error running "FOCUS_IN" command')
+        return "NOK"
+        # raise RuntimeError(f'[Motor] Error running "FOCUS_IN" command')
 
-    def focus_out(self, speed: int) -> str:
-        print(f"Sending focus out command with speed {speed}...")
-        self._set_speed(speed)
+    # def focus_out(self, speed: int) -> str:
+    def focus_out(self, speed: str | int = Config.normal_speed) -> str | None:
+        # print(f"Sending focus out command with speed {speed}...")
+        self._set_speed(int(speed))
         resp = self._write('GS20')
         if resp == "OK":
             return resp
-        raise RuntimeError(f'[Motor] Error running "FOCUS_OUT" command')
+        return "NOK"
+        # raise RuntimeError(f'[Motor] Error running "FOCUS_OUT" command')
 
-    def halt(self) -> str:
-        print("Sending halt command...")
+    def halt(self) -> str | None:
+        # print("Sending halt command...")
         resp = self._write('V42=1')
         if resp == "OK":
             return resp
-        raise RuntimeError(f'[Motor] Error running "HALT" command')
+        return "NOK"
+        # raise RuntimeError(f'[Motor] Error running "HALT" command')
              
 
-    def home(self) -> str:
-        print("Sending home command...")
+    def home(self) -> str | None:
+        # print("Sending home command...")
         resp = self._write('GS30')
         if resp == "OK":
             return resp
-        raise RuntimeError(f'[Motor] Error running "HOME" command')
+        return "NOK"
+        
+        # raise RuntimeError(f'[Motor] Error running "HOME" command')
         
              
 
-    def park(self) -> str:
+    def park(self) -> str | None:
         print("Sending park command...")
         resp = self._write('GS5')
         if resp == "OK":
             return resp
-        raise RuntimeError(f'[Motor] Error running "PARK" command')
+        return "NOK"
+        # raise RuntimeError(f'[Motor] Error running "PARK" command')
 
     def _set_speed(self, speed: int) -> str:
         print(f"Setting motor movement speed")
@@ -468,7 +544,58 @@ class DriverDMX(Driver):
          #TODO: O firmware do motor reseta os valores de max_pos, backlash, max_speed e low_speed durante o boot."""
         return self._write("STORE")
 
-    def _write(self, cmd, max_retries = 5):
+#region backup version
+    # def _write(self, cmd: str, max_retries = 5):
+    #     """Send commands to motor socket.
+    #     Args:  
+    #         cmd (str): Command.
+    #         max_retries (int): Number of retries if first one fails
+    #     Returns: 
+    #         Device response or Error message
+    #     """
+    #     # The ARCUS DMX motor don't seem to accept retries, if an error
+    #     # occurs the connection must be reset
+    #     retries = 0
+    #     self._lock.acquire()  
+    #     # time.sleep(0.01)
+    #     if self.socket:
+    #         while (time.time() - self.time_count) < 0.020_000: 
+    #             time.sleep(0.000_005)
+
+    #         print(time.time() - self.time_count)
+    #         while retries < max_retries: 
+    #             # time.sleep(0.01)     # time.sleep(0.1)  
+    #             try:   
+    #                 # self.socket.sendall(bytes(f'{cmd}\x00', 'utf-8'))
+    #                 format_cmd = f'{cmd}\x00'.encode('ascii')
+    #                 self.socket.sendall(format_cmd)
+
+    #                 time.sleep(0.02)         # time.sleep(0.1) 
+
+    #                 response = self.socket.recv(256) #1024
+    #                 self._lock.release()
+    #                 # time.sleep(0.05)
+    #                 self.time_count = time.time()
+    #                 return response.decode('ascii').replace("\x00", "")         
+    #                 # return response.decode('utf-8').replace("\x00", "")                    
+    #             except Exception as e:
+    #                 logging.warning(f"Focuser motor message timed out: {e}")
+    #                 time.sleep(0.05)
+    #                 retries += 1   
+    #                 err = e
+
+    #     # If the program reaches this points it means that a problem occurred in sending or receiving the data
+    #         # self.logger.error(f"[Device] Error writing {cmd}: {str(err)}")
+    #     print(f"RETRIES {retries}")
+    #     if self._lock.locked:
+    #         self._lock.release()
+    #     if self.socket:
+    #         self.disconnect_motor() 
+    #     # raise ConnectionError(f'Could not send command "{cmd}" to motor. Failed to reach motor after {retries} attempts.')
+    #     return 'NOK' #"Error communicating to the motor" 
+#endregion
+
+    def _write(self, cmd: str, max_retries = 5) -> str:
         """Send commands to motor socket.
         Args:  
             cmd (str): Command.
@@ -476,26 +603,56 @@ class DriverDMX(Driver):
         Returns: 
             Device response or Error message
         """
+        # The ARCUS DMX motor don't seem to accept retries, if an error
+        # occurs the connection must be reset
         retries = 0
-        self._lock.acquire()  
-        # time.sleep(0.01)         # time.sleep(0.1)  #TODO: Avaliar o motivo de precisar desse tempo morto
+        
+        # time.sleep(0.01)
         if self.socket:
-            while retries < max_retries: 
-                time.sleep(0.01)         # time.sleep(0.1)  #TODO: Avaliar o motivo de precisar desse tempo morto
-                try:   
-                    self.socket.sendall(bytes(f'{cmd}\x00', 'utf-8'))
-                    response = self.socket.recv(1024)
+            self._lock.acquire()  
+            # Waits at least 20 milisseconds before sending new data
+            while (time.time() - self.time_count) < 0.025_000: 
+                time.sleep(0.000_005)
+
+            print(time.time() - self.time_count)
+
+            try:
+                format_cmd = f'{cmd}\x00'.encode('ascii')
+                self.socket.sendall(format_cmd)
+
+                # time.sleep(0.02)         # time.sleep(0.1) 
+
+                response = self.socket.recv(1024) #1024
+                self._lock.release()
+
+                self.time_count = time.time()
+                return response.decode('ascii').replace("\x00", "")      
+            except Exception as error:
+                logging.warning(f"Focuser motor message timed out: {error}")
+                if self._lock.locked():
                     self._lock.release()
-                    return response.decode('utf-8').replace("\x00", "")                    
-                except Exception as e:
-                    err = e
-                retries += 1                                                               #TODO: Parece que esse retries tem que estar dentro do exception, mas talvez não faça diferença
-            
-        # If the program reaches this points it means that a problem occurred in sending or receiving the data
-            # self.logger.error(f"[Device] Error writing {cmd}: {str(err)}")
-        print(f"RETRIES {retries}")
-        self._lock.release()
+                if self.socket:
+                    self.disconnect_motor() 
+                return 'NOK' #"Error communicating to the motor" 
+        return 'NOK'
+        
+
+    def _update_all_parameters(self):
+        resp: str = ""
+        p = 0
         if self.socket:
-            self.disconnect_motor() 
-        # raise ConnectionError(f'Could not send command "{cmd}" to motor. Failed to reach motor after {retries} attempts.')
-        return 'NOK' #"Error communicating to the motor" 
+            for param_idx in MotorParamsIdx:
+                p += 1
+                self.motor.signals.progress.string.emit(int(p/len(MotorParamsIdx)*100))
+                # time.sleep(0.05)            # Just for better visualization of ui update
+                resp = self.param_methods[param_idx]()
+                try:
+                    val = float(resp)
+                    print(f'{self.motor.parameters[param_idx]} - {int(self.param_methods[param_idx](converted=True))}')
+                except:
+                    val = resp
+                print(f'{param_idx}, {val}')
+                if val is not None:
+                    self.param_methods[param_idx](value=val)
+            self._store_to_flash()
+                
