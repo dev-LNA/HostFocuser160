@@ -23,6 +23,8 @@ class DriverDMX(Driver):
         self.com_speed: float = 0.0
         self.bits_trasmitted: int = 0
 
+        self.timeout_counter: int = 0
+
     @property
     def focus_out_status(self) -> bool:
         """Precisa ser implementada pelo driver"""
@@ -64,7 +66,7 @@ class DriverDMX(Driver):
         while retries < max_retries: 
             try:
                 self.socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-                self.socket.settimeout(0.5)
+                self.socket.settimeout(3)
                 self.socket.connect((Config.device_ip, Config.device_port)  )      
                 time.sleep(delay)
                 self.driver_comm.status.emit(True)
@@ -102,7 +104,7 @@ class DriverDMX(Driver):
         with closing(socket.socket(socket.AF_INET, socket.SOCK_STREAM)) as sock:
             retries = 0
             max_retries = 5
-            sock.settimeout(1)
+            sock.settimeout(0.5)
             while retries < max_retries:
                 result = sock.connect_ex((Config.device_ip, Config.device_port))
                 if result == 0:
@@ -123,9 +125,9 @@ class DriverDMX(Driver):
         """
         if moving and self.socket:
             val = self.param_max_speed()
-            if val != Config.normal_speed:
-                print('**********Setting normal speed back to original value**********')
-                self.param_max_speed(Config.normal_speed)
+            if val != Config.max_speed:
+                # print('**********Setting normal speed back to original value**********')
+                self.param_max_speed(Config.max_speed)
 
     
     def conv_position_show(self, encoder_pos: int | None = None, type: str = "int") -> int | float:
@@ -280,9 +282,9 @@ class DriverDMX(Driver):
         else:
             # resp = self._write("V74")
             resp = str(Config.backlash)
-            if self.is_convertible_to_int(resp):
-                resp = int(resp)
-                return f"{round(resp / Config.enc_2_microns, 0):.0f}"  # Converts to microns
+            # if self.is_convertible_to_int(resp):
+            #     resp = int(resp)
+            return resp
             # else:
             #     return f'[Device] Failed to configure new BACKLASH'
 
@@ -312,7 +314,7 @@ class DriverDMX(Driver):
             resp = self._write(f"V83={pos_str}")
             return resp
         else:
-            print("Reading park pos value")
+            # print("Reading park pos value")
             # resp = self._write("V83")
             resp = str(Config.park_pos)
             if self.is_convertible_to_int(resp):
@@ -324,9 +326,12 @@ class DriverDMX(Driver):
             
     def param_max_speed(self, value: int | None = None, converted:bool = False) -> str | None:
         if value:
-            resp = self._write(f"V75={value}")             # Flash memory position used to retain the high speed configuration after reboot
+            if value > Config.speed_security:
+                logging.warning(f"Tried to set max speed to {value} but maximum allowed value is {Config.speed_security}")
+                return f"Tried to set max speed to {value} but maximum allowed value is {Config.max_speed}"
+            resp = self._write(f"V75={int(value * Config.enc_2_microns)}")             # Flash memory position used to retain the high speed configuration after reboot
             if resp != "NOK":
-                resp = self._write(f"HSPD={value}")
+                resp = self._write(f"HSPD={int(value * Config.enc_2_microns)}")
                 if resp != "NOK":
                     return "OK"
             # If this point is reached an error occured
@@ -348,6 +353,10 @@ class DriverDMX(Driver):
     
     def param_low_speed(self, value: int | None = None, converted:bool = False) -> str | None:
         if value:
+            if value >= Config.max_speed:
+                logging.warning(f"Tried to set low speed to {value} but value is greater than max_speed {Config.max_speed}")
+                return f"Tried to set low speed to {value} but value is greater than max_speed {Config.max_speed}"
+
             resp = self._write(f"V76={value}")             # Flash memory position used to retain the low speed configuration after reboot
             if resp != "NOK":
                 resp = self._write(f"LSPD={value}")
@@ -518,7 +527,7 @@ class DriverDMX(Driver):
              
 
     def park(self) -> str | None:
-        print("Sending park command...")
+        # print("Sending park command...")
         resp = self._write('GS5')
         if resp == "OK":
             return resp
@@ -526,7 +535,7 @@ class DriverDMX(Driver):
         # raise RuntimeError(f'[Motor] Error running "PARK" command')
 
     def _set_speed(self, speed: int) -> str:
-        print(f"Setting motor movement speed")
+        # print(f"Setting motor movement speed")
         vel_conv = speed*Config.speed_factor
         if vel_conv > Config.speed_security:
             vel_conv = Config.speed_security     
@@ -611,31 +620,67 @@ class DriverDMX(Driver):
         if self.socket:
             self._lock.acquire()  
             # Waits at least 20 milisseconds before sending new data
-            while (time.time() - self.time_count) < 0.025_000: 
+            while (time.time() - self.time_count) < 0.080_000: # 0.025_000: 
                 time.sleep(0.000_005)
 
-            print(time.time() - self.time_count)
+            # print(time.time() - self.time_count)
 
             try:
                 format_cmd = f'{cmd}\x00'.encode('ascii')
-                self.socket.sendall(format_cmd)
+                try:
+                    self.socket.sendall(format_cmd)
+                except Exception as error:
+                    print(f"Exception occured on send")
+                    raise error
+                
+                # time.sleep(0.010)
 
-                # time.sleep(0.02)         # time.sleep(0.1) 
+                response = bytearray()
+                chunk = bytes()
 
-                response = self.socket.recv(1024) #1024
+
+                # while chunk != b'\x00':
+                #     chunk = self.socket.recv(1)
+                #     response.extend(chunk)
+
+                # Receives up to 20 bytes until receive '\x00'
+                # Exits if a timeout occurs
+                while True:
+                    chunk = self.socket.recv(20)
+                    response.extend(chunk)
+                    if b'\x00' in response:
+                        break
+
+                # print(response)
+                # self._flush_stale_data()
+                self.time_count = time.time()
                 self._lock.release()
 
-                self.time_count = time.time()
-                return response.decode('ascii').replace("\x00", "")      
+                return response.decode('ascii').replace("\x00", "")         
             except Exception as error:
-                logging.warning(f"Focuser motor message timed out: {error}")
+                self.timeout_counter += 1
+                print(f"Timeout counter: {self.timeout_counter}")
+                logging.warning(f"Motor communication timed out during command '{cmd}': {error}")
+                # self._flush_stale_data()
                 if self._lock.locked():
                     self._lock.release()
                 if self.socket:
                     self.disconnect_motor() 
                 return 'NOK' #"Error communicating to the motor" 
         return 'NOK'
-        
+
+    def _flush_stale_data(self):
+        """Drains leftover bytes if a previous read was interrupted."""
+        if self.socket:
+            self.socket.setblocking(False)
+            try:
+                while self.socket.recv(1024):
+                    pass
+            except (BlockingIOError, socket.error):
+                pass
+            finally:
+                self.socket.setblocking(True)
+                self.socket.settimeout(3)
 
     def _update_all_parameters(self):
         resp: str = ""
@@ -648,10 +693,10 @@ class DriverDMX(Driver):
                 resp = self.param_methods[param_idx]()
                 try:
                     val = float(resp)
-                    print(f'{self.motor.parameters[param_idx]} - {int(self.param_methods[param_idx](converted=True))}')
+                    # print(f'{self.motor.parameters[param_idx]} - {int(self.param_methods[param_idx](converted=True))}')
                 except:
                     val = resp
-                print(f'{param_idx}, {val}')
+                # print(f'{param_idx}, {val}')
                 if val is not None:
                     self.param_methods[param_idx](value=val)
             self._store_to_flash()

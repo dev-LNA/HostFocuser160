@@ -488,7 +488,7 @@ class FocuserOPD (QMainWindow):
         self.clients[len(self.clients)-1].show()                # Shows the client that was created
         self._num_clients+=1                                    # Adds the number of clients
 
-        print(self.clients)                                     # Prints the list of clients
+        # print(self.clients)                                     # Prints the list of clients
 
     def _simulator_closed(self, msg):
         """ Receives closed window signal from the simulator """
@@ -500,7 +500,7 @@ class FocuserOPD (QMainWindow):
                 print(f"Cliente {removed.client_ID} encerrado")         # Prints the client that was removed
                 removed.destroy(True)
 
-        print(self.clients)                                         # Prints the list of clients
+        # print(self.clients)                                         # Prints the list of clients
 
     def _open_server_info(self):
         
@@ -589,6 +589,8 @@ class FocuserOPD (QMainWindow):
                     self.server.status[SJson.MAX_SPEED] = data[MotorParamsIdx.NORMAL_SPEED]
             if MotorParamsIdx.MAX_POS in data:
                     self.server.status[SJson.MAX_STEP] = data[MotorParamsIdx.MAX_POS]
+            if MotorParamsIdx.MAX_SPEED in data:
+                    self.server.status[SJson.MAX_SPEED] = data[MotorParamsIdx.MAX_SPEED]
 
     def _minimize_to_tray(self):
         """Minimize to tray"""

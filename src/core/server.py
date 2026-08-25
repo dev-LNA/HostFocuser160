@@ -488,7 +488,7 @@ class Server(QObject):
                     time.sleep(TimeDelays.RETRY_TIMEOUT)             # delay between tries                         
                     self.signals.status_message.emit(f"Trying Connect to Router...")                      # Emits signals for GUI update
                     reachable = ping(Config.gateway_ip, count=1, timeout=1, privileged=False).is_alive         # Tries to ping the router IP
-                    print(f'trying to ping gateway at {Config.gateway_ip}')
+                    # print(f'trying to ping gateway at {Config.gateway_ip}')
                     if reachable:                                                                               # If the ping is succesful
                         self.router_reachable = ReachStatus.CONNECTED
                         self.signals.status_message.emit(f"Connection succesfull after {_try+1} tries")                         # Emits signals for GUI update
@@ -511,7 +511,7 @@ class Server(QObject):
                 for _try in range(5):                                                                   # Tries 5 times to ping the router
                     time.sleep(TimeDelays.RETRY_TIMEOUT)             # delay between tries
                     self.signals.status_message.emit(f"Trying Connect to Motor...")               # Emits signals for GUI update
-                    print(f'Trying to ping motor at {Config.device_ip}:{Config.device_port}')
+                    # print(f'Trying to ping motor at {Config.device_ip}:{Config.device_port}')
                     reachable = self.motor.ping()                                              # Tries to ping the motor IP
                     if reachable:                                                               # If the ping is successful
                         self.motor_reachable = ReachStatus.CONNECTED
@@ -623,7 +623,7 @@ class Server(QObject):
         if self.motor:
             p = 0
             for param in MotorParamsIdx:
-                print(param)
+                # print(param)
                 p += 1
                 self.motor.signals.progress.string.emit(int(p/len(MotorParamsIdx)*100))
                 time.sleep(0.05)            # Just for better visualization of ui update
@@ -733,7 +733,7 @@ class Server(QObject):
                         time.sleep(TimeDelays.RETRY_TIMEOUT)             # delay between tries                         
                         self.signals.status_message.emit(f"Trying Connect to Router...")                      # Emits signals for GUI update
                         reachable = ping(Config.gateway_ip, count=1, timeout=1, privileged=False).is_alive         # Tries to ping the router IP
-                        print(f'trying to ping gateway at {Config.gateway_ip}')
+                        # print(f'trying to ping gateway at {Config.gateway_ip}')
                         if reachable:                                                                               # If the ping is succesful
                             self.router_reachable = ReachStatus.CONNECTED
                             self.signals.status_message.emit(f"Connection succesfull after {_try+1} tries")                         # Emits signals for GUI update
@@ -747,7 +747,7 @@ class Server(QObject):
                     # else:
                     #     self._link_device()
                         
-                print(round(time.time()-t0, 3))
+                # print(round(time.time()-t0, 3))
                 self.signals.connection_speed.emit(f"{round(time.time()-t0, 3)}")
 
             except Exception as e:
@@ -792,7 +792,7 @@ class Server(QObject):
         if parsed[SJson.CMD_CLIENT_NAME] is None:
             parsed[SJson.CMD_CLIENT_NAME] = "UNIDENTIFIED"
             msg_json[SJson.CMD_CLIENT_NAME] = parsed[SJson.CMD_CLIENT_NAME]  
-        print(parsed)
+        # print(parsed)
 
         return parsed    
     
@@ -819,7 +819,7 @@ class Server(QObject):
             if  program_status == "Idle":
                 return True
             elif program_status == "Running":
-                print(cmd[SJson.CMD_ACTION])
+                # print(cmd[SJson.CMD_ACTION])
                 if cmd[SJson.CMD_ACTION] == ServerCommands.HALT:
                     return True
                 else:

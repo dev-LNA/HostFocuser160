@@ -292,6 +292,82 @@ class SettingsWindow(QMainWindow):
 
         self._changed_settings.clear()          # Resets changes dictionary   
 
+
+        if motor.model == MotorModels.AMP_MOTOR:
+            self.ui_elements.spinBacklash.setMinimum(0)
+            self.ui_elements.spinBacklash.setMaximum(300)
+            self.ui_elements.spinMaxPos.setMinimum(24800)
+            self.ui_elements.spinMaxPos.setMaximum(25100)
+            self.ui_elements.spinParkPos.setMinimum(0)
+            self.ui_elements.spinParkPos.setMaximum(25100)
+            self.ui_elements.spinMaxSpeed.setMinimum(2)
+            self.ui_elements.spinMaxSpeed.setMaximum(750)
+            self.ui_elements.spinNormalSpeed.setMinimum(2)
+            self.ui_elements.spinNormalSpeed.setMaximum(500)
+            self.ui_elements.spinLowSpeed.setMinimum(2)
+            self.ui_elements.spinLowSpeed.setMaximum(167)
+            self.ui_elements.spinAcceleration.setMinimum(66.7)
+            self.ui_elements.spinAcceleration.setMaximum(2000)
+            self.ui_elements.spinDeceleration.setMinimum(66.7)
+            self.ui_elements.spinDeceleration.setMaximum(2666.7)
+            self.ui_elements.spinIdleCurrent.setMinimum(0)
+            self.ui_elements.spinIdleCurrent.setMaximum(3000)
+            self.ui_elements.spinRunCurrent.setMinimum(1000)
+            self.ui_elements.spinRunCurrent.setMaximum(2000)
+            self.ui_elements.spinAccCurrent.setMinimum(1200)
+            self.ui_elements.spinAccCurrent.setMaximum(2000)
+            self.ui_elements.spinTCPTimeout.setMinimum(20)
+            self.ui_elements.spinTCPTimeout.setMaximum(3000)
+            self.ui_elements.spinComCycle.setMinimum(1)
+            self.ui_elements.spinComCycle.setMaximum(600)
+            self.ui_elements.spinMBTimeout.setMinimum(100)
+            self.ui_elements.spinMBTimeout.setMaximum(5000)
+            self.ui_elements.spinKeepAliveTimeout.setMinimum(1)
+            self.ui_elements.spinKeepAliveTimeout.setMaximum(32767)
+
+        elif motor.model == MotorModels.ARCUS_DMX_ETH:
+            self.ui_elements.spinBacklash.setMinimum(0)
+            self.ui_elements.spinBacklash.setMaximum(300)
+            self.ui_elements.spinMaxPos.setMinimum(50)
+            self.ui_elements.spinMaxPos.setMaximum(50700)
+            self.ui_elements.spinParkPos.setMinimum(0)
+            self.ui_elements.spinParkPos.setMaximum(50700)
+            self.ui_elements.spinMaxSpeed.setMinimum(2)
+            self.ui_elements.spinMaxSpeed.setMaximum(3000)
+            self.ui_elements.spinNormalSpeed.setMinimum(2)
+            self.ui_elements.spinNormalSpeed.setMaximum(3000)
+            self.ui_elements.spinNormalSpeed.setEnabled(False)
+            self.ui_elements.spinLowSpeed.setMinimum(2)
+            self.ui_elements.spinLowSpeed.setMaximum(1000)
+            self.ui_elements.spinAcceleration.setMinimum(66.7)
+            self.ui_elements.spinAcceleration.setMaximum(2000)
+            self.ui_elements.spinAcceleration.setEnabled(False)
+            self.ui_elements.spinDeceleration.setMinimum(66.7)
+            self.ui_elements.spinDeceleration.setMaximum(2666.7)
+            self.ui_elements.spinDeceleration.setEnabled(False)
+            self.ui_elements.spinIdleCurrent.setMinimum(0)
+            self.ui_elements.spinIdleCurrent.setMaximum(3000)
+            self.ui_elements.spinIdleCurrent.setEnabled(False)
+            self.ui_elements.spinRunCurrent.setMinimum(1000)
+            self.ui_elements.spinRunCurrent.setMaximum(2000)
+            self.ui_elements.spinRunCurrent.setEnabled(False)
+            self.ui_elements.spinAccCurrent.setMinimum(1200)
+            self.ui_elements.spinAccCurrent.setMaximum(2000)
+            self.ui_elements.spinAccCurrent.setEnabled(False)
+            self.ui_elements.spinTCPTimeout.setMinimum(20)
+            self.ui_elements.spinTCPTimeout.setMaximum(3000)
+            self.ui_elements.spinTCPTimeout.setEnabled(False)
+            self.ui_elements.spinComCycle.setMinimum(1)
+            self.ui_elements.spinComCycle.setMaximum(600)
+            self.ui_elements.spinComCycle.setEnabled(False)
+            self.ui_elements.spinMBTimeout.setMinimum(100)
+            self.ui_elements.spinMBTimeout.setMaximum(5000)
+            self.ui_elements.spinMBTimeout.setEnabled(False)
+            self.ui_elements.spinKeepAliveTimeout.setMinimum(1)
+            self.ui_elements.spinKeepAliveTimeout.setMaximum(32767)
+            self.ui_elements.spinKeepAliveTimeout.setEnabled(False)
+
+
         # if Config.focuser == "160":
         self._update_settings()                                                         # Runs the _updater to retrieve the current motor parameters
         # else:
@@ -805,30 +881,31 @@ class SettingsWindow(QMainWindow):
 
     # --- Adjust GUI limits
 
-        # Backlash limits 0~150 steps
-        self._config_settings.BACKLASH.OBJ.setMaximum(int(150 * Config.steps_2_encoder * Config.enc_2_microns))
-        
-        # Max pos limits 6000~12600 steps
-        self._config_settings.MAX_POS.OBJ.setMinimum(int(8000 * Config.steps_2_encoder * Config.enc_2_microns * 0.9885853)) # 0.9885853 is the conversion for the maximum possible configuration
-        self._config_settings.MAX_POS.OBJ.setMaximum(int(12700 * Config.steps_2_encoder * Config.enc_2_microns * 0.9885853))# 0.9885853 is the conversion for the maximum possible configuration
+        if self.motor.model == MotorModels.AMP_MOTOR:
+            # Backlash limits 0~150 steps
+            self._config_settings.BACKLASH.OBJ.setMaximum(int(150 * Config.steps_2_encoder * Config.enc_2_microns))
+            
+            # Max pos limits 6000~12600 steps
+            self._config_settings.MAX_POS.OBJ.setMinimum(int(8000 * Config.steps_2_encoder * Config.enc_2_microns * 0.9885853)) # 0.9885853 is the conversion for the maximum possible configuration
+            self._config_settings.MAX_POS.OBJ.setMaximum(int(12700 * Config.steps_2_encoder * Config.enc_2_microns * 0.9885853))# 0.9885853 is the conversion for the maximum possible configuration
 
-        # The Park position is limited by the maximum position
-        self._config_settings.PARK_POS.OBJ.setMaximum(self._config_settings.MAX_POS.OBJ.value())
+            # The Park position is limited by the maximum position
+            self._config_settings.PARK_POS.OBJ.setMaximum(self._config_settings.MAX_POS.OBJ.value())
 
-        # The Idle current is limited by the running current
-        self._config_settings.IDLE_CURRENT.OBJ.setMaximum(self._config_settings.RUN_CURRENT.OBJ.value())
+            # The Idle current is limited by the running current
+            self._config_settings.IDLE_CURRENT.OBJ.setMaximum(self._config_settings.RUN_CURRENT.OBJ.value())
 
-        # The Normal and Low speeds are limited by the High speed, but only if the max speed limit is 
-        # lower than the default limits
-        if self._config_settings.MAX_SPEED.OBJ.value() < 500:
-            self._config_settings.NORMAL_SPEED.OBJ.setMaximum(self._config_settings.MAX_SPEED.OBJ.value())
-        else:
-            self._config_settings.NORMAL_SPEED.OBJ.setMaximum(500)
+            # The Normal and Low speeds are limited by the High speed, but only if the max speed limit is 
+            # lower than the default limits
+            if self._config_settings.MAX_SPEED.OBJ.value() < 500:
+                self._config_settings.NORMAL_SPEED.OBJ.setMaximum(self._config_settings.MAX_SPEED.OBJ.value())
+            else:
+                self._config_settings.NORMAL_SPEED.OBJ.setMaximum(500)
 
-        if self._config_settings.MAX_SPEED.OBJ.value() < 167:
-            self._config_settings.LOW_SPEED.OBJ.setMaximum(self._config_settings.MAX_SPEED.OBJ.value())
-        else:
-            self._config_settings.LOW_SPEED.OBJ.setMaximum(167)
+            if self._config_settings.MAX_SPEED.OBJ.value() < 167:
+                self._config_settings.LOW_SPEED.OBJ.setMaximum(self._config_settings.MAX_SPEED.OBJ.value())
+            else:
+                self._config_settings.LOW_SPEED.OBJ.setMaximum(167)
 
     def _update_gui_element(self, widget: QWidget):
         """Updates the GUI element style after an event occured.

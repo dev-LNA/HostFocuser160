@@ -55,9 +55,9 @@ class ReqSender(QRunnable):
                     "action": self._action
                 }
 
-                print(f"[ZMQ Client] client = {self._msg_json["clientId"]}")
-                print(f"[ZMQ Client] clientTransactionId = {self._msg_json["clientTransactionId"]}")
-                print(f"[ZMQ Client] cmd = {self._msg_json["action"]}")
+                # print(f"[ZMQ Client] client = {self._msg_json["clientId"]}")
+                # print(f"[ZMQ Client] clientTransactionId = {self._msg_json["clientTransactionId"]}")
+                # print(f"[ZMQ Client] cmd = {self._msg_json["action"]}")
                 # self.finished = True
 
                 self.signals.req.send_string(json.dumps(self._msg_json))     # type: ignore # req signal is of type "zmq.SyncSocket" and has a method "send_string"
