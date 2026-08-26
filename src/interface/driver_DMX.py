@@ -93,10 +93,10 @@ class DriverDMX(Driver):
                 self.driver_comm.timeout.emit(True)
                 self.motor.connected = False
                 self.motor.signals.moving.status.disconnect(self._check_normal_speed)
-                return "OK"
-            else:
-                logging.warning(f"Cannot disconnect motor: Socket not open")
-                return "NOK"
+            return "OK"
+            # else:
+            #     logging.warning(f"Cannot disconnect motor: Socket not open")
+            # return "NOK"
         except Exception as e:
             logging.error(f"Error disconnectig from motor: {e}")
             raise RuntimeError(f'Cannot disconnect -> {e}') 
