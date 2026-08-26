@@ -741,7 +741,8 @@ class DriverDMX(Driver):
         # Waits some time before sending new data to avoid problems with
         # the dmx-eth buffer. Too much time will make the readings and 
         # gui update too slow.
-        while (time.time() - self.time_count) < 0.010_000: # 0.025_000: 
+        wait_time = Config.handshake_timeout * 0.001
+        while (time.time() - self.time_count) < wait_time: # 0.025_000: 
             time.sleep(0.000_005)
 
         
