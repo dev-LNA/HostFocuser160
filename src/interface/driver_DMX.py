@@ -125,7 +125,7 @@ class DriverDMX(Driver):
         """
         if moving and self.socket:
             val = self.param_max_speed()
-            if val != Config.max_speed:
+            if val != str(Config.max_speed):
                 # print('**********Setting normal speed back to original value**********')
                 self.param_max_speed(Config.max_speed)
 
@@ -172,13 +172,24 @@ class DriverDMX(Driver):
             return constants.INVALID_RESPONSE
 
     
-    def read_homing(self) -> bool:  
-        x = self._write("V15")
-        # if "1" in x:
-        if x == "1":
-            return True                     
-        else:                                       
+    def read_homing(self) -> bool: 
+    #   The current version of the motor firmware do not implement
+    # a variable that indicates the 'homing' process.
+    #   To indicate homing the program counter is read and if it is
+    # inside the homing function it is homing.
+    #   IMPORTANT: This will only work with this specific mnotor firmware
+        x = self._write("SPC0")
+        if 507 <= int(x) < 564:
+            return True
+        else:
             return False
+             
+        # x = self._write("V15")
+        # if x == "1":
+        #     return True                     
+        # else:                                       
+        #     return False
+        
         
 
     def read_parking(self) -> bool:
@@ -325,22 +336,24 @@ class DriverDMX(Driver):
             #     return "NOK"
             
     def param_max_speed(self, value: int | None = None, converted:bool = False) -> str | None:
+        # Speed unit is in pulses/second
         if value:
-            if value > Config.speed_security:
+            if (value * Config.speed_factor) > Config.speed_security:
                 logging.warning(f"Tried to set max speed to {value} but maximum allowed value is {Config.speed_security}")
                 return f"Tried to set max speed to {value} but maximum allowed value is {Config.max_speed}"
-            resp = self._write(f"V75={int(value * Config.enc_2_microns)}")             # Flash memory position used to retain the high speed configuration after reboot
+            resp = self._write(f"V75={int(value * Config.speed_factor)}")             # Flash memory position used to retain the high speed configuration after reboot
             if resp != "NOK":
-                resp = self._write(f"HSPD={int(value * Config.enc_2_microns)}")
+                resp = self._write(f"HSPD={int(value * Config.speed_factor)}")         # Convert to encoder
                 if resp != "NOK":
                     return "OK"
             # If this point is reached an error occured
             return f'[Device] Failed to configure new MAX_SPEED'
         else:
-            # resp = self._write("HSPD")
-            resp = str(Config.max_speed)
+            resp = self._write("HSPD")
+            # resp = str(Config.max_speed)
             if self.is_convertible_to_int(resp):
-                return resp
+                # return resp
+                return str(int(int(resp) / Config.speed_factor))
             # else:
             #     return "NOK"
     
@@ -357,9 +370,9 @@ class DriverDMX(Driver):
                 logging.warning(f"Tried to set low speed to {value} but value is greater than max_speed {Config.max_speed}")
                 return f"Tried to set low speed to {value} but value is greater than max_speed {Config.max_speed}"
 
-            resp = self._write(f"V76={value}")             # Flash memory position used to retain the low speed configuration after reboot
+            resp = self._write(f"V76={value * Config.speed_factor}")             # Flash memory position used to retain the low speed configuration after reboot
             if resp != "NOK":
-                resp = self._write(f"LSPD={value}")
+                resp = self._write(f"LSPD={value * Config.speed_factor}")
                 if resp != "NOK":
                     return "OK"
             # If this point is reached an error occured
