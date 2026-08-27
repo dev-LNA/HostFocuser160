@@ -709,8 +709,9 @@ class Server(QObject):
                             # self.zmq_comm.pub(self.status)  
                             self.processing_command = False
                     
-                    self._update_status()
+                    # self._update_status()
                     self.motor.update_status()
+                    self._update_status()
 
                     self._reset_client_info()
 
