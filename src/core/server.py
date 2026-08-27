@@ -1006,10 +1006,17 @@ class Server(QObject):
             self.logger.warning("FOCUSER MOVING")
         else:
             if self.motor:
-                # Waits to guarantee that the motor is stopped and have a correct position reading
-                t = time.time()
-                while( (self.motor.is_moving == False) and (time.time() - t < 1) ):
-                    time.sleep(0.2)
+                if self.motor.model == MotorModels.AMP_MOTOR:
+                    # Waits to guarantee that the motor is stopped and have a correct position reading
+                    t = time.time()
+                    while( (self.motor.is_moving == False) and (time.time() - t < 1) ):
+                        time.sleep(0.2)
+
+                elif self.motor.model == MotorModels.ARCUS_DMX_ETH:
+                    # Waits to guarantee that the motor is stopped and have a correct position reading
+                    t = time.time()
+                    while( (self.motor.is_moving == False) and (time.time() - t < 0.2) ):
+                        time.sleep(0.2)
 
                 # After the time motor is stopped
                 if self.motor.is_moving == False:
