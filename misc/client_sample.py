@@ -55,7 +55,7 @@ class ClientSimulator(QtWidgets.QMainWindow):
             self.client_ID = clientID
         if clientName is not None:
             self.name = clientName
-        
+
     # Associate UI variables to allow intellisense with PyQt Widgets
         self.btnMove = self.findChild(QtWidgets.QPushButton, 'btnMove')
         self.btnMove: QPushButton = self.btnMove
@@ -284,8 +284,17 @@ class ClientSimulator(QtWidgets.QMainWindow):
             self.lblMotorID.setText(data["device_ID"])
             self.lblMotorIP.setText(data["device_IP"])
             self.lblClientID.setText(str(self.client_ID))
-            self.sbMovePos.setValue(data[SJson.MAX_STEP])
-            
+            self.sbMovePos.setValue(float(data[SJson.MAX_STEP]))
+            self.sbMovePos.setMaximum(float(data[SJson.MAX_STEP]))
+
+            self.BarFocuser.setMaximum(int(data[SJson.MAX_STEP]))
+
+            if int(data[SJson.MAX_STEP]) > 20000:
+                self.BarFocuser.setMinimum(-int(data[SJson.MAX_STEP] * 0.005))
+            else:
+                self.BarFocuser.setMinimum(-10)
+
+
             self.status_bar.clearMessage()
             self.pageSelect.setCurrentIndex(1)
 
