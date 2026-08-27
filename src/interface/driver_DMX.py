@@ -745,6 +745,7 @@ class DriverDMX(Driver):
         while (time.time() - self.time_count) < wait_time: # 0.025_000: 
             time.sleep(0.000_005)
 
+        # print(time.time() - self.time_count)
         
         if self.socket:
             try:
@@ -792,6 +793,7 @@ class DriverDMX(Driver):
                 return "NOK"
                     
             except Exception as error:
+                self.time_count = time.time()
                 self.timeout_counter += 1
                 print(f"Timeout counter: {self.timeout_counter}")
                 if self._lock.locked():

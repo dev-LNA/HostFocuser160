@@ -695,19 +695,19 @@ class Server(QObject):
                             msg_json = json.loads(received_client_msg)
                             parsed_cmd = self._parse_client_command(msg_json)                   # Parses client command
                             self._command_validation(parsed_cmd)                                # Validates the received command
+                            self.zmq_comm.reply('ACK')                                          # Replies 'ACK' to inform the client that the command was validated
                             self._handle_command(parsed_cmd)                                    # Executes the command
                             self.status[SJson.CMD] = msg_json                                   # Updates status with the current command being executed
-                            self.zmq_comm.reply('ACK')                                          # Replies 'ACK' to inform the client that everything went ok
                             self.logger.info("Sent ACK to client")
                             # self.signals.last_command.emit(self.status)
                             self.signals.last_command.emit(self.last_command)
                         except Exception as e: 
                             print(e)
-                            self.zmq_comm.reply('NAK')          # Replies 'NAK' to inform the client that an error occured       
+                            self.zmq_comm.reply('NAK')          # Replies 'NAK' to inform the client that an error occured  
+                            self.logger.error(e)     
                             self.logger.info("Sent NAK to client")              
                             # self.zmq_comm.pub(self.status)  
                             self.processing_command = False
-                            self.logger.error(e)
                     
                     self._update_status()
                     self.motor.update_status()

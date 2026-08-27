@@ -44,15 +44,13 @@ tcp_keep_alive_timeout = 30
 
 [Network]
 server_ip = "*"
-port_pub = 7003
-port_rep = 7004
+port_pub = 7001
+port_rep = 7002
 sub_mask = "255.255.255.0"
-gateway_ip = "192.168.0.1"
+gateway_ip = "200.131.64.254"
 clp_ip = "127.0.0.1"
-pub_port = 7003
-rep_port = 7004
 pub_interval = 0.2
-handshake_timeout = 5
+handshake_timeout = 15
 
 [Logging]
 log_level = "INFO"
